@@ -17,10 +17,5 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             UsersTableSeeder::class,
         ]);
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
     }
 }
