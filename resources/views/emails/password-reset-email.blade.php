@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>:: Password Reset ::</title>
+    <link rel="stylesheet" href="{{asset('assets')}}/css/password-reset.css">
+</head>
+
+<body>
+    <div class="email-container">
+        <div class="header">
+            <img src="{{asset('assets')}}/img/houses.png" alt="Skyscraper Background" class="background-image">
+            <div class="overlay">
+                <img src="{{asset('assets')}}/img/logo.png" alt="{{env("APP_NAME")}}">
+            </div>
+        </div>
+
+        <div class="email-content">
+            <h1 class="header-text">Reset Password</h1>
+            <p>Hello {{$data['name']}},</p>
+            <p>You requested to change the password on your account.</p>
+            
+            <p><strong>Email:</strong> {{$data['email']}}</p>
+
+            <p>Please click on the button below to continue to reset your password. Also, note that this link expires in
+                10 minutes.</p>
+
+            <p>If you didn’t initiate this reset password attempt, please contact our support team immediately via our email or
+                chat at <a href="mailto:support@cardinalstone.com">{{env("MAIL_FROM_ADDRESS")}}</a></p>
+            <a href="{{env('APP_URL')}}/auth/create-new-password/{{$data['verification_code']}}?email={{$data['email']}}" class="btn-primary">Reset Password</a>
+        </div>
+
+
+        <div class="email-footer">
+            <p>This email was sent to <a
+                    href="mailto:{{$data['email']}}">{{$data['email']}}</a>. If you'd rather not
+                receive this kind of email, you can <a href="#">unsubscribe</a> or <a href="#">manage your email
+                    preferences</a>.</p>
+            <p>&copy; <span id="year"></span> {{env("APP_NAME")}}, Lagos State, Nigeria.</p>
+            <div class="social-icons">
+                <a href="#"><img src="{{asset('assets')}}/img/twitter.png" alt="Twitter"></a>
+                <a href="#"><img src="{{asset('assets')}}/img/facebook.png" alt="Facebook"></a>
+                <a href="#"><img src="{{asset('assets')}}/img/instagram.png" alt="Instagram"></a>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById("year").textContent = new Date().getFullYear();
+    </script>
+</body>
+
+</html>

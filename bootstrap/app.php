@@ -4,6 +4,8 @@ use App\Http\Middleware\CurrentTenantMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Laravel\Sanctum\Http\Middleware\CheckAbilities;
+use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -14,7 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
-            "tenant" => CurrentTenantMiddleware::class
+            "tenant" => CurrentTenantMiddleware::class,
         ]);
         // $middleware->append(CurrentTenantMiddleware::class);
         // $middleware->appendToGroup('admin', [

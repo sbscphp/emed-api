@@ -4,11 +4,14 @@ namespace App\Http\Controllers\v1\Auth;
 
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\LoginRequest;
+use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Responser\JsonResponser;
 use App\Services\User\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class LoginController extends Controller
 {
@@ -27,39 +30,31 @@ class LoginController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        // Validate the incoming request
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|string',
-        ]);
+        $credentials = request(['email', 'password']);
 
-        // Check if the user exists and the password is correct
-        $user = $this->userService->findByAttribute('email', $request->email);
-
-        if(!$user){
-            return JsonResponser::send(true, "Email not found.", [], 403);
+        if (!$token = JWTAuth::attempt($credentials)) {
+            return JsonResponser::send(true, 'Invalid email or password', [], 400);
         }
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return JsonResponser::send(true, "Invalid password.", [], 403);
-        }
+        // This will check if email has been verified
+        $currentUser = auth()->user();
 
-        if (!$user->is_verified) {
+        if (!$currentUser->is_verified) {
             return JsonResponser::send(true, 'Account not verified. Kindly verify your email', [], 400);
         }
-        
-        if (!$user->is_active) {
+
+        // This will check if user has been deactivated
+        if (!$currentUser->is_active) {
             return JsonResponser::send(true, 'Your account has been deactivated. Please contact the administrator', [], 400);
         }
 
-        // Issue a new API token
-        // $token = $user->createToken(env("APP_NAME"))->plainTextToken;
-        $token = $user->createToken(env("APP_NAME"), ['*'], now()->addHours(1))->plainTextToken;
+        $user = $this->userService->find($currentUser->id);
 
-        dd($token);
-        dd(auth()->user());
+        $user->update([
+            "last_login" => now()
+        ]);
 
         $data = [
             "user" => $user,
@@ -79,4 +74,35 @@ class LoginController extends Controller
 
         return JsonResponser::send(false, 'You are logged in successfully', $data);
     }
+
+
+    /**
+     * Log the user out (Invalidate the token).
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function logout()
+    {
+        try {
+            $currentUserInstance = auth()->user();
+
+            $dataToLog = [
+                'causer_id' => $currentUserInstance->id,
+                'action_id' => $currentUserInstance->id,
+                'action_type' => "Models\User",
+                'log_name' => "User logged out successfully",
+                'description' => "{$currentUserInstance->lastname} {$currentUserInstance->firstname} Logged out successfully",
+            ];
+
+            GeneralHelper::storeAuditLog($dataToLog);
+
+             // Invalidate the JWT token
+            JWTAuth::invalidate(JWTAuth::getToken());
+
+            return JsonResponser::send(false, 'Successfully logged out', null);
+        } catch (\Throwable $error) {
+            return JsonResponser::send(true, $error->getMessage(), [], 500, $error);
+        }
+    }
+
 }
