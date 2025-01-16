@@ -27,6 +27,7 @@ class GeneralHelper
     {
         if (!is_null($dataToLog)) {
             $auditLog = AuditLog::create([
+                'uuid' => Str::uuid(),
                 'causer_id' => $dataToLog['causer_id'],
                 'action_type' => $dataToLog['action_type'],
                 'action_module' => isset($dataToLog['action_module']) ? $dataToLog['action_module'] : ModuleEnums::GUEST->value,
@@ -37,6 +38,7 @@ class GeneralHelper
             ]);
 
             $auditLogTransaction = AuditLogTransaction::create([
+                'uuid' => Str::uuid(),
                 'audit_log_id' => $auditLog->id,
                 'old_data' => isset($dataToLog['old_data']) ? json_encode($dataToLog['old_data']) : json_encode([]),
                 'new_data' => isset($dataToLog['new_data']) ? json_encode($dataToLog['new_data']) : json_encode([]),

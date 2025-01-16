@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('audit_logs', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->string('uuid', 36)->unique();
             $table->mediumText('action_type')->nullable();
             $table->mediumText('action_module')->nullable();
             $table->unsignedBigInteger('causer_id');
