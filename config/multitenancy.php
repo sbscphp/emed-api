@@ -62,7 +62,7 @@ return [
      *
      * Set to `null` to use the default connection.
      */
-    'tenant_database_connection_name' => env('DB_CONNECTION', 'tenant'),
+    'tenant_database_connection_name' => env('TENANT_DB_CONNECTION', 'tenant'),
 
     /*
      * The connection name to reach the landlord database.

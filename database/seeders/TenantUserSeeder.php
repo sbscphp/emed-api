@@ -18,9 +18,14 @@ class TenantUserSeeder extends Seeder
     {
         $tenants = [
             [
-                'name' => "SBSCUK",
+                'name' => "SBSC UK",
                 'domain' => "sbscuk.co.uk",
                 'database' => "tenant_sbscuk",
+            ],
+            [
+                'name' => "SBSC NGN",
+                'domain' => "sbscuk.com",
+                'database' => "tenant_sbscngn",
             ]
         ];
 

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Spatie\Multitenancy\Models\Tenant as BaseTenant;
+use Illuminate\Support\Str;
 
 class Tenant extends BaseTenant
 {
@@ -17,7 +18,7 @@ class Tenant extends BaseTenant
     public static function booted()
     {
         static::creating(function ($tenant) {
-            $tenant->database = 'tenant_' . strtolower($tenant->name);
+            $tenant->database = 'tenant_' . Str::slug($tenant->name, '_');
         });
     }
     
