@@ -32,7 +32,7 @@ class TenantUserSeeder extends Seeder
         foreach ($tenants as $tenantData) {
             DB::beginTransaction();
             try {
-                // Check if the tenant already exists to avoid duplication
+                
                 $existingTenant = Tenant::where('domain', $tenantData['domain'])->first();
 
                 if ($existingTenant) {
@@ -40,16 +40,13 @@ class TenantUserSeeder extends Seeder
                     continue;
                 }
 
-                // Create the tenant record
                 $tenant = Tenant::create($tenantData);
 
                 $this->command->info("Created tenant: {$tenant->name}");
 
-                // Automatically create database for the tenant
                 DB::statement("CREATE DATABASE IF NOT EXISTS {$tenant->database}");
                 $this->command->info("Database {$tenant->database} created successfully.");
 
-                // Switch to the tenant and run migrations
                 $tenant->makeCurrent();
 
                 Artisan::call('migrate', [
@@ -76,7 +73,6 @@ class TenantUserSeeder extends Seeder
                 
                 $this->command->info("Seeded default data for tenant: {$tenant->name}");
 
-                // Forget current tenant
                 $tenant->forget();
 
                 DB::commit();

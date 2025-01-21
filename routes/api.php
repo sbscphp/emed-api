@@ -27,7 +27,7 @@ Route::group(["prefix" => "v1"], function () {
 
     });
 
-    Route::group(['prefix' => 'admin', 'middleware' => ["tenant", "auth:api"]], function () {
+    Route::group(['prefix' => 'admin', 'middleware' => ["tenant"]], function () {
         Route::get('/clear-cache-auth', function () {
             Artisan::call('optimize:clear');
             return "Data Cache is cleared";

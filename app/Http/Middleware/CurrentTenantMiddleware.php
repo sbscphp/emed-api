@@ -19,6 +19,7 @@ class CurrentTenantMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        return 333; 
         $tenant = Tenant::where('domain', $request->getHost())->first();
 
         if ($tenant) {
