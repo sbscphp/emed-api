@@ -29,7 +29,7 @@ return [
         'id',
     ],
 
-    //'switch_tenant_database' => false, // Use this if we're using multiple database. But for this branch i'm working on i will be using single database
+    'switch_tenant_database' => true,
 
     /*
      * These tasks will be performed when switching tenants.

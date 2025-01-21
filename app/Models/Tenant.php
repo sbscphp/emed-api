@@ -14,9 +14,12 @@ class Tenant extends BaseTenant
         'updated_by'
     ];
 
-    public function users()
+    public static function booted()
     {
-        return $this->belongsToMany(User::class, 'tenant_users', 'tenant_id', 'user_id');
+        static::creating(function ($tenant) {
+            $tenant->database = 'tenant_' . strtolower($tenant->name);
+        });
     }
+    
 
 }

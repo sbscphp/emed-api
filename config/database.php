@@ -129,11 +129,11 @@ return [
 
         'tenant' => [
             'driver' => 'mysql',
-            'host' => env('DB_TENANT_HOST', '127.0.0.1'),
-            'port' => env('DB_TENANT_PORT', '3306'),
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '3306'),
             'database' => null, // This will be set dynamically
-            'username' => env('DB_TENANT_USERNAME', 'forge'),
-            'password' => env('DB_TENANT_PASSWORD', ''),
+            'username' => env('DB_USERNAME', 'forge'),
+            'password' => env('DB_PASSWORD', ''),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
             'prefix' => '',
