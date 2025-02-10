@@ -1,0 +1,85 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\Tenant;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schema;
+
+class TenantUserSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        $tenants = [
+            [
+                'name' => "SBSC UK",
+                'domain' => "sbscuk.co.uk",
+                'database' => "tenant_sbscuk",
+            ],
+            [
+                'name' => "SBSC NGN",
+                'domain' => "sbscuk.com",
+                'database' => "tenant_sbscngn",
+            ]
+        ];
+
+        foreach ($tenants as $tenantData) {
+            DB::beginTransaction();
+            try {
+                
+                $existingTenant = Tenant::where('domain', $tenantData['domain'])->first();
+
+                if ($existingTenant) {
+                    $this->command->info("Tenant {$tenantData['name']} already exists. Skipping...");
+                    continue;
+                }
+
+                $tenant = Tenant::create($tenantData);
+
+                $this->command->info("Created tenant: {$tenant->name}");
+
+                DB::statement("CREATE DATABASE IF NOT EXISTS {$tenant->database}");
+                $this->command->info("Database {$tenant->database} created successfully.");
+
+                $tenant->makeCurrent();
+
+                Artisan::call('migrate', [
+                    '--database' => 'tenant',
+                    '--path' => 'database/migrations/tenant',
+                    '--force' => true
+                ]);
+                $this->command->info("Migrations executed for tenant: {$tenant->name}");
+
+                $seedingExitCode = Artisan::call('db:seed', [
+                    '--database' => 'tenant',
+                    '--class' => 'DatabaseSeeder',
+                    '--force' => true,
+                    '--verbose' => true,
+                ]);
+                
+                $output = Artisan::output();
+                $this->command->info("Seeding output for {$tenant->name}: $output");
+                
+                if ($seedingExitCode !== 0) {
+                    $this->command->error("Seeding failed for tenant: {$tenant->name}");
+                    throw new \Exception("Seeding failed for tenant: {$tenant->name}");
+                }
+                
+                $this->command->info("Seeded default data for tenant: {$tenant->name}");
+
+                $tenant->forget();
+
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                $this->command->info("Error setting up tenant {$tenantData['name']}: " . $e->getMessage());
+            }
+        }
+    }
+}

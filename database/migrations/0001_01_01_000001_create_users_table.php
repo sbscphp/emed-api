@@ -28,6 +28,8 @@ return new class extends Migration
             $table->boolean('is_completed')->default(false);
             $table->boolean('2fa')->default(false);
             $table->string('status')->default('pending')->nullable();
+            $table->foreign('tenant_id')->nullable()->references('id')->on('tenants')->onUpdate('cascade')->onDelete('cascade');
+            $table->softDeletes();
             $table->rememberToken();
             $table->timestamps();
         });
@@ -35,6 +37,12 @@ return new class extends Migration
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
             $table->string('token');
+            $table->string('otp')->nullable();
+            $table->string('status')->default('pending')->comment('pending, verified, expired, resent');
+            $table->dateTime('expires_at')->nullable();
+            $table->dateTime('verified_at')->nullable();
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->foreign('user_id')->references('id')->on('users')->onUpdate('cascade')->onDelete('cascade');
             $table->timestamp('created_at')->nullable();
         });
 
