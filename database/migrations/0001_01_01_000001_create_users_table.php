@@ -28,6 +28,7 @@ return new class extends Migration
             $table->boolean('is_completed')->default(false);
             $table->boolean('2fa')->default(false);
             $table->string('status')->default('pending')->nullable();
+            $table->foreign('tenant_id')->nullable()->references('id')->on('tenants')->onUpdate('cascade')->onDelete('cascade');
             $table->softDeletes();
             $table->rememberToken();
             $table->timestamps();

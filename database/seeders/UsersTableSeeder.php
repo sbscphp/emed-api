@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\GeneralEnums;
 use App\Enums\RegistrationStepEnum;
 use App\Models\Role;
+use App\Models\Tenant;
 use App\Models\User;
 use App\Services\UserInformation\UserInformationService;
 use Illuminate\Database\Seeder;
