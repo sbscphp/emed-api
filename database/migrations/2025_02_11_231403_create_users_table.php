@@ -14,12 +14,12 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('uuid', 36)->unique();
-            $table->string('firstname');
-            $table->string('lastname');
-            $table->string('middlename')->nullable();
+            $table->foreignId('tenant_id')->nullable()->constrained('tenants')->onUpdate('cascade')->onDelete('cascade');
+            $table->foreignId('registration_id')->nullable()->constrained('registrations')->onUpdate('cascade')->onDelete('cascade');
+            $table->string('fullname');
             $table->string('email')->unique();
             $table->string('phone_number')->unique()->nullable();
+            $table->string('role');
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->boolean('can_login')->default(false);
@@ -28,7 +28,6 @@ return new class extends Migration
             $table->boolean('is_completed')->default(false);
             $table->boolean('2fa')->default(false);
             $table->string('status')->default('pending')->nullable();
-            $table->foreign('tenant_id')->nullable()->references('id')->on('tenants')->onUpdate('cascade')->onDelete('cascade');
             $table->softDeletes();
             $table->rememberToken();
             $table->timestamps();

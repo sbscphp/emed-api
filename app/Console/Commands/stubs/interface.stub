@@ -1,0 +1,66 @@
+<?php
+
+namespace App\Repositories\{{ model }};
+
+/**
+ * Interface {{ model }}Interface
+ * 
+ * This interface defines the methods that must be implemented by any 
+ * class that handles the data operations for the {{ model }} model.
+ */
+interface {{ model }}Interface
+{
+    /**
+     * Retrieve all {{ model }} from the database.
+     * 
+     * @return \Illuminate\Database\Eloquent\Collection|static[]
+     */
+    public function all();
+
+
+    /**
+     * Create new {{ model }} in the database.
+     * 
+     * @param array $data
+     * @return \App\Models{{ folder }}\{{ model }}
+     */
+    public function create(array $data);
+
+
+    /**
+     * Update an existing {{ model }} in the database.
+     * 
+     * @param array $data
+     * @param int $id
+     * @return \App\Models{{ folder }}\{{ model }}
+     */
+    public function update(array $data, $id);
+
+
+    /**
+     * Delete an existing {{ model }} from the database.
+     * 
+     * @param int $id
+     * @return void
+     */
+    public function delete($id);
+
+
+    /**
+     * Find an existing {{ model }} in the database by their ID.
+     * 
+     * @param int $id
+     * @return \App\Models{{ folder }}\{{ model }}
+     */
+    public function find($id);
+
+
+    /**
+     * Find an existing {{ model }} in the database by their $attr.
+     * 
+     * @param string $attr
+     * @param string $value
+     * @return \App\Models{{ folder }}\{{ model }}
+     */
+    public function findByAttribute($attr, $value);
+}

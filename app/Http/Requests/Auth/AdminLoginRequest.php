@@ -2,15 +2,16 @@
 
 namespace App\Http\Requests\Auth;
 
-use App\Rules\Auth\ValidateIdentifier;
 use Illuminate\Foundation\Http\FormRequest;
 
-class ResetPasswordLinkRequest extends FormRequest
+class AdminLoginRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * @return bool
      */
-    public function authorize(): bool
+    public function authorize()
     {
         return true;
     }
@@ -18,21 +19,28 @@ class ResetPasswordLinkRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array
      */
     public function rules()
     {
         return [
             'email' => 'required|email|exists:users,email',
+            'password' => 'required|string',
         ];
     }
 
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array
+     */
     public function messages()
     {
         return [
             'email.required' => 'The email field is required.',
             'email.email' => 'Please provide a valid email address.',
             'email.exists' => 'The provided email does not exist in our records.',
+            'password.required' => 'The password field is required.',
         ];
     }
 }

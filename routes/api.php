@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\v1\Admin\RegistrationController;
 use App\Http\Controllers\v1\Auth\ForgotPasswordController;
 use App\Http\Controllers\v1\Auth\LoginController;
 use Illuminate\Http\Request;
@@ -16,15 +17,18 @@ Route::group(["prefix" => "v1"], function () {
     });
 
     Route::group(['prefix' => 'auth', "namespace" => "v1\Auth"], function () {
-        
         Route::post('/login', [LoginController::class, 'login']);
         Route::post('/request-reset-password', [ForgotPasswordController::class, 'resetPasswordLink']);
 
         Route::middleware(['auth:sanctum'])->group(function () {
             Route::get('logout', [LoginController::class, 'logout']);
         });
-        
+    });
 
+
+    Route::group(['prefix' => 'admin'], function () {
+        Route::post('/register', [RegistrationController::class, 'onboardTenant']);
+        Route::post('/login', [RegistrationController::class, 'adminLogin']);
     });
 
     Route::group(['prefix' => 'admin', 'middleware' => ["tenant"]], function () {
@@ -32,7 +36,5 @@ Route::group(["prefix" => "v1"], function () {
             Artisan::call('optimize:clear');
             return "Data Cache is cleared";
         });
-
     });
-
 });

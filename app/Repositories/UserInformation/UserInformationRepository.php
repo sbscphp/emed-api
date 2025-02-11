@@ -36,16 +36,16 @@ class UserInformationRepository implements UserInformationInterface
      * @param int $id
      * @return \App\Models\UserInformation
      */
-    public function update(array $data, $id=null, $uniqueField=[])
+    public function update(array $data, $id = null, $uniqueField = [])
     {
-        if(empty($uniqueField) && !$id){
+        if (empty($uniqueField) && !$id) {
             abort(500, 'id and uniqueField parameters are required');
         }
-        
+
         $record = UserInformation::query();
-        if(!empty($uniqueField)){
+        if (!empty($uniqueField)) {
             $record->where($uniqueField[0], $uniqueField[1]);
-        }else{
+        } else {
             $record->where('id', $id);
         }
         $record->update($data);

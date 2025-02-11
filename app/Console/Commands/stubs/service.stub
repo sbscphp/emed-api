@@ -1,0 +1,96 @@
+<?php
+
+namespace App\Services\{{ model }};
+
+use App\Repositories\{{ model }}\{{ model }}Interface;
+
+/**
+ * Class {{ model }}Service
+ * 
+ * This class provides services related to {{ model }} operations and acts as a 
+ * layer between the Controller and the {{ model }}Repository.
+ */
+class {{ model }}Service
+{
+    protected {{ model }}Interface ${{ model }}Interface;
+    /**
+     * {{ model }} constructor.
+     * 
+     * @param {{ model }}Interface ${{ model }}Interface
+     */
+    public function __construct({{ model }}Interface ${{ model }}Interface)
+    {
+        $this->{{ model }}Interface = ${{ model }}Interface;
+    }
+
+    /**
+     * Retrieve all {{ model }}.
+     * 
+     * @return \Illuminate\Database\Eloquent\Collection|static[]
+     */
+    public function all()
+    {
+        return $this->{{ model }}Interface->all();
+    }
+
+    /**
+     * Create a new {{ model }} using the data provided.
+     * 
+     * @param array $data
+     * @return \App\Models{{ folder }}\{{ model }}
+     */
+    public function create(array $data)
+    {
+        return $this->{{ model }}Interface->create($data);
+    }
+
+
+    /**
+     * Update an existing {{ model }} with the provided data.
+     * 
+     * @param array $data
+     * @param int $id
+     * @return \App\Models{{ folder }}\{{ model }}
+     */
+    public function update(array $data, $id)
+    {
+        return $this->{{ model }}Interface->update($data, $id);
+    }
+
+
+    /**
+     * Delete a {{ model }} by heir ID.
+     * 
+     * @param int $id
+     * @return void
+     */
+    public function delete($id)
+    {
+        return $this->{{ model }}Interface->delete($id);
+    }
+
+
+    /**
+     * Find a {{ model }} by their ID.
+     * 
+     * @param int $id
+     * @return \App\Models{{ folder }}\{{ model }}
+     */
+    public function find($id)
+    {
+        return $this->{{ model }}Interface->find($id);
+    }
+
+
+    /**
+     * Find an existing {{ model }}  by their $attr.
+     * 
+     * @param string $attr
+     * @param string $value
+     * @return \App\Models{{ folder }}\{{ model }}
+     */
+    public function findByAttribute($attr, $value)
+    {
+        return $this->{{ model }}Interface->findByAttribute($attr, $value);
+    }
+}
