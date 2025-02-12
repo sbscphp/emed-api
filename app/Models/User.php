@@ -24,7 +24,6 @@ class User extends Authenticatable implements JWTSubject
         'email',
         'password',
         'tenant_id',
-        'registration_id'
     ];
     /**
      * The attributes that are mass assignable.

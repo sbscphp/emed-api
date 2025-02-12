@@ -114,7 +114,6 @@ class RegistrationRepository implements RegistrationInterface
                 'role'         => $data['role'],
                 'phone_number' => $data['phone_number'],
                 'password'     => bcrypt($data['password']),
-                'tenant_id'    => $tenantId,
             ]
         );
     }

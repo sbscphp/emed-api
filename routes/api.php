@@ -19,6 +19,7 @@ Route::group(["prefix" => "v1"], function () {
     Route::group(['prefix' => 'auth', "namespace" => "v1\Auth"], function () {
         Route::post('/login', [LoginController::class, 'login']);
         Route::post('/request-reset-password', [ForgotPasswordController::class, 'resetPasswordLink']);
+        Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword']);
 
         Route::middleware(['auth:sanctum'])->group(function () {
             Route::get('logout', [LoginController::class, 'logout']);

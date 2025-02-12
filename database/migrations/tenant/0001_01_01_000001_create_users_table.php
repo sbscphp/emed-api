@@ -15,11 +15,10 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('uuid', 36)->unique();
-            $table->string('firstname');
-            $table->string('lastname');
-            $table->string('middlename')->nullable();
+            $table->string('fullname');
             $table->string('email')->unique();
             $table->string('phone_number')->unique()->nullable();
+            $table->string('role');
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->boolean('can_login')->default(false);
@@ -27,11 +26,16 @@ return new class extends Migration
             $table->boolean('is_verified')->default(false);
             $table->boolean('is_completed')->default(false);
             $table->boolean('2fa')->default(false);
-            $table->string('status')->default('pending')->nullable();
-            $table->foreign('tenant_id')->nullable()->references('id')->on('tenants')->onUpdate('cascade')->onDelete('cascade');
+            $table->string('status')->default('active')->nullable();
+            $table->unsignedBigInteger('tenant_id')->nullable();
             $table->softDeletes();
             $table->rememberToken();
             $table->timestamps();
+            $table->foreign('tenant_id')
+                ->references('id')
+                ->on('tenants')
+                ->onUpdate('cascade')
+                ->onDelete('cascade');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

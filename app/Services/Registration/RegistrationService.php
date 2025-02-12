@@ -102,17 +102,17 @@ class RegistrationService
         return \App\Models\Registration::updateOrCreate($criteria, $data);
     }
 
-    public function saveAdminDetails(array $data, int $tenantId, int $registrationId)
+    public function saveAdminDetails(array $data, int $tenantId)
     {
         return User::updateOrCreate(
             ['email' => $data['email']],
             [
+                'uuid' => Str::uuid(),
                 'fullname'    => $data['fullname'],
                 'role'         => $data['role'],
                 'phone_number' => $data['phone_number'],
                 'password'     => bcrypt($data['password']),
                 'tenant_id'    => $tenantId,
-                'registration_id' => $registrationId
             ]
         );
     }

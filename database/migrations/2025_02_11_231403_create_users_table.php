@@ -14,8 +14,7 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->nullable()->constrained('tenants')->onUpdate('cascade')->onDelete('cascade');
-            $table->foreignId('registration_id')->nullable()->constrained('registrations')->onUpdate('cascade')->onDelete('cascade');
+            $table->string('uuid', 36)->unique();
             $table->string('fullname');
             $table->string('email')->unique();
             $table->string('phone_number')->unique()->nullable();
@@ -27,10 +26,16 @@ return new class extends Migration
             $table->boolean('is_verified')->default(false);
             $table->boolean('is_completed')->default(false);
             $table->boolean('2fa')->default(false);
-            $table->string('status')->default('pending')->nullable();
+            $table->string('status')->default('active')->nullable();
+            $table->unsignedBigInteger('tenant_id')->nullable();
             $table->softDeletes();
             $table->rememberToken();
             $table->timestamps();
+            $table->foreign('tenant_id')
+                ->references('id')
+                ->on('tenants')
+                ->onUpdate('cascade')
+                ->onDelete('cascade');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

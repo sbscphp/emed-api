@@ -24,7 +24,6 @@ class AdminRegisterRequest extends FormRequest
     public function rules()
     {
         return [
-            'tenant_id'    => 'required|exists:registrations,id',
             'fullname'     => 'required|string',
             'role'         => 'required|string',
             'phone_number' => 'required|numeric',
@@ -41,8 +40,7 @@ class AdminRegisterRequest extends FormRequest
     public function messages()
     {
         return [
-            'tenant_id.required' => 'The tenant ID is required.',
-            'tenant_id.exists'   => 'The selected tenant ID is invalid.',
+
             'fullname.required'  => 'The full name is required.',
             'role.required'      => 'The role is required.',
             'phone_number.required' => 'The phone number is required.',

@@ -12,11 +12,11 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Responser\JsonResponser;
 use App\Services\Registration\RegistrationService;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class RegistrationController extends Controller
@@ -31,24 +31,11 @@ class RegistrationController extends Controller
     public function onboardTenant(TenantOnboardingRequest $request)
     {
         try {
-            DB::beginTransaction();
+            DB::connection('landlord')->beginTransaction();
 
             $data = $request->validated();
 
-            $tenantData = [
-                'name' => $data['name'],
-            ];
-
-            $tenant = \App\Models\Tenant::create($tenantData);
-
-            if (empty($tenant->domain)) {
-                $tenant->domain = Str::slug($tenant->name, '-') . '.emed.com';
-                $tenant->database = 'tenant_' . Str::slug($tenant->name, '_');
-                $tenant->save();
-            }
-
             $registrationData = [
-                'tenant_id' => $tenant->id,
                 'name' => $data['name'],
                 'state_city' => $data['state_city'],
                 'registration_number' => $data['registration_number'],
@@ -64,51 +51,82 @@ class RegistrationController extends Controller
                 );
             }
 
-            $registration = \App\Models\Registration::create($registrationData);
+            $registration = Registration::create($registrationData);
 
-            if ($request->hasFile('license')) {
-                $hospitalData['license'] = FileUploadHelper::singleBinaryFileUpload(
-                    $request->file('license'),
-                    'License'
-                );
+            $existingTenant = Tenant::where('domain', Str::slug($data['name'], '-') . '.emed.com')->first();
+            if ($existingTenant) {
+                DB::connection('landlord')->rollBack();
+                return JsonResponser::send(false, "Tenant {$data['name']} already exists.", [], 409);
             }
 
-            $adminData = [
-                'fullname' => $data['admin_fullname'],
-                'role' => $data['admin_role'],
-                'phone_number' => $data['admin_phone_number'],
-                'email' => $data['admin_email'],
-                'password' => $data['admin_password'],
-            ];
+            $tenant = Tenant::create([
+                'name' => $data['name'],
+                'domain' => Str::slug($data['name'], '-') . '.emed.com',
+                'database' => 'tenant_' . Str::slug($data['name'], '_') . '_' . Str::random(4),
+            ]);
+
+            DB::connection('landlord')->commit();
+
+            try {
+                DB::statement("CREATE DATABASE IF NOT EXISTS {$tenant->database} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+
+                $tenant->makeCurrent();
+
+                config(['database.connections.tenant.database' => $tenant->database]);
+                DB::purge('tenant');
+                DB::reconnect('tenant');
+
+                $output = Artisan::call('migrate', [
+                    '--database' => 'tenant',
+                    '--path' => 'database/migrations/tenant',
+                    '--force' => true,
+                ]);
 
 
-            $admin = $this->registrationService->saveAdminDetails($adminData, $tenant->id, $registration->id);
-            $dataToLog = [
-                'causer_id' => $admin->id,
-                'action_id' => $admin->id,
-                'action_type' => "App\Models\User",
-                'log_name' => "User registered successfully and sent for approval",
-                'description' => "{$admin['fullname']} added successfully",
-            ];
-            GeneralHelper::storeAuditLog($dataToLog);
+                $adminData = [
+                    'uuid' => Str::uuid(),
+                    'fullname' => $data['admin_fullname'],
+                    'role' => $data['admin_role'],
+                    'phone_number' => $data['admin_phone_number'],
+                    'email' => $data['admin_email'],
+                    'password' => Hash::make($data['admin_password']),
+                    'tenant_id' => $tenant->id,
+                ];
 
-            DB::commit();
+                $admin = $this->registrationService->saveAdminDetails($adminData, $tenant->id);
 
-            return JsonResponser::send(
-                true,
-                'Tenant onboarding completed successfully. A verification email has been sent',
-                [
-                    'tenant' => $tenant,
-                    'registration' => $registration,
-                    'admin' => $admin,
-                ],
-                200
-            );
+                $dataToLog = [
+                    'causer_id' => $admin->id,
+                    'action_id' => $admin->id,
+                    'action_type' => "App\Models\User",
+                    'log_name' => "Tenant Created Successfully",
+                    'description' => "{$admin['fullname']} added successfully",
+                ];
+
+                GeneralHelper::storeAuditLog($dataToLog);
+
+                return JsonResponser::send(
+                    true,
+                    'Tenant onboarding completed successfully.',
+                    [
+                        'tenant' => $tenant,
+                        'registration' => $registration,
+                        'admin' => $admin,
+                    ],
+                    200
+                );
+            } catch (\Exception $e) {
+                DB::statement("DROP DATABASE IF EXISTS {$tenant->database}");
+
+                Log::error('Error during tenant-specific operations: ' . $e->getMessage());
+
+                throw $e;
+            }
         } catch (\Exception $e) {
-            DB::rollBack();
+            DB::connection('landlord')->rollBack();
             return JsonResponser::send(
                 false,
-                'An error occurred during tenant onboarding.',
+                'An error occurred during tenant onboarding: ' . $e->getMessage(),
                 null,
                 500
             );
@@ -118,7 +136,29 @@ class RegistrationController extends Controller
     public function adminLogin(AdminLoginRequest $request)
     {
         try {
+            // Extract credentials
             $credentials = $request->only('email', 'password');
+
+            // Find the user in the landlord database
+            $user = User::where('email', $credentials['email'])->first();
+
+            if (!$user) {
+                return JsonResponser::send(false, 'User not found', [], 404);
+            }
+
+            // Switch to the tenant's database
+            $tenant = Tenant::find($user->tenant_id);
+            if (!$tenant) {
+                return JsonResponser::send(false, 'Tenant not found for this user', [], 404);
+            }
+
+            // Configure the tenant database connection
+            config(['database.connections.tenant.database' => $tenant->database]);
+            DB::purge('tenant');
+            DB::reconnect('tenant');
+
+            // Make the tenant current
+            $tenant->makeCurrent();
 
             if (!$token = JWTAuth::attempt($credentials)) {
                 return JsonResponser::send(false, 'Invalid credentials', [], 401);
@@ -126,34 +166,14 @@ class RegistrationController extends Controller
 
             $user = JWTAuth::user();
 
-            // Optionally check the admin role if needed
-            // if ($user->role !== 'Administrator') {
-            //     JWTAuth::setToken($token)->invalidate(); // Invalidate the token
-            //     return response()->json([
-            //         'error' => true,
-            //         'message' => 'You do not have permission to log in as an admin.',
-            //     ], 403);
-            // }
-
-            $tenant = Tenant::find($user->tenant_id);
-
-            if (!$tenant) {
-                JWTAuth::setToken($token)->invalidate();
-                return JsonResponser::send(false, 'Tenant not found for this user', [], 404);
-            }
-
-            // if (!$user->is_active || !$user->is_verified) {
-            //     JWTAuth::setToken($token)->invalidate();
-            //     return JsonResponser::send(false, 'Your account is not active or verified', [], 403);
-            // }
-
-            $hospital = User::where('tenant_id', $tenant->id)->first();
+            $hospital = \App\Models\User::where('tenant_id', $tenant->id)->first();
 
             if (!$hospital) {
                 JWTAuth::setToken($token)->invalidate();
                 return JsonResponser::send(false, 'No hospital information found for this tenant', [], 404);
             }
 
+            // Return success response
             return JsonResponser::send(
                 true,
                 'Admin logged in successfully',
@@ -166,7 +186,7 @@ class RegistrationController extends Controller
                 200
             );
         } catch (\Exception $e) {
-            Log::info($e);
+            Log::error('Error during admin login: ' . $e->getMessage());
             return JsonResponser::send(
                 false,
                 'An error occurred during Login.',

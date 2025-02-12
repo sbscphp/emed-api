@@ -44,8 +44,8 @@ class UsersTableSeeder extends Seeder
                 ],
                 [
                     'uuid' => Str::uuid(),
-                    'firstname'     => 'Super-Admin',
-                    'lastname'     => env('APP_NAME'),
+                    'fullname'     => 'Super-Admin',
+                    'role'  => "SuperAdmin",
                     'password' => bcrypt('password'),
                     'phone_number' => fake()->phoneNumber,
                     'status' => GeneralEnums::ACTIVE->value,
@@ -67,8 +67,8 @@ class UsersTableSeeder extends Seeder
                 ],
                 [
                     'uuid' => Str::uuid(),
-                    'firstname'     => 'Customer',
-                    'lastname'     => env('APP_NAME'),
+                    'fullname'     => 'Customer',
+                    'role'  => "Customer",
                     'password' => bcrypt('password'),
                     'phone_number' => fake()->phoneNumber,
                     'status' => GeneralEnums::ACTIVE->value,
@@ -91,8 +91,8 @@ class UsersTableSeeder extends Seeder
                 ],
                 [
                     'uuid' => Str::uuid(),
-                    'firstname'     => 'Guest',
-                    'lastname'     => env('APP_NAME'),
+                    'fullname'     => 'Guest',
+                    'role'  => "Guest",
                     'password' => bcrypt('password'),
                     'phone_number' => fake()->phoneNumber,
                     'status' => GeneralEnums::ACTIVE->value,
@@ -121,7 +121,5 @@ class UsersTableSeeder extends Seeder
                 'status' => GeneralEnums::ACTIVE->value,
             ]);
         }
-
-        
     }
 }

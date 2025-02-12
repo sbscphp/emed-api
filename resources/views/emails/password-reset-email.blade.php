@@ -27,10 +27,6 @@
 
 
         <div class="email-footer">
-            <p>This email was sent to <a
-                    href="mailto:{{$data['email']}}">{{$data['email']}}</a>. If you'd rather not
-                receive this kind of email, you can <a href="#">unsubscribe</a> or <a href="#">manage your email
-                    preferences</a>.</p>
             <p>&copy; <span id="year"></span> {{env("APP_NAME")}}, Lagos State, Nigeria.</p>
             <div class="social-icons">
                 <a href="#"><img src="{{asset('assets')}}/img/twitter.png" alt="Twitter"></a>
