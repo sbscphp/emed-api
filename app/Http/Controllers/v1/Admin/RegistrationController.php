@@ -15,7 +15,6 @@ use App\Services\Registration\RegistrationService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -76,12 +75,11 @@ class RegistrationController extends Controller
                 DB::purge('tenant');
                 DB::reconnect('tenant');
 
-                $output = Artisan::call('migrate', [
+                Artisan::call('migrate', [
                     '--database' => 'tenant',
                     '--path' => 'database/migrations/tenant',
                     '--force' => true,
                 ]);
-
 
                 $adminData = [
                     'uuid' => Str::uuid(),
@@ -89,7 +87,7 @@ class RegistrationController extends Controller
                     'role' => $data['admin_role'],
                     'phone_number' => $data['admin_phone_number'],
                     'email' => $data['admin_email'],
-                    'password' => Hash::make($data['admin_password']),
+                    'password' => $data['admin_password'],
                     'tenant_id' => $tenant->id,
                 ];
 
@@ -117,10 +115,12 @@ class RegistrationController extends Controller
                 );
             } catch (\Exception $e) {
                 DB::statement("DROP DATABASE IF EXISTS {$tenant->database}");
-
-                Log::error('Error during tenant-specific operations: ' . $e->getMessage());
-
-                throw $e;
+                return JsonResponser::send(
+                    false,
+                    'An error occurred during tenant database: ' . $e->getMessage(),
+                    null,
+                    500
+                );
             }
         } catch (\Exception $e) {
             DB::connection('landlord')->rollBack();
@@ -136,44 +136,27 @@ class RegistrationController extends Controller
     public function adminLogin(AdminLoginRequest $request)
     {
         try {
-            // Extract credentials
             $credentials = $request->only('email', 'password');
-
-            // Find the user in the landlord database
-            $user = User::where('email', $credentials['email'])->first();
-
-            if (!$user) {
-                return JsonResponser::send(false, 'User not found', [], 404);
-            }
-
-            // Switch to the tenant's database
-            $tenant = Tenant::find($user->tenant_id);
-            if (!$tenant) {
-                return JsonResponser::send(false, 'Tenant not found for this user', [], 404);
-            }
-
-            // Configure the tenant database connection
-            config(['database.connections.tenant.database' => $tenant->database]);
-            DB::purge('tenant');
-            DB::reconnect('tenant');
-
-            // Make the tenant current
-            $tenant->makeCurrent();
 
             if (!$token = JWTAuth::attempt($credentials)) {
                 return JsonResponser::send(false, 'Invalid credentials', [], 401);
             }
 
             $user = JWTAuth::user();
+            $tenant = Tenant::find($user->tenant_id);
 
-            $hospital = \App\Models\User::where('tenant_id', $tenant->id)->first();
+            if (!$tenant) {
+                JWTAuth::setToken($token)->invalidate();
+                return JsonResponser::send(false, 'Tenant not found for this user', [], 404);
+            }
+
+            $hospital = User::where('tenant_id', $tenant->id)->first();
 
             if (!$hospital) {
                 JWTAuth::setToken($token)->invalidate();
                 return JsonResponser::send(false, 'No hospital information found for this tenant', [], 404);
             }
 
-            // Return success response
             return JsonResponser::send(
                 true,
                 'Admin logged in successfully',
@@ -186,7 +169,7 @@ class RegistrationController extends Controller
                 200
             );
         } catch (\Exception $e) {
-            Log::error('Error during admin login: ' . $e->getMessage());
+            Log::info($e);
             return JsonResponser::send(
                 false,
                 'An error occurred during Login.',

@@ -27,9 +27,9 @@ class Registration extends BaseTenant
             }
         });
 
-        // static::updating(function ($tenant) {
-        //     $tenant->updated_by = Auth::check() ? Auth::id() : null;
-        // });
+        static::updating(function ($tenant) {
+            $tenant->updated_by = Auth::check() ? Auth::id() : null;
+        });
     }
 
     public function tenant()
