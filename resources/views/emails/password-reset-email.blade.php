@@ -21,7 +21,7 @@
                 10 minutes.</p>
 
             <p>If you didn’t initiate this reset password attempt, please contact our support team immediately via our email or
-                chat at <a href="mailto:support@emed.com">{{env("MAIL_FROM_ADDRESS")}}</a></p>
+                chat at <a href="mailto:support@emed.com">support@emed.com</a></p>
             <a href="{{env('APP_URL')}}/auth/create-new-password/{{$data['verification_code']}}?email={{$data['email']}}" class="btn-primary">Reset Password</a>
         </div>
 

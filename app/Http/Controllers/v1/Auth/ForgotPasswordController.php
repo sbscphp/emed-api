@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\ResetPasswordLinkRequest;
 use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Mail\PasswordResetEmail;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
@@ -64,7 +65,6 @@ class ForgotPasswordController extends Controller
             return JsonResponser::send(false, 'Password reset link sent to the email associated with your account.', $record, 200);
         } catch (\Throwable $th) {
             DB::rollBack();
-            Log::error('Error during password reset request: ' . $th->getMessage());
             return JsonResponser::send(true, 'An error occurred while processing your request.', [], 500, $th);
         }
     }
@@ -85,7 +85,7 @@ class ForgotPasswordController extends Controller
                 return JsonResponser::send(true, 'Invalid or expired token.', [], 400);
             }
 
-            $user = \App\Models\User::where('email', $validatedData['email'])->first();
+            $user = User::where('email', $validatedData['email'])->first();
 
             if (!$user) {
                 return JsonResponser::send(true, 'User not found.', [], 404);

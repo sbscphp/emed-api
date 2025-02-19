@@ -24,6 +24,12 @@ class User extends Authenticatable implements JWTSubject
         'email',
         'password',
         'tenant_id',
+        'is_verified',
+        'email_verified_at',
+        'status',
+        'can_login',
+        'is_active',
+        'remember_token',
     ];
     /**
      * The attributes that are mass assignable.

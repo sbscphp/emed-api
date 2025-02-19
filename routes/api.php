@@ -20,22 +20,24 @@ Route::group(["prefix" => "v1"], function () {
         Route::post('/login', [LoginController::class, 'login']);
         Route::post('/request-reset-password', [ForgotPasswordController::class, 'resetPasswordLink']);
         Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword']);
-
         Route::middleware(['auth:sanctum'])->group(function () {
             Route::get('logout', [LoginController::class, 'logout']);
         });
     });
 
-
     Route::group(['prefix' => 'admin'], function () {
-        Route::post('/register', [RegistrationController::class, 'onboardTenant']);
         Route::post('/login', [RegistrationController::class, 'adminLogin']);
     });
-
-    Route::group(['prefix' => 'admin', 'middleware' => ["tenant"]], function () {
-        Route::get('/clear-cache-auth', function () {
-            Artisan::call('optimize:clear');
-            return "Data Cache is cleared";
+    Route::group(["middleware" => ["auth:api"]], function () {
+        Route::group(['prefix' => 'admin'], function () {
+            Route::post('/register', [RegistrationController::class, 'onboardTenant']);
         });
+    });
+    Route::group(['prefix' => 'admin', 'middleware' => ["tenant"]], function () {
+        // Route::get('/clear-cache-auth', function () {
+        //     Artisan::call('optimize:clear');
+        //     return "Data Cache is cleared";
+        // });
+
     });
 });

@@ -20,15 +20,14 @@ class CurrentTenantMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         $tenant = Tenant::where('domain', $request->getHost())->first();
-        
+
         if ($tenant) {
             $tenant->makeCurrent();
 
             config(['database.connections.tenant.database' => $tenant->database]);
-            
+
             \DB::purge('tenant');
             \DB::reconnect('tenant');
-
         } else {
             return response()->json(['error' => "Tenant not found for domain: $tenant"], 404);
         }

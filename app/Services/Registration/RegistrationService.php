@@ -113,6 +113,7 @@ class RegistrationService
                 'phone_number' => $data['phone_number'],
                 'password'     => bcrypt($data['password']),
                 'tenant_id'    => $tenantId,
+                'remember_token' =>  Str::random(40)
             ]
         );
     }

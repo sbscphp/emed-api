@@ -26,7 +26,7 @@ return new class extends Migration
             $table->boolean('is_verified')->default(false);
             $table->boolean('is_completed')->default(false);
             $table->boolean('2fa')->default(false);
-            $table->string('status')->default('active')->nullable();
+            $table->string('status')->default('pending')->nullable();
             $table->unsignedBigInteger('tenant_id')->nullable();
             $table->softDeletes();
             $table->rememberToken();

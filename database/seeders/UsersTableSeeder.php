@@ -45,7 +45,7 @@ class UsersTableSeeder extends Seeder
                 [
                     'uuid' => Str::uuid(),
                     'fullname'     => 'Super-Admin',
-                    'role'  => "SuperAdmin",
+                    'role'  => "Super Admin",
                     'password' => bcrypt('password'),
                     'phone_number' => fake()->phoneNumber,
                     'status' => GeneralEnums::ACTIVE->value,
