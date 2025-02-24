@@ -10,8 +10,11 @@ use App\Services\User\UserService;
 use App\Services\UserInformation\UserInformationService;
 use Illuminate\Support\ServiceProvider;
 use App\Models\Sanctum\PersonalAccessToken;
+use App\Repositories\PatientInformation\PatientInformationInterface;
+use App\Repositories\PatientInformation\PatientInformationRepository;
 use App\Repositories\Registration\RegistrationInterface;
 use App\Repositories\Registration\RegistrationRepository;
+use App\Services\PatientInformation\PatientInformationService;
 use App\Services\Registration\RegistrationService;
 use Laravel\Sanctum\PersonalAccessToken as SanctumPersonalAccessToken;
 use Laravel\Sanctum\Sanctum;
@@ -26,6 +29,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(UserInformationInterface::class, UserInformationRepository::class);
         $this->app->bind(UserRepositoryInterface::class, UserRepository::class);
         $this->app->bind(RegistrationInterface::class, RegistrationRepository::class);
+        $this->app->bind(PatientInformationInterface::class, PatientInformationRepository::class);
 
         $this->app->bind(UserInformationService::class, function ($app) {
             return new UserInformationService($app->make(UserInformationInterface::class));
@@ -35,6 +39,9 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->bind(RegistrationService::class, function ($app) {
             return new RegistrationService($app->make(RegistrationInterface::class));
+        });
+        $this->app->bind(PatientInformationService::class, function($app){
+            return new PatientInformationService($app->make(PatientInformationInterface::class));
         });
     }
 

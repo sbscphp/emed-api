@@ -18,7 +18,8 @@ return new class extends Migration
             $table->date('dob');
             $table->integer('age');
             $table->string('gender');
-            $table->enum('bloodgroup',['A+','A-','B+','B-','AB+','AB-','O+','O-'])->comment(['A+','A-','B+','B-','AB+','AB-','O+','O-']);
+            $table->enum('bloodgroup',['A+','A-','B+','B-','AB+','AB-','O+','O-']);
+            $table->enum('bloodgenotype',['AA', 'AS', 'SS', 'AC', 'SC', 'CC']);
             $table->string('email')->unique();
             $table->string('patient_type');
             $table->string('marital_status');
@@ -26,12 +27,12 @@ return new class extends Migration
             $table->string('occupation');
             $table->string('homeaddress');
             $table->string('companyaddress');
-            $table->string('religion');
-            $table->string('stateoforigin');
-            $table->string('lga');
-            $table->string('tribe');
+            $table->string('religion')->nullable();
+            $table->string('stateoforigin')->nullable();
+            $table->string('lga')->nullable();
+            $table->string('tribe')->nullable();
             $table->string('cardno')->unique();
-            $table->string('receiptno')->unique();
+            $table->string('receiptno')->unique()->nullable();
             $table->softDeletes();
             $table->timestamps();
 

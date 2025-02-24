@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\v1\Admin\RecordManagementController;
 use App\Http\Controllers\v1\Admin\RegistrationController;
 use App\Http\Controllers\v1\Auth\ForgotPasswordController;
 use App\Http\Controllers\v1\Auth\LoginController;
@@ -34,6 +35,7 @@ Route::group(["prefix" => "v1"], function () {
         });
     });
     Route::group(['prefix' => 'admin', 'middleware' => ["tenant"]], function () {
+        Route::post('/register-patient', [RecordManagementController::class, 'storePatient']);
         // Route::get('/clear-cache-auth', function () {
         //     Artisan::call('optimize:clear');
         //     return "Data Cache is cleared";
