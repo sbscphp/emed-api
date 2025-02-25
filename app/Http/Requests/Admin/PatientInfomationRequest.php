@@ -26,7 +26,7 @@ class PatientInfomationRequest extends FormRequest
             'lastname' => 'required|string|max:255',
             'dob' => 'required|date',
             'age' => 'required|integer|min:0',
-            'gender' => 'required|in:male,femaela',
+            'gender' => 'required|in:male,female',
             'bloodgroup' => 'required|in:A+, A-, B+, B-, AB+, AB-, O+, O-',
             'bloodgenotype' => 'required|in:AA, AS, SS, AC, SC, CC',
             'email' => 'required|email|unique:patient_information,email',
@@ -41,7 +41,7 @@ class PatientInfomationRequest extends FormRequest
             'lga' => 'nullable|string',
             'tribe' => 'nullable|string',
             'cardno' => 'required|string|unique:patient_information,cardno',
-            'receiptno' => 'nullable|string|unique:patient_information,receiptno',
+            'recieptno' => 'nullable|string|unique:patient_information,recieptno',
         ];
     }
 

@@ -11,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('patient_information', function (Blueprint $table) {
+        Schema::create('patients', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('firstname');
-            $table->string('lastame');
+            $table->string('lastname');
             $table->date('dob');
             $table->integer('age');
             $table->string('gender');
@@ -32,7 +32,7 @@ return new class extends Migration
             $table->string('lga')->nullable();
             $table->string('tribe')->nullable();
             $table->string('cardno')->unique();
-            $table->string('receiptno')->unique()->nullable();
+            $table->string('recieptno')->unique()->nullable();
             $table->softDeletes();
             $table->timestamps();
 
@@ -50,6 +50,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('patient_information');
+        Schema::dropIfExists('patients');
     }
 };

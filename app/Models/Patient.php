@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Spatie\Multitenancy\Models\Tenant ;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-class PatientInformation extends Model
+class Patient extends Model
 {
+    use HasFactory, SoftDeletes;
 
     protected $guarded = ['id'];
     protected $fillable = [

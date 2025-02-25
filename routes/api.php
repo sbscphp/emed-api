@@ -29,17 +29,25 @@ Route::group(["prefix" => "v1"], function () {
     Route::group(['prefix' => 'admin'], function () {
         Route::post('/login', [RegistrationController::class, 'adminLogin']);
     });
-    Route::group(["middleware" => ["auth:api"]], function () {
-        Route::group(['prefix' => 'admin'], function () {
-            Route::post('/register', [RegistrationController::class, 'onboardTenant']);
-        });
+
+     Route::group(['prefix' => 'admin'], function () {
+        Route::post('/register', [RegistrationController::class, 'onboardTenant']);
     });
-    Route::group(['prefix' => 'admin', 'middleware' => ["tenant"]], function () {
-        Route::post('/register-patient', [RecordManagementController::class, 'storePatient']);
-        // Route::get('/clear-cache-auth', function () {
-        //     Artisan::call('optimize:clear');
-        //     return "Data Cache is cleared";
+
+    Route::group(["middleware" => ["auth:api"]], function () {
+        // Route::group(['prefix' => 'admin'], function () {
+        //     Route::post('/register', [RegistrationController::class, 'onboardTenant']);
+
         // });
 
+        // Route::group(['middleware' => ["tenant"]], function () {
+            Route::group(['prefix' => 'admin', "namespace" => "v1\Admin"], function(){
+                //Patient routes
+                Route::group(['prefix' => 'record'], function(){
+                    Route::post('/patient', [RecordManagementController::class, 'store']);
+                });
+            });
+    //    });
     });
+
 });

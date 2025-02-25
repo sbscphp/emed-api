@@ -3646,30 +3646,30 @@
         },
         {
             "name": "spatie/laravel-multitenancy",
-            "version": "4.0.3",
+            "version": "4.0.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/spatie/laravel-multitenancy.git",
-                "reference": "3f64d999695a51f5e04444ceab274530360473e1"
+                "reference": "d89f7f2842a0ed1370d16b60c6c4c92b73e734c8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/spatie/laravel-multitenancy/zipball/3f64d999695a51f5e04444ceab274530360473e1",
-                "reference": "3f64d999695a51f5e04444ceab274530360473e1",
+                "url": "https://api.github.com/repos/spatie/laravel-multitenancy/zipball/d89f7f2842a0ed1370d16b60c6c4c92b73e734c8",
+                "reference": "d89f7f2842a0ed1370d16b60c6c4c92b73e734c8",
                 "shasum": ""
             },
             "require": {
-                "illuminate/support": "^11.0",
+                "illuminate/support": "^11.0|^12.0",
                 "php": "^8.2",
                 "spatie/laravel-package-tools": "^1.9"
             },
             "require-dev": {
                 "laravel/legacy-factories": "^1.0.4",
-                "laravel/octane": "^2.5",
-                "laravel/serializable-closure": "^1.1",
+                "laravel/octane": "^2.5|dev-develop",
+                "laravel/serializable-closure": "^1.1|^2.0",
                 "mockery/mockery": "^1.4",
-                "orchestra/testbench": "^9.0",
-                "pestphp/pest": "^2.34",
+                "orchestra/testbench": "^9.0|^10.0",
+                "pestphp/pest": "^2.34|^3.7",
                 "spatie/valuestore": "^1.2"
             },
             "type": "library",
@@ -3709,7 +3709,7 @@
             ],
             "support": {
                 "issues": "https://github.com/spatie/laravel-multitenancy/issues",
-                "source": "https://github.com/spatie/laravel-multitenancy/tree/4.0.3"
+                "source": "https://github.com/spatie/laravel-multitenancy/tree/4.0.4"
             },
             "funding": [
                 {
@@ -3721,7 +3721,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2024-12-22T20:52:51+00:00"
+            "time": "2025-02-20T14:48:22+00:00"
         },
         {
             "name": "spatie/laravel-package-tools",
