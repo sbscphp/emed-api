@@ -11,6 +11,7 @@ class Patient extends Model
     use HasFactory, SoftDeletes;
 
     protected $guarded = ['id'];
+    protected $connection = 'tenant';
     protected $fillable = [
         'firstname',
         'lastname',

@@ -33,6 +33,11 @@ return new class extends Migration
             $table->string('tribe')->nullable();
             $table->string('cardno')->unique();
             $table->string('recieptno')->unique()->nullable();
+            $table->dateTime('arrival_time')->nullable();
+            $table->dateTime('departure_time')->nullable();
+            $table->string('status')->nullable();
+            $table->enum('is_active', [false, true])->default(true);
+            $table->unsignedBigInteger('service_id')->nullable();
             $table->softDeletes();
             $table->timestamps();
 

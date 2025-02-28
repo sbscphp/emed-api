@@ -6,6 +6,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 use Spatie\Multitenancy\Models\Tenant;
 use Spatie\Multitenancy\Http\Middleware\NeedsTenant;
@@ -22,7 +23,9 @@ class CurrentTenantMiddleware
         $tenant = Tenant::where('domain', $request->getHost())->first();
 
         if ($tenant) {
+
             $tenant->makeCurrent();
+            //Log::info('Switched to tenant:', ['database' => $tenant->database]);
 
             config(['database.connections.tenant.database' => $tenant->database]);
 

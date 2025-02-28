@@ -40,14 +40,14 @@ Route::group(["prefix" => "v1"], function () {
 
         // });
 
-        // Route::group(['middleware' => ["tenant"]], function () {
+        Route::group(['middleware' => ["tenant"]], function () {
             Route::group(['prefix' => 'admin', "namespace" => "v1\Admin"], function(){
                 //Patient routes
                 Route::group(['prefix' => 'record'], function(){
                     Route::post('/patient', [RecordManagementController::class, 'store']);
                 });
             });
-    //    });
+       });
     });
 
 });
