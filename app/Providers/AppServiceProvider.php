@@ -10,6 +10,7 @@ use App\Services\User\UserService;
 use App\Services\UserInformation\UserInformationService;
 use Illuminate\Support\ServiceProvider;
 use App\Models\Sanctum\PersonalAccessToken;
+use App\Models\Service;
 use App\Repositories\EmergencyContact\EmergencyContactInterface;
 use App\Repositories\EmergencyContact\EmergencyContactRepository;
 use App\Repositories\NextOfKin\NextOfKinInterface;
@@ -18,10 +19,13 @@ use App\Repositories\Patient\PatientInterface;
 use App\Repositories\Patient\PatientRepository;
 use App\Repositories\Registration\RegistrationInterface;
 use App\Repositories\Registration\RegistrationRepository;
+use App\Repositories\ServiceDepartment\ServiceDepartmentInterface;
+use App\Repositories\ServiceDepartment\ServiceDepartmentRepository;
 use App\Services\EmergencyContact\EmergencyContactService;
 use App\Services\NextOfKin\NextOfKinService;
 use App\Services\Patient\PatientService;
 use App\Services\Registration\RegistrationService;
+use App\Services\ServiceDepartment\ServiceDepartmentService;
 use Laravel\Sanctum\PersonalAccessToken as SanctumPersonalAccessToken;
 use Laravel\Sanctum\Sanctum;
 
@@ -38,6 +42,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(PatientInterface::class, PatientRepository::class);
         $this->app->bind(NextOfKinInterface::class, NextOfKinRepository::class);
         $this->app->bind(EmergencyContactInterface::class, EmergencyContactRepository::class);
+        $this->app->bind(ServiceDepartmentInterface::class, ServiceDepartmentRepository::class);
+
 
         $this->app->bind(UserInformationService::class, function ($app) {
             return new UserInformationService($app->make(UserInformationInterface::class));
@@ -56,6 +62,9 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->bind(EmergencyContactService::class, function($app){
             return new EmergencyContactService($app->make(EmergencyContactInterface::class));
+        });
+        $this->app->bind(ServiceDepartmentService::class, function($app){
+            return new ServiceDepartmentService($app->make(ServiceDepartmentInterface::class));
         });
     }
 

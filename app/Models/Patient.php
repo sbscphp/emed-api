@@ -19,7 +19,7 @@ class Patient extends Model
         'age',
         'gender',
         'bloodgroup',
-        'bloodgenotype',
+        'genotype',
         'email',
         'patient_type',
         'marital_status',
@@ -33,5 +33,23 @@ class Patient extends Model
         'tribe',
         'cardno',
         'receiptno',
+        'status',
+        'service_id',
     ];
+
+    public function service()
+    {
+        return $this->belongsTo(ServiceDepartment::class);
+    }
+
+    public function nextOfKin()
+    {
+        return $this->hasOne(NextOfKin::class);
+    }
+
+    public function emergencyContact()
+    {
+        return $this->hasOne(EmergencyContact::class);
+    }
+
 }

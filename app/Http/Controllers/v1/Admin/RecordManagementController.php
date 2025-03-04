@@ -145,7 +145,7 @@ class RecordManagementController extends Controller
                 'age' => $request->age,
                 'gender' => $request->gender,
                 'bloodgroup' => $request->bloodgroup,
-                'genotype' => $request->bloodgenotype,
+                'genotype' => $request->genotype,
                 'email' => $request->email,
                 'patient_type' => $request->patient_type,
                 'marital_status' => $request->marital_status,
@@ -300,6 +300,54 @@ class RecordManagementController extends Controller
             DB::connection('tenant')->commit();
             return JsonResponser::send(false, 'Emergency contact created successfully', $emergencyContact, 201);
         } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, 'Internal server error',[], 500, $th);
+        }
+    }
+
+    public function assignServiceToPatient(Request $request,$patienId)
+    {
+        try{
+            // $request->validate([
+            //     'service_id' => 'required|integer|exists:services,id'
+            // ]);
+
+            DB::connection('tenant')->beginTransaction();
+
+            $currentUser = Auth::user();
+            $user = $this->userService->find($currentUser->id);
+            if (is_null($user)) {
+                return JsonResponser::send(true, 'User not found.', null, 404);
+            }
+
+            if ($user->role !== 'Administrator') {
+                return JsonResponser::send(true, 'Forbidden!, User has no permission to register patient', null, 403);
+            }
+
+            $patient = $this->patientService->find($patienId);
+            if (is_null($patient)) {
+                return JsonResponser::send(true, 'Patient not found.', null, 404);
+            }
+
+            $data = [
+                'service_id' => $request->service_id,
+            ];
+
+            $patientServiceType = $this->patientService->update($data,$patient->id);
+
+            $dataToLog = [
+                'causer_id' => $user->id,
+                'action_id' => $patientServiceType->id,
+                'action' => 'Create',
+                'action_type' => "Models\Patient",
+                'log_name' => "Patient service assigned successfully",
+                'description' => "{$user->firstname} {$user->lastname} assigned patient to service successfully",
+            ];
+
+            GeneralHelper::storeAuditLog($dataToLog);
+            DB::connection('tenant')->commit();
+            return JsonResponser::send(false, 'Patient service assigned successfully', $patientServiceType, 200);
+        }catch(\Throwable $th){
             DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Internal server error',[], 500, $th);
         }
