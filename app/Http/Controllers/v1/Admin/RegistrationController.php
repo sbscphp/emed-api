@@ -9,6 +9,7 @@ use App\Http\Requests\Auth\AdminLoginRequest;
 use App\Http\Requests\Auth\TenantOnboardingRequest;
 use App\Mail\TenantEmailVerification;
 use App\Models\Registration;
+use App\Models\Role;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Responser\JsonResponser;
@@ -33,16 +34,14 @@ class RegistrationController extends Controller
     public function onboardTenant(TenantOnboardingRequest $request)
     {
         try {
-            // $user = Auth::user();
-
-            // if (!$user->hasRole(['Super Admin', 'Admin'])) {
-            //     return JsonResponser::send(false, 'Permission denied. Only admins can onboard a tenant.', [], 403);
-            // }
-
+            $user = Auth::guard('api')->user();
+            if (!$user || !$user->hasRole(['super_admin'])) {
+                return JsonResponser::send(false, 'Permission denied. Only admins can onboard a tenant.', [], 403);
+            }
             DB::connection('landlord')->beginTransaction();
 
             $data = $request->validated();
-
+            $adminRole = Role::where('name', 'admin')->first();
             $registrationData = [
                 'name' => $data['name'],
                 'state_city' => $data['state_city'],
@@ -101,6 +100,8 @@ class RegistrationController extends Controller
                 ];
 
                 $admin = $this->registrationService->saveAdminDetails($adminData, $tenant->id);
+                $admin->addRole($adminRole);
+                $admin->permissions()->sync($adminRole->permissions);
                 $verificationCode = Str::random(40);
                 $verificationUrl = url('/verify-email/' . $verificationCode . '?email=' . urlencode($data['admin_email']));
 
@@ -162,7 +163,6 @@ class RegistrationController extends Controller
                 return JsonResponser::send(false, 'Invalid credentials', [], 401);
             }
 
-            // Check if user is verified
             if (!$user->is_verified) {
                 return JsonResponser::send(false, 'Your email has not been verified. Please check your email for verification.', [], 403);
             }
@@ -172,6 +172,7 @@ class RegistrationController extends Controller
             }
 
             $tenant = Tenant::find($user->tenant_id);
+
             if (!$tenant) {
                 JWTAuth::setToken($token)->invalidate();
                 return JsonResponser::send(false, 'Tenant not found for this user', [], 404);

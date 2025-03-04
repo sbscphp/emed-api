@@ -14,6 +14,7 @@ use App\Services\User\UserService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class RecordManagementController extends Controller
 {
@@ -22,20 +23,102 @@ class RecordManagementController extends Controller
     protected $nextOfKinService;
     protected $emergencyContactService;
 
-    public function __construct(UserService $userService,
-    PatientService $patientService,
-    NextOfKinService $nextOfKinService,
-    EmergencyContactService $emergencyContactService
-    )
-    {
+    public function __construct(
+        UserService $userService,
+        PatientService $patientService,
+        NextOfKinService $nextOfKinService,
+        EmergencyContactService $emergencyContactService
+    ) {
         $this->userService = $userService;
         $this->patientService = $patientService;
         $this->nextOfKinService = $nextOfKinService;
         $this->emergencyContactService = $emergencyContactService;
     }
 
+    // public function store(PatientInfomationRequest $request)
+    // {
+    //     try {
+    //         // Get the authenticated user
+    //         $currentUser = Auth::user();
+    //         if (!$currentUser) {
+    //             return JsonResponser::send(true, 'Unauthorized', null, 401);
+    //         }
+
+
+    //         // Get the tenant from the user's tenant ID
+    //         $tenant = Tenant::where('id', $currentUser->tenant_id)->first();
+    //         if (!$tenant) {
+    //             return JsonResponser::send(true, 'Tenant not found', null, 404);
+    //         }
+    //         Log::info('Current tenant database: ' . DB::connection('tenant')->getDatabaseName());
+
+    //         // Manually set tenant connection
+    //         $tenant->makeCurrent();
+    //         DB::purge('tenant'); // Clear old tenant connection
+    //         DB::reconnect('tenant'); // Reconnect to the new tenant database
+
+    //         Log::info("Switched to tenant database: " . $tenant->database);
+
+    //         // Validate user role
+    //         $user = $this->userService->find($currentUser->id);
+    // if (!$user || !$user->hasRole(['admin'])) {
+    //     return JsonResponser::send(true, 'Forbidden! User has no permission to register a patient', null, 403);
+    // }
+
+    //         DB::connection('tenant')->beginTransaction();
+
+    //         // Prepare patient data
+    //         $data = [
+    //             'firstname' => $request->firstname,
+    //             'lastname' => $request->lastname,
+    //             'dob' => $request->dob,
+    //             'age' => $request->age,
+    //             'gender' => $request->gender,
+    //             'bloodgroup' => $request->bloodgroup,
+    //             'bloodgenotype' => $request->bloodgenotype,
+    //             'email' => $request->email,
+    //             'patient_type' => $request->patient_type,
+    //             'marital_status' => $request->marital_status,
+    //             'phoneno' => $request->phoneno,
+    //             'occupation' => $request->occupation,
+    //             'homeaddress' => $request->homeaddress,
+    //             'companyaddress' => $request->companyaddress,
+    //             'religion' => $request->religion,
+    //             'stateoforigin' => $request->stateoforigin,
+    //             'lga' => $request->lga,
+    //             'tribe' => $request->tribe,
+    //             'cardno' => $request->cardno,
+    //             'recieptno' => $request->recieptno,
+    //         ];
+
+    //         // Create patient with the correct connection
+    //         $patient = $this->patientService->create($data);
+    //         $patient->setConnection('tenant'); // Ensure the patient is saved in the tenant DB
+    //         $patient->save();
+
+    //         // Log the action
+    //         $dataToLog = [
+    //             'causer_id' => $user->id,
+    //             'action_id' => $patient->id,
+    //             'action' => 'Create',
+    //             'action_type' => "Models\PatientInformation",
+    //             'log_name' => "Patient created successfully",
+    //             'description' => "{$user->firstname} {$user->lastname} created a patient successfully",
+    //         ];
+
+    //         GeneralHelper::storeAuditLog($dataToLog);
+    //         DB::connection('tenant')->commit();
+
+    //         return JsonResponser::send(false, 'Patient created successfully', $patient, 201);
+    //     } catch (\Throwable $th) {
+    //         DB::connection('tenant')->rollBack();
+    //         return JsonResponser::send(true, 'Internal server error', $th->getMessage(), 500);
+    //     }
+    // }
+
     public function store(PatientInfomationRequest $request)
     {
+
         try {
 
             DB::connection('tenant')->beginTransaction();
@@ -46,9 +129,14 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
 
-            if ($user->role !== 'Administrator') {
-                return JsonResponser::send(true, 'Forbidden!, User has no permission to register patient', null, 403);
+            // if ($user->role !== 'Administrator') {
+            //     return JsonResponser::send(true, 'Forbidden!, User has no permission to register patient', null, 403);
+            // }
+
+            if (!$user || !$user->hasRole(['admin'])) {
+                return JsonResponser::send(true, 'Forbidden! User has no permission to register a patient', null, 403);
             }
+
 
             //Prepare data to store
             $data = [
@@ -58,7 +146,7 @@ class RecordManagementController extends Controller
                 'age' => $request->age,
                 'gender' => $request->gender,
                 'bloodgroup' => $request->bloodgroup,
-                'bloodgenotype' => $request->bloodgenotype,
+                'genotype' => $request->bloodgenotype,
                 'email' => $request->email,
                 'patient_type' => $request->patient_type,
                 'marital_status' => $request->marital_status,
@@ -71,7 +159,8 @@ class RecordManagementController extends Controller
                 'lga' => $request->lga,
                 'tribe' => $request->tribe,
                 'cardno' => $request->cardno,
-                'recieptno' => $request->recieptno,
+                //'service_type' => $request->service_type,
+                'recieptno' => GeneralHelper::generateUniqueRandomId($user),
             ];
 
             $patient = $this->patientService->create($data);
@@ -90,7 +179,7 @@ class RecordManagementController extends Controller
             return JsonResponser::send(false, 'Patient created successfully', $patient, 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error', $th->getMessage(), 500);
+            return JsonResponser::send(true, 'Internal server error', 500, $th);
         }
     }
 
@@ -175,7 +264,6 @@ class RecordManagementController extends Controller
             DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Internal server error', $data, 500, $th);
         }
-
     }
 
     public function addEmergencyContact(Request $request, $patienId)
@@ -233,6 +321,5 @@ class RecordManagementController extends Controller
             DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Internal server error', $data, 500, $th);
         }
-
     }
 }
