@@ -115,7 +115,6 @@ class RecordManagementController extends Controller
     //         return JsonResponser::send(true, 'Internal server error', $th->getMessage(), 500);
     //     }
     // }
-
     public function store(PatientInfomationRequest $request)
     {
 
