@@ -18,8 +18,8 @@ return new class extends Migration
             $table->date('dob');
             $table->integer('age');
             $table->string('gender');
-            $table->enum('bloodgroup',['A+','A-','B+','B-','AB+','AB-','O+','O-']);
-            $table->enum('bloodgenotype',['AA', 'AS', 'SS', 'AC', 'SC', 'CC']);
+            $table->string('bloodgroup');
+            $table->string('genotype');
             $table->string('email')->unique();
             $table->string('patient_type');
             $table->string('marital_status');

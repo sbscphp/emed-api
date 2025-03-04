@@ -178,7 +178,7 @@ class RecordManagementController extends Controller
             return JsonResponser::send(false, 'Patient created successfully', $patient, 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error', 500, $th);
+            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
         }
     }
 
@@ -211,15 +211,8 @@ class RecordManagementController extends Controller
     public function addNextOfKin(Request $request, $patienId)
     {
         try {
+
             DB::connection('tenant')->beginTransaction();
-
-            $tenant = Tenant::whereDomain($request->getHost())->first();
-
-            if (is_null($tenant)) {
-                $tenant = Tenant::first();
-            }
-
-            $tenant->makeCurrent();
 
             $currentUser = Auth::user();
             $user = $this->userService->find($currentUser->id);
@@ -227,10 +220,9 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
 
-
-            // if (!$user->hasRole(['admin', 'records'])) {
-            //     return JsonResponser::send(true, 'Forbidden!, User has no permission to register patient', null, 403);
-            // }
+            if ($user->role !== 'Administrator') {
+                return JsonResponser::send(true, 'Forbidden!, User has no permission to register patient', null, 403);
+            }
 
             //Prepare data to store
             $data = [
@@ -261,7 +253,7 @@ class RecordManagementController extends Controller
             return JsonResponser::send(false, 'Next of kin created successfully', $nextOfKin, 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error', $data, 500, $th);
+            return JsonResponser::send(true, 'Internal server error',[], 500, $th);
         }
     }
 
@@ -270,24 +262,15 @@ class RecordManagementController extends Controller
         try {
             DB::connection('tenant')->beginTransaction();
 
-            $tenant = Tenant::whereDomain($request->getHost())->first();
-
-            if (is_null($tenant)) {
-                $tenant = Tenant::first();
-            }
-
-            $tenant->makeCurrent();
-
             $currentUser = Auth::user();
             $user = $this->userService->find($currentUser->id);
             if (is_null($user)) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
 
-
-            // if (!$user->hasRole(['admin', 'records'])) {
-            //     return JsonResponser::send(true, 'Forbidden!, User has no permission to register patient', null, 403);
-            // }
+            if ($user->role !== 'Administrator') {
+                return JsonResponser::send(true, 'Forbidden!, User has no permission to register patient', null, 403);
+            }
 
             //Prepare data to store
             $data = [
@@ -308,17 +291,17 @@ class RecordManagementController extends Controller
                 'causer_id' => $user->id,
                 'action_id' => $emergencyContact->id,
                 'action' => 'Create',
-                'action_type' => "Models\NextOfKin",
-                'log_name' => "Next of kin created successfully",
-                'description' => "{$user->firstname} {$user->lastname} created next of kin successfully",
+                'action_type' => "Models\EmergencyContact",
+                'log_name' => "Emergency contact created successfully",
+                'description' => "{$user->firstname} {$user->lastname} created emergency successfully",
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
             DB::connection('tenant')->commit();
-            return JsonResponser::send(false, 'Next of kin created successfully', $emergencyContact, 201);
+            return JsonResponser::send(false, 'Emergency contact created successfully', $emergencyContact, 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error', $data, 500, $th);
+            return JsonResponser::send(true, 'Internal server error',[], 500, $th);
         }
     }
 }
