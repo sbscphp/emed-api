@@ -35,6 +35,8 @@ class Patient extends Model
         'receiptno',
         'status',
         'service_id',
+        'arrival_time',
+        'depature_time'
     ];
 
     public function service()

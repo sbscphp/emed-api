@@ -42,6 +42,9 @@ class PatientInfomationRequest extends FormRequest
             'tribe' => 'nullable|string',
             'cardno' => 'required|string|unique:patients,cardno',
             'recieptno' => 'nullable|string|unique:patients,recieptno',
+            'arrival_time' => 'nullable|date',
+            'departure_time' => 'nullable|date'
+
         ];
     }
 

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\v1\Admin;
 
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\EmergencyContactRequest;
+use App\Http\Requests\Admin\NextOfkinRequest;
 use App\Http\Requests\Admin\PatientInfomationRequest;
 use App\Models\Tenant;
 use App\Responser\JsonResponser;
@@ -11,6 +13,7 @@ use App\Services\EmergencyContact\EmergencyContactService;
 use App\Services\NextOfKin\NextOfKinService;
 use App\Services\Patient\PatientService;
 use App\Services\User\UserService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -119,7 +122,6 @@ class RecordManagementController extends Controller
     {
 
         try {
-
             DB::connection('tenant')->beginTransaction();
 
             $currentUser = Auth::user();
@@ -135,7 +137,6 @@ class RecordManagementController extends Controller
             if (!$user || !$user->hasRole(['admin'])) {
                 return JsonResponser::send(true, 'Forbidden! User has no permission to register a patient', null, 403);
             }
-
 
             //Prepare data to store
             $data = [
@@ -158,7 +159,7 @@ class RecordManagementController extends Controller
                 'lga' => $request->lga,
                 'tribe' => $request->tribe,
                 'cardno' => $request->cardno,
-                //'service_type' => $request->service_type,
+                'arrival_time' => Carbon::now(),
                 'recieptno' => GeneralHelper::generateUniqueRandomId($user),
             ];
 
@@ -168,14 +169,14 @@ class RecordManagementController extends Controller
                 'causer_id' => $user->id,
                 'action_id' => $patient->id,
                 'action' => 'Create',
-                'action_type' => "Models\PatientInformation",
-                'log_name' => "Patient created successfully",
-                'description' => "{$user->firstname} {$user->lastname} created patient successfully",
+                'action_type' => "Models\Patient",
+                'log_name' => "Patient details created successfully",
+                'description' => "{$user->firstname} {$user->lastname} created patient details successfully",
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
             DB::connection('tenant')->commit();
-            return JsonResponser::send(false, 'Patient created successfully', $patient, 201);
+            return JsonResponser::send(false, 'Patient details created successfully', $patient, 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Internal server error', [], 500, $th);
@@ -184,31 +185,102 @@ class RecordManagementController extends Controller
 
     public function update(Request $request, $id)
     {
-        $request->validated;
+        try {
+            DB::connection('tenant')->beginTransaction();
 
-        // try{
-        //     DB::connection('tenant')->beginTransaction();
+            $currentUser = Auth::user();
+            $user = $this->userService->find($currentUser->id);
+            if (is_null($user)) {
+                return JsonResponser::send(true, 'User not found.', null, 404);
+            }
 
-        //     $currentUser = Auth::user();
-        //     $user = $this->userService->find($currentUser->id);
-        //     if (is_null($user)) {
-        //         return JsonResponser::send(true, 'User not found.', null, 404);
-        //     }
+            if ($user->role !== 'Administrator') {
+                return JsonResponser::send(true, 'Forbidden!, User has no permission to register patient', null, 403);
+            }
 
-        //     $patient = $this->patientService->find($id);
-        //     if (is_null($patient)) {
-        //         return JsonResponser::send(true, 'Patient not found.', null, 404);
-        //     }
+            $patientInfo = $this->patientService->find($id);
+            if (is_null($patientInfo)) {
+                return JsonResponser::send(true, 'Record not found.', null, 404);
+            }
 
-        //     // if (!$user->hasRole(['admin', 'records'])) {
-        //     //     return JsonResponser::send(true, 'Forbidden!, User has no permission to update patient', null, 403);
-        //     // }
+            //Prepare data to store
+            $data = [
+                'email' => $request->email ?? $patientInfo->email,
+                'patient_type' => $request->patient_type ?? $patientInfo->patient_type,
+                'marital_status' => $request->marital_status ?? $patientInfo->marital_status,
+                'phoneno' => $request->phoneno ?? $patientInfo->phoneno,
+                'occupation' => $request->occupation ?? $patientInfo->occupation,
+                'homeaddress' => $request->homeaddress ?? $patientInfo->homeaddress,
+                'stateoforigin' => $request->stateoforigin ?? $patientInfo->stateoforigin,
+                'lga' => $request->lga ?? $patientInfo->lga,
+                'tribe' => $request->tribe ?? $patientInfo->tribe,
+                'bloodgroup' => $request->bloodgroup ?? $patientInfo->bloodgroup,
+                'genotype' => $request->genotype ?? $patientInfo->genotype
+            ];
 
+            $updatePatientDetails = $this->patientService->update($data, $id);
 
-        // }
+            $dataToLog = [
+                'causer_id' => $user->id,
+                'action_id' => $updatePatientDetails->id,
+                'action' => 'Update',
+                'action_type' => "Models\Patient",
+                'log_name' => "Patient details updated successfully",
+                'description' => "{$user->firstname} {$user->lastname} updated patient details successfully",
+            ];
+
+            GeneralHelper::storeAuditLog($dataToLog);
+            DB::connection('tenant')->commit();
+            return JsonResponser::send(false, 'Patient details updated successfully', $updatePatientDetails, 200);
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+        }
     }
 
-    public function addNextOfKin(Request $request, $patienId)
+    // public function delete($id)
+    // {
+    //     try {
+    //         DB::connection('tenant')->beginTransaction();
+
+    //         $currentUser = Auth::user();
+    //         $user = $this->userService->find($currentUser->id);
+    //         if (is_null($user)) {
+    //             return JsonResponser::send(true, 'User not found.', null, 404);
+    //         }
+
+    //         if ($user->role !== 'Administrator') {
+    //             return JsonResponser::send(true, 'Forbidden!, User has no permission to register patient', null, 403);
+    //         }
+
+    //         $patientInfo = $this->patientService->find($id);
+    //         if (is_null($patientInfo)) {
+    //             return JsonResponser::send(true, 'Record not found.', null, 404);
+    //         }
+
+
+
+    //         $updatePatientDetails = $this->patientService->update($data, $id);
+
+    //         $dataToLog = [
+    //             'causer_id' => $user->id,
+    //             'action_id' => $updatePatientDetails->id,
+    //             'action' => 'Update',
+    //             'action_type' => "Models\Patient",
+    //             'log_name' => "Patient details updated successfully",
+    //             'description' => "{$user->firstname} {$user->lastname} updated patient details successfully",
+    //         ];
+
+    //         GeneralHelper::storeAuditLog($dataToLog);
+    //         DB::connection('tenant')->commit();
+    //         return JsonResponser::send(false, 'Patient details updated successfully', $updatePatientDetails, 200);
+    //     } catch (\Throwable $th) {
+    //         DB::connection('tenant')->rollBack();
+    //         return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+    //     }
+    // }
+
+    public function addNextOfKin(NextOfkinRequest $request, $patienId)
     {
         try {
 
@@ -253,11 +325,64 @@ class RecordManagementController extends Controller
             return JsonResponser::send(false, 'Next of kin created successfully', $nextOfKin, 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error',[], 500, $th);
+            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
         }
     }
 
-    public function addEmergencyContact(Request $request, $patienId)
+    public function updateNextOfKin(Request $request, $id)
+    {
+        try {
+
+            DB::connection('tenant')->beginTransaction();
+
+            $currentUser = Auth::user();
+            $user = $this->userService->find($currentUser->id);
+            if (is_null($user)) {
+                return JsonResponser::send(true, 'User not found.', null, 404);
+            }
+
+            if ($user->role !== 'Administrator') {
+                return JsonResponser::send(true, 'Forbidden!, User has no permission to register patient', null, 403);
+            }
+
+            $nextOfKinInfo = $this->nextOfKinService->find($id);
+            if(is_null($nextOfKinInfo)){
+                return JsonResponser::send(true, 'Record not found', null, 404);
+            }
+
+            //Prepare data to store
+            $data = [
+                'firstname' => $request->firstname ?? $nextOfKinInfo->firstname,
+                'lastname' => $request->lastname ?? $nextOfKinInfo->lastname,
+                'gender' => $request->gender ?? $nextOfKinInfo->gender,
+                'phoneno' => $request->phoneno ?? $nextOfKinInfo->phoneno,
+                'stateoforigin' => $request->stateoforigin ?? $nextOfKinInfo->stateoforigin,
+                'lga' => $request->lga ?? $nextOfKinInfo->lga,
+                'homeaddress' => $request->homeaddress ?? $nextOfKinInfo->homeaddress,
+                'relationship' => $request->relationship ?? $nextOfKinInfo->relationship,
+            ];
+
+            $updateNextOfKin = $this->nextOfKinService->update($data,$id);
+
+            $dataToLog = [
+                'causer_id' => $user->id,
+                'action_id' => $updateNextOfKin->id,
+                'action' => 'Update',
+                'action_type' => "Models\NextOfKin",
+                'log_name' => "Next of kin updated successfully",
+                'description' => "{$user->firstname} {$user->lastname} updated next of kin successfully",
+            ];
+
+            GeneralHelper::storeAuditLog($dataToLog);
+            DB::connection('tenant')->commit();
+            return JsonResponser::send(false, 'Next of kin updated successfully', $updateNextOfKin, 201);
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+        }
+    }
+
+    public function addEmergencyContact(EmergencyContactRequest $request, $patienId)
     {
         try {
             DB::connection('tenant')->beginTransaction();
@@ -301,16 +426,70 @@ class RecordManagementController extends Controller
             return JsonResponser::send(false, 'Emergency contact created successfully', $emergencyContact, 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error',[], 500, $th);
+            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
         }
     }
 
-    public function assignServiceToPatient(Request $request,$patienId)
+    public function updateEmergencyContact(Request $request, $id)
     {
-        try{
-            // $request->validate([
-            //     'service_id' => 'required|integer|exists:services,id'
-            // ]);
+        try {
+
+            DB::connection('tenant')->beginTransaction();
+
+            $currentUser = Auth::user();
+            $user = $this->userService->find($currentUser->id);
+            if (is_null($user)) {
+                return JsonResponser::send(true, 'User not found.', null, 404);
+            }
+
+            if ($user->role !== 'Administrator') {
+                return JsonResponser::send(true, 'Forbidden!, User has no permission to register patient', null, 403);
+            }
+
+            $emergencyContactInfo = $this->nextOfKinService->find($id);
+            if(is_null($emergencyContactInfo)){
+                return JsonResponser::send(true, 'Record not found', null, 404);
+            }
+
+            //Prepare data to store
+            $data = [
+                'firstname' => $request->firstname ?? $emergencyContactInfo->firstname,
+                'lastname' => $request->lastname ?? $emergencyContactInfo->lastname,
+                'gender' => $request->gender ?? $emergencyContactInfo->gender,
+                'phoneno' => $request->phoneno ?? $emergencyContactInfo->phoneno,
+                'stateoforigin' => $request->stateoforigin ?? $emergencyContactInfo->stateoforigin,
+                'lga' => $request->lga ?? $emergencyContactInfo->lga,
+                'homeaddress' => $request->homeaddress ?? $emergencyContactInfo->homeaddress,
+                'relationship' => $request->relationship ?? $emergencyContactInfo->relationship,
+            ];
+
+            $updateEmergencyContact = $this->emergencyContactService->update($data,$id);
+
+            $dataToLog = [
+                'causer_id' => $user->id,
+                'action_id' => $updateEmergencyContact->id,
+                'action' => 'Update',
+                'action_type' => "Models\NextOfKin",
+                'log_name' => "Emergency contact updated successfully",
+                'description' => "{$user->firstname} {$user->lastname} updated emergency contact successfully",
+            ];
+
+            GeneralHelper::storeAuditLog($dataToLog);
+            DB::connection('tenant')->commit();
+            return JsonResponser::send(false, 'Emergency contact updated successfully', $updateEmergencyContact, 201);
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+        }
+    }
+
+
+    public function assignServiceToPatient(Request $request, $patienId)
+    {
+        try {
+            $request->validate([
+                'service_id' => 'required|integer|exists:services,id'
+            ]);
 
             DB::connection('tenant')->beginTransaction();
 
@@ -333,12 +512,12 @@ class RecordManagementController extends Controller
                 'service_id' => $request->service_id,
             ];
 
-            $patientServiceType = $this->patientService->update($data,$patient->id);
+            $patientServiceType = $this->patientService->update($data, $patient->id);
 
             $dataToLog = [
                 'causer_id' => $user->id,
                 'action_id' => $patientServiceType->id,
-                'action' => 'Create',
+                'action' => 'Update',
                 'action_type' => "Models\Patient",
                 'log_name' => "Patient service assigned successfully",
                 'description' => "{$user->firstname} {$user->lastname} assigned patient to service successfully",
@@ -347,9 +526,35 @@ class RecordManagementController extends Controller
             GeneralHelper::storeAuditLog($dataToLog);
             DB::connection('tenant')->commit();
             return JsonResponser::send(false, 'Patient service assigned successfully', $patientServiceType, 200);
-        }catch(\Throwable $th){
+        } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error',[], 500, $th);
+            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
         }
+    }
+
+    public function show($id)
+    {
+
+        try {
+
+            $currentUser = Auth::user();
+            $user = $this->userService->find($currentUser->id);
+            if(is_null($user)){
+                return JsonResponser::send(true,'User not found.', null, 404);
+            }
+
+            $patientDetails = $this->patientService->find($id);
+            if(is_null($patientDetails)){
+                return JsonResponser::send(true,'Record not found.', null, 404);
+            }
+            $patientDetails->load(['nextOfKin']);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+    }
+
+    public function patientHistory($id)
+    {
+
     }
 }

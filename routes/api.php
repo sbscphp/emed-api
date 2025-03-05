@@ -45,8 +45,11 @@ Route::group(["prefix" => "v1"], function () {
                 //Patient routes
                 Route::group(['prefix' => 'record'], function(){
                     Route::post('/patient', [RecordManagementController::class, 'store']);
+                    Route::put('/patient-update/{id}', [RecordManagementController::class, 'update']);
                     Route::post('/next-of-kin/{id}', [RecordManagementController::class, 'addNextOfKin']);
+                    Route::put('/next-of-kin-update/{id}', [RecordManagementController::class, 'updateNextOfKin']);
                     Route::post('/emergency-contact/{id}', [RecordManagementController::class, 'addEmergencyContact']);
+                    Route::put('/emergency-contact-update/{id}', [RecordManagementController::class, 'updateNextOfKin']);
                     Route::put('/assign-patient/{id}', [RecordManagementController::class, 'assignServiceToPatient']);
                 });
             });
