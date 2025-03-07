@@ -42,7 +42,7 @@ Route::group(["prefix" => "v1"], function () {
 
         Route::group(['middleware' => ["tenant"]], function () {
             Route::group(['prefix' => 'admin', "namespace" => "v1\Admin"], function(){
-                //Patient routes
+                //Record routes
                 Route::group(['prefix' => 'record'], function(){
                     Route::post('/patient', [RecordManagementController::class, 'store']);
                     Route::put('/patient-update/{id}', [RecordManagementController::class, 'update']);
@@ -51,7 +51,11 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/emergency-contact/{id}', [RecordManagementController::class, 'addEmergencyContact']);
                     Route::put('/emergency-contact-update/{id}', [RecordManagementController::class, 'updateNextOfKin']);
                     Route::put('/assign-patient/{id}', [RecordManagementController::class, 'assignServiceToPatient']);
+                    Route::get('/patient/{id}', [RecordManagementController::class, 'show'])->name('record.show');
+                    Route::post('/all-records', [RecordManagementController::class, 'allRecords']);
+
                 });
+
             });
        });
     });

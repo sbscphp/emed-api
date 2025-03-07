@@ -24,6 +24,7 @@ class Patient extends Model
         'patient_type',
         'marital_status',
         'phoneno',
+        'visitno',
         'occupation',
         'homeaddress',
         'companyaddress',
@@ -36,7 +37,8 @@ class Patient extends Model
         'status',
         'service_id',
         'arrival_time',
-        'depature_time'
+        'depature_time',
+        'patientno'
     ];
 
     public function service()

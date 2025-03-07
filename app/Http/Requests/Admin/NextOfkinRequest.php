@@ -22,6 +22,7 @@ class NextOfkinRequest extends FormRequest
     public function rules(): array
     {
         return [
+            // 'patient_id' => 'required|exists:patients,id',
             'firstname' => 'required|string',
             'lastname' => 'required|string',
             'gender' => 'required|string',
@@ -36,6 +37,8 @@ class NextOfkinRequest extends FormRequest
     public function messages()
     {
         return [
+            // 'patient_id.required' => 'Patient ID is required.',
+            // 'patient_id.exists' => 'Patient ID must belong in Patients table',
             'firstname.required' => 'The first name field is required.',
             'firstname.string' => 'The first name must be a valid string.',
             'lastname.required' => 'The last name field is required.',

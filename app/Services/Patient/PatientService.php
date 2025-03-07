@@ -6,8 +6,8 @@ use App\Repositories\Patient\PatientInterface;
 
 /**
  * Class PatientService
- * 
- * This class provides services related to Patient operations and acts as a 
+ *
+ * This class provides services related to Patient operations and acts as a
  * layer between the Controller and the PatientRepository.
  */
 class PatientService
@@ -15,7 +15,7 @@ class PatientService
     protected PatientInterface $PatientInterface;
     /**
      * Patient constructor.
-     * 
+     *
      * @param PatientInterface $PatientInterface
      */
     public function __construct(PatientInterface $PatientInterface)
@@ -25,7 +25,7 @@ class PatientService
 
     /**
      * Retrieve all Patient.
-     * 
+     *
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
     public function all()
@@ -35,7 +35,7 @@ class PatientService
 
     /**
      * Create a new Patient using the data provided.
-     * 
+     *
      * @param array $data
      * @return \App\Models\Patient
      */
@@ -47,7 +47,7 @@ class PatientService
 
     /**
      * Update an existing Patient with the provided data.
-     * 
+     *
      * @param array $data
      * @param int $id
      * @return \App\Models\Patient
@@ -60,7 +60,7 @@ class PatientService
 
     /**
      * Delete a Patient by heir ID.
-     * 
+     *
      * @param int $id
      * @return void
      */
@@ -72,7 +72,7 @@ class PatientService
 
     /**
      * Find a Patient by their ID.
-     * 
+     *
      * @param int $id
      * @return \App\Models\Patient
      */
@@ -84,7 +84,7 @@ class PatientService
 
     /**
      * Find an existing Patient  by their $attr.
-     * 
+     *
      * @param string $attr
      * @param string $value
      * @return \App\Models\Patient
@@ -92,5 +92,15 @@ class PatientService
     public function findByAttribute($attr, $value)
     {
         return $this->PatientInterface->findByAttribute($attr, $value);
+    }
+
+     /**
+     * Retrieve all records
+     *
+     * @return \App\Models\Patient
+     */
+    public function getAllRecords($search,$paginate,$perPage)
+    {
+        return $this->PatientInterface->getAllRecords($search,$paginate,$perPage);
     }
 }

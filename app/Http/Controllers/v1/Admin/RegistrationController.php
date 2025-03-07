@@ -35,9 +35,10 @@ class RegistrationController extends Controller
     {
         try {
             $user = Auth::guard('api')->user();
-            if (!$user || !$user->hasRole(['super_admin'])) {
-                return JsonResponser::send(false, 'Permission denied. Only admins can onboard a tenant.', [], 403);
-            }
+
+            // if (!$user || !$user->hasRole(['super_admin'])) {
+            //     return JsonResponser::send(false, 'Permission denied. Only admins can onboard a tenant.', [], 403);
+            // }
             DB::connection('landlord')->beginTransaction();
 
             $data = $request->validated();
@@ -85,6 +86,12 @@ class RegistrationController extends Controller
                 Artisan::call('migrate', [
                     '--database' => 'tenant',
                     '--path' => 'database/migrations/tenant',
+                    '--force' => true,
+                ]);
+
+                Artisan::call('db:seed', [
+                    '--database' => 'tenant',
+                    '--class' => 'ServicesTableSeeder',
                     '--force' => true,
                 ]);
 

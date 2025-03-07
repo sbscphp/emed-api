@@ -4,15 +4,15 @@ namespace App\Repositories\Patient;
 
 /**
  * Interface PatientInterface
- * 
- * This interface defines the methods that must be implemented by any 
+ *
+ * This interface defines the methods that must be implemented by any
  * class that handles the data operations for the Patient model.
  */
 interface PatientInterface
 {
     /**
      * Retrieve all Patient from the database.
-     * 
+     *
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
     public function all();
@@ -20,7 +20,7 @@ interface PatientInterface
 
     /**
      * Create new Patient in the database.
-     * 
+     *
      * @param array $data
      * @return \App\Models\Patient
      */
@@ -29,7 +29,7 @@ interface PatientInterface
 
     /**
      * Update an existing Patient in the database.
-     * 
+     *
      * @param array $data
      * @param int $id
      * @return \App\Models\Patient
@@ -39,7 +39,7 @@ interface PatientInterface
 
     /**
      * Delete an existing Patient from the database.
-     * 
+     *
      * @param int $id
      * @return void
      */
@@ -48,7 +48,7 @@ interface PatientInterface
 
     /**
      * Find an existing Patient in the database by their ID.
-     * 
+     *
      * @param int $id
      * @return \App\Models\Patient
      */
@@ -57,10 +57,17 @@ interface PatientInterface
 
     /**
      * Find an existing Patient in the database by their $attr.
-     * 
+     *
      * @param string $attr
      * @param string $value
      * @return \App\Models\Patient
      */
     public function findByAttribute($attr, $value);
+
+    /**
+     * Retrieve all records
+     *
+     * @return \App\Models\Patient
+     */
+    public function getAllRecords($search,$paginate,$perPage);
 }

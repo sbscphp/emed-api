@@ -18,8 +18,8 @@ return new class extends Migration
             $table->date('dob');
             $table->integer('age');
             $table->string('gender');
-            $table->enum('bloodgroup',['A+','A-','B+','B-','AB+','AB-','O+','O-']);
-            $table->enum('bloodgenotype',['AA', 'AS', 'SS', 'AC', 'SC', 'CC']);
+            $table->string('bloodgroup');
+            $table->string('bloodgenotype');
             $table->string('email')->unique();
             $table->string('patient_type');
             $table->string('marital_status');
@@ -36,6 +36,7 @@ return new class extends Migration
             $table->dateTime('arrival_time')->nullable();
             $table->dateTime('departure_time')->nullable();
             $table->string('status')->nullable();
+            $table->string('patientno');
             $table->enum('is_active', [false, true])->default(true);
             $table->unsignedBigInteger('service_id')->nullable();
             $table->softDeletes();
@@ -46,6 +47,7 @@ return new class extends Migration
             $table->index('email');
             $table->index('phoneno');
             $table->index('cardno');
+            $table->index('patientno');
             $table->index('recieptno');
         });
     }

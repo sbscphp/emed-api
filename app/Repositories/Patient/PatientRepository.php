@@ -3,12 +3,13 @@
 namespace App\Repositories\Patient;
 
 use App\Models\Patient;
+use Illuminate\Support\Facades\DB;
 
 class PatientRepository implements PatientInterface
 {
     /**
      * Retrieve a collection of Patient from the database.
-     * 
+     *
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
     public function all()
@@ -19,7 +20,7 @@ class PatientRepository implements PatientInterface
 
     /**
      * Create new Patient in the database.
-     * 
+     *
      * @param array $data
      * @return \App\Models\Patient
      */
@@ -31,7 +32,7 @@ class PatientRepository implements PatientInterface
 
     /**
      * Update an existing Patient in the database.
-     * 
+     *
      * @param array $data
      * @param int $id
      * @return \App\Models\Patient
@@ -46,7 +47,7 @@ class PatientRepository implements PatientInterface
 
     /**
      * Delete an existing Patient from the database.
-     * 
+     *
      * @param int $id
      * @return void
      */
@@ -59,7 +60,7 @@ class PatientRepository implements PatientInterface
 
     /**
      * Find an existing Patient in the database by their ID.
-     * 
+     *
      * @param int $id
      * @return \App\Models\Patient
      */
@@ -71,7 +72,7 @@ class PatientRepository implements PatientInterface
 
     /**
      * Find an existing Patient in the database by their $attr.
-     * 
+     *
      * @param string $attr
      * @param string $value
      * @return \App\Models\Patient
@@ -79,5 +80,33 @@ class PatientRepository implements PatientInterface
     public function findByAttribute($attr, $value)
     {
         return Patient::where($attr, $value)->first();
+    }
+
+    public function getAllRecords($search,$paginate, $perPage)
+    {
+        $query = Patient::query();
+
+        if(isset($search)){
+           $query->where(function($q) use ($search){
+                $q->where('firstname', 'LIKE', "%{$search}%")
+                ->orWhere('lastname', 'LIKE', "%{$search}%")
+                ->orWhere('cardno', 'LIKE', "%{$search}%")
+                ->orWhere('patient_type', 'LIKE', "%{$search}%")
+                ->orWhere('phoneno', 'LIKE', "%{$search}%");
+            });
+        }
+
+        if(isset($paginate)){
+            return $query->paginate($perPage);
+        }else{
+            return $query->get();
+        }
+    }
+
+    public function stats()
+    {
+        // $query = DB::table('patients');
+        // $totalPatients = $query->count();
+        // $totalPatientsVisitedToday = $query->where
     }
 }

@@ -28,6 +28,7 @@ return new class extends Migration
             $table->string('homeaddress');
             $table->string('companyaddress');
             $table->string('religion')->nullable();
+            $table->string('visitno')->nullable();
             $table->string('stateoforigin')->nullable();
             $table->string('lga')->nullable();
             $table->string('tribe')->nullable();
@@ -35,18 +36,22 @@ return new class extends Migration
             $table->string('recieptno')->unique()->nullable();
             $table->dateTime('arrival_time')->nullable();
             $table->dateTime('departure_time')->nullable();
-            $table->enum('status',['new','follow-up'])->default('new');
+            $table->string('status');
             $table->enum('is_active', [false, true])->default(true);
+            $table->longText('image')->nullable();
             $table->unsignedBigInteger('service_id')->nullable();
             $table->softDeletes();
             $table->timestamps();
 
+            $table->index('id');
             $table->index('firstname');
             $table->index('lastname');
             $table->index('email');
             $table->index('phoneno');
             $table->index('cardno');
-            $table->index('recieptno');
+            $table->index('patient_type');
+            $table->index('status');
+
         });
     }
 
