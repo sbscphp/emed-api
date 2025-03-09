@@ -53,6 +53,8 @@ Route::group(["prefix" => "v1"], function () {
                     Route::put('/assign-patient/{id}', [RecordManagementController::class, 'assignServiceToPatient']);
                     Route::get('/patient/{id}', [RecordManagementController::class, 'show'])->name('record.show');
                     Route::post('/all-records', [RecordManagementController::class, 'allRecords']);
+                    Route::post('/initiate-visit/{id}', [RecordManagementController::class, 'initiateVisit']);
+
 
                 });
 

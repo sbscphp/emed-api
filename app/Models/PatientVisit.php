@@ -8,5 +8,6 @@ class PatientVisit extends Model
 {
     protected $guarded = ['id'];
     protected $connection = 'tenant';
+    protected $table = 'visits';
     protected $fillable = ['patient_id','arrival_time','departure_time','status','visit_type','visit_date'];
 }

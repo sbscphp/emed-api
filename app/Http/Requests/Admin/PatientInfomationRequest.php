@@ -25,11 +25,11 @@ class PatientInfomationRequest extends FormRequest
             'firstname' => 'required|string|max:255',
             'lastname' => 'required|string|max:255',
             'dob' => 'required|date',
-            'age' => 'required|integer|min:0',
-            'gender' => 'required|in:male,female',
+            'age' => 'required|integer|min:1',
+            'gender' => 'required|string',
             'bloodgroup' => 'required|string',
             'genotype' => 'required|string',
-            'email' => 'required|email|unique:patients,email',
+            'email' => 'required|email|unique:patients',
             // 'patient_type' => 'required|string',
             'marital_status' => 'required|string',
             'phoneno' => 'required|string|unique:patients,phoneno',
@@ -42,9 +42,6 @@ class PatientInfomationRequest extends FormRequest
             'tribe' => 'nullable|string',
             'cardno' => 'required|string|unique:patients,cardno',
             'recieptno' => 'nullable|string|unique:patients,recieptno',
-            'arrival_time' => 'nullable|date',
-            'departure_time' => 'nullable|date'
-
         ];
     }
 
@@ -60,7 +57,6 @@ class PatientInfomationRequest extends FormRequest
             'age.required' => 'The age field is required.',
             'age.min' => 'The age must be at least 0.',
             'gender.required' => 'The gender field is required.',
-            'gender.in' => 'The gender must be either male or female.',
             'bloodgroup.required' => 'The blood group field is required.',
             'genotype.required' => 'The blood genotype field is required.',
             'email.required' => 'The email field is required.',

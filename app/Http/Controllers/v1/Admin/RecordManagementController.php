@@ -463,7 +463,7 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'Record not found.', null, 404);
             }
 
-            $patientDetails->load(['nextOfKin']);
+            $patientDetails->load(['nextOfKin','emergencyContact','patientVisit']);
 
             return JsonResponser::send(false, 'Record retrieved successfully.', $patientDetails, 200);
         } catch (\Throwable $th) {
@@ -501,7 +501,7 @@ class RecordManagementController extends Controller
             $recordVisit = $this->patientVisitService->create($visitData);
 
 
-            if($recordVisit){
+            if($patient->patient_type === 'new'){
                 $updatePatientData = [
                     'patient_type' => 'existing',
                 ];
@@ -519,7 +519,7 @@ class RecordManagementController extends Controller
 
             GeneralHelper::storeAuditLog($dataToLog);
             DB::connection('tenant')->commit();
-            return JsonResponser::send(false, 'Visit created successfully.', $visitData, 200);
+            return JsonResponser::send(false, 'Visit created successfully.',['visitRecord' => $recordVisit, 'patient'=>$updateRecord], 200);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'An error occurred.', 'Internal server error', 500, $th);
@@ -552,7 +552,7 @@ class RecordManagementController extends Controller
                 $record->show_url = route('record.show', ['id' => $record->id]);
             });
 
-            $records->load(['nextOfKin', 'emergencyContact']);
+            $records->load(['nextOfKin', 'emergencyContact','']);
 
             return JsonResponser::send(false, 'Record(s) found successfully.', $records, 200);
         } catch (\Throwable $th) {
