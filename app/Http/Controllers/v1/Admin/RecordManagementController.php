@@ -8,11 +8,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\EmergencyContactRequest;
 use App\Http\Requests\Admin\NextOfkinRequest;
 use App\Http\Requests\Admin\PatientInfomationRequest;
+use App\Models\PatientVisit;
 use App\Models\Tenant;
 use App\Responser\JsonResponser;
+use App\Services\Admission\AdmissionService;
+use App\Services\Appointment\AppointmentService;
 use App\Services\EmergencyContact\EmergencyContactService;
 use App\Services\NextOfKin\NextOfKinService;
 use App\Services\Patient\PatientService;
+use App\Services\PatientVisit\PatientVisitService;
 use App\Services\User\UserService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -26,17 +30,26 @@ class RecordManagementController extends Controller
     protected $patientService;
     protected $nextOfKinService;
     protected $emergencyContactService;
+    protected $admissionService;
+    protected $appointmentService;
+    protected $patientVisitService;
 
     public function __construct(
         UserService $userService,
         PatientService $patientService,
         NextOfKinService $nextOfKinService,
-        EmergencyContactService $emergencyContactService
+        EmergencyContactService $emergencyContactService,
+        AdmissionService $admissionService,
+        AppointmentService $appointmentService,
+        PatientVisitService $patientVisitService,
     ) {
         $this->userService = $userService;
         $this->patientService = $patientService;
         $this->nextOfKinService = $nextOfKinService;
         $this->emergencyContactService = $emergencyContactService;
+        $this->admissionService = $admissionService;
+        $this->appointmentService = $appointmentService;
+        $this->patientVisitService = $patientVisitService;
     }
 
     public function store(PatientInfomationRequest $request)
@@ -55,11 +68,16 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'Forbidden! User has no permission to register a patient', null, 403);
             }
 
+            //$tenant = Tenant::find($user->tenant_id);
+            $tenantDbName = $request->getHost();
 
-            $tenant = Tenant::find($user->tenant_id);
-            $tenantDbName = $tenant->database;
+            if ($tenantDbName !== '') {
+                $acronym = 'EMED';
+            } else {
+                $acronym = $tenantDbName;
+            }
 
-            $tenantAcronym = $this->generateAcronym($tenantDbName);
+            $tenantAcronym = $this->generateAcronym($acronym);
 
             //Prepare data to store
             $data = [
@@ -84,7 +102,7 @@ class RecordManagementController extends Controller
                 'tribe' => $request->tribe,
                 'cardno' => $request->cardno,
                 'status' => 'new',
-                'patientno' => 'EMED/' . GeneralHelper::generateUniqueRandomId($user) . '/' . GeneralHelper::generateUniqueRandomId($user) . '/'.$tenantDbName,
+                'patientno' => 'EMED/' . GeneralHelper::generateUniqueRandomId($user) . '/' . GeneralHelper::generateUniqueRandomId($user) . '/' . $tenantAcronym,
                 'recieptno' => 'RCP-' . $request->receiptno,
             ];
             $patient = $this->patientService->create($data);
@@ -384,11 +402,11 @@ class RecordManagementController extends Controller
     public function assignServiceToPatient(Request $request, $patienId)
     {
         try {
+            DB::connection('tenant')->beginTransaction();
+
             $request->validate([
                 'service_id' => 'required|integer|exists:services,id'
             ]);
-
-            DB::connection('tenant')->beginTransaction();
 
             $currentUser = Auth::user();
             $user = $this->userService->find($currentUser->id);
@@ -474,18 +492,36 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'Record not found.', null, 404);
             }
 
-            $data = [
-                'status' => $request->status
+            $visitData = [
+                'patient_id' => $patient->id,
+                'arrival_time' => now(),
+                'status' => $patient->status,
+                'visit_type' => $request->status
             ];
+            $recordVisit = $this->patientVisitService->create($visitData);
 
-            if ($patient->patient_type === 'new') {
-                $data['patient_type'] = 'existing';
+
+            if($recordVisit){
+                $updatePatientData = [
+                    'patient_type' => 'existing',
+                ];
+                $updateRecord = $this->patientService->update($updatePatientData,$patient->id);
             }
 
-            $statusUpdate = $this->patientService->update($data, $id);
+            $dataToLog = [
+                'causer_id' => $user->id,
+                'action_id' => $recordVisit->id,
+                'action' => 'Create',
+                'action_type' => "Models\PatientVisit",
+                'log_name' => "Patient visit created successfully",
+                'description' => "{$user->firstname} {$user->lastname} created patient visit successfully",
+            ];
 
-            return JsonResponser::send(false, 'Status updated successfully.', $statusUpdate, 200);
+            GeneralHelper::storeAuditLog($dataToLog);
+            DB::connection('tenant')->commit();
+            return JsonResponser::send(false, 'Visit created successfully.', $visitData, 200);
         } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'An error occurred.', 'Internal server error', 500, $th);
         }
     }

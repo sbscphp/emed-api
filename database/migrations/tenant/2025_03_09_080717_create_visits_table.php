@@ -11,16 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('patient_visits', function (Blueprint $table) {
+        Schema::create('visits', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->foreignId('patient_id')->constrained('patients')->onDelete('cascade');
-            $table->dateTime('check_in')->nullable();
-            $table->dateTime('check_out')->nullable();
-            $table->string('reason')->nullable();
+            $table->dateTime('arrival_time');
+            $table->dateTime('departure_time')->nullable();
+            $table->string('status');
+            $table->enum('visit_type', ['initial','follow up']);
+            $table->dateTime('visit_date')->nullable();
             $table->timestamps();
 
             $table->index('patient_id');
-            $table->index('check_in');
+            $table->index('arrival_time');
+            $table->index('status');
+            $table->index('visit_type');
         });
     }
 
@@ -29,6 +33,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('patient_visits');
+        Schema::dropIfExists('visits');
     }
 };

@@ -11,19 +11,28 @@ use App\Services\UserInformation\UserInformationService;
 use Illuminate\Support\ServiceProvider;
 use App\Models\Sanctum\PersonalAccessToken;
 use App\Models\Service;
+use App\Repositories\Admission\AdmissionInterface;
+use App\Repositories\Admission\AdmissionRepository;
+use App\Repositories\Appointment\AppointmentInterface;
+use App\Repositories\Appointment\AppointmentRepository;
 use App\Repositories\EmergencyContact\EmergencyContactInterface;
 use App\Repositories\EmergencyContact\EmergencyContactRepository;
 use App\Repositories\NextOfKin\NextOfKinInterface;
 use App\Repositories\NextOfKin\NextOfKinRepository;
 use App\Repositories\Patient\PatientInterface;
 use App\Repositories\Patient\PatientRepository;
+use App\Repositories\PatientVisit\PatientVisitInterface;
+use App\Repositories\PatientVisit\PatientVisitRepository;
 use App\Repositories\Registration\RegistrationInterface;
 use App\Repositories\Registration\RegistrationRepository;
 use App\Repositories\ServiceDepartment\ServiceDepartmentInterface;
 use App\Repositories\ServiceDepartment\ServiceDepartmentRepository;
+use App\Services\Admission\AdmissionService;
+use App\Services\Appointment\AppointmentService;
 use App\Services\EmergencyContact\EmergencyContactService;
 use App\Services\NextOfKin\NextOfKinService;
 use App\Services\Patient\PatientService;
+use App\Services\PatientVisit\PatientVisitService;
 use App\Services\Registration\RegistrationService;
 use App\Services\ServiceDepartment\ServiceDepartmentService;
 use Laravel\Sanctum\PersonalAccessToken as SanctumPersonalAccessToken;
@@ -43,6 +52,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(NextOfKinInterface::class, NextOfKinRepository::class);
         $this->app->bind(EmergencyContactInterface::class, EmergencyContactRepository::class);
         $this->app->bind(ServiceDepartmentInterface::class, ServiceDepartmentRepository::class);
+        $this->app->bind(AdmissionInterface::class, AdmissionRepository::class);
+        $this->app->bind(AppointmentInterface::class, AppointmentRepository::class);
+        $this->app->bind(PatientVisitInterface::class, PatientVisitRepository::class);
 
 
         $this->app->bind(UserInformationService::class, function ($app) {
@@ -66,6 +78,18 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ServiceDepartmentService::class, function($app){
             return new ServiceDepartmentService($app->make(ServiceDepartmentInterface::class));
         });
+        $this->app->bind(AdmissionService::class, function($app){
+            return new AdmissionService($app->make(AdmissionInterface::class));
+        });
+        $this->app->bind(AppointmentService::class, function($app){
+            return new AppointmentService($app->make(AppointmentInterface::class));
+        });
+        $this->app->bind(PatientVisitService::class, function($app){
+            return new PatientVisitService($app->make(PatientVisitInterface::class));
+        });
+
+
+
     }
 
     /**
