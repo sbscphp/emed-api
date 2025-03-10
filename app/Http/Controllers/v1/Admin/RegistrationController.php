@@ -34,11 +34,6 @@ class RegistrationController extends Controller
     public function onboardTenant(TenantOnboardingRequest $request)
     {
         try {
-            $user = Auth::guard('api')->user();
-
-            // if (!$user || !$user->hasRole(['super_admin'])) {
-            //     return JsonResponser::send(false, 'Permission denied. Only admins can onboard a tenant.', [], 403);
-            // }
             DB::connection('landlord')->beginTransaction();
 
             $data = $request->validated();

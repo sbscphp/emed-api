@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\v1\Admin\RecordManagementController;
 use App\Http\Controllers\v1\Admin\RegistrationController;
+use App\Http\Controllers\v1\Admin\TriageController;
 use App\Http\Controllers\v1\Auth\ForgotPasswordController;
 use App\Http\Controllers\v1\Auth\LoginController;
 use Illuminate\Http\Request;
@@ -30,7 +31,7 @@ Route::group(["prefix" => "v1"], function () {
         Route::post('/login', [RegistrationController::class, 'adminLogin']);
     });
 
-     Route::group(['prefix' => 'admin'], function () {
+    Route::group(['prefix' => 'admin'], function () {
         Route::post('/register', [RegistrationController::class, 'onboardTenant']);
     });
 
@@ -41,9 +42,9 @@ Route::group(["prefix" => "v1"], function () {
         // });
 
         Route::group(['middleware' => ["tenant"]], function () {
-            Route::group(['prefix' => 'admin', "namespace" => "v1\Admin"], function(){
+            Route::group(['prefix' => 'admin', "namespace" => "v1\Admin"], function () {
                 //Record routes
-                Route::group(['prefix' => 'record'], function(){
+                Route::group(['prefix' => 'record'], function () {
                     Route::post('/patient', [RecordManagementController::class, 'store']);
                     Route::put('/patient-update/{id}', [RecordManagementController::class, 'update']);
                     Route::post('/next-of-kin/{id}', [RecordManagementController::class, 'addNextOfKin']);
@@ -54,12 +55,14 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/patient/{id}', [RecordManagementController::class, 'show'])->name('record.show');
                     Route::post('/all-records', [RecordManagementController::class, 'allRecords']);
                     Route::post('/initiate-visit/{id}', [RecordManagementController::class, 'initiateVisit']);
-
-
                 });
 
+                Route::group(['prefix' => 'nurse'], function () {
+                    Route::post('/triage/{patientId}', [TriageController::class, 'store']);
+                    Route::get('/all-records', [TriageController::class, 'getPatientsByService']);
+                    Route::get('/patient-statistics', [TriageController::class, 'getPatientStatistics']);
+                });
             });
-       });
+        });
     });
-
 });

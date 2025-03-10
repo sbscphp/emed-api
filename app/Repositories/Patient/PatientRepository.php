@@ -82,35 +82,35 @@ class PatientRepository implements PatientInterface
         return Patient::where($attr, $value)->first();
     }
 
-    public function getAllRecords($search,$paginate, $perPage)
+    public function getAllRecords($search, $paginate, $perPage)
     {
         $query = DB::table('patients as pa')
-        ->join('patient_visits as pv', 'pa.id', '=', 'pv.patient_id')
-        ->leftJoin('services as se', 'se.id', '=', 'pa.service_id' )
-        ->select(
-            'pa.firstname as firtsname',
-            'pa.lastname as lastname',
-            'pa.patient_type as patient_type',
-            'pa.cardno as cardno',
-            'pa.phoneno as phoneno',
-            'pv.check_in',
-            'pv.check_out',
-            'pa.status',
-            'se.name'
+            ->join('patient_visits as pv', 'pa.id', '=', 'pv.patient_id')
+            ->leftJoin('services as se', 'se.id', '=', 'pa.service_id')
+            ->select(
+                'pa.firstname as firtsname',
+                'pa.lastname as lastname',
+                'pa.patient_type as patient_type',
+                'pa.cardno as cardno',
+                'pa.phoneno as phoneno',
+                'pv.check_in',
+                'pv.check_out',
+                'pa.status',
+                'se.name'
 
-        );
+            );
 
-        if(isset($search)){
-           $query->where(function($q) use ($search){
+        if (isset($search)) {
+            $query->where(function ($q) use ($search) {
                 $q->where('firstname', 'LIKE', "%{$search}%")
-                ->orWhere('lastname', 'LIKE', "%{$search}%")
-                ->orWhere('cardno', 'LIKE', "%{$search}%")
-                ->orWhere('patient_type', 'LIKE', "%{$search}%")
-                ->orWhere('phoneno', 'LIKE', "%{$search}%");
+                    ->orWhere('lastname', 'LIKE', "%{$search}%")
+                    ->orWhere('cardno', 'LIKE', "%{$search}%")
+                    ->orWhere('patient_type', 'LIKE', "%{$search}%")
+                    ->orWhere('phoneno', 'LIKE', "%{$search}%");
             });
         }
 
-       return $paginate ? $query->paginate($perPage) : $query->get();
+        return $paginate ? $query->paginate($perPage) : $query->get();
     }
 
     public function stats()
