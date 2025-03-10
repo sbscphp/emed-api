@@ -103,4 +103,16 @@ class PatientService
     {
         return $this->PatientInterface->getAllRecords($search,$paginate,$perPage);
     }
+
+    /*
+    * Retrieve record stats
+    *
+    * @return \App\Models\Patient
+    */
+   public function getRecordStats()
+   {
+        return $this->PatientInterface->getRecordStats();
+   }
+
+
 }

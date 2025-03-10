@@ -89,7 +89,7 @@ class RecordManagementController extends Controller
                 'bloodgroup' => $request->bloodgroup,
                 'genotype' => $request->genotype,
                 'email' => $request->email,
-                'patient_type' => 'new',
+                'patient_type' => $request->patient_type,
                 'marital_status' => $request->marital_status,
                 'phoneno' => $request->phoneno,
                 'visitno' => 'VIS' . GeneralHelper::generateUniqueRandomId($user),
@@ -463,7 +463,7 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'Record not found.', null, 404);
             }
 
-            $patientDetails->load(['nextOfKin','emergencyContact','patientVisit']);
+            $patientDetails->load(['nextOfKin','emergencyContact','visits','service']);
 
             return JsonResponser::send(false, 'Record retrieved successfully.', $patientDetails, 200);
         } catch (\Throwable $th) {
@@ -492,18 +492,23 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'Record not found.', null, 404);
             }
 
+            if($patient->status === 'draft'){
+                return JsonResponser::send(true, 'Action forbidden. Registeration not complete', null, 403);
+            }
+
             $visitData = [
                 'patient_id' => $patient->id,
                 'arrival_time' => now(),
-                'status' => $patient->status,
-                'visit_type' => $request->status
+                'status' => $request->status,
+                'visit_type' => $request->visit_type
             ];
             $recordVisit = $this->patientVisitService->create($visitData);
 
-
+            $updateRecord = null;
             if($patient->patient_type === 'new'){
                 $updatePatientData = [
                     'patient_type' => 'existing',
+                    'status' => $request->status
                 ];
                 $updateRecord = $this->patientService->update($updatePatientData,$patient->id);
             }
@@ -519,15 +524,12 @@ class RecordManagementController extends Controller
 
             GeneralHelper::storeAuditLog($dataToLog);
             DB::connection('tenant')->commit();
-            return JsonResponser::send(false, 'Visit created successfully.',['visitRecord' => $recordVisit, 'patient'=>$updateRecord], 200);
+            return JsonResponser::send(false, 'Visit created successfully.',['visitRecord' => $recordVisit], 200);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'An error occurred.', 'Internal server error', 500, $th);
+            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
         }
     }
-
-
-    public function patientHistory($id) {}
 
     public function allRecords(Request $request)
     {
@@ -552,10 +554,22 @@ class RecordManagementController extends Controller
                 $record->show_url = route('record.show', ['id' => $record->id]);
             });
 
-            $records->load(['nextOfKin', 'emergencyContact','']);
+            $records->load(['service','visits']);
 
             return JsonResponser::send(false, 'Record(s) found successfully.', $records, 200);
         } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
+        }
+    }
+
+    public function recordStats()
+    {
+        try{
+            $stats = $this->patientService->getRecordStats();
+
+            return JsonResponser::send(false, 'Stats', $stats, 200);
+        }catch(\Throwable $th){
+            DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
         }
     }

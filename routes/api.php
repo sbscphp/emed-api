@@ -54,7 +54,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/patient/{id}', [RecordManagementController::class, 'show'])->name('record.show');
                     Route::post('/all-records', [RecordManagementController::class, 'allRecords']);
                     Route::post('/initiate-visit/{id}', [RecordManagementController::class, 'initiateVisit']);
-
+                    Route::get('/record-stats', [RecordManagementController::class, 'recordStats']);
 
                 });
 

@@ -56,4 +56,14 @@ class Patient extends Model
         return $this->hasOne(EmergencyContact::class);
     }
 
+    public function visits()
+    {
+        return $this->hasMany(PatientVisit::class);
+    }
+
+    public function appointments()
+    {
+        return $this->hasMany(Appointment::class);
+    }
+
 }
