@@ -101,7 +101,7 @@ class RecordManagementController extends Controller
                 'lga' => $request->lga,
                 'tribe' => $request->tribe,
                 'cardno' => $request->cardno,
-                'status' => 'new',
+                'status' => $request->status,
                 'patientno' => 'EMED/' . GeneralHelper::generateUniqueRandomId($user) . '/' . GeneralHelper::generateUniqueRandomId($user) . '/' . $tenantAcronym,
                 'recieptno' => 'RCP-' . $request->receiptno,
             ];
@@ -405,7 +405,8 @@ class RecordManagementController extends Controller
             DB::connection('tenant')->beginTransaction();
 
             $request->validate([
-                'service_id' => 'required|integer|exists:services,id'
+                'service_id' => 'required|integer|exists:services,id',
+                'status' => 'required|string'
             ]);
 
             $currentUser = Auth::user();
@@ -425,6 +426,7 @@ class RecordManagementController extends Controller
 
             $data = [
                 'service_id' => $request->service_id,
+                'status' => $request->status
             ];
 
             $patientServiceType = $this->patientService->update($data, $patient->id);
