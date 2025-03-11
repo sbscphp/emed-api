@@ -21,6 +21,14 @@ class Tenant extends BaseTenant
             $tenant->database = 'tenant_' . Str::slug($tenant->name, '_');
         });
     }
-    
 
+    public function register()
+    {
+        return $this->hasMany(Registration::class);
+    }
+
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
 }

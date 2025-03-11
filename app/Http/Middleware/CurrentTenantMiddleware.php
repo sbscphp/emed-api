@@ -6,6 +6,8 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 use Spatie\Multitenancy\Models\Tenant;
 use Spatie\Multitenancy\Http\Middleware\NeedsTenant;
@@ -17,20 +19,24 @@ class CurrentTenantMiddleware
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
+
     public function handle(Request $request, Closure $next): Response
     {
-        $tenant = Tenant::where('domain', $request->getHost())->first();
-        
+        $user = Auth::user();
+        if ($user && $user->tenant_id) {
+            $tenant = Tenant::find($user->tenant_id);
+        } else {
+            $tenant = Tenant::where('domain', $request->getHost())->first();
+        }
+
         if ($tenant) {
             $tenant->makeCurrent();
 
             config(['database.connections.tenant.database' => $tenant->database]);
-            
-            \DB::purge('tenant');
-            \DB::reconnect('tenant');
-
+            DB::purge('tenant');
+            DB::reconnect('tenant');
         } else {
-            return response()->json(['error' => "Tenant not found for domain: $tenant"], 404);
+            return response()->json(['error' => "Tenant not found for domain or user: " . $request->getHost()], 404);
         }
 
         return $next($request);

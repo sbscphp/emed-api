@@ -27,13 +27,13 @@ class RolePermissionSeeder extends Seeder
         $mapPermission = collect(config('role_permission_seeder.permissions_map'));
 
         foreach ($config as $key => $modules) {
-            if($key == 'super_admin') {
+            if ($key == 'super_admin') {
                 $description = 'Super admin has full access to everything including global settings.';
-            } else if($key == 'admin') {
+            } else if ($key == 'admin') {
                 $description = 'Admin can access all the modules of the software and have all the privileges within the system.';
-            } else if($key == 'guest') {
+            } else if ($key == 'guest') {
                 $description = 'Guest can access all the modules of the software and have all the privileges within the system.';
-            } else if($key == 'customer') {
+            } else if ($key == 'customer') {
                 $description = 'Customer can access all the modules of the software and have all the privileges within the system.';
             } else {
                 $description = 'All the privileges within the system has been imported.';
@@ -47,7 +47,7 @@ class RolePermissionSeeder extends Seeder
             ]);
             $permissions = [];
 
-            $this->command->info('Creating Role '. strtoupper($key));
+            $this->command->info('Creating Role ' . strtoupper($key));
 
             // Reading role permission modules
             foreach ($modules as $module => $value) {
@@ -62,7 +62,7 @@ class RolePermissionSeeder extends Seeder
                         'description' => ucfirst($permissionValue) . ' ' . ucfirst($module),
                     ])->id;
 
-                    $this->command->info('Creating Permission to '.$permissionValue.' for '. $module);
+                    $this->command->info('Creating Permission to ' . $permissionValue . ' for ' . $module);
                 }
             }
 
@@ -74,12 +74,11 @@ class RolePermissionSeeder extends Seeder
                 // Create default user for each role
                 $user = User::create([
                     'name' => ucwords(str_replace('_', ' ', $key)),
-                    'email' => $key.'@app.com',
+                    'email' => $key . '@app.com',
                     'password' => bcrypt('password')
                 ]);
                 $user->addRole($role);
             }
-
         }
 
         // $admin = User::first();

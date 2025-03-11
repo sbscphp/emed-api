@@ -20,19 +20,19 @@ class ResetPasswordLinkRequest extends FormRequest
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
-    public function rules(): array
+    public function rules()
     {
         return [
-            'email' => ['required', 'email'],
+            'email' => 'required|email|exists:users,email',
         ];
     }
 
-
-    public function messages(): array
+    public function messages()
     {
         return [
-            'email.required' => 'Email  is required',
-            'email.email' => 'Invalid email',
+            'email.required' => 'The email field is required.',
+            'email.email' => 'Please provide a valid email address.',
+            'email.exists' => 'The provided email does not exist in our records.',
         ];
     }
 }

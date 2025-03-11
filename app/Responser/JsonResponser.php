@@ -43,22 +43,63 @@ class JsonResponser
         bool $error = true,
         string $message = "",
         $data = [],
-        $statusCode = 200,
-        $th = null
+        int $statusCode = 200,
+        ?\Throwable $th = null
     ): JsonResponse {
-        if($th && $statusCode == 500){
+        if ($th && $statusCode === 500) {
             ErrorLog::create([
                 'causer' => optional(auth()->user())->id ?? 'Guest',
                 'model' => get_class($th),
                 'error_message' => $th->getMessage(),
                 'error_line' => $th->getLine(),
                 'error_trace' => $th->getTraceAsString(),
+                'request_url' => request()->fullUrl() ?? 'N/A',
+                'request_method' => request()->method() ?? 'N/A',
+                'request_data' => !empty(request()->all()) ? json_encode(request()->all()) : null,
+                'request_ip' => request()->ip() ?? 'N/A',
+                'user_agent' => request()->header('User-Agent') ?? 'N/A',
             ]);
         }
-        return response()->json([
+
+        $response = [
             "error" => $error,
-            "message" => $message,
+            "message" => $error ? $message : ucwords($message),
             "data" => $data,
-        ], $statusCode);
+        ];
+
+        // Include exception details if available
+        if ($th) {
+            $response['exception'] = [
+                'message' => $th->getMessage(),
+                'line' => $th->getLine(),
+                // 'trace' => $th->getTrace(),
+            ];
+        }
+
+        return response()->json($response, $statusCode);
     }
 }
+
+//     public static function send(
+//         bool $error = true,
+//         string $message = "",
+//         $data = [],
+//         $statusCode = 200,
+//         $th = null
+//     ): JsonResponse {
+//         if($th && $statusCode == 500){
+//             ErrorLog::create([
+//                 'causer' => optional(auth()->user())->id ?? 'Guest',
+//                 'model' => get_class($th),
+//                 'error_message' => $th->getMessage(),
+//                 'error_line' => $th->getLine(),
+//                 'error_trace' => $th->getTraceAsString(),
+//             ]);
+//         }
+//         return response()->json([
+//             "error" => $error,
+//             "message" => $message,
+//             "data" => $data,
+//         ], $statusCode);
+//     }
+// }

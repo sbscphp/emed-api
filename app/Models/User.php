@@ -16,7 +16,21 @@ class User extends Authenticatable implements JWTSubject
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasRolesAndPermissions, HasFactory, Notifiable, HasApiTokens, SoftDeletes;
-
+    protected $fillable = [
+        'uuid',
+        'fullname',
+        'role',
+        'phone_number',
+        'email',
+        'password',
+        'tenant_id',
+        'is_verified',
+        'email_verified_at',
+        'status',
+        'can_login',
+        'is_active',
+        'remember_token',
+    ];
     /**
      * The attributes that are mass assignable.
      *
@@ -70,5 +84,16 @@ class User extends Authenticatable implements JWTSubject
     public function userInformation()
     {
         return $this->hasOne(UserInformation::class);
+    }
+
+
+    public function register()
+    {
+        return $this->belongsTo(Registration::class);
+    }
+
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class);
     }
 }

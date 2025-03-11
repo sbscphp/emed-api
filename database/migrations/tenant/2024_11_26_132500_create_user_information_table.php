@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('user_information', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
-            $table->string('uuid', 36)->unique();
             $table->string('phone_number')->nullable();
             $table->date('date_of_birth')->nullable();
             $table->string('address')->nullable();
@@ -27,7 +26,6 @@ return new class extends Migration
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->timestamps();
         });
-        
     }
 
     /**

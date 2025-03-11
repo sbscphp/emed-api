@@ -1,0 +1,83 @@
+<?php
+
+namespace App\Repositories\{{ model }};
+
+use App\Models{{ folder }}\{{ model }};
+
+class {{ model }}Repository implements {{ model }}Interface
+{
+    /**
+     * Retrieve a collection of {{ model }} from the database.
+     * 
+     * @return \Illuminate\Database\Eloquent\Collection|static[]
+     */
+    public function all()
+    {
+        return {{ model }}::all();
+    }
+
+
+    /**
+     * Create new {{ model }} in the database.
+     * 
+     * @param array $data
+     * @return \App\Models{{ folder }}\{{ model }}
+     */
+    public function create(array $data)
+    {
+        return {{ model }}::create($data);
+    }
+
+
+    /**
+     * Update an existing {{ model }} in the database.
+     * 
+     * @param array $data
+     * @param int $id
+     * @return \App\Models{{ folder }}\{{ model }}
+     */
+    public function update(array $data, $id)
+    {
+        $record = {{ model }}::findOrFail($id);
+        $record->update($data);
+        return $record;
+    }
+
+
+    /**
+     * Delete an existing {{ model }} from the database.
+     * 
+     * @param int $id
+     * @return void
+     */
+    public function delete($id)
+    {
+        $record = {{ model }}::findOrFail($id);
+        $record->delete();
+    }
+
+
+    /**
+     * Find an existing {{ model }} in the database by their ID.
+     * 
+     * @param int $id
+     * @return \App\Models{{ folder }}\{{ model }}
+     */
+    public function find($id)
+    {
+        return {{ model }}::find($id);
+    }
+
+
+    /**
+     * Find an existing {{ model }} in the database by their $attr.
+     * 
+     * @param string $attr
+     * @param string $value
+     * @return \App\Models{{ folder }}\{{ model }}
+     */
+    public function findByAttribute($attr, $value)
+    {
+        return {{ model }}::where($attr, $value)->first();
+    }
+}
