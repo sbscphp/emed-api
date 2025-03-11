@@ -4,15 +4,15 @@ namespace App\Repositories\PatientVisit;
 
 /**
  * Interface PatientVisitInterface
- * 
- * This interface defines the methods that must be implemented by any 
+ *
+ * This interface defines the methods that must be implemented by any
  * class that handles the data operations for the PatientVisit model.
  */
 interface PatientVisitInterface
 {
     /**
      * Retrieve all PatientVisit from the database.
-     * 
+     *
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
     public function all();
@@ -20,7 +20,7 @@ interface PatientVisitInterface
 
     /**
      * Create new PatientVisit in the database.
-     * 
+     *
      * @param array $data
      * @return \App\Models\PatientVisit
      */
@@ -29,7 +29,7 @@ interface PatientVisitInterface
 
     /**
      * Update an existing PatientVisit in the database.
-     * 
+     *
      * @param array $data
      * @param int $id
      * @return \App\Models\PatientVisit
@@ -39,7 +39,7 @@ interface PatientVisitInterface
 
     /**
      * Delete an existing PatientVisit from the database.
-     * 
+     *
      * @param int $id
      * @return void
      */
@@ -48,7 +48,7 @@ interface PatientVisitInterface
 
     /**
      * Find an existing PatientVisit in the database by their ID.
-     * 
+     *
      * @param int $id
      * @return \App\Models\PatientVisit
      */
@@ -57,10 +57,12 @@ interface PatientVisitInterface
 
     /**
      * Find an existing PatientVisit in the database by their $attr.
-     * 
+     *
      * @param string $attr
      * @param string $value
      * @return \App\Models\PatientVisit
      */
     public function findByAttribute($attr, $value);
+
+    public function findByMultiAttributes(array $attrs);
 }

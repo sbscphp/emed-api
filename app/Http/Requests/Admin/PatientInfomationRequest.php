@@ -3,6 +3,9 @@
 namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Spatie\Multitenancy\Models\Tenant;
 
 class PatientInfomationRequest extends FormRequest
 {
@@ -21,6 +24,7 @@ class PatientInfomationRequest extends FormRequest
      */
     public function rules(): array
     {
+
         return [
             'firstname' => 'required|string|max:255',
             'lastname' => 'required|string|max:255',
@@ -29,10 +33,10 @@ class PatientInfomationRequest extends FormRequest
             'gender' => 'required|string',
             'bloodgroup' => 'required|string',
             'genotype' => 'required|string',
-            'email' => 'required|email|unique:patients',
-            // 'patient_type' => 'required|string',
+            'email' => 'required|email|unique:patients,email',
+            'patient_type' => 'required|string',
             'marital_status' => 'required|string',
-            'phoneno' => 'required|string|unique:patients,phoneno',
+            'phoneno' => 'required|string',
             'occupation' => 'required|string',
             'homeaddress' => 'required|string',
             'companyaddress' => 'required|string',
@@ -40,7 +44,7 @@ class PatientInfomationRequest extends FormRequest
             'stateoforigin' => 'nullable|string',
             'lga' => 'nullable|string',
             'tribe' => 'nullable|string',
-            'cardno' => 'required|string|unique:patients,cardno',
+            'cardno' => 'required|unique:patients,cardno',
             'recieptno' => 'nullable|string|unique:patients,recieptno',
         ];
     }
@@ -61,8 +65,7 @@ class PatientInfomationRequest extends FormRequest
             'genotype.required' => 'The blood genotype field is required.',
             'email.required' => 'The email field is required.',
             'email.email' => 'Please enter a valid email address.',
-            'email.unique' => 'This email is already registered.',
-            // 'patient_type.required' => 'The patient type field is required.',
+             'patient_type.required' => 'The patient type field is required.',
             'marital_status.required' => 'The marital status field is required.',
             'phoneno.required' => 'The phone number field is required.',
             'phoneno.string' => 'The phone number must be a valid string.',

@@ -8,8 +8,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\EmergencyContactRequest;
 use App\Http\Requests\Admin\NextOfkinRequest;
 use App\Http\Requests\Admin\PatientInfomationRequest;
+use App\Models\Patient;
 use App\Models\PatientVisit;
-use App\Models\Tenant;
+// use App\Models\Tenant;
 use App\Responser\JsonResponser;
 use App\Services\Admission\AdmissionService;
 use App\Services\Appointment\AppointmentService;
@@ -19,10 +20,12 @@ use App\Services\Patient\PatientService;
 use App\Services\PatientVisit\PatientVisitService;
 use App\Services\User\UserService;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Spatie\Multitenancy\Models\Tenant;
 
 class RecordManagementController extends Controller
 {
@@ -68,16 +71,22 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'Forbidden! User has no permission to register a patient', null, 403);
             }
 
-            //$tenant = Tenant::find($user->tenant_id);
-            $tenantDbName = $request->getHost();
-
-            if ($tenantDbName !== '') {
-                $acronym = 'EMED';
-            } else {
-                $acronym = $tenantDbName;
+            // Validate patient email
+            $emailExists = $this->checkIfExists(new Patient(), 'email', $request->email);
+            if ($emailExists) {
+                return JsonResponser::send(true, 'Email has been taken', null, 422);
             }
 
-            $tenantAcronym = $this->generateAcronym($acronym);
+             // Validate patient card number
+             $cardnoExists = $this->checkIfExists(new Patient(), 'cardno', $request->cardno);
+             if ($cardnoExists) {
+                 return JsonResponser::send(true, 'Card number exists already.', null, 422);
+             }
+
+
+            $tenant = Tenant::current();
+            $tenantDatabase = $tenant ? $tenant->domain : 'emed';
+            $tenantAcronym = $this->generateAcronym($tenantDatabase);
 
             //Prepare data to store
             $data = [
@@ -92,7 +101,7 @@ class RecordManagementController extends Controller
                 'patient_type' => $request->patient_type,
                 'marital_status' => $request->marital_status,
                 'phoneno' => $request->phoneno,
-                'visitno' => 'VIS' . GeneralHelper::generateUniqueRandomId($user),
+                'visitno' => 'VIS' . GeneralHelper::generateUniqueRandomId($request->firstname),
                 'occupation' => $request->occupation,
                 'homeaddress' => $request->homeaddress,
                 'companyaddress' => $request->companyaddress,
@@ -102,9 +111,10 @@ class RecordManagementController extends Controller
                 'tribe' => $request->tribe,
                 'cardno' => $request->cardno,
                 'status' => $request->status,
-                'patientno' => 'EMED/' . GeneralHelper::generateUniqueRandomId($user) . '/' . GeneralHelper::generateUniqueRandomId($user) . '/' . $tenantAcronym,
+                'patientno' => 'EMED/' . GeneralHelper::generateUniqueRandomId($request->firstname) . '/' . GeneralHelper::generateUniqueRandomId($request->lastname) . '/' . $tenantAcronym,
                 'recieptno' => 'RCP-' . $request->receiptno,
             ];
+
             $patient = $this->patientService->create($data);
 
             $dataToLog = [
@@ -203,6 +213,12 @@ class RecordManagementController extends Controller
             $patient = $this->patientService->find($patienId);
             if (is_null($patient)) {
                 return JsonResponser::send(true, 'Patient not found.', null, 404);
+            }
+
+            // Check if the patient already has a next of kin
+            $existingNextOfKin = $this->nextOfKinService->find($patient->id);
+            if ($existingNextOfKin) {
+                return JsonResponser::send(true, 'Patient already has a next of kin.', null, 422);
             }
 
             //Prepare data to store
@@ -310,6 +326,12 @@ class RecordManagementController extends Controller
             $patient = $this->patientService->find($patienId);
             if (is_null($patient)) {
                 return JsonResponser::send(true, 'Patient not found.', null, 404);
+            }
+
+            // Check if the patient already has a next of kin
+            $existingContact = $this->nextOfKinService->find($patient->id);
+            if ($existingContact) {
+                return JsonResponser::send(true, 'Patient already has an emergency contact', null, 422);
             }
 
             //Prepare data to store
@@ -465,7 +487,7 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'Record not found.', null, 404);
             }
 
-            $patientDetails->load(['nextOfKin','emergencyContact','visits','service']);
+            $patientDetails->load(['nextOfKin', 'emergencyContact', 'visits', 'service']);
 
             return JsonResponser::send(false, 'Record retrieved successfully.', $patientDetails, 200);
         } catch (\Throwable $th) {
@@ -494,25 +516,36 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'Record not found.', null, 404);
             }
 
-            if($patient->status === 'draft'){
+            if ($patient->status === 'draft') {
                 return JsonResponser::send(true, 'Action forbidden. Registeration not complete', null, 403);
+            }
+
+            // Check if the patient already has a visit today
+            $existingVisit = $this->patientVisitService->findByMultiAttributes([
+                ['patient_id', '=', $patient->id],
+                ['status', '=', $request->status],
+                // ['arrival_time', '=', now()->toDateString()] // Check for today's visit
+            ]);
+
+            if ($existingVisit) {
+                return JsonResponser::send(false, 'A visit has already been created for this patient today.', null, 422);
             }
 
             $visitData = [
                 'patient_id' => $patient->id,
                 'arrival_time' => now(),
                 'status' => $request->status,
-                'visit_type' => $request->visit_type
+                'visit_type' => $patient->status === "new" ? 'initial':'follow up'
             ];
             $recordVisit = $this->patientVisitService->create($visitData);
 
             $updateRecord = null;
-            if($patient->patient_type === 'new'){
+            if ($patient->patient_type === 'new') {
                 $updatePatientData = [
                     'patient_type' => 'existing',
                     'status' => $request->status
                 ];
-                $updateRecord = $this->patientService->update($updatePatientData,$patient->id);
+                $updateRecord = $this->patientService->update($updatePatientData, $patient->id);
             }
 
             $dataToLog = [
@@ -526,7 +559,7 @@ class RecordManagementController extends Controller
 
             GeneralHelper::storeAuditLog($dataToLog);
             DB::connection('tenant')->commit();
-            return JsonResponser::send(false, 'Visit created successfully.',['visitRecord' => $recordVisit], 200);
+            return JsonResponser::send(false, 'Visit created successfully.', ['visitRecord' => $recordVisit], 200);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Internal server error', [], 500, $th);
@@ -552,11 +585,18 @@ class RecordManagementController extends Controller
             if ($records->isEmpty()) {
                 return JsonResponser::send(false, 'Record(s) not found.', null, 404);
             }
-            $records->each(function ($record) {
-                $record->show_url = route('record.show', ['id' => $record->id]);
-            });
+            // Load relationships
+            $records->load(['service', 'visits']);
 
-            $records->load(['service','visits']);
+
+            $records->each(function ($record) {
+
+                $record->show_url = route('record.show', ['id' => $record->id]);
+
+                // Get the latest visit
+                $latestVisit = $record->visits->sortByDesc('created_at')->first();
+                $record->latest_visit = $latestVisit;
+            });
 
             return JsonResponser::send(false, 'Record(s) found successfully.', $records, 200);
         } catch (\Throwable $th) {
@@ -566,11 +606,11 @@ class RecordManagementController extends Controller
 
     public function recordStats()
     {
-        try{
+        try {
             $stats = $this->patientService->getRecordStats();
 
             return JsonResponser::send(false, 'Stats', $stats, 200);
-        }catch(\Throwable $th){
+        } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
         }
@@ -578,15 +618,26 @@ class RecordManagementController extends Controller
 
     public function generateAcronym($name)
     {
-        // Split the name into words
-        $words = explode(" ", trim($name));
+        // Trim any leading or trailing spaces
+        $name = trim($name);
 
-        // Get the first letter of each word and convert to uppercase
-        $acronym = "";
-        foreach ($words as $word) {
-            $acronym .= strtoupper(substr($word, 0, 1));
-        }
+        // Get the first two letters of the name
+        $firstTwoLetters = substr($name, 0, 2);
+
+        // Convert to uppercase and append 'H'
+        $acronym = strtoupper($firstTwoLetters) . 'H';
 
         return $acronym;
+    }
+
+    public function checkIfExists(Model $model, string $attribute, $value, string $message = 'Record exists already.', int $statusCode = 422)
+    {
+        $exists = $model->where($attribute, $value)->exists();
+
+        if ($exists) {
+            return JsonResponser::send(true, $message, null, $statusCode);
+        }
+
+        return null;
     }
 }

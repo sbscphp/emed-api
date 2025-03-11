@@ -121,4 +121,5 @@ class PatientRepository implements PatientInterface
             'numberOfFollowUp' => $totalFollowUp
         ];
     }
+
 }
