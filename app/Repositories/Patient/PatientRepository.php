@@ -2,7 +2,10 @@
 
 namespace App\Repositories\Patient;
 
+use App\Models\Admission;
 use App\Models\Patient;
+use App\Models\PatientVisit;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class PatientRepository implements PatientInterface
@@ -84,21 +87,7 @@ class PatientRepository implements PatientInterface
 
     public function getAllRecords($search, $paginate, $perPage)
     {
-        $query = DB::table('patients as pa')
-            ->join('patient_visits as pv', 'pa.id', '=', 'pv.patient_id')
-            ->leftJoin('services as se', 'se.id', '=', 'pa.service_id')
-            ->select(
-                'pa.firstname as firtsname',
-                'pa.lastname as lastname',
-                'pa.patient_type as patient_type',
-                'pa.cardno as cardno',
-                'pa.phoneno as phoneno',
-                'pv.check_in',
-                'pv.check_out',
-                'pa.status',
-                'se.name'
-
-            );
+        $query = Patient::query();
 
         if (isset($search)) {
             $query->where(function ($q) use ($search) {
@@ -113,10 +102,22 @@ class PatientRepository implements PatientInterface
         return $paginate ? $query->paginate($perPage) : $query->get();
     }
 
-    public function stats()
+
+
+    public function getRecordStats()
     {
-        // $query = DB::table('patients');
-        // $totalPatients = $query->count();
-        // $totalPatientsVisitedToday = $query->where
+        //
+        $currentDate = Carbon::now();
+        $registeredPatients = Patient::count();
+        $admittedPatients = Admission::count();
+        $totalPatientsVisitedToday = PatientVisit::whereDate('created_at', $currentDate)->count();
+        $totalFollowUp = Patient::where('status', 'follow up')->count();
+
+        return [
+            'totalRegisteredPatient' => $registeredPatients,
+            'admittedPatients' => $admittedPatients,
+            'totalPatientsVisitedToday' => $totalPatientsVisitedToday,
+            'numberOfFollowUp' => $totalFollowUp
+        ];
     }
 }

@@ -70,4 +70,11 @@ interface PatientInterface
      * @return \App\Models\Patient
      */
     public function getAllRecords($search,$paginate,$perPage);
+
+    /**
+     * Retrieve record stats
+     *
+     * @return \App\Models\Patient
+     */
+    public function getRecordStats();
 }
