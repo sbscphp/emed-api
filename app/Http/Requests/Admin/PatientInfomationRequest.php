@@ -29,7 +29,7 @@ class PatientInfomationRequest extends FormRequest
             'firstname' => 'required|string|max:255',
             'lastname' => 'required|string|max:255',
             'dob' => 'required|date',
-            'age' => 'required|integer|min:1',
+            'age' => 'required|integer',
             'gender' => 'required|string',
             'bloodgroup' => 'required|string',
             'genotype' => 'required|string',
@@ -44,8 +44,8 @@ class PatientInfomationRequest extends FormRequest
             'stateoforigin' => 'nullable|string',
             'lga' => 'nullable|string',
             'tribe' => 'nullable|string',
-            'cardno' => 'required|unique:patients,cardno',
-            'recieptno' => 'nullable|string|unique:patients,recieptno',
+            'cardno' => 'nullable|unique:patients,cardno',
+            'recieptno' => 'nullable|string',
         ];
     }
 
@@ -59,13 +59,12 @@ class PatientInfomationRequest extends FormRequest
             'dob.required' => 'The date of birth is required.',
             'dob.date' => 'The date of birth must be a valid date.',
             'age.required' => 'The age field is required.',
-            'age.min' => 'The age must be at least 0.',
             'gender.required' => 'The gender field is required.',
             'bloodgroup.required' => 'The blood group field is required.',
             'genotype.required' => 'The blood genotype field is required.',
             'email.required' => 'The email field is required.',
             'email.email' => 'Please enter a valid email address.',
-             'patient_type.required' => 'The patient type field is required.',
+            'patient_type.required' => 'The patient type field is required.',
             'marital_status.required' => 'The marital status field is required.',
             'phoneno.required' => 'The phone number field is required.',
             'phoneno.string' => 'The phone number must be a valid string.',
@@ -78,7 +77,6 @@ class PatientInfomationRequest extends FormRequest
             'tribe.string' => 'The tribe must be a valid string.',
             'cardno.required' => 'The card number field is required.',
             'cardno.unique' => 'This card number is already registered.',
-            'receiptno.unique' => 'This receipt number is already registered.',
         ];
 
     }

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Enums\PatientVisitStageEnums;
+use App\Enums\PatientVisitStatusEnums;
 use App\Helpers\FileUploadHelper;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
@@ -101,7 +103,7 @@ class RecordManagementController extends Controller
                 'patient_type' => $request->patient_type,
                 'marital_status' => $request->marital_status,
                 'phoneno' => $request->phoneno,
-                'visitno' => 'VIS' . GeneralHelper::generateUniqueRandomId($request->firstname),
+                // 'visitno' => 'VIS' . GeneralHelper::generateUniqueRandomId($request->firstname),
                 'occupation' => $request->occupation,
                 'homeaddress' => $request->homeaddress,
                 'companyaddress' => $request->companyaddress,
@@ -110,12 +112,24 @@ class RecordManagementController extends Controller
                 'lga' => $request->lga,
                 'tribe' => $request->tribe,
                 'cardno' => $request->cardno,
-                'status' => $request->status,
                 'patientno' => 'EMED/' . GeneralHelper::generateUniqueRandomId($request->firstname) . '/' . GeneralHelper::generateUniqueRandomId($request->lastname) . '/' . $tenantAcronym,
                 'recieptno' => 'RCP-' . $request->receiptno,
             ];
 
             $patient = $this->patientService->create($data);
+
+            if($patient){
+                $data = [
+                    'patient_id' => $patient->id,
+                    'visitno' => 'VIS' . GeneralHelper::generateUniqueRandomId($request->firstname),
+                    'stage' => PatientVisitStageEnums::TRIAGE->value,
+                    'status' => PatientVisitStatusEnums::WAITING->value,
+                    'arrival_date' => now(),
+
+                ];
+
+                $patientVisit = $this->patientVisitService->create($data);
+            }
 
             $dataToLog = [
                 'causer_id' => $user->id,
@@ -128,7 +142,7 @@ class RecordManagementController extends Controller
 
             GeneralHelper::storeAuditLog($dataToLog);
             DB::connection('tenant')->commit();
-            return JsonResponser::send(false, 'Patient details created successfully', $patient, 201);
+            return JsonResponser::send(false, 'Patient details created successfully', ['patient'=> $patient, 'patientVisit'=> $patientVisit], 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Internal server error', [], 500, $th);
