@@ -13,8 +13,9 @@ return new class extends Migration
     {
         Schema::create('patient_visit_lab', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->foreignId('patient_id')->constrained('patients')->onDelete('delete');
-            $table->foreignId('admin_id')->nullable()->constrained()->onDelete('cascade');
+            $table->foreignId('patient_id')->constrained('patients')->onDelete('cascade');
+            $table->unsignedBigInteger('admin_id')->nullable();
+            $table->unsignedBigInteger('consultation_id')->nullable();
             $table->string('visitno');
             $table->string('lab_dept')->nullable();
             $table->string('test_name')->nullable();

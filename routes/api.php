@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\v1\Admin\ConsultationController;
 use App\Http\Controllers\v1\Admin\RecordManagementController;
 use App\Http\Controllers\v1\Admin\RegistrationController;
 use App\Http\Controllers\v1\Auth\ForgotPasswordController;
@@ -56,6 +57,11 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/initiate-visit/{id}', [RecordManagementController::class, 'initiateVisit']);
                     Route::get('/record-stats', [RecordManagementController::class, 'recordStats']);
 
+                });
+
+                //Consultant routes
+                Route::group(['prefix' => 'consultant'], function(){
+                    Route::get('/patients', [ConsultationController::class, 'patientsForConsultation']);
                 });
 
             });

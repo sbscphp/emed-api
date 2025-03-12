@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('patient_visit_consultations', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->foreignId('patient_id')->constrained('patients')->onDelete('cascade');
-            $table->foreignId('admin_id')->constrained('user_id')->onDelete('cascade');
+            $table->foreignId('admin_id')->constrained('users')->onDelete('cascade');
             $table->string('visitno');
-            $table->text('complaints')->nullable();
+            $table->text('complaint')->nullable();
             $table->text('complaint_history')->nullable();
             $table->text('review')->nullable();
             $table->text('diagnosis')->nullable();
@@ -24,11 +24,11 @@ return new class extends Migration
             $table->string('disease_pattern')->nullable();
             $table->string('disease_type')->nullable();
             $table->enum('investigation',['laboratory','radiology','both'])->nullable();
-            $table->enum('follow_up',[true,false])->default(false);
+            $table->integer('follow_up')->default(0);
             $table->dateTime('followUp_date')->nullable();
-            $table->enum('referral',[true,false])->default(false);
+            $table->integer('referral')->default(0);
             $table->string('referral_detail')->nullable();
-            $table->enum('admitted',[true,false])->default(false);
+            $table->integer('admitted')->default(0);
             $table->timestamps();
 
             $table->index('visitno');
