@@ -22,6 +22,5 @@ class ServicesTableSeeder extends Seeder
         ];
 
         DB::table('services')->insert($services);
-
     }
 }

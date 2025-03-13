@@ -15,7 +15,6 @@ use App\Models\User;
 use App\Responser\JsonResponser;
 use App\Services\Registration\RegistrationService;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -84,43 +83,90 @@ class RegistrationController extends Controller
                     '--force' => true,
                 ]);
 
+                // Seed the roles table
+                Artisan::call('db:seed', [
+                    '--database' => 'tenant',
+                    '--class' => 'RolePermissionSeeder',
+                    '--force' => true,
+                ]);
+
                 Artisan::call('db:seed', [
                     '--database' => 'tenant',
                     '--class' => 'ServicesTableSeeder',
                     '--force' => true,
                 ]);
 
-                $adminData = [
+                Artisan::call('db:seed', [
+                    '--database' => 'tenant',
+                    '--class' => 'StateSeeder',
+                    '--force' => true,
+                ]);
+                DB::connection('tenant')->table('tenants')->insert([
+                    'id' => $tenant->id,
+                    'name' => $tenant->name,
+                    'domain' => $tenant->domain,
+                    'database' => $tenant->database,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                $adminLandlord = User::on('landlord')->create([
                     'uuid' => Str::uuid(),
                     'fullname' => $data['admin_fullname'],
                     'role' => $data['admin_role'],
                     'phone_number' => $data['admin_phone_number'],
                     'email' => $data['admin_email'],
                     'password' => $data['admin_password'],
-                    'remember_token' => Str::random(60),
                     'tenant_id' => $tenant->id,
+                    'remember_token' => Str::random(60),
+                ]);
+
+                $adminData = [
+                    'id' => $adminLandlord->id,
+                    'uuid' => $adminLandlord->uuid,
+                    'fullname' => $adminLandlord->fullname,
+                    'role' => $adminLandlord->role,
+                    'phone_number' => $adminLandlord->phone_number,
+                    'email' => $adminLandlord->email,
+                    'password' => $adminLandlord->password,
+                    'tenant_id' => $tenant->id,
+                    'remember_token' => $adminLandlord->remember_token,
                 ];
 
-                $admin = $this->registrationService->saveAdminDetails($adminData, $tenant->id);
-                $admin->addRole($adminRole);
-                $admin->permissions()->sync($adminRole->permissions);
-                $verificationCode = Str::random(40);
+                $adminTenantId  = DB::connection('tenant')->table('users')->insertGetId($adminData);
+                $adminTenant  = User::on('tenant')->find($adminTenantId);
+
+                // User::on('landlord')->create([
+                //     'id' => $adminTenant->id,
+                //     'uuid' => $adminTenant->uuid,
+                //     'fullname' => $adminTenant->fullname,
+                //     'role' => $adminTenant->role,
+                //     'phone_number' => $adminTenant->phone_number,
+                //     'email' => $adminTenant->email,
+                //     'password' => $adminTenant->password,
+                //     'tenant_id' => $tenant->id,
+                //     'remember_token' => $adminTenant->remember_token,
+                // ]);
+
+                $adminTenant->addRole($adminRole);
+                $adminTenant->permissions()->sync($adminRole->permissions);
+                $verificationCode = $adminTenant->remember_token;
                 $verificationUrl = url('/verify-email/' . $verificationCode . '?email=' . urlencode($data['admin_email']));
 
-                $admin->remember_token = $verificationCode;
-                $admin->save();
-                Mail::to($admin->email)->send(new TenantEmailVerification($verificationUrl, [
+                $adminTenant->remember_token = $verificationCode;
+                $adminTenant->save();
+                Mail::to($adminTenant->email)->send(new TenantEmailVerification($verificationUrl, [
                     'firstname' => $data['admin_fullname'],
                     'email' => $data['admin_email'],
                     'verification_code' => $verificationCode,
                 ]));
 
                 $dataToLog = [
-                    'causer_id' => $admin->id,
-                    'action_id' => $admin->id,
+                    'causer_id' => $adminTenant->id,
+                    'action_id' => $adminTenant->id,
                     'action_type' => "App\Models\User",
                     'log_name' => "Tenant Created Successfully",
-                    'description' => "{$admin['fullname']} added successfully",
+                    'description' => "{$adminTenant['fullname']} added successfully",
                 ];
                 GeneralHelper::storeAuditLog($dataToLog);
 
@@ -130,7 +176,7 @@ class RegistrationController extends Controller
                     [
                         'tenant' => $tenant,
                         'registration' => $registration,
-                        'admin' => $admin,
+                        'admin' => $adminTenant,
                     ],
                     200
                 );
@@ -219,14 +265,61 @@ class RegistrationController extends Controller
     }
 
 
+    // public function verifyEmail($token)
+    // {
+    //     try {
+    //         DB::beginTransaction();
+
+    //         $user = User::where('remember_token', $token)->first();
+
+    //         if (!$user) {
+    //             return JsonResponser::send(
+    //                 false,
+    //                 'Invalid or expired verification link.',
+    //                 null,
+    //                 404
+    //             );
+    //         }
+
+    //         $user->update([
+    //             'is_verified' => true,
+    //             'email_verified_at' => now(),
+    //             'status' => 'active',
+    //             'can_login' => true,
+    //             'is_active' => true,
+    //             'remember_token' => null,
+    //         ]);
+
+    //         DB::commit();
+
+    //         return JsonResponser::send(
+    //             true,
+    //             'Your email has been verified. You can now log in.',
+    //             [
+    //                 'user' => [
+    //                     'email' => $user->email,
+    //                 ]
+    //             ],
+    //             200
+    //         );
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         return JsonResponser::send(
+    //             false,
+    //             'An error occurred while verifying your email. Please try again later ' . $e->getMessage(),
+    //             null,
+    //             500
+    //         );
+    //     }
+    // }
     public function verifyEmail($token)
     {
         try {
             DB::beginTransaction();
 
-            $user = User::where('remember_token', $token)->first();
+            $landlordUser = User::on('landlord')->where('remember_token', $token)->first();
 
-            if (!$user) {
+            if (!$landlordUser) {
                 return JsonResponser::send(
                     false,
                     'Invalid or expired verification link.',
@@ -235,14 +328,29 @@ class RegistrationController extends Controller
                 );
             }
 
-            $user->update([
+            $tenantUser = User::on('tenant')->where('email', $landlordUser->email)->first();
+
+            if (!$tenantUser) {
+                return JsonResponser::send(
+                    false,
+                    'User not found in tenant database.',
+                    null,
+                    404
+                );
+            }
+
+            // Update both landlord and tenant users
+            $updateData = [
                 'is_verified' => true,
                 'email_verified_at' => now(),
                 'status' => 'active',
                 'can_login' => true,
                 'is_active' => true,
                 'remember_token' => null,
-            ]);
+            ];
+
+            $landlordUser->update($updateData);
+            $tenantUser->update($updateData);
 
             DB::commit();
 
@@ -251,7 +359,7 @@ class RegistrationController extends Controller
                 'Your email has been verified. You can now log in.',
                 [
                     'user' => [
-                        'email' => $user->email,
+                        'email' => $landlordUser->email,
                     ]
                 ],
                 200
@@ -260,7 +368,7 @@ class RegistrationController extends Controller
             DB::rollBack();
             return JsonResponser::send(
                 false,
-                'An error occurred while verifying your email. Please try again later ' . $e->getMessage(),
+                'An error occurred while verifying your email. Please try again later. ' . $e->getMessage(),
                 null,
                 500
             );

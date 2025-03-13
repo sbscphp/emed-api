@@ -16,7 +16,6 @@ class User extends Authenticatable implements JWTSubject
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasRolesAndPermissions, HasFactory, Notifiable, HasApiTokens, SoftDeletes;
-    protected $connection = 'tenant';
     protected $fillable = [
         'uuid',
         'fullname',

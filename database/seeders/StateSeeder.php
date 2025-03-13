@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use App\Models\Tenant; // Import the Tenant model if using spatie/laravel-multitenancy
 
 class StateSeeder extends Seeder
 {
@@ -53,16 +52,6 @@ class StateSeeder extends Seeder
             ['id' => 37, 'state_name' => 'Zamfara State'],
         ];
 
-        DB::connection('landlord')->table('states')->insert($states);
-
-        $tenants = Tenant::all();
-
-        foreach ($tenants as $tenant) {
-            DB::purge('tenant');
-            config(['database.connections.tenant.database' => $tenant->database]);
-            DB::reconnect('tenant');
-
-            DB::connection('tenant')->table('states')->insert($states);
-        }
+        DB::table('states')->insert($states);
     }
 }
