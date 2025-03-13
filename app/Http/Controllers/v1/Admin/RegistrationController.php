@@ -90,12 +90,6 @@ class RegistrationController extends Controller
                     '--force' => true,
                 ]);
 
-                Artisan::call('db:seed', [
-                    '--database' => 'tenant',
-                    '--class' => 'StateSeeder',
-                    '--force' => true,
-                ]);
-
                 $adminData = [
                     'uuid' => Str::uuid(),
                     'fullname' => $data['admin_fullname'],
