@@ -60,6 +60,12 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/record-stats', [RecordManagementController::class, 'recordStats']);
                 });
 
+                Route::group(['prefix' => 'nurse'], function () {
+                    Route::post('/triage/{patientId}', [TriageController::class, 'store']);
+                    Route::get('/all-records', [TriageController::class, 'getPatientsByService']);
+                    Route::get('/patient-statistics', [TriageController::class, 'getPatientStatistics']);
+                });
+
                 //Consultant routes
                 Route::group(['prefix' => 'consultant'], function () {
                     Route::get('/patients', [ConsultationController::class, 'patientsForConsultation']);
