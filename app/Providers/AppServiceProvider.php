@@ -29,6 +29,8 @@ use App\Repositories\PatientVisit\PatientVisitInterface;
 use App\Repositories\PatientVisit\PatientVisitRepository;
 use App\Repositories\Radiology\RadiologyInterface;
 use App\Repositories\Radiology\RadiologyRepository;
+use App\Repositories\Pharmacy\PharmacyInterface;
+use App\Repositories\Pharmacy\PharmacyRepository;
 use App\Repositories\Registration\RegistrationInterface;
 use App\Repositories\Registration\RegistrationRepository;
 use App\Repositories\ServiceDepartment\ServiceDepartmentInterface;
@@ -46,6 +48,7 @@ use App\Services\NextOfKin\NextOfKinService;
 use App\Services\Patient\PatientService;
 use App\Services\PatientVisit\PatientVisitService;
 use App\Services\Radiology\RadiologyService;
+use App\Services\Pharmacy\PharmacyService;
 use App\Services\Registration\RegistrationService;
 use App\Services\ServiceDepartment\ServiceDepartmentService;
 use App\Services\Triage\TriageService;
@@ -75,6 +78,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(LaboratoryInterface::class, LaboratoryRepository::class);
         $this->app->bind(RadiologyInterface::class, RadiologyRepository::class);
         $this->app->bind(TreatmentInterface::class, TreatmentRepository::class);
+        $this->app->bind(PharmacyInterface::class, PharmacyRepository::class);
 
 
         $this->app->bind(UserInformationService::class, function ($app) {
@@ -121,6 +125,9 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->bind(TreatmentService::class, function ($app) {
             return new TreatmentService($app->make(TreatmentInterface::class));
+        });
+        $this->app->bind(PharmacyService::class, function ($app) {
+            return new PharmacyService($app->make(PharmacyInterface::class));
         });
     }
 

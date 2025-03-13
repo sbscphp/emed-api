@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\v1\Admin\ConsultationController;
+use App\Http\Controllers\v1\Admin\PharmacyController;
 use App\Http\Controllers\v1\Admin\RecordManagementController;
 use App\Http\Controllers\v1\Admin\RegistrationController;
 use App\Http\Controllers\v1\Admin\TriageController;
@@ -63,6 +64,15 @@ Route::group(["prefix" => "v1"], function () {
                 Route::group(['prefix' => 'consultant'], function () {
                     Route::get('/patients', [ConsultationController::class, 'patientsForConsultation']);
                     Route::post('/patient/{id}', [ConsultationController::class, 'storeConsultationInfo']);
+                });
+
+                Route::prefix('pharmacy')->group(function () {
+                    Route::post('/create', [PharmacyController::class, 'store']);
+                    Route::get('/lists', [PharmacyController::class, 'index']);
+                    Route::get('/list/{id}', [PharmacyController::class, 'show']);
+                    Route::put('/update/{id}', [PharmacyController::class, 'update']);
+                    Route::delete('/delete/{id}', [PharmacyController::class, 'destroy']);
+                    Route::patch('/{id}/toggle-status', [PharmacyController::class, 'toggleStatus']);
                 });
             });
         });
