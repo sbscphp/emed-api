@@ -22,7 +22,6 @@ class ConsultationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'visitno' => 'required|string',
             'complaint' => 'required|string',
             'complaint_history' => 'required|string',
             'review' => 'required|string',
@@ -31,8 +30,8 @@ class ConsultationRequest extends FormRequest
             'disease_pattern' => 'nullable|string',
             'disease_type' => 'nullable|string',
             'investigation' => 'nullable|in:laboratory,radiology,both',
-            'follow_up' => 'nullable|boolean',
-            'followUp_date' => 'nullable|date',
+            'follow_up' => 'nullable|integer',
+            // 'followUp_date' => 'nullable|date',
             'referral' => 'nullable|boolean',
             'referral_detail' => 'nullable|date',
             'admitted' => 'nullable|boolean'

@@ -62,6 +62,7 @@ Route::group(["prefix" => "v1"], function () {
                 //Consultant routes
                 Route::group(['prefix' => 'consultant'], function(){
                     Route::get('/patients', [ConsultationController::class, 'patientsForConsultation']);
+                    Route::post('/patient/{id}', [ConsultationController::class, 'storeConsultationInfo']);
                 });
 
             });

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('patient_visit_consultations', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->foreignId('patient_id')->constrained('patients')->onDelete('cascade');
-            $table->foreignId('admin_id')->constrained('users')->onDelete('cascade');
+            $table->unsignedBigInteger('admin_id');
             $table->string('visitno');
             $table->text('complaint')->nullable();
             $table->text('complaint_history')->nullable();

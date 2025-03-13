@@ -94,6 +94,18 @@ class PatientService
         return $this->PatientInterface->findByAttribute($attr, $value);
     }
 
+    public function findByMultiAttributes(array $attrs){
+        return $this->PatientInterface->findByMultiAttributes($attrs);
+    }
+
+    public function findMultipleRecordsByMultiAttributes(array $attrs){
+        return $this->PatientInterface->findMultipleRecordsByMultiAttributes($attrs);
+    }
+
+    public function findUserByFirstnameAndLastname($firstname, $lastname){
+        return $this->PatientInterface->findUserByFirstnameAndLastname($firstname, $lastname);
+    }
+
      /**
      * Retrieve all records
      *

@@ -64,6 +64,12 @@ interface PatientInterface
      */
     public function findByAttribute($attr, $value);
 
+    public function findByMultiAttributes(array $attrs);
+
+    public function findMultipleRecordsByMultiAttributes(array $attrs);
+
+    public function findUserByFirstnameAndLastname($firstname, $lastname);
+
     /**
      * Retrieve all records
      *

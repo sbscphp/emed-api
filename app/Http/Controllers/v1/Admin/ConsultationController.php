@@ -65,7 +65,7 @@ class ConsultationController extends Controller
             if(!$user){
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
-
+           // dd($user->email);
             $patient = $this->patientVisitService->findByAttribute('visitno',$visitno);
             if(!$patient){
                 return JsonResponser::send(true, 'User not found.', null, 404);
@@ -91,9 +91,11 @@ class ConsultationController extends Controller
                 'disease_pattern' => $request->disease_pattern,
                 'disease_types' => $request->disease_types,
                 'investigation ' => $request->investigation,
-                'referral' => $request->referral,
+                'follow_up' => $request->follow_up ?? 0,
+                'followUp_date' => $request->followUp_date,
+                'referral' => $request->referral ?? 0,
                 'referral_details' => $request->referral_details,
-                'admiited' => $request->admitted
+                'admiited' => $request->admitted ?? 0
             ];
 
             $consultation = $this->consultationService->create($data);
@@ -103,15 +105,16 @@ class ConsultationController extends Controller
                 'action_id' => $consultation->id,
                 'action' => 'Create',
                 'action_type' => "Models\Patient",
-                'log_name' => "Patient details created successfully",
-                'description' => "{$user->firstname} {$user->lastname} created patient details successfully",
+                'log_name' => "Consultation created successfully",
+                'description' => "{$user->firstname} {$user->lastname} created consultation successfully",
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
             DB::connection('tenant')->commit();
-            return JsonResponser::send(false, 'Patient details created successfully', ['consultation'=> $consultation], 201);
+            return JsonResponser::send(false, 'Consultation created successfully', ['consultation'=> $consultation], 201);
         }catch(\Throwable $th){
-
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
         }
     }
 
