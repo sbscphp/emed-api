@@ -117,7 +117,6 @@ class PatientRepository implements PatientInterface
         foreach ($attrs as $attr => $value) {
             $record = $record->where($attr, $value);
         }
-
         return $record->get();
     }
 
@@ -131,30 +130,29 @@ class PatientRepository implements PatientInterface
                     ->orWhere('lastname', 'LIKE', "%{$search}%")
                     ->orWhere('cardno', 'LIKE', "%{$search}%")
                     ->orWhere('patient_type', 'LIKE', "%{$search}%")
-                    ->orWhere('phoneno', 'LIKE', "%{$search}%");
+                    ->orWhere('phoneno', 'LIKE', "%{$search}%")
+                    ->orWhere('patientno', 'LIKE', "%{$search}%");
             });
         }
 
         $query->orderBy('created_at', 'desc');
-        return $paginate ? $query->paginate($perPage) : $query->get();
+        return $paginate ? $query->paginate($perPage):$query->get();
     }
-
-
 
     public function getRecordStats()
     {
         //
-        $currentDate = Carbon::now();
+        $currentDate = Carbon::today();
         $registeredPatients = Patient::count();
         $admittedPatients = Admission::count();
         $totalPatientsVisitedToday = PatientVisit::whereDate('created_at', $currentDate)->count();
-        $totalFollowUp = Patient::where('status', 'follow up')->count();
+        //$totalFollowUp = Patient::where('status', 'follow up')->count();
 
         return [
             'totalRegisteredPatient' => $registeredPatients,
             'admittedPatients' => $admittedPatients,
             'totalPatientsVisitedToday' => $totalPatientsVisitedToday,
-            'numberOfFollowUp' => $totalFollowUp
+            //'numberOfFollowUp' => $totalFollowUp
         ];
     }
 }

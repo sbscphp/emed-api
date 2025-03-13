@@ -82,6 +82,8 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'Card Number already exists.', null, 422);
             }
 
+            $image = $request->image ? FileUploadHelper::singleStringFileUpload($request->image, 'Patient') : null;
+
             $tenant = Tenant::current(); //Retrieve the current tenant
             $tenantDomain = $tenant ? $tenant->domain : 'emed'; // Current tenant domain name
             $tenantAcronym = $this->generateAcronym($tenantDomain); //Acronym for the hospital name()
@@ -109,7 +111,8 @@ class RecordManagementController extends Controller
                 'cardno' => $request->cardno,
                 'patientno' => 'EMED/' . GeneralHelper::generateUniqueRandomId($request->firstname) . '/' . GeneralHelper::generateUniqueRandomId($request->lastname) . '/' . $tenantAcronym,
                 'recieptno' => $tenantAcronym . '-' . $request->receiptno,
-                'service_id' => $request->service_id
+                'service_id' => $request->service_id,
+                'image' => $image
             ];
 
             $patient = $this->patientService->create($data);
@@ -154,7 +157,8 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
 
-            if (!$user->hasRole(['admin'])) {
+            //Validate if user has permission to register new patient
+            if (!$this->userHasPermission($user)) {
                 return JsonResponser::send(true, 'Forbidden! User has no permission to register a patient', null, 403);
             }
 
@@ -214,7 +218,8 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
 
-            if (!$user->hasRole(['admin'])) {
+            //Validate if user has permission to register new patient
+            if (!$this->userHasPermission($user)) {
                 return JsonResponser::send(true, 'Forbidden! User has no permission to register a patient', null, 403);
             }
 
@@ -224,7 +229,7 @@ class RecordManagementController extends Controller
             }
 
             // Check if the patient already has a next of kin
-            $existingNextOfKin = $this->nextOfKinService->find($patient->id);
+            $existingNextOfKin = $this->nextOfKinService->findByAttribute('patient_id', $patient->id);
             if ($existingNextOfKin) {
                 return JsonResponser::send(true, 'Patient already has a next of kin.', null, 422);
             }
@@ -274,7 +279,8 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
 
-            if (!$user->hasRole(['admin'])) {
+            //Validate if user has permission to register new patient
+            if (!$this->userHasPermission($user)) {
                 return JsonResponser::send(true, 'Forbidden! User has no permission to register a patient', null, 403);
             }
 
@@ -327,7 +333,8 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
 
-            if (!$user->hasRole(['admin'])) {
+             //Validate if user has permission to register new patient
+             if (!$this->userHasPermission($user)) {
                 return JsonResponser::send(true, 'Forbidden! User has no permission to register a patient', null, 403);
             }
 
@@ -337,7 +344,7 @@ class RecordManagementController extends Controller
             }
 
             // Check if the patient already has a next of kin
-            $existingContact = $this->nextOfKinService->find($patient->id);
+            $existingContact = $this->emergencyContactService->findByAttribute('patient_id', $patient->id);
             if ($existingContact) {
                 return JsonResponser::send(true, 'Patient already has an emergency contact', null, 422);
             }
@@ -387,7 +394,8 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
 
-            if (!$user->hasRole(['admin'])) {
+            //Validate if user has permission to register new patient
+            if (!$this->userHasPermission($user)) {
                 return JsonResponser::send(true, 'Forbidden! User has no permission to register a patient', null, 403);
             }
 
@@ -490,7 +498,7 @@ class RecordManagementController extends Controller
             $visitData = [
                 'patient_id' => $patient->id,
                 'arrival_date' => now(),
-                'visitno' => 'VIS'.GeneralHelper::generateUniqueRandomId($patient->firstname),
+                'visitno' => 'VIS' . GeneralHelper::generateUniqueRandomId($patient->firstname),
                 'stage' => $request->stage,
                 'status' => PatientVisitStatusEnums::ONGOING,
             ];
