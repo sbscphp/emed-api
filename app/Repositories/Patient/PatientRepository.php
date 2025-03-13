@@ -85,6 +85,44 @@ class PatientRepository implements PatientInterface
         return Patient::where($attr, $value)->first();
     }
 
+<<<<<<< HEAD
+=======
+    public function findByMultiAttributes(array $attrs)
+    {
+        $record = Patient::query();
+
+        foreach ($attrs as $key => $value) {
+            if (is_string($key)) {
+                $record = $record->where($key, $value);
+            } elseif (is_array($value) && count($value) === 3) {
+                [$column, $operator, $conditionValue] = $value;
+                $record = $record->where($column, $operator, $conditionValue);
+            } elseif (is_array($value) && count($value) === 2) {
+                [$column, $conditionValue] = $value;
+                $record = $record->where($column, $conditionValue);
+            }
+        }
+
+        return $record->first();
+    }
+
+    public function findUserByFirstnameAndLastname($firstname, $lastname)
+    {
+        $patient = Patient::where('firstname', $firstname)->where('lastname', $lastname)->first();
+        return $patient;
+    }
+
+    public function findMultipleRecordsByMultiAttributes(array $attrs)
+    {
+        $record = Patient::query();
+
+        foreach ($attrs as $attr => $value) {
+            $record = $record->where($attr, $value);
+        }
+        return $record->get();
+    }
+
+>>>>>>> 211c927e653215534c466057f84828e8bcd16386
     public function getAllRecords($search, $paginate, $perPage)
     {
         $query = Patient::query();
@@ -95,29 +133,37 @@ class PatientRepository implements PatientInterface
                     ->orWhere('lastname', 'LIKE', "%{$search}%")
                     ->orWhere('cardno', 'LIKE', "%{$search}%")
                     ->orWhere('patient_type', 'LIKE', "%{$search}%")
+<<<<<<< HEAD
                     ->orWhere('phoneno', 'LIKE', "%{$search}%");
             });
         }
 
         return $paginate ? $query->paginate($perPage) : $query->get();
+=======
+                    ->orWhere('phoneno', 'LIKE', "%{$search}%")
+                    ->orWhere('patientno', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $query->orderBy('created_at', 'desc');
+        return $paginate ? $query->paginate($perPage):$query->get();
+>>>>>>> 211c927e653215534c466057f84828e8bcd16386
     }
-
-
 
     public function getRecordStats()
     {
         //
-        $currentDate = Carbon::now();
+        $currentDate = Carbon::today();
         $registeredPatients = Patient::count();
         $admittedPatients = Admission::count();
         $totalPatientsVisitedToday = PatientVisit::whereDate('created_at', $currentDate)->count();
-        $totalFollowUp = Patient::where('status', 'follow up')->count();
+        //$totalFollowUp = Patient::where('status', 'follow up')->count();
 
         return [
             'totalRegisteredPatient' => $registeredPatients,
             'admittedPatients' => $admittedPatients,
             'totalPatientsVisitedToday' => $totalPatientsVisitedToday,
-            'numberOfFollowUp' => $totalFollowUp
+            //'numberOfFollowUp' => $totalFollowUp
         ];
     }
 }

@@ -15,29 +15,41 @@ use App\Repositories\Admission\AdmissionInterface;
 use App\Repositories\Admission\AdmissionRepository;
 use App\Repositories\Appointment\AppointmentInterface;
 use App\Repositories\Appointment\AppointmentRepository;
+use App\Repositories\Consultation\ConsultationInterface;
+use App\Repositories\Consultation\ConsultationRepository;
 use App\Repositories\EmergencyContact\EmergencyContactInterface;
 use App\Repositories\EmergencyContact\EmergencyContactRepository;
+use App\Repositories\Laboratory\LaboratoryInterface;
+use App\Repositories\Laboratory\LaboratoryRepository;
 use App\Repositories\NextOfKin\NextOfKinInterface;
 use App\Repositories\NextOfKin\NextOfKinRepository;
 use App\Repositories\Patient\PatientInterface;
 use App\Repositories\Patient\PatientRepository;
 use App\Repositories\PatientVisit\PatientVisitInterface;
 use App\Repositories\PatientVisit\PatientVisitRepository;
+use App\Repositories\Radiology\RadiologyInterface;
+use App\Repositories\Radiology\RadiologyRepository;
 use App\Repositories\Registration\RegistrationInterface;
 use App\Repositories\Registration\RegistrationRepository;
 use App\Repositories\ServiceDepartment\ServiceDepartmentInterface;
 use App\Repositories\ServiceDepartment\ServiceDepartmentRepository;
+use App\Repositories\Treatment\TreatmentInterface;
+use App\Repositories\Treatment\TreatmentRepository;
 use App\Repositories\Triage\TriageInterface;
 use App\Repositories\Triage\TriageRepository;
 use App\Services\Admission\AdmissionService;
 use App\Services\Appointment\AppointmentService;
+use App\Services\Consultation\ConsultationService;
 use App\Services\EmergencyContact\EmergencyContactService;
+use App\Services\Laboratory\LaboratoryService;
 use App\Services\NextOfKin\NextOfKinService;
 use App\Services\Patient\PatientService;
 use App\Services\PatientVisit\PatientVisitService;
+use App\Services\Radiology\RadiologyService;
 use App\Services\Registration\RegistrationService;
 use App\Services\ServiceDepartment\ServiceDepartmentService;
 use App\Services\Triage\TriageService;
+use App\Services\Treatment\TreatmentService;
 use Laravel\Sanctum\PersonalAccessToken as SanctumPersonalAccessToken;
 use Laravel\Sanctum\Sanctum;
 
@@ -59,6 +71,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AppointmentInterface::class, AppointmentRepository::class);
         $this->app->bind(PatientVisitInterface::class, PatientVisitRepository::class);
         $this->app->bind(TriageInterface::class, TriageRepository::class);
+        $this->app->bind(ConsultationInterface::class, ConsultationRepository::class);
+        $this->app->bind(LaboratoryInterface::class, LaboratoryRepository::class);
+        $this->app->bind(RadiologyInterface::class, RadiologyRepository::class);
+        $this->app->bind(TreatmentInterface::class, TreatmentRepository::class);
 
 
         $this->app->bind(UserInformationService::class, function ($app) {
@@ -93,6 +109,18 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->bind(TriageService::class, function ($app) {
             return new TriageService($app->make(TriageInterface::class));
+        });
+        $this->app->bind(ConsultationService::class, function ($app) {
+            return new ConsultationService($app->make(ConsultationInterface::class));
+        });
+        $this->app->bind(LaboratoryService::class, function ($app) {
+            return new LaboratoryService($app->make(LaboratoryInterface::class));
+        });
+        $this->app->bind(RadiologyService::class, function ($app) {
+            return new RadiologyService($app->make(RadiologyInterface::class));
+        });
+        $this->app->bind(TreatmentService::class, function ($app) {
+            return new TreatmentService($app->make(TreatmentInterface::class));
         });
     }
 
