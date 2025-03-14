@@ -22,14 +22,14 @@ class ConsultationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'complaint' => 'required|string',
+            'complaints' => 'required|string',
             'complaint_history' => 'required|string',
             'review' => 'required|string',
             'diagnosis' => 'required|string',
             'allergy' => 'nullable|string',
             'disease_pattern' => 'nullable|string',
             'disease_type' => 'nullable|string',
-            'investigation' => 'nullable|in:laboratory,radiology,both',
+            'investigation' => 'nullable|string|in:laboratory,radiology,both',
             'follow_up' => 'nullable|integer',
             // 'followUp_date' => 'nullable|date',
             'referral' => 'nullable|boolean',

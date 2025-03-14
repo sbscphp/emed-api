@@ -3,6 +3,7 @@
 namespace App\Repositories\PatientVisit;
 
 use App\Models\PatientVisit;
+use Carbon\Carbon;
 
 class PatientVisitRepository implements PatientVisitInterface
 {
@@ -107,4 +108,26 @@ class PatientVisitRepository implements PatientVisitInterface
         return $record->first();
 
     }
+
+    public function getPatientForConsultationToday()
+    {
+        $query = PatientVisit::query();
+        $query->select(
+            'patient_id',
+            'visitno',
+            'arrival_date',
+            'stage',
+            'status'
+        );
+
+        $query->whereDate('arrival_date', now()->toDateString());
+        $query->where('stage', 'consultation');
+        $query->where('status', 'waiting');
+        $query->orderBy('created_at', 'asc');
+        $query->limit(10);
+
+        return $query->get();
+    }
+
+
 }
