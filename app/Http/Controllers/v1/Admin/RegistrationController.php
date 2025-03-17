@@ -136,17 +136,6 @@ class RegistrationController extends Controller
                 $adminTenantId  = DB::connection('tenant')->table('users')->insertGetId($adminData);
                 $adminTenant  = User::on('tenant')->find($adminTenantId);
 
-                // User::on('landlord')->create([
-                //     'id' => $adminTenant->id,
-                //     'uuid' => $adminTenant->uuid,
-                //     'fullname' => $adminTenant->fullname,
-                //     'role' => $adminTenant->role,
-                //     'phone_number' => $adminTenant->phone_number,
-                //     'email' => $adminTenant->email,
-                //     'password' => $adminTenant->password,
-                //     'tenant_id' => $tenant->id,
-                //     'remember_token' => $adminTenant->remember_token,
-                // ]);
 
                 $adminTenant->addRole($adminRole);
                 $adminTenant->permissions()->sync($adminRole->permissions);
@@ -328,6 +317,24 @@ class RegistrationController extends Controller
                 );
             }
 
+            $tenant = DB::connection('landlord')->table('tenants')
+                ->where('id', $landlordUser->tenant_id)
+                ->first();
+
+            if (!$tenant) {
+                return JsonResponser::send(
+                    false,
+                    'Tenant not found in landlord database.',
+                    null,
+                    404
+                );
+            }
+
+            config(['database.connections.tenant.database' => $tenant->database]);
+
+            DB::purge('tenant');
+            DB::reconnect('tenant');
+
             $tenantUser = User::on('tenant')->where('email', $landlordUser->email)->first();
 
             if (!$tenantUser) {
@@ -339,7 +346,6 @@ class RegistrationController extends Controller
                 );
             }
 
-            // Update both landlord and tenant users
             $updateData = [
                 'is_verified' => true,
                 'email_verified_at' => now(),
