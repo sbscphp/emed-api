@@ -3,6 +3,7 @@
 namespace App\Repositories\Patient;
 
 use App\Models\Admission;
+use App\Models\Appointment;
 use App\Models\Patient;
 use App\Models\PatientVisit;
 use Carbon\Carbon;
@@ -147,13 +148,13 @@ class PatientRepository implements PatientInterface
         $registeredPatients = Patient::count();
         $admittedPatients = Admission::count();
         $totalPatientsVisitedToday = PatientVisit::whereDate('created_at', $currentDate)->count();
-        //$totalFollowUp = Patient::where('status', 'follow up')->count();
+        $totalFollowUp = Appointment::count();
 
         return [
             'totalRegisteredPatient' => $registeredPatients,
             'admittedPatients' => $admittedPatients,
             'totalPatientsVisitedToday' => $totalPatientsVisitedToday,
-            //'numberOfFollowUp' => $totalFollowUp
+            'numberOfFollowUp' => $totalFollowUp
         ];
     }
 }

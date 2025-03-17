@@ -65,6 +65,7 @@ class RecordManagementController extends Controller
             if (is_null($user)) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
+
             //Validate if user has permission to register new patient
             if (!$this->userHasPermission($user)) {
                 return JsonResponser::send(true, 'Forbidden! User has no permission to register a patient', null, 403);
@@ -112,21 +113,11 @@ class RecordManagementController extends Controller
                 'patientno' => 'EMED/' . GeneralHelper::generateUniqueRandomId($request->firstname) . '/' . GeneralHelper::generateUniqueRandomId($request->lastname) . '/' . $tenantAcronym,
                 'recieptno' => $tenantAcronym . '-' . $request->receiptno,
                 'service_id' => $request->service_id,
-                'image' => $image
+                'image' => $image,
+                'status' => $request->status
             ];
 
             $patient = $this->patientService->create($data);
-
-            if ($patient) {
-                $data = [
-                    'patient_id' => $patient->id,
-                    'visitno' => 'VIS' . GeneralHelper::generateUniqueRandomId($request->firstname),
-                    'stage' => PatientVisitStageEnums::TRIAGE,
-                    'status' => PatientVisitStatusEnums::ONGOING,
-                    'arrival_date' => now(),
-                ];
-                $patientVisit = $this->patientVisitService->create($data);
-            }
 
             $dataToLog = [
                 'causer_id' => $user->id,
@@ -139,7 +130,7 @@ class RecordManagementController extends Controller
 
             GeneralHelper::storeAuditLog($dataToLog);
             DB::connection('tenant')->commit();
-            return JsonResponser::send(false, 'Patient details created successfully', ['patient' => $patient, 'patientVisit' => $patientVisit], 201);
+            return JsonResponser::send(false, 'Patient details created successfully', ['patient' => $patient], 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Internal server error', [], 500, $th);
@@ -364,6 +355,21 @@ class RecordManagementController extends Controller
 
             $emergencyContact = $this->emergencyContactService->create($data);
 
+            if($emergencyContact && $request->status === 'complete'){
+
+                $data = [
+                    'patient_id' => $patient->id,
+                    'visitno' => 'VIS' . GeneralHelper::generateUniqueRandomId($request->firstname),
+                    'stage' => PatientVisitStageEnums::TRIAGE,
+                    'status' => PatientVisitStatusEnums::ONGOING,
+                    'arrival_date' => now(),
+                ];
+                $patientVisit = $this->patientVisitService->create($data);
+
+                $patient->update(['status'=> $request->status]); //Update the status of the patient to complete
+
+            }
+
             $dataToLog = [
                 'causer_id' => $user->id,
                 'action_id' => $emergencyContact->id,
@@ -375,7 +381,7 @@ class RecordManagementController extends Controller
 
             GeneralHelper::storeAuditLog($dataToLog);
             DB::connection('tenant')->commit();
-            return JsonResponser::send(false, 'Emergency contact created successfully', $emergencyContact, 201);
+            return JsonResponser::send(false, 'Emergency contact created successfully', ['emergencyContact'=>$emergencyContact, 'patientVisit'=>$patientVisit], 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Internal server error', [], 500, $th);
@@ -481,9 +487,9 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'Record not found.', null, 404);
             }
 
-            // if ($patient->status === 'draft') {
-            //     return JsonResponser::send(true, 'Action forbidden. Registeration not complete', null, 403);
-            // }
+            if ($patient->status === 'draft') {
+                return JsonResponser::send(true, 'Action forbidden. Registeration not complete', null, 403);
+            }
 
             // Check if the patient already has a visit today
             $existingVisit = $this->patientVisitService->findByMultiAttributes([
@@ -588,6 +594,6 @@ class RecordManagementController extends Controller
 
     private function userHasPermission($user)
     {
-        return $user->hasRole(['admin']) && $user->is_active && $user->is_verified && $user->tenant_id !== null;
+        return $user->role === 'Admin' && $user->is_active && $user->is_verified && $user->tenant_id !== null;
     }
 }

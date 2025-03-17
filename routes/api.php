@@ -69,10 +69,16 @@ Route::group(["prefix" => "v1"], function () {
                 //Consultant routes
                 Route::group(['prefix' => 'consultant'], function () {
                     Route::get('/patients', [ConsultationController::class, 'patientsForConsultation']);
-                    Route::post('/patient/{id}', [ConsultationController::class, 'storeConsultationInfo']);
-                    Route::post('/patient/{id}/lab', [ConsultationController::class, 'storeLabInfo']);
-                    Route::post('/patient/{id}/radiology', [ConsultationController::class, 'storeRadiologyInfo']);
-                    Route::post('/patient/{id}/treatment', [ConsultationController::class, 'storeTreatmentInfo']);
+                    Route::get('/patient/{visitNo}', [ConsultationController::class, 'show']);
+                    Route::post('/patient/{visitNo}/store', [ConsultationController::class, 'storeConsultationInfo']);
+                    Route::post('/patient/{visitNo}/lab', [ConsultationController::class, 'storeLabInfo']);
+                    Route::post('/patient/{visitNo}/radiology', [ConsultationController::class, 'storeRadiologyInfo']);
+                    Route::post('/patient/{visitNo}/treatment', [ConsultationController::class, 'storeTreatmentInfo']);
+                    Route::post('/patient/medical/{patientId}', [ConsultationController::class, 'storeMedicalHistory']);
+                    Route::post('/patient/family/{patientId}', [ConsultationController::class, 'storeFamilyHistory']);
+                    Route::post('/patient/social/{patientId}', [ConsultationController::class, 'storeSocialHistory']);
+                    Route::post('/patient/drug/{patientId}', [ConsultationController::class, 'storeDrugHistory']);
+
                 });
 
                 Route::prefix('pharmacy')->group(function () {

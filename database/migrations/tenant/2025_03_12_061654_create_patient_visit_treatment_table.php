@@ -17,8 +17,8 @@ return new class extends Migration
             $table->unsignedBigInteger('admin_id')->nullable();
             $table->unsignedBigInteger('consultation_id')->nullable();
             $table->string('visitno');
-            $table->string('lab_dept')->nullable();
-            $table->string('test_name')->nullable();
+            $table->string('drug')->nullable();
+            $table->string('qualifier')->nullable();
             $table->string('medication')->nullable();
             $table->string('dosage')->nullable();
             $table->string('weight')->nullable();
