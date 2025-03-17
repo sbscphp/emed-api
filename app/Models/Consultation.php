@@ -8,12 +8,12 @@ class Consultation extends Model
 {
     protected $guarded = ['id'];
     protected $connection = 'tenant';
-    protected $table = 'patient_visit_consultations';
+    protected $table = 'patient_visit_consultation';
     protected $fillable = [
         'patient_id',
         'admin_id',
         'visitno',
-        'complaints',
+        'complaint',
         'complaint_history',
         'review',
         'diagnosis',

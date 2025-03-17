@@ -97,4 +97,12 @@ class ConsultationService
     public function getPatients(){
         return $this->ConsultationInterface->getPatients();
     }
+
+    public function findByVisitNoLabOrBoth($visitno){
+        return $this->ConsultationInterface->findByVisitNoLabOrBoth($visitno);
+    }
+
+    public function findByVisitNoRadiologyOrBoth($visitno){
+        return $this->ConsultationInterface->findByVisitNoRadiologyOrBoth($visitno);
+    }
 }

@@ -85,8 +85,6 @@ class PatientRepository implements PatientInterface
         return Patient::where($attr, $value)->first();
     }
 
-<<<<<<< HEAD
-=======
     public function findByMultiAttributes(array $attrs)
     {
         $record = Patient::query();
@@ -122,7 +120,6 @@ class PatientRepository implements PatientInterface
         return $record->get();
     }
 
->>>>>>> 211c927e653215534c466057f84828e8bcd16386
     public function getAllRecords($search, $paginate, $perPage)
     {
         $query = Patient::query();
@@ -133,21 +130,14 @@ class PatientRepository implements PatientInterface
                     ->orWhere('lastname', 'LIKE', "%{$search}%")
                     ->orWhere('cardno', 'LIKE', "%{$search}%")
                     ->orWhere('patient_type', 'LIKE', "%{$search}%")
-<<<<<<< HEAD
-                    ->orWhere('phoneno', 'LIKE', "%{$search}%");
-            });
-        }
 
-        return $paginate ? $query->paginate($perPage) : $query->get();
-=======
-                    ->orWhere('phoneno', 'LIKE', "%{$search}%")
-                    ->orWhere('patientno', 'LIKE', "%{$search}%");
+                    ->orWhere('phoneno', 'LIKE', "%{$search}%");
             });
         }
 
         $query->orderBy('created_at', 'desc');
         return $paginate ? $query->paginate($perPage):$query->get();
->>>>>>> 211c927e653215534c466057f84828e8bcd16386
+
     }
 
     public function getRecordStats()

@@ -99,4 +99,9 @@ class PatientVisitService
         return $this->PatientVisitInterface->findByMultiAttributes($attrs);
     }
 
+    public function getPatientForConsultationToday()
+    {
+        return $this->PatientVisitInterface->getPatientForConsultationToday();
+    }
+
 }

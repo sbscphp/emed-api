@@ -104,4 +104,24 @@ class ConsultationRepository implements ConsultationInterface
 
         return $query->get();
     }
+
+    public function findByVisitNoLabOrBoth($visitno)
+    {
+        $consultation  = Consultation::where('visit',$visitno)
+                        ->where('investigation','laboratory')
+                        ->orWhere('investigation','both')
+                        ->first();
+
+        return $consultation;
+    }
+
+    public function findByVisitNoRadiologyOrBoth($visitno)
+    {
+        $consultation  = Consultation::where('visit',$visitno)
+                        ->where('investigation','radiology')
+                        ->orWhere('investigation','both')
+                        ->first();
+
+        return $consultation;
+    }
 }
