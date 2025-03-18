@@ -33,6 +33,16 @@ class Consultation extends Model
         return $this->belongsTo(Patient::class);
     }
 
+    public function lab()
+    {
+        return $this->hasMany(Laboratory::class);
+    }
+
+    public function treatment()
+    {
+        return $this->hasMany(Treatment::class);
+    }
+
     // public function patientVisit()
     // {
     //     return $this->belongsTo(PatientVisit::class, 'visitno');

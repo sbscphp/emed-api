@@ -24,4 +24,9 @@ class Laboratory extends Model
     {
         return $this->belongsTo(Patient::class);
     }
+
+    public function consultation()
+    {
+        return $this->belongsTo(Consultation::class);
+    }
 }
