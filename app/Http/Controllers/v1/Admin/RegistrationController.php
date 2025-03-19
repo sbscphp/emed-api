@@ -189,173 +189,6 @@ class RegistrationController extends Controller
     // }
 
     //manually create a tenant database
-    // public function onboardTenant(TenantOnboardingRequest $request)
-    // {
-    //     try {
-    //         DB::connection('landlord')->beginTransaction();
-
-    //         $data = $request->validated();
-    //         $adminRole = Role::where('name', 'admin')->first();
-    //         $registrationData = [
-    //             'name' => $data['name'],
-    //             'state_city' => $data['state_city'],
-    //             'registration_number' => $data['registration_number'],
-    //             'email' => $data['email'],
-    //             'phone_number' => $data['phone_number'],
-    //             'address' => $data['address'],
-    //         ];
-
-    //         if ($request->hasFile('license')) {
-    //             $registrationData['license'] = FileUploadHelper::singleBinaryFileUpload(
-    //                 $request->file('license'),
-    //                 'License'
-    //             );
-    //         }
-
-    //         $registration = Registration::create($registrationData);
-
-    //         $existingTenant = Tenant::where('domain', Str::slug($data['name'], '-') . '.emed.com')->first();
-    //         if ($existingTenant) {
-    //             DB::connection('landlord')->rollBack();
-    //             return JsonResponser::send(false, "Tenant {$data['name']} already exists.", [], 409);
-    //         }
-
-    //         $tenant = Tenant::create([
-    //             'name' => $data['name'],
-    //             'domain' => Str::slug($data['name'], '-') . '.emed.com',
-    //             'database' => 'jkpmjemy_emed_' . Str::slug($data['name'], '') . '' . Str::random(4),
-    //         ]);
-    //         DB::connection('landlord')->commit();
-
-    //         try {
-    //             // Check if the database exists (since we cannot create it)
-    //             $dbExists = DB::select("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?", [$tenant->database]);
-
-    //             if (!$dbExists) {
-    //                 return JsonResponser::send(
-    //                     false,
-    //                     "Database {$tenant->database} does not exist. Please create it manually in cPanel before onboarding this tenant.",
-    //                     null,
-    //                     500
-    //                 );
-    //             }
-
-    //             $tenant->makeCurrent();
-    //             config(['database.connections.tenant.database' => $tenant->database]);
-    //             DB::purge('tenant');
-    //             DB::reconnect('tenant');
-
-    //             Artisan::call('migrate', [
-    //                 '--database' => 'tenant',
-    //                 '--path' => 'database/migrations/tenant',
-    //                 '--force' => true,
-    //             ]);
-
-    //             // Seed the roles table
-    //             Artisan::call('db:seed', [
-    //                 '--database' => 'tenant',
-    //                 '--class' => 'RolePermissionSeeder',
-    //                 '--force' => true,
-    //             ]);
-
-    //             Artisan::call('db:seed', [
-    //                 '--database' => 'tenant',
-    //                 '--class' => 'ServicesTableSeeder',
-    //                 '--force' => true,
-    //             ]);
-
-    //             Artisan::call('db:seed', [
-    //                 '--database' => 'tenant',
-    //                 '--class' => 'StateSeeder',
-    //                 '--force' => true,
-    //             ]);
-    //             DB::connection('tenant')->table('tenants')->insert([
-    //                 'id' => $tenant->id,
-    //                 'name' => $tenant->name,
-    //                 'domain' => $tenant->domain,
-    //                 'database' => $tenant->database,
-    //                 'created_at' => now(),
-    //                 'updated_at' => now(),
-    //             ]);
-
-    //             $adminLandlord = User::on('landlord')->create([
-    //                 'uuid' => Str::uuid(),
-    //                 'fullname' => $data['admin_fullname'],
-    //                 'role' => $data['admin_role'],
-    //                 'phone_number' => $data['admin_phone_number'],
-    //                 'email' => $data['admin_email'],
-    //                 'password' => $data['admin_password'],
-    //                 'tenant_id' => $tenant->id,
-    //                 'remember_token' => Str::random(60),
-    //             ]);
-
-    //             $adminData = [
-    //                 'id' => $adminLandlord->id,
-    //                 'uuid' => $adminLandlord->uuid,
-    //                 'fullname' => $adminLandlord->fullname,
-    //                 'role' => $adminLandlord->role,
-    //                 'phone_number' => $adminLandlord->phone_number,
-    //                 'email' => $adminLandlord->email,
-    //                 'password' => $adminLandlord->password,
-    //                 'tenant_id' => $tenant->id,
-    //                 'remember_token' => $adminLandlord->remember_token,
-    //             ];
-
-    //             $adminTenantId  = DB::connection('tenant')->table('users')->insertGetId($adminData);
-    //             $adminTenant  = User::on('tenant')->find($adminTenantId);
-
-
-    //             $adminTenant->addRole($adminRole);
-    //             $adminTenant->permissions()->sync($adminRole->permissions);
-    //             $verificationCode = $adminTenant->remember_token;
-    //             $verificationUrl = url('/verify-email/' . $verificationCode . '?email=' . urlencode($data['admin_email']));
-
-    //             $adminTenant->remember_token = $verificationCode;
-    //             $adminTenant->save();
-    //             Mail::to($adminTenant->email)->send(new TenantEmailVerification($verificationUrl, [
-    //                 'firstname' => $data['admin_fullname'],
-    //                 'email' => $data['admin_email'],
-    //                 'verification_code' => $verificationCode,
-    //             ]));
-
-    //             $dataToLog = [
-    //                 'causer_id' => $adminTenant->id,
-    //                 'action_id' => $adminTenant->id,
-    //                 'action_type' => "App\Models\User",
-    //                 'log_name' => "Tenant Created Successfully",
-    //                 'description' => "{$adminTenant['fullname']} added successfully",
-    //             ];
-    //             GeneralHelper::storeAuditLog($dataToLog);
-
-    //             return JsonResponser::send(
-    //                 true,
-    //                 'Tenant onboarding completed successfully. Please check your email to verify your account.',
-    //                 [
-    //                     'tenant' => $tenant,
-    //                     'registration' => $registration,
-    //                     'admin' => $adminTenant,
-    //                 ],
-    //                 200
-    //             );
-    //         } catch (\Exception $e) {
-    //             DB::statement("DROP DATABASE IF EXISTS {$tenant->database}");
-    //             return JsonResponser::send(
-    //                 false,
-    //                 'An error occurred during tenant database: ' . $e->getMessage(),
-    //                 null,
-    //                 500
-    //             );
-    //         }
-    //     } catch (\Exception $e) {
-    //         DB::connection('landlord')->rollBack();
-    //         return JsonResponser::send(
-    //             false,
-    //             'An error occurred during tenant onboarding: ' . $e->getMessage(),
-    //             null,
-    //             500
-    //         );
-    //     }
-    // }
     public function onboardTenant(TenantOnboardingRequest $request)
     {
         try {
@@ -418,43 +251,79 @@ class RegistrationController extends Controller
                     '--force' => true,
                 ]);
 
+                // Seed the roles table
+                Artisan::call('db:seed', [
+                    '--database' => 'tenant',
+                    '--class' => 'RolePermissionSeeder',
+                    '--force' => true,
+                ]);
+
                 Artisan::call('db:seed', [
                     '--database' => 'tenant',
                     '--class' => 'ServicesTableSeeder',
                     '--force' => true,
                 ]);
 
-                $adminData = [
+                Artisan::call('db:seed', [
+                    '--database' => 'tenant',
+                    '--class' => 'StateSeeder',
+                    '--force' => true,
+                ]);
+                DB::connection('tenant')->table('tenants')->insert([
+                    'id' => $tenant->id,
+                    'name' => $tenant->name,
+                    'domain' => $tenant->domain,
+                    'database' => $tenant->database,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                $adminLandlord = User::on('landlord')->create([
                     'uuid' => Str::uuid(),
                     'fullname' => $data['admin_fullname'],
                     'role' => $data['admin_role'],
                     'phone_number' => $data['admin_phone_number'],
                     'email' => $data['admin_email'],
                     'password' => $data['admin_password'],
-                    'remember_token' => Str::random(60),
                     'tenant_id' => $tenant->id,
+                    'remember_token' => Str::random(60),
+                ]);
+
+                $adminData = [
+                    'id' => $adminLandlord->id,
+                    'uuid' => $adminLandlord->uuid,
+                    'fullname' => $adminLandlord->fullname,
+                    'role' => $adminLandlord->role,
+                    'phone_number' => $adminLandlord->phone_number,
+                    'email' => $adminLandlord->email,
+                    'password' => $adminLandlord->password,
+                    'tenant_id' => $tenant->id,
+                    'remember_token' => $adminLandlord->remember_token,
                 ];
 
-                $admin = $this->registrationService->saveAdminDetails($adminData, $tenant->id);
-                $admin->addRole($adminRole);
-                $admin->permissions()->sync($adminRole->permissions);
-                $verificationCode = Str::random(40);
+                $adminTenantId  = DB::connection('tenant')->table('users')->insertGetId($adminData);
+                $adminTenant  = User::on('tenant')->find($adminTenantId);
+
+
+                $adminTenant->addRole($adminRole);
+                $adminTenant->permissions()->sync($adminRole->permissions);
+                $verificationCode = $adminTenant->remember_token;
                 $verificationUrl = url('/verify-email/' . $verificationCode . '?email=' . urlencode($data['admin_email']));
 
-                $admin->remember_token = $verificationCode;
-                $admin->save();
-                Mail::to($admin->email)->send(new TenantEmailVerification($verificationUrl, [
+                $adminTenant->remember_token = $verificationCode;
+                $adminTenant->save();
+                Mail::to($adminTenant->email)->send(new TenantEmailVerification($verificationUrl, [
                     'firstname' => $data['admin_fullname'],
                     'email' => $data['admin_email'],
                     'verification_code' => $verificationCode,
                 ]));
 
                 $dataToLog = [
-                    'causer_id' => $admin->id,
-                    'action_id' => $admin->id,
+                    'causer_id' => $adminTenant->id,
+                    'action_id' => $adminTenant->id,
                     'action_type' => "App\Models\User",
                     'log_name' => "Tenant Created Successfully",
-                    'description' => "{$admin['fullname']} added successfully",
+                    'description' => "{$adminTenant['fullname']} added successfully",
                 ];
                 GeneralHelper::storeAuditLog($dataToLog);
 
@@ -464,14 +333,15 @@ class RegistrationController extends Controller
                     [
                         'tenant' => $tenant,
                         'registration' => $registration,
-                        'admin' => $admin,
+                        'admin' => $adminTenant,
                     ],
                     200
                 );
             } catch (\Exception $e) {
+                DB::statement("DROP DATABASE IF EXISTS {$tenant->database}");
                 return JsonResponser::send(
                     false,
-                    'An error occurred during tenant database setup. Please contact support.',
+                    'An error occurred during tenant database: ' . $e->getMessage(),
                     null,
                     500
                 );
