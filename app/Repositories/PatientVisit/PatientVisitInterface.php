@@ -67,5 +67,7 @@ interface PatientVisitInterface
     public function findByMultiAttributes(array $attrs);
 
     public function getPatientForConsultationToday();
+    public function getPatientVisits($patientId);
+    public function getPatientPreviousVisits($patientId, $visitNo);
 
 }

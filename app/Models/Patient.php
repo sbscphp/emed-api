@@ -71,4 +71,28 @@ class Patient extends Model
         return $this->hasMany(Consultation::class);
     }
 
+    public function triage()
+    {
+        return $this->hasOne(Triage::class);
+    }
+
+    public function medicalHistory()
+    {
+        return $this->hasMany(MedicalHistory::class);
+    }
+
+    public function familyHistory()
+    {
+        return $this->hasMany(FamilyHistory::class);
+    }
+
+    public function socialHistory()
+    {
+        return $this->hasMany(SocialHistory::class);
+    }
+
+    public function drugHistory()
+    {
+        return $this->hasMany(DrugHistory::class);
+    }
 }

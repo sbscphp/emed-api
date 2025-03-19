@@ -104,4 +104,12 @@ class PatientVisitService
         return $this->PatientVisitInterface->getPatientForConsultationToday();
     }
 
+    public function getPatientVisits($patientId){
+        return $this->PatientVisitInterface->getPatientVisits($patientId);
+    }
+
+    public function getPatientPreviousVisits($patientId, $visitNo){
+        return $this->PatientVisitInterface->getPatientPreviousVisits($patientId, $visitNo);
+    }
+
 }
