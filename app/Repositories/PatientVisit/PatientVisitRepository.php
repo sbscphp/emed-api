@@ -129,5 +129,24 @@ class PatientVisitRepository implements PatientVisitInterface
         return $query->get();
     }
 
+    public function getPatientVisits($patientId){
+        $patientVisits = PatientVisit::where('patient_id',$patientId)
+                        ->orderBy('arrival_date','desc')
+                        ->get();
+
+        return $patientVisits;
+    }
+
+
+    public function getPatientPreviousVisits($patientId, $visitNo){
+        $patientPreviousVisits = PatientVisit::where('patient_id',$patientId)
+                        ->where('visitno', '!==', $visitNo)
+                        ->orderBy('arrival_date','desc')
+                        ->take(4)
+                        ->get();
+
+        return $patientPreviousVisits;
+    }
+
 
 }
