@@ -44,6 +44,10 @@ class TriageService
         return $this->TriageInterface->create($data);
     }
 
+    public function updateOrCreate(array $conditions, array $data)
+    {
+        return $this->TriageInterface->updateOrCreate($conditions, $data);
+    }
 
     /**
      * Update an existing Triage with the provided data.

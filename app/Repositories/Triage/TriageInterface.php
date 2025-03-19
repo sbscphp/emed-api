@@ -37,6 +37,7 @@ interface TriageInterface
      */
     public function update(array $data, $id);
 
+    public function updateOrCreate(array $conditions, array $data);
 
     /**
      * Delete an existing Triage from the database.

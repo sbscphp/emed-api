@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\v1\Admin\ConsultationController;
+use App\Http\Controllers\v1\Admin\PharmacyController;
 use App\Http\Controllers\v1\Admin\RecordManagementController;
 use App\Http\Controllers\v1\Admin\RegistrationController;
 use App\Http\Controllers\v1\Admin\TriageController;
@@ -60,8 +62,27 @@ Route::group(["prefix" => "v1"], function () {
 
                 Route::group(['prefix' => 'nurse'], function () {
                     Route::post('/triage/{patientId}', [TriageController::class, 'store']);
+                    Route::get('/single-triage/{patientId}', [TriageController::class, 'show']);
                     Route::get('/all-records', [TriageController::class, 'getPatientsByService']);
-                    Route::get('/patient-statistics', [TriageController::class, 'getPatientStatistics']);
+                    Route::get('/patient-statistics/{serviceId}', [TriageController::class, 'getPatientStatistics']);
+                });
+
+                //Consultant routes
+                Route::group(['prefix' => 'consultant'], function () {
+                    Route::get('/patients', [ConsultationController::class, 'patientsForConsultation']);
+                    Route::post('/patient/{id}', [ConsultationController::class, 'storeConsultationInfo']);
+                    Route::post('/patient/{id}/lab', [ConsultationController::class, 'storeLabInfo']);
+                    Route::post('/patient/{id}/radiology', [ConsultationController::class, 'storeRadiologyInfo']);
+                    Route::post('/patient/{id}/treatment', [ConsultationController::class, 'storeTreatmentInfo']);
+                });
+
+                Route::prefix('pharmacy')->group(function () {
+                    Route::post('/create', [PharmacyController::class, 'store']);
+                    Route::get('/lists', [PharmacyController::class, 'index']);
+                    Route::get('/list/{id}', [PharmacyController::class, 'show']);
+                    Route::put('/update/{id}', [PharmacyController::class, 'update']);
+                    Route::delete('/delete/{id}', [PharmacyController::class, 'destroy']);
+                    Route::patch('/{id}/toggle-status', [PharmacyController::class, 'toggleStatus']);
                 });
             });
         });
