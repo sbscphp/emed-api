@@ -106,7 +106,7 @@ class ConsultationController extends Controller
                     'patient.medicalHistory',
                     'patient.familyHistory',
                     'patient.socialHistory',
-                    'patient.drugHistory'
+                    'patient.drugHistory',
                 ]
             );
             $previousVisits = $this->patientVisitService->getPatientPreviousVisits($patientVisit->patient_id, $visitNo);
