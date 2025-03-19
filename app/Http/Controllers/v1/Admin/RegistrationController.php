@@ -83,6 +83,7 @@ class RegistrationController extends Controller
     //                 '--force' => true,
     //             ]);
 
+    //             // Seed the roles table
     //             Artisan::call('db:seed', [
     //                 '--database' => 'tenant',
     //                 '--class' => 'RolePermissionSeeder',
@@ -422,7 +423,7 @@ class RegistrationController extends Controller
     //     }
     // }
 
-    //LOGIN THROUGH INDIVIDUAL TENANT DB 
+    //LOGIN THROUGH INDIVIDUAL TENANT DB
     public function adminLogin(AdminLoginRequest $request)
     {
         try {
