@@ -62,8 +62,9 @@ Route::group(["prefix" => "v1"], function () {
 
                 Route::group(['prefix' => 'nurse'], function () {
                     Route::post('/triage/{patientId}', [TriageController::class, 'store']);
+                    Route::get('/single-triage/{patientId}', [TriageController::class, 'show']);
                     Route::get('/all-records', [TriageController::class, 'getPatientsByService']);
-                    Route::get('/patient-statistics', [TriageController::class, 'getPatientStatistics']);
+                    Route::get('/patient-statistics/{serviceId}', [TriageController::class, 'getPatientStatistics']);
                 });
 
                 //Consultant routes

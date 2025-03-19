@@ -28,6 +28,10 @@ class TriageRepository implements TriageInterface
         return Triage::create($data);
     }
 
+    public function updateOrCreate(array $conditions, array $data)
+    {
+        return Triage::updateOrCreate($conditions, $data);
+    }
 
     /**
      * Update an existing Triage in the database.

@@ -25,7 +25,15 @@ class PharmacyRequest extends FormRequest
             'name' => 'required|string|max:255',
             'type' => 'nullable|string',
             'address' => 'nullable|string',
-            'state_id' => 'nullable|integer|exists:states,id',
+            'state_id' => 'required|exists:tenant.states,id',
+            'phone_number' => 'nullable|string|max:20',
+            'opening_time' => 'required|date_format:H:i',
+            'closing_time' => 'required|date_format:H:i|after:opening_time',
+            'assigned_pharmacist' => 'nullable|exists:users,id',
+            'license_number' => 'nullable|string|max:255',
+            'email_address' => 'nullable|email|max:255|unique:tenant.pharmacies,email_address',
+            'pharmacy_id' => 'required|string|unique:tenant.pharmacies,pharmacy_id',
+
             'active' => 'boolean',
         ];
     }

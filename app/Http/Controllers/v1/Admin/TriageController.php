@@ -31,7 +31,7 @@ class TriageController extends Controller
         DB::connection('tenant')->beginTransaction();
 
         try {
-            $visit = PatientVisit::where('patient_id', $patientId)->where('status', 'new')->first();
+            $visit = PatientVisit::where('patient_id', $patientId)->first();
             if (!$visit) {
                 return JsonResponser::send(true, 'Patient not found or visit not yet initiated.', null, 404);
             }
@@ -39,13 +39,8 @@ class TriageController extends Controller
             $currentUser = Auth::user();
             $user = $this->userService->find($currentUser->id);
 
-            if (!$user->hasRole(['admin'])) {
-                return JsonResponser::send(true, 'Forbidden! User has no permission to initialize Triage', null, 403);
-            }
-
-            $existingTriage = $this->triageService->find($patientId);
-            if ($existingTriage) {
-                return JsonResponser::send(true, 'Patient has already been triaged.', null, 409);
+            if (!in_array($user->role, ['Super Admin', 'Admin'])) {
+                return JsonResponser::send(false, 'Forbidden! User has no permission to register a patient', [], 403);
             }
 
             $validated = array_merge($request->validated(), [
@@ -53,18 +48,18 @@ class TriageController extends Controller
                 'user_id' => $currentUser->id,
             ]);
 
-            $triage = $this->triageService->create($validated);
+            $triage = $this->triageService->updateOrCreate(['patient_id' => $patientId], $validated);
 
-            $visit->update(['status' => 'triaged']);
-            Patient::where('id', $patientId)->update(['status' => 'triaged']);
-
+            $visit->update(['stage' => 'consultation']);
+            Patient::where('patient_type', 'new')->update(['patient_type' => 'existing']);
+            // Log activity
             $dataToLog = [
                 'causer_id' => $user->id,
                 'action_id' => $patientId,
-                'action' => 'Create',
+                'action' => 'Create/Update',
                 'action_type' => "Models\Patient",
-                'log_name' => "Triage created successfully",
-                'description' => "{$user->firstname} {$user->lastname} recorded triage details successfully",
+                'log_name' => "Triage recorded successfully",
+                'description' => "{$user->firstname} {$user->lastname} recorded or updated triage details successfully",
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -76,7 +71,6 @@ class TriageController extends Controller
             return JsonResponser::send(true, 'Internal server error', [], 500, $e);
         }
     }
-
 
     public function show($patientId)
     {
@@ -93,20 +87,19 @@ class TriageController extends Controller
                 return JsonResponser::send(true, 'Service ID is required.', null, 400);
             }
 
-            $patients = PatientVisit::join('patients', 'visits.patient_id', '=', 'patients.id')
+            $patients = PatientVisit::join('patients', 'patient_visits.patient_id', '=', 'patients.id')
                 ->join('services', 'patients.service_id', '=', 'services.id')
-                ->leftJoin('triages', 'visits.patient_id', '=', 'triages.patient_id')
-                ->whereIn('patients.status', ['visit initiated', 'triaged'])
+                ->leftJoin('triages', 'patient_visits.patient_id', '=', 'triages.patient_id')
                 ->where('services.id', $serviceId)
                 ->select(
-                    'visits.id as id',
+                    'patient_visits.id as id',
                     'patients.*',
                     'services.id as service_id',
                     'services.name as service_name',
-                    'visits.created_at as visit_date',
+                    'patient_visits.created_at as visit_date',
                     DB::raw('COALESCE(triages.severity, 0) as acuity')
                 )
-                ->orderBy('visits.created_at', 'desc')
+                ->orderBy('patient_visits.created_at', 'desc')
                 ->paginate(10);
 
             if ($patients->isEmpty()) {
@@ -119,20 +112,46 @@ class TriageController extends Controller
         }
     }
 
-
-    public function getPatientStatistics()
+    public function getPatientStatistics($serviceId)
     {
         $today = now()->toDateString();
 
         $stats = [
-            'awaiting_triage' => Patient::where('status', 'new')->count(),
-            'awaiting_consultation' => Patient::where('status', 'triaged')->count(),
-            'admitted_today' => Patient::where('status', 'admitted')
-                ->whereDate('created_at', $today)
+            'awaiting_triage' => PatientVisit::where('stage', 'triage')
+                ->whereHas('patient', function ($query) use ($serviceId) {
+                    $query->where('service_id', $serviceId);
+                })
                 ->count(),
-            'discharged' => Patient::where('status', 'discharged')->count(),
-            'completed_surgery' => Patient::where('status', 'completed_surgery')->count(),
-            'cancelled_or_postponed' => Patient::whereIn('status', ['cancelled', 'postponed'])->count(),
+
+            'awaiting_consultation' => PatientVisit::where('stage', 'consultation')
+                ->whereHas('patient', function ($query) use ($serviceId) {
+                    $query->where('service_id', $serviceId);
+                })
+                ->count(),
+            'admitted_today' => PatientVisit::where('stage', 'admitted')
+                ->whereDate('created_at', $today)
+                ->whereHas('patient', function ($query) use ($serviceId) {
+                    $query->where('service_id', $serviceId);
+                })
+                ->count(),
+
+            'discharged' => PatientVisit::where('stage', 'discharged')
+                ->whereHas('patient', function ($query) use ($serviceId) {
+                    $query->where('service_id', $serviceId);
+                })
+                ->count(),
+
+            'completed_surgery' => PatientVisit::where('stage', 'completed_surgery')
+                ->whereHas('patient', function ($query) use ($serviceId) {
+                    $query->where('service_id', $serviceId);
+                })
+                ->count(),
+
+            'cancelled_or_postponed' => PatientVisit::whereIn('stage', ['cancelled', 'postponed'])
+                ->whereHas('patient', function ($query) use ($serviceId) {
+                    $query->where('service_id', $serviceId);
+                })
+                ->count(),
         ];
 
         return JsonResponser::send(false, 'Visit Statistics Fetched Successfully', $stats);

@@ -12,10 +12,28 @@ class Pharmacy extends Model
     protected $guarded = ['id'];
     protected $connection = 'tenant';
 
-    protected $fillable = ['name', 'type', 'address', 'state_id', 'active'];
+    protected $fillable = [
+        'name',
+        'type',
+        'address',
+        'state_id',
+        'phone_number',
+        'assigned_pharmacist',
+        'license_number',
+        'active',
+        'email_address',
+        'pharmacy_id',
+        'opening_time',
+        'closing_time'
+    ];
+
 
     public function state()
     {
         return $this->belongsTo(State::class, 'state_id');
+    }
+    public function pharmacist()
+    {
+        return $this->belongsTo(User::class, 'assigned_pharmacist');
     }
 }

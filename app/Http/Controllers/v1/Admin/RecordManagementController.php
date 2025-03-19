@@ -333,8 +333,8 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
 
-             //Validate if user has permission to register new patient
-             if (!$this->userHasPermission($user)) {
+            //Validate if user has permission to register new patient
+            if (!$this->userHasPermission($user)) {
                 return JsonResponser::send(true, 'Forbidden! User has no permission to register a patient', null, 403);
             }
 

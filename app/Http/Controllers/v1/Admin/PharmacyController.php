@@ -47,8 +47,11 @@ class PharmacyController extends Controller
             $currentUser = Auth::user();
             $user = $this->userService->find($currentUser->id);
 
-            if (!$user->hasRole(['admin'])) {
-                return JsonResponser::send(true, 'Forbidden! User has no permission to create a pharmacy.', null, 403);
+            // if (!$user->hasRole(['admin'])) {
+            //     return JsonResponser::send(true, 'Forbidden! User has no permission to create a pharmacy.', null, 403);
+            // }
+            if (!in_array($user->role, ['Super Admin', 'Admin'])) {
+                return JsonResponser::send(false, 'Forbidden! User has no permission to register a patient', [], 403);
             }
 
             $validated = array_merge($request->validated(), [

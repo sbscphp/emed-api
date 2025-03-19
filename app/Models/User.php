@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laratrust\Contracts\LaratrustUser;
@@ -37,6 +38,7 @@ class User extends Authenticatable implements JWTSubject
      * @var array<int, string>
      */
     protected $guarded = ['id'];
+    protected $connection = 'tenant';
 
     /**
      * The attributes that should be hidden for serialization.
@@ -86,6 +88,10 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasOne(UserInformation::class);
     }
 
+    public function pharmacist()
+    {
+        return $this->hasOne(Pharmacist::class);
+    }
 
     public function register()
     {
@@ -95,5 +101,15 @@ class User extends Authenticatable implements JWTSubject
     public function tenant()
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(Role::class, 'role_user', 'user_id', 'role_id');
+    }
+
+    public function permissions(): BelongsToMany
+    {
+        return $this->belongsToMany(Permission::class, 'permission_user', 'user_id', 'permission_id');
     }
 }
