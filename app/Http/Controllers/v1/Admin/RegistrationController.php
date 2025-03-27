@@ -101,6 +101,13 @@ class RegistrationController extends Controller
     //                 '--class' => 'StateSeeder',
     //                 '--force' => true,
     //             ]);
+
+    //             Artisan::call('db:seed', [
+    //                 '--database' => 'tenant',
+    //                 '--class' => 'ServiceUnitSeeder',
+    //                 '--force' => true,
+    //             ]);
+
     //             DB::connection('tenant')->table('tenants')->insert([
     //                 'id' => $tenant->id,
     //                 'name' => $tenant->name,
@@ -252,7 +259,7 @@ class RegistrationController extends Controller
                     '--force' => true,
                 ]);
 
-                // Seed the roles table
+
                 Artisan::call('db:seed', [
                     '--database' => 'tenant',
                     '--class' => 'RolePermissionSeeder',
@@ -264,7 +271,11 @@ class RegistrationController extends Controller
                     '--class' => 'ServicesTableSeeder',
                     '--force' => true,
                 ]);
-
+                Artisan::call('db:seed', [
+                    '--database' => 'tenant',
+                    '--class' => 'ServiceUnitSeeder',
+                    '--force' => true,
+                ]);
                 Artisan::call('db:seed', [
                     '--database' => 'tenant',
                     '--class' => 'StateSeeder',

@@ -5,11 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class State extends Model
+class ServiceUnit extends Model
 {
     use HasFactory;
     protected $connection = 'tenant';
     protected $guarded = ['id'];
 
-    protected $fillable = ['state_name'];
+    protected $fillable = ['name'];
+
+    public function billingLogs()
+    {
+        return $this->hasMany(BillingLog::class);
+    }
 }

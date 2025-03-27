@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             TenantUserSeeder::class,
             ServicesTableSeeder::class,
             StateSeeder::class,
+            ServiceUnitSeeder::class,
         ]);
     }
 }

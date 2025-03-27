@@ -22,7 +22,7 @@ class LabRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'lab_dept'=>'nullable|string',
+            'lab_dept' => 'nullable|string',
             'test_name' => 'required|string',
             'ordered_test' => 'required|array',
             'others' => 'string|nullable'

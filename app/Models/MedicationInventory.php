@@ -1,0 +1,43 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class MedicationInventory extends Model
+{
+    protected $table = 'medication_inventory';
+    protected $connection = 'tenant';
+    protected $guarded = ['id'];
+    protected $fillable = [
+        'medication_id',
+        'pharmacy_id',
+        'shipment_no',
+        'batch_no',
+        'mfg_date',
+        'expiry_date',
+        'received_qty',
+        'current_stock',
+        'vendor',
+        'shipment_status',
+        'date_of_shipment',
+        'expected_delivery_date'
+    ];
+
+    protected $casts = [
+        'mfg_date' => 'date',
+        'expiry_date' => 'date',
+        'date_of_shipment' => 'date',
+        'expected_delivery_date' => 'date',
+    ];
+
+    public function medication()
+    {
+        return $this->belongsTo(Medication::class);
+    }
+
+    public function pharmacy()
+    {
+        return $this->belongsTo(Pharmacy::class);
+    }
+}
