@@ -1,6 +1,9 @@
 <?php
 
+use App\Http\Controllers\v1\Admin\BillingController;
+use App\Http\Controllers\v1\Admin\MedicationInventoryController;
 use App\Http\Controllers\v1\Admin\ConsultationController;
+use App\Http\Controllers\v1\Admin\MedicationController;
 use App\Http\Controllers\v1\Admin\PharmacyController;
 use App\Http\Controllers\v1\Admin\RecordManagementController;
 use App\Http\Controllers\v1\Admin\RegistrationController;
@@ -79,7 +82,6 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/patient/family/{patientId}', [ConsultationController::class, 'storeFamilyHistory']);
                     Route::post('/patient/social/{patientId}', [ConsultationController::class, 'storeSocialHistory']);
                     Route::post('/patient/drug/{patientId}', [ConsultationController::class, 'storeDrugHistory']);
-
                 });
 
                 Route::prefix('pharmacy')->group(function () {
@@ -89,6 +91,37 @@ Route::group(["prefix" => "v1"], function () {
                     Route::put('/update/{id}', [PharmacyController::class, 'update']);
                     Route::delete('/delete/{id}', [PharmacyController::class, 'destroy']);
                     Route::patch('/{id}/toggle-status', [PharmacyController::class, 'toggleStatus']);
+                    Route::get('/stats', [PharmacyController::class, 'pharmacyDashboardStats']);
+                });
+
+                Route::prefix('medicine')->group(function () {
+                    Route::post('/create', [MedicationController::class, 'store']);
+                    Route::get('/lists', [MedicationController::class, 'index']);
+                    Route::get('/list/{id}', [MedicationController::class, 'show']);
+                    Route::put('/update/{id}', [MedicationController::class, 'update']);
+                    Route::delete('/delete/{id}', [MedicationController::class, 'destroy']);
+                    Route::patch('/{id}/toggle-status', [MedicationController::class, 'changeStatus']);
+                    Route::get('/vendors', [MedicationController::class, 'listVendors']);
+                });
+
+                Route::prefix('medicine-inventory')->group(function () {
+                    Route::get('/', [MedicationInventoryController::class, 'index']);
+                    Route::get('/{id}', [MedicationInventoryController::class, 'show']);
+                    Route::post('/', [MedicationInventoryController::class, 'store']);
+                    Route::patch('/{id}/status', [MedicationInventoryController::class, 'updateStatus']);
+                    Route::get('/dashboard/stats', [MedicationInventoryController::class, 'shipmentStat']);
+                });
+
+                Route::prefix('billing')->group(function () {
+                    Route::get('/', [BillingController::class, 'index']);
+                    Route::post('/', [BillingController::class, 'store']);
+                    Route::get('/{id}', [BillingController::class, 'show']);
+                    Route::put('/{id}', [BillingController::class, 'update']);
+                    Route::delete('/{id}', [BillingController::class, 'destroy']);
+                    Route::get('/dashboard/stats', [BillingController::class, 'getBillingStatistics']);
+                    Route::get('/all/services', [BillingController::class, 'getAllServiceUnitsAndTypes']);
+                    Route::get('/service-unit/{id}', [BillingController::class, 'getBillingByServiceUnit']);
+                    Route::get('/service-type/all', [BillingController::class, 'getBillingByServiceType']);
                 });
             });
         });

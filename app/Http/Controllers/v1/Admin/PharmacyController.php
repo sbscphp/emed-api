@@ -5,6 +5,9 @@ namespace App\Http\Controllers\v1\Admin;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\PharmacyRequest;
+use App\Models\Medication;
+use App\Models\MedicationInventory;
+use App\Models\Pharmacy;
 use App\Responser\JsonResponser;
 use App\Services\Pharmacy\PharmacyService;
 use App\Services\User\UserService;
@@ -135,5 +138,24 @@ class PharmacyController extends Controller
         }
         $this->pharmacyService->delete($id);
         return JsonResponser::send(false, 'Pharmacy deleted successfully', null, 200);
+    }
+
+    public function pharmacyDashboardStats()
+    {
+        try {
+            $stats = [
+                'total_medications' => Medication::count(),
+                'available_medications' => Medication::where('medicine_status', 'available')->count(),
+                'near_expiry_medications' => MedicationInventory::whereBetween('expiry_date', [now(), now()->addDays(30)])
+                    ->distinct('medication_id')
+                    ->count('medication_id'),
+                'low_stock_alert' => MedicationInventory::where('current_stock', '<', 10)->count(),
+                'total_pharmacies' => Pharmacy::count(),
+            ];
+
+            return JsonResponser::send(false, 'Pharmacy dashboard stats fetched successfully', $stats);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Failed to fetch pharmacy dashboard stats', [], 500, $e);
+        }
     }
 }

@@ -13,7 +13,7 @@ class PharmacyRepository implements PharmacyInterface
      */
     public function all()
     {
-        return Pharmacy::with(['state:id,state_name', 'pharmacist:id,fullname,email'])->paginate(10);;
+        return Pharmacy::with(['state:id,state_name', 'pharmacist:id,fullname,email'])->paginate(10);
     }
 
 

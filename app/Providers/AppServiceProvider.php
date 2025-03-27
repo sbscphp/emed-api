@@ -15,12 +15,18 @@ use App\Repositories\Admission\AdmissionInterface;
 use App\Repositories\Admission\AdmissionRepository;
 use App\Repositories\Appointment\AppointmentInterface;
 use App\Repositories\Appointment\AppointmentRepository;
+use App\Repositories\BillingLog\BillingLogRepository;
+use App\Repositories\BillingLog\BillingLogRepositoryInterface;
 use App\Repositories\Consultation\ConsultationInterface;
 use App\Repositories\Consultation\ConsultationRepository;
 use App\Repositories\EmergencyContact\EmergencyContactInterface;
 use App\Repositories\EmergencyContact\EmergencyContactRepository;
 use App\Repositories\Laboratory\LaboratoryInterface;
 use App\Repositories\Laboratory\LaboratoryRepository;
+use App\Repositories\Medication\MedicationRepository;
+use App\Repositories\Medication\MedicationRepositoryInterface;
+use App\Repositories\MedicationInventory\MedicationInventoryRepository;
+use App\Repositories\MedicationInventory\MedicationInventoryRepositoryInterface;
 use App\Repositories\NextOfKin\NextOfKinInterface;
 use App\Repositories\NextOfKin\NextOfKinRepository;
 use App\Repositories\Patient\PatientInterface;
@@ -41,6 +47,7 @@ use App\Repositories\Triage\TriageInterface;
 use App\Repositories\Triage\TriageRepository;
 use App\Services\Admission\AdmissionService;
 use App\Services\Appointment\AppointmentService;
+use App\Services\BillingLog\BillingLogService;
 use App\Services\Consultation\ConsultationService;
 use App\Services\EmergencyContact\EmergencyContactService;
 use App\Services\Laboratory\LaboratoryService;
@@ -55,6 +62,8 @@ use App\Services\Triage\TriageService;
 use App\Services\Treatment\TreatmentService;
 use Laravel\Sanctum\PersonalAccessToken as SanctumPersonalAccessToken;
 use Laravel\Sanctum\Sanctum;
+use App\Services\Medication\MedicationService;
+use App\Services\MedicationInventoryService\MedicationInventoryService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -79,6 +88,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(RadiologyInterface::class, RadiologyRepository::class);
         $this->app->bind(TreatmentInterface::class, TreatmentRepository::class);
         $this->app->bind(PharmacyInterface::class, PharmacyRepository::class);
+        $this->app->bind(MedicationRepositoryInterface::class, MedicationRepository::class);
+        $this->app->bind(MedicationInventoryRepositoryInterface::class, MedicationInventoryRepository::class);
+        $this->app->bind(BillingLogRepositoryInterface::class, BillingLogRepository::class);
 
 
         $this->app->bind(UserInformationService::class, function ($app) {
@@ -128,6 +140,15 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->bind(PharmacyService::class, function ($app) {
             return new PharmacyService($app->make(PharmacyInterface::class));
+        });
+        $this->app->bind(MedicationService::class, function ($app) {
+            return new MedicationService($app->make(MedicationRepositoryInterface::class));
+        });
+        $this->app->bind(MedicationInventoryService::class, function ($app) {
+            return new MedicationInventoryService($app->make(MedicationInventoryRepositoryInterface::class));
+        });
+        $this->app->bind(BillingLogService::class, function ($app) {
+            return new BillingLogService($app->make(BillingLogRepositoryInterface::class));
         });
     }
 
