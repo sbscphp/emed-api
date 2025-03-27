@@ -494,6 +494,7 @@ class RecordManagementController extends Controller
             // Check if the patient already has a visit today
             $existingVisit = $this->patientVisitService->findByMultiAttributes([
                 ['patient_id', '=', $patient->id],
+                ['stage', '=', $request->stage],
                 ['status', '=', 'ongoing'],
             ]);
 

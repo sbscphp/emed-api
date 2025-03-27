@@ -72,7 +72,7 @@ Route::group(["prefix" => "v1"], function () {
 
                 //Consultant routes
                 Route::group(['prefix' => 'consultant'], function () {
-                    Route::get('/patients', [ConsultationController::class, 'patientsForConsultation']);
+                    Route::post('/patients', [ConsultationController::class, 'patientsForConsultation']);
                     Route::get('/patient/{visitNo}', [ConsultationController::class, 'show']);
                     Route::post('/patient/{visitNo}/store', [ConsultationController::class, 'storeConsultationInfo']);
                     Route::post('/patient/{visitNo}/lab', [ConsultationController::class, 'storeLabInfo']);

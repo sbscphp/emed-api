@@ -99,9 +99,9 @@ class PatientVisitService
         return $this->PatientVisitInterface->findByMultiAttributes($attrs);
     }
 
-    public function getPatientForConsultation($date)
+    public function getPatientForConsultation($search, $sortBy, $date, $paginate, $perPage)
     {
-        return $this->PatientVisitInterface->getPatientForConsultation($date);
+        return $this->PatientVisitInterface->getPatientForConsultation($search, $sortBy, $date, $paginate, $perPage);
     }
 
     public function getPatientVisits($patientId){

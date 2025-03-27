@@ -71,15 +71,24 @@ class ConsultationController extends Controller
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
 
+            $search = $request->search;
+            $sortBy = $request->sortBy ?? "DESC";
             $date = $request->date ?? null;
+            $paginate = $request->paginate ?? false;
+            $perPage = $request->perPage ?? 10;
 
-            $patients = $this->patientVisitService->getPatientForConsultation($date);
+            $patients = $this->patientVisitService->getPatientForConsultation($search, $sortBy, $date, $paginate, $perPage);
             if ($patients->isEmpty()) {
                 return JsonResponser::send(true, 'Records not found.', null, 404);
             }
-            $patients->load(['patient']);
+            $patients->load(['patient', 'patient.triage']);
 
-            return JsonResponser::send(false, 'Records found successfully.', $patients, 200);
+            $response = [
+                'patients' => $patients,
+                'total' => $patients->count()
+            ];
+
+            return JsonResponser::send(false, 'Records found successfully.', $response, 200);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'Internal server error.', null, 500, $th);
         }
@@ -111,13 +120,21 @@ class ConsultationController extends Controller
                     'patient.drugHistory',
                 ]
             );
+            $consultation = $this->consultationService->findByAttribute('visitno', $visitNo);
             $previousVisits = $this->patientVisitService->getPatientPreviousVisits($patientVisit->patient_id, $visitNo);
             $patientVisits = $this->patientVisitService->getPatientVisits($patientVisit->patient_id);
+            $laboratory = $this->consultationService->findByVisitNoLabOrBoth($visitNo);
+            $radiology = $this->consultationService->findByVisitNoRadiologyOrBoth($visitNo);
+            $treatment = $this->treatmentService->getConsultationTreatmentByVisitNo($visitNo);
 
             $response = [
                 'patientVisit' => $patientVisit,
                 'previousVisits' => $previousVisits ?? [],
-                'visits' => $patientVisits ?? []
+                'visits' => $patientVisits ?? [],
+                'consultation' => $consultation ?? [],
+                'laboratory' => $laboratory->test_name ?? [],
+                'radiology' => $radiology->test_name ?? [],
+                'treatment' => $treatment ?? []
             ];
 
             return JsonResponser::send(false, 'Records found successfully.', $response, 200);
@@ -139,6 +156,12 @@ class ConsultationController extends Controller
             $patient = $this->patientVisitService->findByAttribute('visitno', $visitno);
             if (!$patient) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
+            }
+
+            //validate if the visit number have a record
+            $consultation = $this->consultationService->findByAttribute('visitno', $visitno);
+            if ($consultation) {
+                return JsonResponser::send(true, 'Record already exist for this visit.', null, 409);
             }
 
             if (!empty($request->follow_up) && !$request->followUp_date) {
@@ -170,7 +193,7 @@ class ConsultationController extends Controller
 
             $consultation = $this->consultationService->create($data);
 
-            if (!empty($request->investigation)) {
+            if ($consultation) {
                 $patient->update(['stage' => PatientVisitStageEnums::INVESTIGATION]);
             }
 
@@ -183,8 +206,8 @@ class ConsultationController extends Controller
             }
 
             //Save record if patient is admitted
-            if(!empty($request->admitted)){
-                $data = ['patient_id'=>$patient->patient_id,'admission_date' => Carbon::now()];
+            if (!empty($request->admitted)) {
+                $data = ['patient_id' => $patient->patient_id, 'admission_date' => Carbon::now()];
                 $this->admissionService->create($data);
             }
 

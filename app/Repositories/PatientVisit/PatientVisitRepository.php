@@ -150,27 +150,46 @@ class PatientVisitRepository implements PatientVisitInterface
         return $query->get();
     }
 
-    public function getPatientForConsultation($date=Null)
+    /**
+     * Patients for consultation
+     *
+     * @param [type] $date
+     * @return void
+     */
+    public function getPatientForConsultation($search, $sortBy, $date=Null, $paginate, $perPage)
     {
-        $query = PatientVisit::query();
+        $query = PatientVisit::with(['patient','patient.triage']);
         $query->select(
             'patient_id',
             'visitno',
             'arrival_date',
+            'departure_date',
             'stage',
             'status'
         );
 
-        if($date){
-            $query->whereDate('arrival_date', $date);
+        if (isset($search)) {
+            $query->where('visitno', 'like', '%' . $search . '%')
+                ->orWhere('arrival_date', 'like', '%' . $search . '%')
+                ->orWhereHas('patient', function ($q) use ($search) {
+                    $q->where('firstname', 'like', '%' . $search . '%')
+                        ->orWhere('lastname', 'like', '%' . $search . '%')
+                        ->orWhere('email', 'like', '%' . $search . '%')
+                        ->orWhere('patientno', 'like', '%' . $search . '%')
+                        ->orWhere('cardno', 'like', '%' . $search . '%');
+                });
+
+        }
+
+        if(isset($date)){
+            $query->whereDate('arrival_date', Carbon::parse($date)->toDateString());
         }
 
         $query->where('stage', 'consultation');
         $query->where('status', 'ongoing');
-        $query->orderBy('created_at', 'asc');
-        $query->limit(10);
+        $query->orderBy('created_at', $sortBy);
 
-        return $query->get();
+        return $paginate ? $query->paginate($perPage) : $query->get();
     }
 
     public function getPatientVisits($patientId)

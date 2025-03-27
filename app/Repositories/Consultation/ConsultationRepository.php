@@ -129,7 +129,7 @@ class ConsultationRepository implements ConsultationInterface
 
     public function findByVisitNoLabOrBoth($visitno)
     {
-        $consultation  = Consultation::where('visit',$visitno)
+        $consultation  = Consultation::where('visitno',$visitno)
                         ->where('investigation','laboratory')
                         ->orWhere('investigation','both')
                         ->first();
@@ -139,7 +139,7 @@ class ConsultationRepository implements ConsultationInterface
 
     public function findByVisitNoRadiologyOrBoth($visitno)
     {
-        $consultation  = Consultation::where('visit',$visitno)
+        $consultation  = Consultation::where('visitno',$visitno)
                         ->where('investigation','radiology')
                         ->orWhere('investigation','both')
                         ->first();
