@@ -60,7 +60,7 @@ class ConsultationController extends Controller
         $this->admissionService = $admissionService;
     }
 
-    public function patientsForConsultation()
+    public function patientsForConsultation(Request $request)
     {
         try {
 
@@ -71,7 +71,9 @@ class ConsultationController extends Controller
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
 
-            $patients = $this->patientVisitService->getPatientForConsultationToday();
+            $date = $request->date ?? null;
+
+            $patients = $this->patientVisitService->getPatientForConsultation($date);
             if ($patients->isEmpty()) {
                 return JsonResponser::send(true, 'Records not found.', null, 404);
             }

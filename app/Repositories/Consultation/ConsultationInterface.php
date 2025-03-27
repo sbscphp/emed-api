@@ -64,7 +64,7 @@ interface ConsultationInterface
      */
     public function findByAttribute($attr, $value);
 
-    public function getPatients();
+    public function getPatients($search, $sortBy, $stage, $status, $paginate, $perPage);
 
     public function findByVisitNoLabOrBoth($visitno);
     public function findByVisitNoRadiologyOrBoth($visitno);

@@ -84,10 +84,9 @@ class ConsultationRepository implements ConsultationInterface
         return Consultation::where($attr, $value)->first();
     }
 
-    public function getPatients()
+    public function getPatients($search, $sortBy, $stage, $status, $paginate, $perPage)
     {
-        // $date = $date ? Carbon::parse($date) : Carbon::today();
-        $query = PatientVisit::query();
+        $query = Consultation::with(['patient']);
         $query->select(
             'patient_id',
             'visitno',
@@ -96,14 +95,37 @@ class ConsultationRepository implements ConsultationInterface
             'status'
         );
 
-        $query->whereDate('arrival_date', now()->toDateString());
-        $query->where('stage', 'consultation');
-        $query->where('status', 'waiting');
-        $query->orderBy('created_at', 'asc');
-        $query->limit(10);
+        if (isset($search)) {
+            $query->where('visitno', 'like', '%' . $search . '%')
+                ->orWhere('arrival_date', 'like', '%' . $search . '%')
+                ->orWhereHas('patient', function ($q) use ($search) {
+                    $q->where('firstname', 'like', '%' . $search . '%')
+                        ->orWhere('lastname', 'like', '%' . $search . '%')
+                        ->orWhere('email', 'like', '%' . $search . '%')
+                        ->orWhere('patientno', 'like', '%' . $search . '%');
+                });
+
+        }
+
+        if ($stage) {
+            $query->where('stage', $stage);
+        }
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        if ($sortBy) {
+            $query->orderBy('created_at', $sortBy);
+        }
+
+        if ($paginate) {
+            return $query->paginate($perPage);
+        }
 
         return $query->get();
     }
+
 
     public function findByVisitNoLabOrBoth($visitno)
     {
@@ -123,5 +145,25 @@ class ConsultationRepository implements ConsultationInterface
                         ->first();
 
         return $consultation;
+    }
+
+    public function getPatientPreviousVisits($patientId, $visitNo)
+    {
+        $patientPreviousVisits = Consultation::where('patient_id', $patientId)
+            ->where('visitno', '!==', $visitNo)
+            ->orderBy('created_at', 'desc')
+            ->take(4)
+            ->get();
+
+        return $patientPreviousVisits;
+    }
+
+    public function getPatientVisits($patientId)
+    {
+        $patientVisits = Consultation::where('patient_id', $patientId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return $patientVisits;
     }
 }

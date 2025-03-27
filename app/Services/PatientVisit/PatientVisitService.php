@@ -99,9 +99,9 @@ class PatientVisitService
         return $this->PatientVisitInterface->findByMultiAttributes($attrs);
     }
 
-    public function getPatientForConsultationToday()
+    public function getPatientForConsultation($date)
     {
-        return $this->PatientVisitInterface->getPatientForConsultationToday();
+        return $this->PatientVisitInterface->getPatientForConsultation($date);
     }
 
     public function getPatientVisits($patientId){
@@ -110,6 +110,11 @@ class PatientVisitService
 
     public function getPatientPreviousVisits($patientId, $visitNo){
         return $this->PatientVisitInterface->getPatientPreviousVisits($patientId, $visitNo);
+    }
+
+    public function getPatients($search, $sortBy, $stage, $status, $date, $paginate, $perPage)
+    {
+        return $this->PatientVisitInterface->getPatients($search, $sortBy, $stage, $status, $date, $paginate, $perPage);
     }
 
 }

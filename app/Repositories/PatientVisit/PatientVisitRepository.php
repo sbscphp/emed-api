@@ -106,10 +106,51 @@ class PatientVisitRepository implements PatientVisitInterface
         }
 
         return $record->first();
-
     }
 
-    public function getPatientForConsultationToday()
+    public function getPatients($search, $sortBy, $stage, $status, $date, $paginate, $perPage)
+    {
+        $query = PatientVisit::with(['patient']);
+        $query->select(
+            'patient_id',
+            'visitno',
+            'arrival_date',
+            'stage',
+            'status'
+        );
+
+        if (isset($search)) {
+            $query->where('visitno', 'like', '%' . $search . '%')
+                ->orWhere('arrival_date', 'like', '%' . $search . '%')
+                ->orWhereHas('patient', function ($q) use ($search) {
+                    $q->where('firstname', 'like', '%' . $search . '%')
+                        ->orWhere('lastname', 'like', '%' . $search . '%')
+                        ->orWhere('email', 'like', '%' . $search . '%')
+                        ->orWhere('patientno', 'like', '%' . $search . '%');
+                });
+
+        }
+
+        if ($stage) {
+            $query->where('stage', $stage);
+        }
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        if ($sortBy) {
+            $query->orderBy('created_at', $sortBy);
+        }
+
+        if ($paginate) {
+            return $query->paginate($perPage);
+        }
+
+        return $query->get();
+    }
+
+    public function getPatientForConsultation($date=Null)
     {
         $query = PatientVisit::query();
         $query->select(
@@ -120,33 +161,36 @@ class PatientVisitRepository implements PatientVisitInterface
             'status'
         );
 
-        $query->whereDate('arrival_date', now()->toDateString());
+        if($date){
+            $query->whereDate('arrival_date', $date);
+        }
+
         $query->where('stage', 'consultation');
-        $query->where('status', 'waiting');
+        $query->where('status', 'ongoing');
         $query->orderBy('created_at', 'asc');
         $query->limit(10);
 
         return $query->get();
     }
 
-    public function getPatientVisits($patientId){
-        $patientVisits = PatientVisit::where('patient_id',$patientId)
-                        ->orderBy('arrival_date','desc')
-                        ->get();
+    public function getPatientVisits($patientId)
+    {
+        $patientVisits = PatientVisit::where('patient_id', $patientId)
+            ->orderBy('arrival_date', 'desc')
+            ->get();
 
         return $patientVisits;
     }
 
 
-    public function getPatientPreviousVisits($patientId, $visitNo){
-        $patientPreviousVisits = PatientVisit::where('patient_id',$patientId)
-                        ->where('visitno', '!==', $visitNo)
-                        ->orderBy('arrival_date','desc')
-                        ->take(4)
-                        ->get();
+    public function getPatientPreviousVisits($patientId, $visitNo)
+    {
+        $patientPreviousVisits = PatientVisit::where('patient_id', $patientId)
+            ->where('visitno', '!==', $visitNo)
+            ->orderBy('arrival_date', 'desc')
+            ->take(4)
+            ->get();
 
         return $patientPreviousVisits;
     }
-
-
 }
