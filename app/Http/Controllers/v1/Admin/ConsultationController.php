@@ -7,6 +7,7 @@ use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ConsultationRequest;
 use App\Http\Requests\Admin\LabRequest;
+use App\Http\Requests\Admin\TreatmentRequest;
 use App\Models\DrugHistory;
 use App\Models\FamilyHistory;
 use App\Models\MedicalHistory;
@@ -172,15 +173,18 @@ class ConsultationController extends Controller
                 return JsonResponser::send(true, 'Please kindly provide details of the referral', null, 422);
             }
 
+            $complaints = implode(',', $request->complaints);
+            $allergies = implode(',', $request->allergy);
+
             $data = [
                 'patient_id' => $patient->patient_id,
                 'admin_id' => $user->id,
                 'visitno' => $patient->visitno,
-                'complaint' => $request->complaints,
+                'complaint' => $complaints,
                 'complaint_history' => $request->complaint_history,
                 'review' => $request->review,
                 'diagnosis' => $request->diagnosis,
-                'allergy' => $request->allergy,
+                'allergy' => $allergies,
                 'disease_pattern' => $request->disease_pattern,
                 'disease_type' => $request->disease_type,
                 'investigation' => $request->investigation,
@@ -334,10 +338,10 @@ class ConsultationController extends Controller
         }
     }
 
-    public function storeTreatmentInfo(Request $request, $visitno)
+    public function storeTreatmentInfo(TreatmentRequest $request, $visitno)
     {
         try {
-            $medications = $request->medications;
+
             DB::connection('tenant')->beginTransaction();
             $currentUser = Auth::user();
             $user = $this->userService->find($currentUser->id);
@@ -351,12 +355,13 @@ class ConsultationController extends Controller
             }
 
             $treatmentIds = [];
-            foreach ($medications as $med) {
+            foreach ($request->medications as $med) {
                 $data = [
                     'patient_id' => $consultation->patient_id,
                     'admin_id' => $user->id,
                     'consultation_id' => $consultation->id,
                     'visitno' => $consultation->visitno,
+                    'drug_id' => $med['drug_id'],
                     'drug' => $med['drug'],
                     'qualifier' => $med['qualifier'],
                     'dosage' => $med['dosage'],

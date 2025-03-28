@@ -159,6 +159,7 @@ class PatientVisitRepository implements PatientVisitInterface
     public function getPatientForConsultation($search, $sortBy, $date=Null, $paginate, $perPage)
     {
         $query = PatientVisit::with(['patient','patient.triage']);
+       // $query->join('billings', 'patient_visits.visitno', '=', 'billings.visitno');
         $query->select(
             'patient_id',
             'visitno',
@@ -187,6 +188,7 @@ class PatientVisitRepository implements PatientVisitInterface
 
         $query->where('stage', 'consultation');
         $query->where('status', 'ongoing');
+       // $query->where('billings.payment_status', 'paid');
         $query->orderBy('created_at', $sortBy);
 
         return $paginate ? $query->paginate($perPage) : $query->get();
