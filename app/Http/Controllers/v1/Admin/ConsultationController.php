@@ -239,7 +239,7 @@ class ConsultationController extends Controller
             DB::connection('tenant')->beginTransaction();
             $currentUser = Auth::user();
             $user = $this->userService->find($currentUser->id);
-            //dd($user);
+
             if (!$user) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
