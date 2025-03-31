@@ -6,8 +6,8 @@ use App\Repositories\Laboratory\LaboratoryInterface;
 
 /**
  * Class LaboratoryService
- * 
- * This class provides services related to Laboratory operations and acts as a 
+ *
+ * This class provides services related to Laboratory operations and acts as a
  * layer between the Controller and the LaboratoryRepository.
  */
 class LaboratoryService
@@ -15,7 +15,7 @@ class LaboratoryService
     protected LaboratoryInterface $LaboratoryInterface;
     /**
      * Laboratory constructor.
-     * 
+     *
      * @param LaboratoryInterface $LaboratoryInterface
      */
     public function __construct(LaboratoryInterface $LaboratoryInterface)
@@ -25,7 +25,7 @@ class LaboratoryService
 
     /**
      * Retrieve all Laboratory.
-     * 
+     *
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
     public function all()
@@ -35,7 +35,7 @@ class LaboratoryService
 
     /**
      * Create a new Laboratory using the data provided.
-     * 
+     *
      * @param array $data
      * @return \App\Models\Laboratory
      */
@@ -47,7 +47,7 @@ class LaboratoryService
 
     /**
      * Update an existing Laboratory with the provided data.
-     * 
+     *
      * @param array $data
      * @param int $id
      * @return \App\Models\Laboratory
@@ -60,7 +60,7 @@ class LaboratoryService
 
     /**
      * Delete a Laboratory by heir ID.
-     * 
+     *
      * @param int $id
      * @return void
      */
@@ -72,7 +72,7 @@ class LaboratoryService
 
     /**
      * Find a Laboratory by their ID.
-     * 
+     *
      * @param int $id
      * @return \App\Models\Laboratory
      */
@@ -84,7 +84,7 @@ class LaboratoryService
 
     /**
      * Find an existing Laboratory  by their $attr.
-     * 
+     *
      * @param string $attr
      * @param string $value
      * @return \App\Models\Laboratory
@@ -92,5 +92,15 @@ class LaboratoryService
     public function findByAttribute($attr, $value)
     {
         return $this->LaboratoryInterface->findByAttribute($attr, $value);
+    }
+
+    public function getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage)
+    {
+        return $this->LaboratoryInterface->getAllLabRecords($$search, $status, $paginate, $paymentStatus, $perPage);
+    }
+
+    public function getStats()
+    {
+        return $this->LaboratoryInterface->getStats();
     }
 }

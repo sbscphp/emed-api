@@ -7,6 +7,7 @@ use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ConsultationRequest;
 use App\Http\Requests\Admin\LabRequest;
+use App\Http\Requests\Admin\TreatmentRequest;
 use App\Models\DrugHistory;
 use App\Models\FamilyHistory;
 use App\Models\MedicalHistory;
@@ -60,7 +61,7 @@ class ConsultationController extends Controller
         $this->admissionService = $admissionService;
     }
 
-    public function patientsForConsultation()
+    public function patientsForConsultation(Request $request)
     {
         try {
 
@@ -71,13 +72,24 @@ class ConsultationController extends Controller
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
 
-            $patients = $this->patientVisitService->getPatientForConsultationToday();
+            $search = $request->search;
+            $sortBy = $request->sortBy ?? "DESC";
+            $date = $request->date ?? null;
+            $paginate = $request->paginate ?? false;
+            $perPage = $request->perPage ?? 10;
+
+            $patients = $this->patientVisitService->getPatientForConsultation($search, $sortBy, $date, $paginate, $perPage);
             if ($patients->isEmpty()) {
                 return JsonResponser::send(true, 'Records not found.', null, 404);
             }
-            $patients->load(['patient']);
+            $patients->load(['patient', 'patient.triage']);
 
-            return JsonResponser::send(false, 'Records found successfully.', $patients, 200);
+            $response = [
+                'patients' => $patients,
+                'total' => $patients->count()
+            ];
+
+            return JsonResponser::send(false, 'Records found successfully.', $response, 200);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'Internal server error.', null, 500, $th);
         }
@@ -106,16 +118,24 @@ class ConsultationController extends Controller
                     'patient.medicalHistory',
                     'patient.familyHistory',
                     'patient.socialHistory',
-                    'patient.drugHistory'
+                    'patient.drugHistory',
                 ]
             );
+            $consultation = $this->consultationService->findByAttribute('visitno', $visitNo);
             $previousVisits = $this->patientVisitService->getPatientPreviousVisits($patientVisit->patient_id, $visitNo);
             $patientVisits = $this->patientVisitService->getPatientVisits($patientVisit->patient_id);
+            $laboratory = $this->consultationService->findByVisitNoLabOrBoth($visitNo);
+            $radiology = $this->consultationService->findByVisitNoRadiologyOrBoth($visitNo);
+            $treatment = $this->treatmentService->getConsultationTreatmentByVisitNo($visitNo);
 
             $response = [
                 'patientVisit' => $patientVisit,
                 'previousVisits' => $previousVisits ?? [],
-                'visits' => $patientVisits ?? []
+                'visits' => $patientVisits ?? [],
+                'consultation' => $consultation ?? [],
+                'laboratory' => $laboratory->test_name ?? [],
+                'radiology' => $radiology->test_name ?? [],
+                'treatment' => $treatment ?? []
             ];
 
             return JsonResponser::send(false, 'Records found successfully.', $response, 200);
@@ -139,6 +159,12 @@ class ConsultationController extends Controller
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
 
+            //validate if the visit number have a record
+            $consultation = $this->consultationService->findByAttribute('visitno', $visitno);
+            if ($consultation) {
+                return JsonResponser::send(true, 'Record already exist for this visit.', null, 409);
+            }
+
             if (!empty($request->follow_up) && !$request->followUp_date) {
                 return JsonResponser::send(true, 'Please kindly provide a date for follow up', null, 422);
             }
@@ -147,15 +173,18 @@ class ConsultationController extends Controller
                 return JsonResponser::send(true, 'Please kindly provide details of the referral', null, 422);
             }
 
+            $complaints = implode(',', $request->complaints);
+            $allergies = implode(',', $request->allergy);
+
             $data = [
                 'patient_id' => $patient->patient_id,
                 'admin_id' => $user->id,
                 'visitno' => $patient->visitno,
-                'complaint' => $request->complaints,
+                'complaint' => $complaints,
                 'complaint_history' => $request->complaint_history,
                 'review' => $request->review,
                 'diagnosis' => $request->diagnosis,
-                'allergy' => $request->allergy,
+                'allergy' => $allergies,
                 'disease_pattern' => $request->disease_pattern,
                 'disease_type' => $request->disease_type,
                 'investigation' => $request->investigation,
@@ -168,7 +197,7 @@ class ConsultationController extends Controller
 
             $consultation = $this->consultationService->create($data);
 
-            if (!empty($request->investigation)) {
+            if ($consultation) {
                 $patient->update(['stage' => PatientVisitStageEnums::INVESTIGATION]);
             }
 
@@ -181,8 +210,8 @@ class ConsultationController extends Controller
             }
 
             //Save record if patient is admitted
-            if(!empty($request->admitted)){
-                $data = ['patient_id'=>$patient->patient_id,'admission_date' => Carbon::now()];
+            if (!empty($request->admitted)) {
+                $data = ['patient_id' => $patient->patient_id, 'admission_date' => Carbon::now()];
                 $this->admissionService->create($data);
             }
 
@@ -210,7 +239,7 @@ class ConsultationController extends Controller
             DB::connection('tenant')->beginTransaction();
             $currentUser = Auth::user();
             $user = $this->userService->find($currentUser->id);
-            //dd($user);
+
             if (!$user) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
@@ -309,10 +338,10 @@ class ConsultationController extends Controller
         }
     }
 
-    public function storeTreatmentInfo(Request $request, $visitno)
+    public function storeTreatmentInfo(TreatmentRequest $request, $visitno)
     {
         try {
-            $medications = $request->medications;
+
             DB::connection('tenant')->beginTransaction();
             $currentUser = Auth::user();
             $user = $this->userService->find($currentUser->id);
@@ -326,12 +355,13 @@ class ConsultationController extends Controller
             }
 
             $treatmentIds = [];
-            foreach ($medications as $med) {
+            foreach ($request->medications as $med) {
                 $data = [
                     'patient_id' => $consultation->patient_id,
                     'admin_id' => $user->id,
                     'consultation_id' => $consultation->id,
                     'visitno' => $consultation->visitno,
+                    'drug_id' => $med['drug_id'],
                     'drug' => $med['drug'],
                     'qualifier' => $med['qualifier'],
                     'dosage' => $med['dosage'],

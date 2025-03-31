@@ -4,15 +4,15 @@ namespace App\Repositories\Laboratory;
 
 /**
  * Interface LaboratoryInterface
- * 
- * This interface defines the methods that must be implemented by any 
+ *
+ * This interface defines the methods that must be implemented by any
  * class that handles the data operations for the Laboratory model.
  */
 interface LaboratoryInterface
 {
     /**
      * Retrieve all Laboratory from the database.
-     * 
+     *
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
     public function all();
@@ -20,7 +20,7 @@ interface LaboratoryInterface
 
     /**
      * Create new Laboratory in the database.
-     * 
+     *
      * @param array $data
      * @return \App\Models\Laboratory
      */
@@ -29,7 +29,7 @@ interface LaboratoryInterface
 
     /**
      * Update an existing Laboratory in the database.
-     * 
+     *
      * @param array $data
      * @param int $id
      * @return \App\Models\Laboratory
@@ -39,7 +39,7 @@ interface LaboratoryInterface
 
     /**
      * Delete an existing Laboratory from the database.
-     * 
+     *
      * @param int $id
      * @return void
      */
@@ -48,7 +48,7 @@ interface LaboratoryInterface
 
     /**
      * Find an existing Laboratory in the database by their ID.
-     * 
+     *
      * @param int $id
      * @return \App\Models\Laboratory
      */
@@ -57,10 +57,13 @@ interface LaboratoryInterface
 
     /**
      * Find an existing Laboratory in the database by their $attr.
-     * 
+     *
      * @param string $attr
      * @param string $value
      * @return \App\Models\Laboratory
      */
     public function findByAttribute($attr, $value);
+
+    public function getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage);
+    public function getStats();
 }

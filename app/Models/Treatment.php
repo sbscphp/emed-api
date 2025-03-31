@@ -14,8 +14,8 @@ class Treatment extends Model
         'admin_id',
         'consultation_id',
         'visitno',
-        'lab_dept',
-        'test_name',
+        'drug',
+        'qualifier',
         'medication',
         'dosage',
         'weight',
@@ -24,6 +24,7 @@ class Treatment extends Model
         'route',
         'remark',
         'receiptno',
+        'drug_id'
     ];
 
     public function patient()

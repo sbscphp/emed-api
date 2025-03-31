@@ -6,8 +6,8 @@ use App\Repositories\Treatment\TreatmentInterface;
 
 /**
  * Class TreatmentService
- * 
- * This class provides services related to Treatment operations and acts as a 
+ *
+ * This class provides services related to Treatment operations and acts as a
  * layer between the Controller and the TreatmentRepository.
  */
 class TreatmentService
@@ -15,7 +15,7 @@ class TreatmentService
     protected TreatmentInterface $TreatmentInterface;
     /**
      * Treatment constructor.
-     * 
+     *
      * @param TreatmentInterface $TreatmentInterface
      */
     public function __construct(TreatmentInterface $TreatmentInterface)
@@ -25,7 +25,7 @@ class TreatmentService
 
     /**
      * Retrieve all Treatment.
-     * 
+     *
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
     public function all()
@@ -35,7 +35,7 @@ class TreatmentService
 
     /**
      * Create a new Treatment using the data provided.
-     * 
+     *
      * @param array $data
      * @return \App\Models\Treatment
      */
@@ -47,7 +47,7 @@ class TreatmentService
 
     /**
      * Update an existing Treatment with the provided data.
-     * 
+     *
      * @param array $data
      * @param int $id
      * @return \App\Models\Treatment
@@ -60,7 +60,7 @@ class TreatmentService
 
     /**
      * Delete a Treatment by heir ID.
-     * 
+     *
      * @param int $id
      * @return void
      */
@@ -72,7 +72,7 @@ class TreatmentService
 
     /**
      * Find a Treatment by their ID.
-     * 
+     *
      * @param int $id
      * @return \App\Models\Treatment
      */
@@ -84,7 +84,7 @@ class TreatmentService
 
     /**
      * Find an existing Treatment  by their $attr.
-     * 
+     *
      * @param string $attr
      * @param string $value
      * @return \App\Models\Treatment
@@ -92,5 +92,10 @@ class TreatmentService
     public function findByAttribute($attr, $value)
     {
         return $this->TreatmentInterface->findByAttribute($attr, $value);
+    }
+
+    public function getConsultationTreatmentByVisitNo($visitNo)
+    {
+        return $this->TreatmentInterface->getConsultationTreatmentByVisitNo($visitNo);
     }
 }
