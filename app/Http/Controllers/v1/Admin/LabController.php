@@ -92,27 +92,27 @@ class LabController extends Controller
         }
     }
 
-    public function show($visitNo)
-    {
-        try{
+    // public function show($visitNo)
+    // {
+    //     try{
 
-            DB::connection('tenant');
-            $currentUser = Auth::user();
-            $user = $this->userService->find($currentUser->id);
+    //         DB::connection('tenant');
+    //         $currentUser = Auth::user();
+    //         $user = $this->userService->find($currentUser->id);
 
-            if(!$user){
-                return JsonResponser::send(true, 'User not found.', null, 404);
-            }
+    //         if(!$user){
+    //             return JsonResponser::send(true, 'User not found.', null, 404);
+    //         }
 
-            $record = $this->laboratoryService->findByAttribute('visitno',$visitNo);
-            if(!$record){
-                return JsonResponser::send(true, 'Record not found.', null, 404);
-            }
+    //         $record = $this->laboratoryService->findByAttribute('visitno',$visitNo);
+    //         if(!$record){
+    //             return JsonResponser::send(true, 'Record not found.', null, 404);
+    //         }
 
-            return JsonResponser::send(false, 'Record(s) found successfully.', $record, 200);
-        }catch(Throwable $th){
-            return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
-        }
-    }
+    //         return JsonResponser::send(false, 'Record(s) found successfully.', $record, 200);
+    //     }catch(Throwable $th){
+    //         return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
+    //     }
+    // }
 }
 
