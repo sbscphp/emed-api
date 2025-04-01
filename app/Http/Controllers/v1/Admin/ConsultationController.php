@@ -221,7 +221,7 @@ class ConsultationController extends Controller
                 'action' => 'Create',
                 'action_type' => "Models\Patient",
                 'log_name' => "Consultation created successfully",
-                'description' => "{$user->firstname} {$user->lastname} created consultation successfully",
+                'description' => "{{$user['fullname']} created consultation successfully",
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -273,7 +273,7 @@ class ConsultationController extends Controller
                 'action' => 'Create',
                 'action_type' => "Models\Laboratory",
                 'log_name' => "Lab details created successfully",
-                'description' => "{$user->firstname} {$user->lastname} created lab details successfully",
+                'description' => "{$user['fullname']} created lab details successfully",
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -326,7 +326,7 @@ class ConsultationController extends Controller
                 'action' => 'Create',
                 'action_type' => "Models\Radiology",
                 'log_name' => "Patient radiology diagnosis created successfully",
-                'description' => "{$user->firstname} {$user->lastname} created radiology diagnosis successfully",
+                'description' => "{$user['fullname']} created radiology diagnosis successfully",
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -385,7 +385,7 @@ class ConsultationController extends Controller
                     'action' => 'Create',
                     'action_type' => "Models\Treatment",
                     'log_name' => "Treatment for diagnosis created successfully",
-                    'description' => "{$user->firstname} {$user->lastname} created treatment for diagnosis successfully",
+                    'description' => "{$user['fullname']} created treatment for diagnosis successfully",
                 ];
 
                 GeneralHelper::storeAuditLog($dataToLog);
@@ -440,7 +440,7 @@ class ConsultationController extends Controller
                 'action' => 'Create',
                 'action_type' => "Models\Treatment",
                 'log_name' => "Medical history diagnosis created successfully",
-                'description' => "{$user->firstname} {$user->lastname} created medical history diagnosis successfully",
+                'description' => "{$user['fullname']} created medical history diagnosis successfully",
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -494,7 +494,7 @@ class ConsultationController extends Controller
                 'action' => 'Create',
                 'action_type' => "Models\Treatment",
                 'log_name' => "Family history diagnosis created successfully",
-                'description' => "{$user->firstname} {$user->lastname} created family history diagnosis successfully",
+                'description' => "{$user['fullname']} created family history diagnosis successfully",
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -548,7 +548,7 @@ class ConsultationController extends Controller
                 'action' => 'Create',
                 'action_type' => "Models\Treatment",
                 'log_name' => "Social history diagnosis created successfully",
-                'description' => "{$user->firstname} {$user->lastname} created social history diagnosis successfully",
+                'description' => "{$user['fullname']} created social history diagnosis successfully",
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -602,7 +602,7 @@ class ConsultationController extends Controller
                 'action' => 'Create',
                 'action_type' => "Models\Treatment",
                 'log_name' => "Drug history diagnosis created successfully",
-                'description' => "{$user->firstname} {$user->lastname} created drug history diagnosis successfully",
+                'description' => "{$user['fullname']} created drug history diagnosis successfully",
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);

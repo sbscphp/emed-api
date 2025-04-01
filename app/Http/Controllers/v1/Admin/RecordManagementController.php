@@ -118,14 +118,14 @@ class RecordManagementController extends Controller
             ];
 
             $patient = $this->patientService->create($data);
-
+            dd($user['fullname']);
             $dataToLog = [
                 'causer_id' => $user->id,
                 'action_id' => $patient->id,
                 'action' => 'Create',
                 'action_type' => "Models\Patient",
                 'log_name' => "Patient details created successfully",
-                'description' => "{$user->firstname} {$user->lastname} created patient details successfully",
+                'description' => "{$user['fullname']} created patient details successfully",
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -184,7 +184,7 @@ class RecordManagementController extends Controller
                 'action' => 'Update',
                 'action_type' => "Models\Patient",
                 'log_name' => "Patient details updated successfully",
-                'description' => "{$user->firstname} {$user->lastname} updated patient details successfully",
+                'description' => "{$user['fullname']} updated patient details successfully",
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -246,7 +246,7 @@ class RecordManagementController extends Controller
                 'action' => 'Create',
                 'action_type' => "Models\NextOfKin",
                 'log_name' => "Next of kin created successfully",
-                'description' => "{$user->firstname} {$user->lastname} created next of kin successfully",
+                'description' => "{$user['fullname']} created next of kin successfully",
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -300,7 +300,7 @@ class RecordManagementController extends Controller
                 'action' => 'Update',
                 'action_type' => "Models\NextOfKin",
                 'log_name' => "Next of kin updated successfully",
-                'description' => "{$user->firstname} {$user->lastname} updated next of kin successfully",
+                'description' => "{$user['fullname']} updated next of kin successfully",
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -376,7 +376,7 @@ class RecordManagementController extends Controller
                 'action' => 'Create',
                 'action_type' => "Models\EmergencyContact",
                 'log_name' => "Emergency contact created successfully",
-                'description' => "{$user->firstname} {$user->lastname} created emergency successfully",
+                'description' => "{$user['fullname']} created emergency successfully",
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -430,7 +430,7 @@ class RecordManagementController extends Controller
                 'action' => 'Update',
                 'action_type' => "Models\NextOfKin",
                 'log_name' => "Emergency contact updated successfully",
-                'description' => "{$user->firstname} {$user->lastname} updated emergency contact successfully",
+                'description' => "{$user['fullname']} updated emergency contact successfully",
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -517,7 +517,7 @@ class RecordManagementController extends Controller
                 'action' => 'Create',
                 'action_type' => "Models\PatientVisit",
                 'log_name' => "Patient visit created successfully",
-                'description' => "{$user->firstname} {$user->lastname} created patient visit successfully",
+                'description' => "{$user['fullname']} created patient visit successfully",
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
