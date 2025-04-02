@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\v1\Admin\AuditLogController;
 use App\Http\Controllers\v1\Admin\BillingController;
 use App\Http\Controllers\v1\Admin\MedicationInventoryController;
 use App\Http\Controllers\v1\Admin\ConsultationController;
@@ -130,6 +131,12 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/stats', [LabController::class, 'stats']);
                     Route::post('/records',[LabController::class, 'allLabRecords']);
                     Route::get('/single-lab-record/{id}', [LabController::class, 'show']);
+                });
+
+                //Audit Log Routes
+                Route::prefix('auditLog')->group(function(){
+                    Route::post('/logs', [AuditLogController::class, 'userActivity']);
+                    Route::get('/logs-download/{type}',[AuditLogController::class, 'downloadAuditLog']);
                 });
             });
         });

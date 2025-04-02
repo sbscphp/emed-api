@@ -15,6 +15,8 @@ use App\Repositories\Admission\AdmissionInterface;
 use App\Repositories\Admission\AdmissionRepository;
 use App\Repositories\Appointment\AppointmentInterface;
 use App\Repositories\Appointment\AppointmentRepository;
+use App\Repositories\AuditLog\AuditLogInterface;
+use App\Repositories\AuditLog\AuditLogRepository;
 use App\Repositories\BillingLog\BillingLogRepository;
 use App\Repositories\BillingLog\BillingLogRepositoryInterface;
 use App\Repositories\Consultation\ConsultationInterface;
@@ -47,6 +49,7 @@ use App\Repositories\Triage\TriageInterface;
 use App\Repositories\Triage\TriageRepository;
 use App\Services\Admission\AdmissionService;
 use App\Services\Appointment\AppointmentService;
+use App\Services\AuditLog\AuditLogService;
 use App\Services\BillingLog\BillingLogService;
 use App\Services\Consultation\ConsultationService;
 use App\Services\EmergencyContact\EmergencyContactService;
@@ -91,6 +94,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(MedicationRepositoryInterface::class, MedicationRepository::class);
         $this->app->bind(MedicationInventoryRepositoryInterface::class, MedicationInventoryRepository::class);
         $this->app->bind(BillingLogRepositoryInterface::class, BillingLogRepository::class);
+        $this->app->bind(AuditLogInterface::class, AuditLogRepository::class);
 
 
         $this->app->bind(UserInformationService::class, function ($app) {
@@ -149,6 +153,9 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->bind(BillingLogService::class, function ($app) {
             return new BillingLogService($app->make(BillingLogRepositoryInterface::class));
+        });
+        $this->app->bind(AuditLogService::class, function ($app) {
+            return new AuditLogService($app->make(AuditLogInterface::class));
         });
     }
 
