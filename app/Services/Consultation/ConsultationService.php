@@ -94,8 +94,8 @@ class ConsultationService
         return $this->ConsultationInterface->findByAttribute($attr, $value);
     }
 
-    public function getPatients(){
-        return $this->ConsultationInterface->getPatients();
+    public function getPatients($search, $sortBy, $stage, $status, $paginate, $perPage){
+        return $this->ConsultationInterface->getPatients($search, $sortBy, $stage, $status, $paginate, $perPage);
     }
 
     public function findByVisitNoLabOrBoth($visitno){

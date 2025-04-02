@@ -37,6 +37,7 @@ class RegistrationController extends Controller
 
     //         $data = $request->validated();
     //         $adminRole = Role::where('name', 'admin')->first();
+
     //         $registrationData = [
     //             'name' => $data['name'],
     //             'state_city' => $data['state_city'],
@@ -142,7 +143,6 @@ class RegistrationController extends Controller
 
     //             $adminTenantId  = DB::connection('tenant')->table('users')->insertGetId($adminData);
     //             $adminTenant  = User::on('tenant')->find($adminTenantId);
-
 
     //             $adminTenant->addRole($adminRole);
     //             $adminTenant->permissions()->sync($adminRole->permissions);
@@ -259,7 +259,7 @@ class RegistrationController extends Controller
                     '--force' => true,
                 ]);
 
-
+                // Seed the roles table
                 Artisan::call('db:seed', [
                     '--database' => 'tenant',
                     '--class' => 'RolePermissionSeeder',
@@ -271,16 +271,19 @@ class RegistrationController extends Controller
                     '--class' => 'ServicesTableSeeder',
                     '--force' => true,
                 ]);
-                Artisan::call('db:seed', [
-                    '--database' => 'tenant',
-                    '--class' => 'ServiceUnitSeeder',
-                    '--force' => true,
-                ]);
+
                 Artisan::call('db:seed', [
                     '--database' => 'tenant',
                     '--class' => 'StateSeeder',
                     '--force' => true,
                 ]);
+
+                Artisan::call('db:seed', [
+                    '--database' => 'tenant',
+                    '--class' => 'ServiceUnitSeeder',
+                    '--force' => true,
+                ]);
+
                 DB::connection('tenant')->table('tenants')->insert([
                     'id' => $tenant->id,
                     'name' => $tenant->name,

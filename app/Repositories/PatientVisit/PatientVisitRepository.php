@@ -106,12 +106,11 @@ class PatientVisitRepository implements PatientVisitInterface
         }
 
         return $record->first();
-
     }
 
-    public function getPatientForConsultationToday()
+    public function getPatients($search, $sortBy, $stage, $status, $date, $paginate, $perPage)
     {
-        $query = PatientVisit::query();
+        $query = PatientVisit::with(['patient']);
         $query->select(
             'patient_id',
             'visitno',
@@ -120,33 +119,99 @@ class PatientVisitRepository implements PatientVisitInterface
             'status'
         );
 
-        $query->whereDate('arrival_date', now()->toDateString());
-        $query->where('stage', 'consultation');
-        $query->where('status', 'waiting');
-        $query->orderBy('created_at', 'asc');
-        $query->limit(10);
+        if (isset($search)) {
+            $query->where('visitno', 'like', '%' . $search . '%')
+                ->orWhere('arrival_date', 'like', '%' . $search . '%')
+                ->orWhereHas('patient', function ($q) use ($search) {
+                    $q->where('firstname', 'like', '%' . $search . '%')
+                        ->orWhere('lastname', 'like', '%' . $search . '%')
+                        ->orWhere('email', 'like', '%' . $search . '%')
+                        ->orWhere('patientno', 'like', '%' . $search . '%');
+                });
+
+        }
+
+        if ($stage) {
+            $query->where('stage', $stage);
+        }
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        if ($sortBy) {
+            $query->orderBy('created_at', $sortBy);
+        }
+
+        if ($paginate) {
+            return $query->paginate($perPage);
+        }
 
         return $query->get();
     }
 
-    public function getPatientVisits($patientId){
-        $patientVisits = PatientVisit::where('patient_id',$patientId)
-                        ->orderBy('arrival_date','desc')
-                        ->get();
+    /**
+     * Patients for consultation
+     *
+     * @param [type] $date
+     * @return void
+     */
+    public function getPatientForConsultation($search, $sortBy, $date=Null, $paginate, $perPage)
+    {
+        $query = PatientVisit::with(['patient','patient.triage']);
+       // $query->join('billings', 'patient_visits.visitno', '=', 'billings.visitno');
+        $query->select(
+            'patient_id',
+            'visitno',
+            'arrival_date',
+            'departure_date',
+            'stage',
+            'status'
+        );
+
+        if (isset($search)) {
+            $query->where('visitno', 'like', '%' . $search . '%')
+                ->orWhere('arrival_date', 'like', '%' . $search . '%')
+                ->orWhereHas('patient', function ($q) use ($search) {
+                    $q->where('firstname', 'like', '%' . $search . '%')
+                        ->orWhere('lastname', 'like', '%' . $search . '%')
+                        ->orWhere('email', 'like', '%' . $search . '%')
+                        ->orWhere('patientno', 'like', '%' . $search . '%')
+                        ->orWhere('cardno', 'like', '%' . $search . '%');
+                });
+
+        }
+
+        if(isset($date)){
+            $query->whereDate('arrival_date', Carbon::parse($date)->toDateString());
+        }
+
+        $query->where('stage', 'consultation');
+        $query->where('status', 'ongoing');
+       // $query->where('billings.payment_status', 'paid');
+        $query->orderBy('created_at', $sortBy);
+
+        return $paginate ? $query->paginate($perPage) : $query->get();
+    }
+
+    public function getPatientVisits($patientId)
+    {
+        $patientVisits = PatientVisit::where('patient_id', $patientId)
+            ->orderBy('arrival_date', 'desc')
+            ->get();
 
         return $patientVisits;
     }
 
 
-    public function getPatientPreviousVisits($patientId, $visitNo){
-        $patientPreviousVisits = PatientVisit::where('patient_id',$patientId)
-                        ->where('visitno', '!==', $visitNo)
-                        ->orderBy('arrival_date','desc')
-                        ->take(4)
-                        ->get();
+    public function getPatientPreviousVisits($patientId, $visitNo)
+    {
+        $patientPreviousVisits = PatientVisit::where('patient_id', $patientId)
+            ->where('visitno', '!==', $visitNo)
+            ->orderBy('arrival_date', 'desc')
+            ->take(4)
+            ->get();
 
         return $patientPreviousVisits;
     }
-
-
 }

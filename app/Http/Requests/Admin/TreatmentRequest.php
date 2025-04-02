@@ -22,15 +22,16 @@ class TreatmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'medications' => 'required|array',
-            'medications.*.lab_dept' => 'required|string',
-            'medications.*.test_name' => 'required|string',
-            'medications.*.medication' => 'required|string',
+            'medications' => 'required|array|min:1',
+            'medications.*.drug_id' => 'required|integer',
+            'medications.*.drug' => 'nullable|string',
+            'medications.*.qualifier' => 'nullable|string',
+            'medications.*.medication' => 'nullable|string',
             'medications.*.dosage' => 'required|string',
             'medications.*.weight' => 'nullable|string',
             'medications.*.period' => 'required|string',
             'medications.*.duration' => 'required|string',
-            'medications.*.route' => 'required|string',
+            'medications.*.route' => 'nullable|string',
             'medications.*.remark' => 'nullable|string',
         ];
     }
@@ -38,16 +39,25 @@ class TreatmentRequest extends FormRequest
     public function messages()
     {
         return [
-            'medications.required' => 'At least one medication is required.',
+            'medications.required' => 'At least one medication must be provided.',
             'medications.array' => 'Medications must be an array.',
-            'medications.*.lab_dept.required' => 'Lab department is required.',
-            'medications.*.test_name.required' => 'Test name is required.',
-            'medications.*.medication.required' => 'Medication name is required.',
-            'medications.*.dosage.required' => 'Dosage is required.',
-            'medications.*.period.required' => 'Period is required.',
-            'medications.*.duration.required' => 'Duration is required.',
-            'medications.*.route.required' => 'Route of administration is required.',
+            'medications.*.drug_id.required' => 'Each medication must have a drug ID.',
+            'medications.*.drug_id.integer' => 'The drug ID must be a valid integer.',
+            'medications.*.drug.string' => 'The drug name must be a valid string.',
+            'medications.*.qualifier.string' => 'The qualifier must be a valid string.',
+            'medications.*.medication.string' => 'The medication name must be a valid string.',
+            'medications.*.dosage.required' => 'Each medication must have a dosage.',
+            'medications.*.dosage.string' => 'The dosage must be a valid string.',
+            'medications.*.weight.string' => 'The weight must be a valid string.',
+            'medications.*.period.required' => 'Each medication must have a period.',
+            'medications.*.period.string' => 'The period must be a valid string.',
+            'medications.*.duration.required' => 'Each medication must have a duration.',
+            'medications.*.duration.string' => 'The duration must be a valid string.',
+            'medications.*.route.string' => 'The route must be a valid string.',
+            'medications.*.remark.string' => 'The remark must be a valid string.',
         ];
     }
+
+
 
 }

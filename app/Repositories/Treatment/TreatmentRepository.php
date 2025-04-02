@@ -8,7 +8,7 @@ class TreatmentRepository implements TreatmentInterface
 {
     /**
      * Retrieve a collection of Treatment from the database.
-     * 
+     *
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
     public function all()
@@ -19,7 +19,7 @@ class TreatmentRepository implements TreatmentInterface
 
     /**
      * Create new Treatment in the database.
-     * 
+     *
      * @param array $data
      * @return \App\Models\Treatment
      */
@@ -31,7 +31,7 @@ class TreatmentRepository implements TreatmentInterface
 
     /**
      * Update an existing Treatment in the database.
-     * 
+     *
      * @param array $data
      * @param int $id
      * @return \App\Models\Treatment
@@ -46,7 +46,7 @@ class TreatmentRepository implements TreatmentInterface
 
     /**
      * Delete an existing Treatment from the database.
-     * 
+     *
      * @param int $id
      * @return void
      */
@@ -59,7 +59,7 @@ class TreatmentRepository implements TreatmentInterface
 
     /**
      * Find an existing Treatment in the database by their ID.
-     * 
+     *
      * @param int $id
      * @return \App\Models\Treatment
      */
@@ -71,7 +71,7 @@ class TreatmentRepository implements TreatmentInterface
 
     /**
      * Find an existing Treatment in the database by their $attr.
-     * 
+     *
      * @param string $attr
      * @param string $value
      * @return \App\Models\Treatment
@@ -80,4 +80,10 @@ class TreatmentRepository implements TreatmentInterface
     {
         return Treatment::where($attr, $value)->first();
     }
+
+    public function getConsultationTreatmentByVisitNo($visitNo)
+    {
+        return Treatment::where('visitno', $visitNo)->get();
+    }
+
 }

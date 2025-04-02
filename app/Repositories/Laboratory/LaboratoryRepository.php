@@ -3,12 +3,13 @@
 namespace App\Repositories\Laboratory;
 
 use App\Models\Laboratory;
+use Carbon\Carbon;
 
 class LaboratoryRepository implements LaboratoryInterface
 {
     /**
      * Retrieve a collection of Laboratory from the database.
-     * 
+     *
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
     public function all()
@@ -19,7 +20,7 @@ class LaboratoryRepository implements LaboratoryInterface
 
     /**
      * Create new Laboratory in the database.
-     * 
+     *
      * @param array $data
      * @return \App\Models\Laboratory
      */
@@ -31,7 +32,7 @@ class LaboratoryRepository implements LaboratoryInterface
 
     /**
      * Update an existing Laboratory in the database.
-     * 
+     *
      * @param array $data
      * @param int $id
      * @return \App\Models\Laboratory
@@ -46,7 +47,7 @@ class LaboratoryRepository implements LaboratoryInterface
 
     /**
      * Delete an existing Laboratory from the database.
-     * 
+     *
      * @param int $id
      * @return void
      */
@@ -59,7 +60,7 @@ class LaboratoryRepository implements LaboratoryInterface
 
     /**
      * Find an existing Laboratory in the database by their ID.
-     * 
+     *
      * @param int $id
      * @return \App\Models\Laboratory
      */
@@ -71,7 +72,7 @@ class LaboratoryRepository implements LaboratoryInterface
 
     /**
      * Find an existing Laboratory in the database by their $attr.
-     * 
+     *
      * @param string $attr
      * @param string $value
      * @return \App\Models\Laboratory
@@ -79,5 +80,58 @@ class LaboratoryRepository implements LaboratoryInterface
     public function findByAttribute($attr, $value)
     {
         return Laboratory::where($attr, $value)->first();
+    }
+
+    public function getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage)
+    {
+        $query = Laboratory::query()
+            ->join('patients', 'patient_visit_lab.patient_id', '=', 'patients.id')
+            ->join('billings', 'patient_visit_lab.patient_id', '=', 'billings.patient_id');
+        $query->select(
+            'patient_visit_lab.*',
+            'patients.firstname',
+            'patients.lastname',
+            'patients.patientno',
+            'patients.cardno',
+            'billings.*'
+        );
+
+        if (isset($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('firstname', 'LIKE', "%{$search}%")
+                    ->orWhere('lastname', 'LIKE', "%{$search}%")
+                    ->orWhere('patientno', 'LIKE', "%{$search}%")
+                    ->orWhere('cardno', 'LIKE', "%{$search}%");
+            });
+        }
+
+        if (isset($status)) {
+            $query->where('patient_visit_lab.test_status', $status);
+        }
+
+        if (isset($paymentStatus)) {
+            $query->where('patient_visit_lab.payment_status', $paymentStatus); //check back, it should be from billings table
+        }
+
+        // $query->where('billings.payment_status', 'paid');
+        $query->orderBy('created_at', 'desc');
+
+        return $paginate ? $query->paginate($perPage) : $query->get();
+    }
+
+    public function getStats()
+    {
+        $today = Carbon::today();
+        $query = Laboratory::query();
+
+        $totalPatients = $query->where('created_at', $today)->count();
+        $completedTestToday = $query->where('test_status', 'completed')->where('updated_at', $today)->count();
+        $confirmedPaymentToday = $query->where('payment_status', 'paid')->where('updated_at', $today)->count(); // check back, should come from billings
+
+        return [
+            'totalPatientsToday' => $totalPatients ?? 0,
+            'completedTestToday' => $completedTestToday ?? 0,
+            'confirmedPaymentToday' => $confirmedPaymentToday ?? 0
+        ];
     }
 }

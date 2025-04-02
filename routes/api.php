@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\v1\Admin\AuditLogController;
 use App\Http\Controllers\v1\Admin\BillingController;
 use App\Http\Controllers\v1\Admin\MedicationInventoryController;
 use App\Http\Controllers\v1\Admin\ConsultationController;
+use App\Http\Controllers\v1\Admin\LabController;
 use App\Http\Controllers\v1\Admin\MedicationController;
 use App\Http\Controllers\v1\Admin\PharmacyController;
 use App\Http\Controllers\v1\Admin\RecordManagementController;
@@ -72,7 +74,7 @@ Route::group(["prefix" => "v1"], function () {
 
                 //Consultant routes
                 Route::group(['prefix' => 'consultant'], function () {
-                    Route::get('/patients', [ConsultationController::class, 'patientsForConsultation']);
+                    Route::post('/patients', [ConsultationController::class, 'patientsForConsultation']);
                     Route::get('/patient/{visitNo}', [ConsultationController::class, 'show']);
                     Route::post('/patient/{visitNo}/store', [ConsultationController::class, 'storeConsultationInfo']);
                     Route::post('/patient/{visitNo}/lab', [ConsultationController::class, 'storeLabInfo']);
@@ -122,6 +124,19 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/all/services', [BillingController::class, 'getAllServiceUnitsAndTypes']);
                     Route::get('/service-unit/{id}', [BillingController::class, 'getBillingByServiceUnit']);
                     Route::get('/service-type/all', [BillingController::class, 'getBillingByServiceType']);
+                });
+
+                //Laboratory Routes
+                Route::prefix('laboratory')->group(function(){
+                    Route::get('/stats', [LabController::class, 'stats']);
+                    Route::post('/records',[LabController::class, 'allLabRecords']);
+                    Route::get('/single-lab-record/{id}', [LabController::class, 'show']);
+                });
+
+                //Audit Log Routes
+                Route::prefix('auditLog')->group(function(){
+                    Route::post('/logs', [AuditLogController::class, 'userActivity']);
+                    Route::get('/logs-download/{type}',[AuditLogController::class, 'downloadAuditLog']);
                 });
             });
         });

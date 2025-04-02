@@ -4,15 +4,15 @@ namespace App\Repositories\Treatment;
 
 /**
  * Interface TreatmentInterface
- * 
- * This interface defines the methods that must be implemented by any 
+ *
+ * This interface defines the methods that must be implemented by any
  * class that handles the data operations for the Treatment model.
  */
 interface TreatmentInterface
 {
     /**
      * Retrieve all Treatment from the database.
-     * 
+     *
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
     public function all();
@@ -20,7 +20,7 @@ interface TreatmentInterface
 
     /**
      * Create new Treatment in the database.
-     * 
+     *
      * @param array $data
      * @return \App\Models\Treatment
      */
@@ -29,7 +29,7 @@ interface TreatmentInterface
 
     /**
      * Update an existing Treatment in the database.
-     * 
+     *
      * @param array $data
      * @param int $id
      * @return \App\Models\Treatment
@@ -39,7 +39,7 @@ interface TreatmentInterface
 
     /**
      * Delete an existing Treatment from the database.
-     * 
+     *
      * @param int $id
      * @return void
      */
@@ -48,7 +48,7 @@ interface TreatmentInterface
 
     /**
      * Find an existing Treatment in the database by their ID.
-     * 
+     *
      * @param int $id
      * @return \App\Models\Treatment
      */
@@ -57,10 +57,12 @@ interface TreatmentInterface
 
     /**
      * Find an existing Treatment in the database by their $attr.
-     * 
+     *
      * @param string $attr
      * @param string $value
      * @return \App\Models\Treatment
      */
     public function findByAttribute($attr, $value);
+
+    public function getConsultationTreatmentByVisitNo($visitNo);
 }
