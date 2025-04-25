@@ -2,6 +2,8 @@
 
 namespace App\Repositories\Patient;
 
+use Illuminate\Http\Request;
+
 /**
  * Interface PatientInterface
  *
@@ -75,7 +77,7 @@ interface PatientInterface
      *
      * @return \App\Models\Patient
      */
-    public function getAllRecords($search,$paginate,$perPage);
+    public function getAllRecords($search, $paginate, $perPage);
 
     /**
      * Retrieve record stats
@@ -83,4 +85,5 @@ interface PatientInterface
      * @return \App\Models\Patient
      */
     public function getRecordStats();
+    public function getPatientReport(Request $request);
 }

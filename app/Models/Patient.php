@@ -43,8 +43,9 @@ class Patient extends Model
 
     public function service()
     {
-        return $this->belongsTo(ServiceDepartment::class);
+        return $this->belongsTo(ServiceDepartment::class, 'service_id');
     }
+
 
     public function nextOfKin()
     {

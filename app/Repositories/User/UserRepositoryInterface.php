@@ -2,6 +2,8 @@
 
 namespace App\Repositories\User;
 
+use Illuminate\Http\Request;
+
 /**
  * Interface UserRepositoryInterface
  * 
@@ -68,4 +70,5 @@ interface UserRepositoryInterface
      * @return \App\Models\User
      */
     public function findByAttribute($attr, $value);
+    public function getSystemReport(Request $request);
 }

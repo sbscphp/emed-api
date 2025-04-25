@@ -2,12 +2,17 @@
 
 namespace App\Repositories\Patient;
 
+use App\Exports\PatientReportExport;
 use App\Models\Admission;
 use App\Models\Appointment;
 use App\Models\Patient;
 use App\Models\PatientVisit;
+use App\Responser\JsonResponser;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Pagination\LengthAwarePaginator;
+
 
 class PatientRepository implements PatientInterface
 {
@@ -137,8 +142,7 @@ class PatientRepository implements PatientInterface
         }
 
         $query->orderBy('created_at', 'desc');
-        return $paginate ? $query->paginate($perPage):$query->get();
-
+        return $paginate ? $query->paginate($perPage) : $query->get();
     }
 
     public function getRecordStats()
@@ -156,5 +160,56 @@ class PatientRepository implements PatientInterface
             'totalPatientsVisitedToday' => $totalPatientsVisitedToday,
             'numberOfFollowUp' => $totalFollowUp
         ];
+    }
+
+    public function getPatientReport(Request $request)
+    {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+
+        $start = $request->start_date;
+        $end = $request->end_date;
+        $download = $request->boolean('download', false);
+        $perPage = $request->integer('per_page', 10);
+        $currentPage = $request->integer('page', 1);
+
+        $patients = Patient::with('service')
+            ->whereBetween('created_at', [$start, $end])
+            ->get();
+
+        if ($patients->isEmpty()) {
+            return JsonResponser::send(false, 'No patient records found for the selected date range.', [], 200);
+        }
+
+        $grouped = $patients->groupBy(fn($p) => optional($p->service)->name ?? 'Unknown');
+
+        $report = $grouped->map(function ($group, $dept) {
+            return [
+                'department' => $dept,
+                'total_patients' => $group->count(),
+                'patients' => $group->take(10),
+            ];
+        })->values();
+
+        $grandTotal = $patients->count();
+
+        if ($download) {
+            return Excel::download(new PatientReportExport($report, $grandTotal), 'patient_report_' . now()->format('Ymd_His') . '.xlsx');
+        }
+
+        $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
+            $report->forPage($currentPage, $perPage),
+            $report->count(),
+            $perPage,
+            $currentPage,
+            ['path' => url()->current(), 'query' => $request->query()]
+        );
+
+        return JsonResponser::send(false, 'Patient report generated successfully.', [
+            'data' => $paginated,
+            'grand_total' => $grandTotal,
+        ]);
     }
 }

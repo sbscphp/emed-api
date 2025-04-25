@@ -2,6 +2,7 @@
 
 namespace App\Services\BillingLog;
 
+use App\Models\BillingLog;
 use App\Repositories\BillingLog\BillingLogRepositoryInterface;
 
 class BillingLogService
@@ -99,5 +100,22 @@ class BillingLogService
         }
 
         return 'INV-' . $nextNumber;
+    }
+    public function getMonthlyRevenue()
+    {
+        return $this->repo->getMonthlyRevenue();
+    }
+    public function getPendingPayment()
+    {
+        return $this->repo->getPendingPayment();
+    }
+    public function getCompletedPayment()
+    {
+        return $this->repo->getCompletedPayment();
+    }
+
+    public function getFinancialReport($request)
+    {
+        return $this->repo->getFinancialReport($request);
     }
 }

@@ -9,14 +9,14 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laratrust\Contracts\LaratrustUser;
 use Laratrust\Traits\HasRolesAndPermissions;
-use Illuminate\Database\Eloquent\SoftDeletes;
+// use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Sanctum\HasApiTokens;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 class User extends Authenticatable implements JWTSubject
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasRolesAndPermissions, HasFactory, Notifiable, HasApiTokens, SoftDeletes;
+    use HasRolesAndPermissions, HasFactory, Notifiable, HasApiTokens;
     protected $fillable = [
         'uuid',
         'fullname',
@@ -86,11 +86,6 @@ class User extends Authenticatable implements JWTSubject
     public function userInformation()
     {
         return $this->hasOne(UserInformation::class);
-    }
-
-    public function pharmacist()
-    {
-        return $this->hasOne(Pharmacist::class);
     }
 
     public function register()

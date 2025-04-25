@@ -2,7 +2,15 @@
 
 namespace App\Repositories\User;
 
+use App\Models\AuditLog;
 use App\Models\User;
+use App\Responser\JsonResponser;
+use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\SystemReportExport;
+
+
 
 /**
  * Class UserRepository
@@ -18,7 +26,7 @@ class UserRepository implements UserRepositoryInterface
      */
     public function all()
     {
-        return User::all();
+        return User::paginate(20);
     }
 
     /**
@@ -91,5 +99,58 @@ class UserRepository implements UserRepositoryInterface
     public function findByAttribute($attr, $value)
     {
         return User::where($attr, $value)->first();
+    }
+
+    public function getSystemReport(Request $request)
+    {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+
+        $start = $request->start_date;
+        $end = $request->end_date;
+        $download = $request->boolean('download', false);
+        $perPage = $request->integer('per_page', 10);
+        $currentPage = $request->integer('page', 1);
+
+        $logs = AuditLog::with('causer.roles')
+            ->whereBetween('created_at', [$start, $end])
+            ->get()
+            ->groupBy('causer_id');
+
+        if ($logs->isEmpty()) {
+            return JsonResponser::send(false, 'No system logs found for the selected date range.', []);
+        }
+
+        $reportCollection = $logs->map(function ($group) {
+            $admin = $group->first()->causer;
+
+            return [
+                'full_name' => $admin?->fullname ?? 'Unknown',
+                'roles' => $admin?->roles->pluck('name') ?? [],
+                'status' => $admin?->status ?? 'inactive',
+                'actions' => $group->map(function ($log) {
+                    return [
+                        'description' => $log->description,
+                        'performed_at' => $log->created_at->toDateTimeString(),
+                    ];
+                })->values()
+            ];
+        })->values();
+
+        if ($download) {
+            return Excel::download(new SystemReportExport($reportCollection), 'system_report_' . now()->format('Ymd_His') . '.xlsx');
+        }
+
+        $paginated = new LengthAwarePaginator(
+            $reportCollection->forPage($currentPage, $perPage),
+            $reportCollection->count(),
+            $perPage,
+            $currentPage,
+            ['path' => url()->current(), 'query' => $request->query()]
+        );
+
+        return JsonResponser::send(false, 'System Report Generated Successfully.', $paginated);
     }
 }
