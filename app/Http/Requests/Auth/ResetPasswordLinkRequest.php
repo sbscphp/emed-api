@@ -23,7 +23,7 @@ class ResetPasswordLinkRequest extends FormRequest
     public function rules()
     {
         return [
-            'email' => 'required|email|exists:users,email',
+            'email' => 'required|email|exists:tenant.users,email',
         ];
     }
 

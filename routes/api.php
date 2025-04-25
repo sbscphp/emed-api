@@ -9,13 +9,15 @@ use App\Http\Controllers\v1\Admin\MedicationController;
 use App\Http\Controllers\v1\Admin\PharmacyController;
 use App\Http\Controllers\v1\Admin\RecordManagementController;
 use App\Http\Controllers\v1\Admin\RegistrationController;
+use App\Http\Controllers\v1\Admin\ReportController;
+use App\Http\Controllers\v1\Admin\RoleController;
 use App\Http\Controllers\v1\Admin\TriageController;
+use App\Http\Controllers\v1\Admin\UserController;
 use App\Http\Controllers\v1\Auth\ForgotPasswordController;
 use App\Http\Controllers\v1\Auth\LoginController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
-
 
 Route::group(["prefix" => "v1"], function () {
 
@@ -125,18 +127,42 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/service-unit/{id}', [BillingController::class, 'getBillingByServiceUnit']);
                     Route::get('/service-type/all', [BillingController::class, 'getBillingByServiceType']);
                 });
+                Route::prefix('report')->group(function () {
+                    Route::get('/dashboard/stats', [ReportController::class, 'getReportStatistics']);
+                    Route::get('/', [ReportController::class, 'index']);
+                    Route::get('/patient', [ReportController::class, 'getPatientReport']);
+                    Route::get('/financial', [ReportController::class, 'getFinancialReport']);
+                    Route::get('/system', [ReportController::class, 'getAllSystemReport']);
+                });
 
                 //Laboratory Routes
-                Route::prefix('laboratory')->group(function(){
+                Route::prefix('laboratory')->group(function () {
                     Route::get('/stats', [LabController::class, 'stats']);
-                    Route::post('/records',[LabController::class, 'allLabRecords']);
+                    Route::post('/records', [LabController::class, 'allLabRecords']);
                     Route::get('/single-lab-record/{id}', [LabController::class, 'show']);
                 });
 
                 //Audit Log Routes
-                Route::prefix('auditLog')->group(function(){
+                Route::prefix('auditLog')->group(function () {
                     Route::post('/logs', [AuditLogController::class, 'userActivity']);
-                    Route::get('/logs-download/{type}',[AuditLogController::class, 'downloadAuditLog']);
+                    Route::get('/logs-download/{type}', [AuditLogController::class, 'downloadAuditLog']);
+                });
+
+                //Roles Routes
+                Route::prefix('role')->group(function () {
+                    Route::get('/all', [RoleController::class, 'index']);
+                    Route::post('/create', [RoleController::class, 'store']);
+                    Route::get('/view/{id}', [RoleController::class, 'show']);
+                    Route::put('/update/{id}', [RoleController::class, 'update']);
+                });
+
+                //Users Routes
+                Route::prefix('users')->group(function () {
+                    Route::get('/all', [UserController::class, 'allUsers']);
+                    Route::post('/create', [UserController::class, 'addUser']);
+                    Route::get('/view/{id}', [UserController::class, 'viewUser']);
+                    Route::put('/update/{id}', [UserController::class, 'updateUser']);
+                    Route::delete('/delete/{id}', [UserController::class, 'deleteUser']);
                 });
             });
         });

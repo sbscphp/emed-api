@@ -101,4 +101,9 @@ class UserService
     {
         return $this->userRepositoryInterface->findByAttribute($attr, $value);
     }
+
+    public function getSystemReport($request)
+    {
+        return $this->userRepositoryInterface->getSystemReport($request);
+    }
 }

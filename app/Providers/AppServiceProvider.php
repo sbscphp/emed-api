@@ -41,6 +41,8 @@ use App\Repositories\Pharmacy\PharmacyInterface;
 use App\Repositories\Pharmacy\PharmacyRepository;
 use App\Repositories\Registration\RegistrationInterface;
 use App\Repositories\Registration\RegistrationRepository;
+use App\Repositories\Role\RoleInterface;
+use App\Repositories\Role\RoleRepository;
 use App\Repositories\ServiceDepartment\ServiceDepartmentInterface;
 use App\Repositories\ServiceDepartment\ServiceDepartmentRepository;
 use App\Repositories\Treatment\TreatmentInterface;
@@ -67,6 +69,7 @@ use Laravel\Sanctum\PersonalAccessToken as SanctumPersonalAccessToken;
 use Laravel\Sanctum\Sanctum;
 use App\Services\Medication\MedicationService;
 use App\Services\MedicationInventoryService\MedicationInventoryService;
+use App\Services\Role\RoleService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -95,6 +98,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(MedicationInventoryRepositoryInterface::class, MedicationInventoryRepository::class);
         $this->app->bind(BillingLogRepositoryInterface::class, BillingLogRepository::class);
         $this->app->bind(AuditLogInterface::class, AuditLogRepository::class);
+        $this->app->bind(RoleInterface::class, RoleRepository::class);
+        $this->app->bind(UserRepositoryInterface::class, UserRepository::class);
 
 
         $this->app->bind(UserInformationService::class, function ($app) {
@@ -156,6 +161,12 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->bind(AuditLogService::class, function ($app) {
             return new AuditLogService($app->make(AuditLogInterface::class));
+        });
+        $this->app->bind(RoleService::class, function ($app) {
+            return new RoleService($app->make(RoleInterface::class));
+        });
+        $this->app->bind(UserService::class, function ($app) {
+            return new UserService($app->make(UserRepositoryInterface::class));
         });
     }
 

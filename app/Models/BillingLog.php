@@ -42,4 +42,9 @@ class BillingLog extends Model
     {
         return $this->belongsTo(Patient::class, 'patient_id');
     }
+
+    public function service()
+    {
+        return $this->belongsTo(ServiceDepartment::class, 'service_id');
+    }
 }

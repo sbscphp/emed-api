@@ -438,8 +438,10 @@ class RegistrationController extends Controller
     // }
 
     //LOGIN THROUGH INDIVIDUAL TENANT DB
+
     public function adminLogin(AdminLoginRequest $request)
     {
+        DB::connection('tenant')->beginTransaction();
         try {
             $credentials = $request->only('email', 'password');
 
@@ -452,7 +454,6 @@ class RegistrationController extends Controller
             if (!$tenant) {
                 return JsonResponser::send(false, 'Tenant not found.', [], 404);
             }
-
 
             $tenant->makeCurrent();
             config(['database.connections.tenant.database' => $tenant->database]);
@@ -488,6 +489,32 @@ class RegistrationController extends Controller
                 ]);
             }
 
+            $roles = $user->roles;
+            $permissions = [];
+
+            foreach ($roles as $role) {
+                foreach ($role->permissions as $permission) {
+                    $permissions[] = [
+                        'id' => $permission->id,
+                        'name' => $permission->name,
+                        'slug' => $permission->slug,
+                        'description' => $permission->description,
+                        'model' => 'Permission',
+                        'created_at' =>  $permission->created_at ? $permission->created_at->toISOString() : null,
+                        'updated_at' =>  $permission->updated_at ? $permission->updated_at->toISOString() : null,
+                        'deleted_at' => $permission->deleted_at ? $permission->deleted_at->toISOString() : null,
+                        'is_active' => $permission->is_active ? 'true' : 'false',
+                        'is_default' => $permission->is_default ? 'true' : 'false',
+                        'pivot' => [
+                            'role_id' => $role->id,
+                            'permission_id' => $permission->id,
+                            'created_at' => $permission->pivot->created_at ? $permission->pivot->created_at->toISOString() : null,
+                            'updated_at' => $permission->pivot->updated_at ? $permission->pivot->updated_at->toISOString() : null,
+                        ],
+                    ];
+                }
+            }
+
             return JsonResponser::send(
                 true,
                 'Admin logged in successfully',
@@ -508,6 +535,7 @@ class RegistrationController extends Controller
             );
         }
     }
+
 
 
     public function verifyEmail($token)

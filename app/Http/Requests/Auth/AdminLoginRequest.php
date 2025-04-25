@@ -24,23 +24,8 @@ class AdminLoginRequest extends FormRequest
     public function rules()
     {
         return [
-            'email' => 'required|email|exists:users,email',
+            'email' => 'required|email',
             'password' => 'required|string',
-        ];
-    }
-
-    /**
-     * Get custom messages for validator errors.
-     *
-     * @return array
-     */
-    public function messages()
-    {
-        return [
-            'email.required' => 'The email field is required.',
-            'email.email' => 'Please provide a valid email address.',
-            'email.exists' => 'The provided email does not exist in our records.',
-            'password.required' => 'The password field is required.',
         ];
     }
 }

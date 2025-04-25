@@ -15,6 +15,7 @@ class AuditLog extends Model
         return $this->belongsTo(User::class, 'causer_id');
     }
 
+
     public function audit_log_transactions()
     {
         return $this->hasMany(AuditLogTransaction::class);
