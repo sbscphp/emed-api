@@ -29,6 +29,7 @@ class RegistrationController extends Controller
     {
         $this->registrationService = $registrationService;
     }
+
     //create an automatic instance of tenant database
     // public function onboardTenant(TenantOnboardingRequest $request)
     // {
@@ -236,7 +237,6 @@ class RegistrationController extends Controller
             DB::connection('landlord')->commit();
 
             try {
-                // Check if the database exists (since we cannot create it)
                 $dbExists = DB::select("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?", [$tenant->database]);
 
                 if (!$dbExists) {
