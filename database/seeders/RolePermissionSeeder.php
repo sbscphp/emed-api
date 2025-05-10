@@ -96,17 +96,24 @@ class RolePermissionSeeder extends Seeder
     public function truncateLaratrustTables()
     {
         $this->command->info('Truncating User, Role and Permission tables');
-        Schema::disableForeignKeyConstraints();
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
         DB::table('permission_role')->truncate();
         DB::table('permission_user')->truncate();
         DB::table('role_user')->truncate();
+
         if (Config::get('role_permission_seeder.truncate_tables')) {
-            Role::truncate();
-            Permission::truncate();
+            Role::query()->delete();
+            Permission::query()->delete();
         }
+        DB::statement('ALTER TABLE roles AUTO_INCREMENT = 1');
+        DB::statement('ALTER TABLE permissions AUTO_INCREMENT = 1');
+
         if (Config::get('role_permission_seeder.truncate_tables') && Config::get('role_permission_seeder.create_users')) {
-            User::truncate();
+            User::query()->delete();
         }
-        Schema::enableForeignKeyConstraints();
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
     }
 }
