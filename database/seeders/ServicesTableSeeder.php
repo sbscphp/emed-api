@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class ServicesTableSeeder extends Seeder
 {
@@ -13,6 +13,15 @@ class ServicesTableSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->command->info('Cleaning up services table...');
+
+        Schema::disableForeignKeyConstraints();
+
+        DB::table('services')->delete();
+        DB::statement('ALTER TABLE services AUTO_INCREMENT = 1');
+
+        Schema::enableForeignKeyConstraints();
+
         $services = [
             ['name' => 'GOPD'],
             ['name' => 'SOPD'],
@@ -22,5 +31,7 @@ class ServicesTableSeeder extends Seeder
         ];
 
         DB::table('services')->insert($services);
+
+        $this->command->info('Services seeded successfully.');
     }
 }
