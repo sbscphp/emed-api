@@ -118,7 +118,7 @@ class RecordManagementController extends Controller
             ];
 
             $patient = $this->patientService->create($data);
-            dd($user['fullname']);
+            // dd($user['fullname']);
             $dataToLog = [
                 'causer_id' => $user->id,
                 'action_id' => $patient->id,
@@ -355,7 +355,7 @@ class RecordManagementController extends Controller
 
             $emergencyContact = $this->emergencyContactService->create($data);
 
-            if($emergencyContact && $request->status === 'complete'){
+            if ($emergencyContact && $request->status === 'complete') {
 
                 $data = [
                     'patient_id' => $patient->id,
@@ -366,7 +366,7 @@ class RecordManagementController extends Controller
                 ];
                 $patientVisit = $this->patientVisitService->create($data);
 
-                $patient->update(['status'=> $request->status]); //Update the status of the patient to complete
+                $patient->update(['status' => $request->status]); //Update the status of the patient to complete
 
             }
 
@@ -381,7 +381,7 @@ class RecordManagementController extends Controller
 
             GeneralHelper::storeAuditLog($dataToLog);
             DB::connection('tenant')->commit();
-            return JsonResponser::send(false, 'Emergency contact created successfully', ['emergencyContact'=>$emergencyContact, 'patientVisit'=>$patientVisit], 201);
+            return JsonResponser::send(false, 'Emergency contact created successfully', ['emergencyContact' => $emergencyContact, 'patientVisit' => $patientVisit], 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Internal server error', [], 500, $th);
