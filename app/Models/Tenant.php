@@ -15,10 +15,20 @@ class Tenant extends BaseTenant
         'updated_by'
     ];
 
+    // public static function booted()
+    // {
+    //     static::creating(function ($tenant) {
+    //         $tenant->database = 'tenant_' . Str::slug($tenant->name, '_');
+    //     });
+    // }
     public static function booted()
     {
         static::creating(function ($tenant) {
-            $tenant->database = 'tenant_' . Str::slug($tenant->name, '_');
+            if (!app()->environment('production')) {
+                $tenant->database = 'tenant_' . Str::slug($tenant->name, '_') . '_' . Str::random(4);
+            } elseif (empty($tenant->database)) {
+                $tenant->database = 'tenant_john_hospital';
+            }
         });
     }
 

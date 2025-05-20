@@ -27,6 +27,8 @@ return [
     */
 
     'env' => env('APP_ENV', 'production'),
+    'tenant_central_db' => env('TENANT_CENTRAL_DB', 'tenant_central'),
+
 
     /*
     |--------------------------------------------------------------------------
