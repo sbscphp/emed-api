@@ -66,7 +66,8 @@ class RegistrationController extends Controller
 
             $isProduction = app()->environment(['production', 'staging', 'qa']);
             $tenantDatabase = $isProduction
-                ? 'tenant_john_hospital'
+                // ? 'tenant_john_hospital'
+                ? 'jkpmjemy_tenant_john_hospital'
                 : 'tenant_' . Str::slug($data['name'], '_') . '_' . Str::random(4);
 
             // Create tenant
