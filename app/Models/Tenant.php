@@ -25,7 +25,7 @@ class Tenant extends BaseTenant
     {
         static::creating(function ($tenant) {
             if (!app()->environment('production')) {
-                $tenant->database = 'tenant_' . Str::slug($tenant->name, '_') . '_' . Str::random(4);
+                $tenant->database = 'jkpmjemy_tenant_' . Str::slug($tenant->name, '_') . '_' . Str::random(4);
             } elseif (empty($tenant->database)) {
                 $tenant->database = 'tenant_john_hospital';
             }
