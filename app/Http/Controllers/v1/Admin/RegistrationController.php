@@ -68,7 +68,7 @@ class RegistrationController extends Controller
             $tenantDatabase = $isProduction
                 // ? 'tenant_john_hospital'
                 ? 'jkpmjemy_tenant_john_hospital'
-                : 'tenant_' . Str::slug($data['name'], '_') . '_' . Str::random(4);
+                : 'tenant_' . Str::slug($data['name'], '_');
 
             // Create tenant
             $tenant = Tenant::create([
