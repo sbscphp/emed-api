@@ -46,6 +46,7 @@ class PatientInfomationRequest extends FormRequest
             'tribe' => 'nullable|string',
             'cardno' => 'nullable|unique:patients,cardno',
             'recieptno' => 'nullable|string',
+            'service_id' => 'required|exists:tenant.services,id',
         ];
     }
 
@@ -77,7 +78,9 @@ class PatientInfomationRequest extends FormRequest
             'tribe.string' => 'The tribe must be a valid string.',
             'cardno.required' => 'The card number field is required.',
             'cardno.unique' => 'This card number is already registered.',
-        ];
+            'service_id.required' => 'The service ID is required.',
+            'service_id.exists' => 'The selected service ID does not exist in the system.',
 
+        ];
     }
 }
