@@ -158,7 +158,7 @@
 
         <div class="button-container">
             <a href="{{ $verificationUrl }}" class="button">
-                Verify Email
+                Verify your Email
             </a>
         </div>
 
