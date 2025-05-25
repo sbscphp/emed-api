@@ -29,8 +29,7 @@ class LabController extends Controller
         PatientVisitService $patientVisitService,
         ConsultationService $consultationService,
         LaboratoryService $laboratoryService,
-    )
-    {
+    ) {
         $this->userService = $userService;
         $this->patientService = $patientService;
         $this->patientVisitService = $patientVisitService;
@@ -40,7 +39,7 @@ class LabController extends Controller
 
     public function allLabRecords(Request $request)
     {
-        try{
+        try {
             $search = $request->search;
             $status = $request->status;
             $paymentStatus = $request->payment_status;
@@ -51,13 +50,13 @@ class LabController extends Controller
             $currentUser = Auth::user();
             $user = $this->userService->find($currentUser->id);
 
-            if(!$user){
+            if (!$user) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
 
             $labRecords = $this->laboratoryService->getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage);
 
-            if($labRecords->isEmpty()){
+            if ($labRecords->isEmpty()) {
                 return JsonResponser::send(true, 'Record(s) not found.', null, 404);
             }
 
@@ -67,52 +66,51 @@ class LabController extends Controller
             ];
 
             return JsonResponser::send(false, 'Record(s) found successfully.', $response, 200);
-        }catch(Throwable $th){
+        } catch (Throwable $th) {
             return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
         }
     }
 
     public function stats()
     {
-        try{
+        try {
 
             DB::connection('tenant');
             $currentUser = Auth::user();
             $user = $this->userService->find($currentUser->id);
 
-            if(!$user){
+            if (!$user) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
 
             $stats = $this->laboratoryService->getStats();
 
             return JsonResponser::send(false, 'Record(s) found successfully.', $stats, 200);
-        }catch(Throwable $th){
+        } catch (Throwable $th) {
             return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
         }
     }
 
-    // public function show($visitNo)
-    // {
-    //     try{
+    public function show($visitNo)
+    {
+        try {
 
-    //         DB::connection('tenant');
-    //         $currentUser = Auth::user();
-    //         $user = $this->userService->find($currentUser->id);
+            DB::connection('tenant');
+            $currentUser = Auth::user();
+            $user = $this->userService->find($currentUser->id);
 
-    //         if(!$user){
-    //             return JsonResponser::send(true, 'User not found.', null, 404);
-    //         }
+            if (!$user) {
+                return JsonResponser::send(true, 'User not found.', null, 404);
+            }
 
-    //         $record = $this->laboratoryService->findByAttribute('visitno',$visitNo);
-    //         if(!$record){
-    //             return JsonResponser::send(true, 'Record not found.', null, 404);
-    //         }
+            $record = $this->laboratoryService->findByAttribute('visitno', $visitNo);
+            if (!$record) {
+                return JsonResponser::send(true, 'Record not found.', null, 404);
+            }
 
-    //         return JsonResponser::send(false, 'Record(s) found successfully.', $record, 200);
-    //     }catch(Throwable $th){
-    //         return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
-    //     }
-    // }
+            return JsonResponser::send(false, 'Record(s) found successfully.', $record, 200);
+        } catch (Throwable $th) {
+            return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
+        }
+    }
 }
-
