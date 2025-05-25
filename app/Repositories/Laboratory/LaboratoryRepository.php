@@ -86,14 +86,14 @@ class LaboratoryRepository implements LaboratoryInterface
     {
         $query = Laboratory::query()
             ->join('patients', 'patient_visit_lab.patient_id', '=', 'patients.id')
-            ->join('billings', 'patient_visit_lab.patient_id', '=', 'billings.patient_id');
+            ->join('billing_logs', 'patient_visit_lab.patient_id', '=', 'billing_logs.patient_id');
         $query->select(
             'patient_visit_lab.*',
             'patients.firstname',
             'patients.lastname',
             'patients.patientno',
             'patients.cardno',
-            'billings.*'
+            'billing_logs.*'
         );
 
         if (isset($search)) {
@@ -110,11 +110,10 @@ class LaboratoryRepository implements LaboratoryInterface
         }
 
         if (isset($paymentStatus)) {
-            $query->where('patient_visit_lab.payment_status', $paymentStatus); //check back, it should be from billings table
+            $query->where('patient_visit_lab.payment_status', $paymentStatus);
         }
 
-        // $query->where('billings.payment_status', 'paid');
-        $query->orderBy('created_at', 'desc');
+        $query->orderBy('patient_visit_lab.created_at', 'desc');
 
         return $paginate ? $query->paginate($perPage) : $query->get();
     }
@@ -126,7 +125,7 @@ class LaboratoryRepository implements LaboratoryInterface
 
         $totalPatients = $query->where('created_at', $today)->count();
         $completedTestToday = $query->where('test_status', 'completed')->where('updated_at', $today)->count();
-        $confirmedPaymentToday = $query->where('payment_status', 'paid')->where('updated_at', $today)->count(); // check back, should come from billings
+        $confirmedPaymentToday = $query->where('payment_status', 'paid')->where('updated_at', $today)->count(); // check back, should come from billing_logs
 
         return [
             'totalPatientsToday' => $totalPatients ?? 0,

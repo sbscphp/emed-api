@@ -96,7 +96,7 @@ class LaboratoryService
 
     public function getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage)
     {
-        return $this->LaboratoryInterface->getAllLabRecords($$search, $status, $paginate, $paymentStatus, $perPage);
+        return $this->LaboratoryInterface->getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage);
     }
 
     public function getStats()
