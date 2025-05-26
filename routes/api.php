@@ -65,13 +65,15 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/all-records', [RecordManagementController::class, 'allRecords']);
                     Route::post('/initiate-visit/{id}', [RecordManagementController::class, 'initiateVisit']);
                     Route::get('/record-stats', [RecordManagementController::class, 'recordStats']);
+                    Route::get('/export', [RecordManagementController::class, 'exportPatients']);
                 });
 
                 Route::group(['prefix' => 'nurse'], function () {
                     Route::post('/triage/{patientId}', [TriageController::class, 'store']);
                     Route::get('/single-triage/{patientId}', [TriageController::class, 'show']);
                     Route::get('/all-records', [TriageController::class, 'getPatientsByService']);
-                    Route::get('/patient-statistics/{serviceId}', [TriageController::class, 'getPatientStatistics']);
+                    Route::get('/investigation-order', [TriageController::class, 'getInvestigationOrders']);
+                    // Route::get('/patient-statistics/{serviceId}', [TriageController::class, 'getPatientStatistics']);
                 });
 
                 //Consultant routes

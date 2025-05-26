@@ -47,8 +47,6 @@ return new class extends Migration
             $table->index('firstname');
             $table->index('lastname');
             $table->index('patientno');
-
-
         });
     }
 

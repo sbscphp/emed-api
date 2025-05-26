@@ -4,6 +4,7 @@ namespace App\Http\Controllers\v1\Admin;
 
 use App\Enums\PatientVisitStageEnums;
 use App\Enums\PatientVisitStatusEnums;
+use App\Helpers\ExportHelper;
 use App\Helpers\FileUploadHelper;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
@@ -529,6 +530,44 @@ class RecordManagementController extends Controller
         }
     }
 
+    // public function allRecords(Request $request)
+    // {
+    //     try {
+    //         DB::connection('tenant');
+
+    //         $search = $request->search;
+    //         $paginate = $request->paginate ?? false;
+    //         $perPage = $request->perPage ?? 10;
+
+    //         $currentUser = Auth::user();
+    //         $user = $this->userService->find($currentUser->id);
+    //         if (is_null($user)) {
+    //             return JsonResponser::send(false, 'User not found.', null, 404);
+    //         }
+
+    //         $records = $this->patientService->getAllRecordFiltered($search, $paginate, $perPage);
+
+    //         if ($records->isEmpty()) {
+    //             return JsonResponser::send(false, 'Record(s) not found.', null, 404);
+    //         }
+
+    //         $records->load(['service', 'visits']);
+
+    //         $records->each(function ($record) {
+    //             $record->show_url = route('record.show', ['id' => $record->id]);
+    //             $record->latest_visit = $record->visits->sortByDesc('created_at')->first();
+    //         });
+
+    //         $summary = $this->patientService->getRecordStats();
+    //         return JsonResponser::send(false, 'Record(s) found successfully.', [
+    //             'records' => $records,
+    //             'summary' => $summary,
+    //         ], 200);
+    //     } catch (\Throwable $th) {
+    //         return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
+    //     }
+    // }
+
     public function allRecords(Request $request)
     {
         try {
@@ -536,7 +575,7 @@ class RecordManagementController extends Controller
 
             $search = $request->search;
             $paginate = $request->paginate ?? false;
-            $perPage = $request->perPage ?? 1;
+            $perPage = $request->perPage ?? 10;
 
             $currentUser = Auth::user();
             $user = $this->userService->find($currentUser->id);
@@ -544,28 +583,54 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(false, 'User not found.', null, 404);
             }
 
-            $records = $this->patientService->getAllRecords($search, $paginate, $perPage);
+            $records = $this->patientService->getAllRecordFiltered($search, $paginate, $perPage);
+
             if ($records->isEmpty()) {
                 return JsonResponser::send(false, 'Record(s) not found.', null, 404);
             }
-            // Load relationships
-            $records->load(['service', 'visits']);
 
+            $records->load([
+                'service',
+                'visits' => function ($query) {
+                    $query->select(
+                        'id',
+                        'patient_id',
+                        'visitno',
+                        'stage',
+                        'status',
+                        'arrival_date',
+                        'departure_date',
+                        'visit_date',
+                        'created_at'
+                    );
+                }
+            ]);
 
             $records->each(function ($record) {
+                $serviceId = $record->service_id;
 
-                $record->show_url = route('record.show', ['id' => $record->id]);
+                $record->visits->each(function ($visit) use ($serviceId) {
+                    $billingLog = \App\Models\BillingLog::where('patient_id', $visit->patient_id)
+                        ->where('service_type_id', $serviceId)
+                        ->latest()
+                        ->first();
 
-                // Get the latest visit
-                $latestVisit = $record->visits->sortByDesc('created_at')->first();
-                $record->latest_visit = $latestVisit;
+                    $visit->payment_status = $billingLog->payment_status ?? 'pending';
+                });
+
+                $record->latest_visit = $record->visits->sortByDesc('created_at')->first();
             });
 
-            return JsonResponser::send(false, 'Record(s) found successfully.', $records, 200);
+            $summary = $this->patientService->getRecordStats();
+            return JsonResponser::send(false, 'Record(s) found successfully.', [
+                'records' => $records,
+                'summary' => $summary,
+            ], 200);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
         }
     }
+
 
     public function recordStats()
     {
@@ -596,5 +661,12 @@ class RecordManagementController extends Controller
     private function userHasPermission($user)
     {
         return $user->role === 'Admin' && $user->is_active && $user->is_verified && $user->tenant_id !== null;
+    }
+
+    public function exportPatients()
+    {
+        $patients = $this->patientService->getExportData();
+
+        return ExportHelper::streamCsv($patients, null, 'patients_export.csv');
     }
 }

@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('phoneno');
             $table->string('occupation');
             $table->string('homeaddress');
-            $table->string('companyaddress');
+            $table->string('companyaddress')->nullable();
             $table->string('religion')->nullable();
             $table->string('stateoforigin')->nullable();
             $table->string('lga')->nullable();
