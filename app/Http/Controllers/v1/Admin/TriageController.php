@@ -52,7 +52,7 @@ class TriageController extends Controller
 
             $visit->update(['stage' => 'consultation']);
             Patient::where('patient_type', 'new')->update(['patient_type' => 'existing']);
-            // Log activity
+
             $dataToLog = [
                 'causer_id' => $user->id,
                 'action_id' => $patientId,
@@ -81,79 +81,50 @@ class TriageController extends Controller
     public function getPatientsByService(Request $request)
     {
         try {
-            $serviceId = $request->query('service_id');
+            $serviceId = $request->input('service_id');
+            $search = $request->input('search');
+            $export = $request->boolean('export', false);
 
             if (!$serviceId) {
                 return JsonResponser::send(true, 'Service ID is required.', null, 400);
             }
 
-            $patients = PatientVisit::join('patients', 'patient_visits.patient_id', '=', 'patients.id')
-                ->join('services', 'patients.service_id', '=', 'services.id')
-                ->leftJoin('triages', 'patient_visits.patient_id', '=', 'triages.patient_id')
-                ->where('services.id', $serviceId)
-                ->select(
-                    'patient_visits.id as id',
-                    'patients.*',
-                    'services.id as service_id',
-                    'services.name as service_name',
-                    'patient_visits.created_at as visit_date',
-                    DB::raw('COALESCE(triages.severity, 0) as acuity')
-                )
-                ->orderBy('patient_visits.created_at', 'desc')
-                ->paginate(10);
+            $result = $this->triageService->getPatientsAndStatsByService($serviceId, $search);
 
-            if ($patients->isEmpty()) {
-                return JsonResponser::send(true, 'No patients found for this service.', [], 404);
+            if ($export) {
+                $filename = 'triage-patients-' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+                return $this->triageService->exportTriagePatients($result['patients'], $filename);
             }
 
-            return JsonResponser::send(false, 'Patients fetched successfully', $patients, 200);
+            return JsonResponser::send(false, 'Patients fetched successfully', [
+                'service_id' => $serviceId,
+                'stats' => $result['stats'],
+                'patients' => $result['patients']
+            ], 200);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Internal server error', [], 500, $e);
         }
     }
 
-    public function getPatientStatistics($serviceId)
+    public function getInvestigationOrders(Request $request)
     {
-        $today = now()->toDateString();
+        try {
+            $search = $request->input('search');
+            $export = $request->boolean('export', false);
 
-        $stats = [
-            'awaiting_triage' => PatientVisit::where('stage', 'triage')
-                ->whereHas('patient', function ($query) use ($serviceId) {
-                    $query->where('service_id', $serviceId);
-                })
-                ->count(),
+            $result = $this->triageService->getAllInvestigationOrders($search);
 
-            'awaiting_consultation' => PatientVisit::where('stage', 'consultation')
-                ->whereHas('patient', function ($query) use ($serviceId) {
-                    $query->where('service_id', $serviceId);
-                })
-                ->count(),
-            'admitted_today' => PatientVisit::where('stage', 'admitted')
-                ->whereDate('created_at', $today)
-                ->whereHas('patient', function ($query) use ($serviceId) {
-                    $query->where('service_id', $serviceId);
-                })
-                ->count(),
+            if ($export) {
+                $filename = 'investigation-orders-' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+                return $this->triageService->exportInvestigationOrders($result['patients'], $filename);
+            }
 
-            'discharged' => PatientVisit::where('stage', 'discharged')
-                ->whereHas('patient', function ($query) use ($serviceId) {
-                    $query->where('service_id', $serviceId);
-                })
-                ->count(),
-
-            'completed_surgery' => PatientVisit::where('stage', 'completed_surgery')
-                ->whereHas('patient', function ($query) use ($serviceId) {
-                    $query->where('service_id', $serviceId);
-                })
-                ->count(),
-
-            'cancelled_or_postponed' => PatientVisit::whereIn('stage', ['cancelled', 'postponed'])
-                ->whereHas('patient', function ($query) use ($serviceId) {
-                    $query->where('service_id', $serviceId);
-                })
-                ->count(),
-        ];
-
-        return JsonResponser::send(false, 'Visit Statistics Fetched Successfully', $stats);
+            return JsonResponser::send(false, 'Investigation Orders fetched successfully', [
+                'stats' => $result['stats'],
+                'patients' => $result['patients']
+            ], 200);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+        }
     }
 }

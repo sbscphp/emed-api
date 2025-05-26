@@ -2,7 +2,9 @@
 
 namespace App\Services\Patient;
 
+use App\Models\Patient;
 use App\Repositories\Patient\PatientInterface;
+use Illuminate\Support\Collection;
 
 /**
  * Class PatientService
@@ -132,5 +134,48 @@ class PatientService
     public function getPatientReport($request)
     {
         return $this->PatientInterface->getPatientReport($request);
+    }
+
+    public function getAllRecordFiltered($search = null, $paginate = false, $perPage = 10)
+    {
+        $query = Patient::query();
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('firstname', 'like', "%$search%")
+                    ->orWhere('lastname', 'like', "%$search%")
+                    ->orWhere('middlename', 'like', "%$search%")
+                    ->orWhere('email', 'like', "%$search%")
+                    ->orWhere('phoneno', 'like', "%$search%")
+                    ->orWhere('patientno', 'like', "%$search%")
+                    ->orWhere('cardno', 'like', "%$search%")
+                    ->orWhere('occupation', 'like', "%$search%")
+                    ->orWhere('homeaddress', 'like', "%$search%");
+            });
+        }
+
+        if ($paginate) {
+            return $query->latest()->paginate($perPage);
+        }
+
+        return $query->latest()->get();
+    }
+
+    /**
+     * Get patient export data.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function getExportData(): Collection
+    {
+        return Patient::select([
+            'firstname',
+            'lastname',
+            'email',
+            'phoneno',
+            'patientno',
+        ])->get()->map(function ($patient) {
+            return $patient->toArray(); // Ensures only model attributes are exported
+        });
     }
 }

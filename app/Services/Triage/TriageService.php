@@ -2,7 +2,11 @@
 
 namespace App\Services\Triage;
 
+use App\Helpers\ExportHelper;
+use App\Models\BillingLog;
+use App\Models\PatientVisit;
 use App\Repositories\Triage\TriageInterface;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class TriageService
@@ -101,5 +105,212 @@ class TriageService
     public function getTriageByPatient(int $patientId)
     {
         return $this->TriageInterface->getByPatientId($patientId);
+    }
+
+    public function getPatientsAndStatsByService($serviceId, $search = null)
+    {
+        DB::connection('tenant');
+
+        $today = now()->toDateString();
+
+        $query = PatientVisit::join('patients', 'patient_visits.patient_id', '=', 'patients.id')
+            ->join('services', 'patients.service_id', '=', 'services.id')
+            ->leftJoin('triages', 'patient_visits.patient_id', '=', 'triages.patient_id')
+            ->where('services.id', $serviceId)
+            ->select(
+                'patient_visits.id as id',
+                'patients.id as patient_id',
+                'patients.firstname',
+                'patients.lastname',
+                'patients.cardno',
+                'patients.patient_type',
+                'patients.patientno',
+                'patient_visits.arrival_date',
+                'patient_visits.departure_date',
+                'services.id as service_id',
+                'services.name as service_name',
+                'patient_visits.created_at as visit_date',
+                DB::raw('COALESCE(triages.severity, 0) as acuity'),
+                'patient_visits.stage as patient_status'
+            );
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('patients.firstname', 'like', "%$search%")
+                    ->orWhere('patients.lastname', 'like', "%$search%")
+                    ->orWhere('patients.cardno', 'like', "%$search%")
+                    ->orWhere('patients.patientno', 'like', "%$search%")
+                    ->orWhere('patient_visits.stage', 'like', "%$search%")
+                    ->orWhere('triages.severity', 'like', "%$search%");
+            });
+        }
+
+        $patients = $query->orderBy('patient_visits.created_at', 'desc')->paginate(10);
+
+        foreach ($patients as $patient) {
+            $billingLog = BillingLog::where('patient_id', $patient->patient_id)
+                ->where('service_type_id', $serviceId)
+                ->latest()
+                ->first();
+
+            $patient->payment_status = $billingLog->payment_status ?? 'pending';
+        }
+
+        $stats = $this->generateServiceStats($serviceId, $today);
+
+        return [
+            'patients' => $patients,
+            'stats' => $stats
+        ];
+    }
+
+    public function exportTriagePatients($patients, $filename)
+    {
+        $exportData = $patients->map(function ($p) {
+            return [
+                'Firstname' => $p->firstname,
+                'Lastname' => $p->lastname,
+                'Card No' => $p->cardno,
+                'Patient Type' => $p->patient_type,
+                'Patient No' => $p->patientno,
+                'Arrival Time' => $p->arrival_date,
+                'Departure Time' => $p->departure_date,
+                'Acuity' => $p->acuity,
+                'Payment Status' => $p->payment_status,
+                'Patient Status' => $p->patient_status
+            ];
+        })->toArray();
+
+        return ExportHelper::streamCsv($exportData, null, 'nurse_export.csv');
+    }
+
+    private function generateServiceStats($serviceId, $today)
+    {
+        if ($serviceId == 1) {
+            return [
+                'awaiting_triage' => $this->countByStage($serviceId, 'triage'),
+                'awaiting_consultation' => $this->countByStage($serviceId, 'consultation'),
+                'admitted_today' => $this->countByStage($serviceId, 'admitted', $today),
+                'discharged' => $this->countByStage($serviceId, 'discharged'),
+            ];
+        } elseif ($serviceId == 2) {
+            return [
+                'awaiting_triage' => $this->countByStage($serviceId, 'triage'),
+                'awaiting_consultation' => $this->countByStage($serviceId, 'consultation'),
+                'completed_surgery' => $this->countByStage($serviceId, 'completed_surgery'),
+                'cancelled_or_postponed' => $this->countByStage($serviceId, ['cancelled', 'postponed'], null, true),
+            ];
+        } elseif (in_array($serviceId, [3, 4, 5])) {
+            return [
+                'awaiting_triage' => $this->countByStage($serviceId, 'triage'),
+                'triaged_patient' => $this->countByStage($serviceId, 'triaged'),
+                'total_test' => $this->countTests($serviceId),
+                'pending_test' => $this->countTests($serviceId, 'pending'),
+                'emergency_prescription' => 0,
+                'medication_dispenses_today' => 0,
+                'routine_medication' => 0,
+                'critical_stock_alert' => 0,
+            ];
+        }
+
+        return [];
+    }
+
+    private function countByStage($serviceId, $stage, $date = null, $isMultiple = false)
+    {
+        $query = PatientVisit::whereHas('patient', function ($q) use ($serviceId) {
+            $q->where('service_id', $serviceId);
+        });
+
+        if ($isMultiple) {
+            $query->whereIn('stage', $stage);
+        } else {
+            $query->where('stage', $stage);
+        }
+
+        if ($date) {
+            $query->whereDate('created_at', $date);
+        }
+
+        return $query->count();
+    }
+
+    private function countTests($serviceId, $status = null)
+    {
+        $query = DB::connection('tenant')->table('lab_test_results')
+            ->join('patient_visit_lab', 'lab_test_results.patient_visit_lab_id', '=', 'patient_visit_lab.id')
+            ->join('patients', 'patient_visit_lab.patient_id', '=', 'patients.id')
+            ->where('patients.service_id', $serviceId);
+
+        if ($status) {
+            $query->where('lab_test_results.result', $status);
+        }
+
+        return $query->count();
+    }
+
+    public function getAllInvestigationOrders($search = null)
+    {
+        $query = PatientVisit::join('patients', 'patient_visits.patient_id', '=', 'patients.id')
+            ->join('services', 'patients.service_id', '=', 'services.id')
+            ->leftJoin('triages', 'patient_visits.patient_id', '=', 'triages.patient_id')
+            ->select(
+                'patient_visits.id as id',
+                'patients.id as patient_id',
+                'patients.firstname',
+                'patients.lastname',
+                'patients.cardno',
+                'patients.patient_type',
+                'patients.patientno',
+                'patient_visits.arrival_date',
+                'patient_visits.departure_date',
+                'services.id as service_id',
+                'services.name as service_name',
+                'patient_visits.created_at as visit_date',
+                DB::raw('COALESCE(triages.severity, 0) as acuity'),
+                'patient_visits.stage as patient_status'
+            )
+            ->orderByDesc('patient_visits.created_at');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('patients.firstname', 'like', "%$search%")
+                    ->orWhere('patients.lastname', 'like', "%$search%")
+                    ->orWhere('patients.cardno', 'like', "%$search%");
+            });
+        }
+
+        $patients = $query->paginate(10);
+
+        $statsQuery = clone $query;
+
+        $stats = [
+            'total_patients' => $statsQuery->count(),
+            'pending_patients' => (clone $statsQuery)->where('patient_visits.stage', 'triaged')->count(),
+            'order_available' => (clone $statsQuery)->where('patient_visits.stage', '!=', 'triaged')->count(),
+        ];
+
+        return [
+            'patients' => $patients,
+            'stats' => $stats
+        ];
+    }
+
+
+    public function exportInvestigationOrders($patients, $filename)
+    {
+        $exportData = $patients->map(function ($p) {
+            return [
+                'Firstname' => $p->firstname,
+                'Lastname' => $p->lastname,
+                'Card No' => $p->cardno,
+                'Patient No' => $p->patientno,
+                'Patient Type' => $p->patient_type,
+                'Order Date' => $p->order_date,
+                'Patient Status' => ucfirst($p->stage),
+            ];
+        })->toArray();
+
+        return ExportHelper::streamCsv($exportData, null,  $filename);
     }
 }
