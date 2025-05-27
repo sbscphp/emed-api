@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
-use App\Helpers\ExportHelper;
+
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\TriageRequest;
@@ -14,7 +14,6 @@ use App\Models\PatientVisit;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class TriageController extends Controller
 {
@@ -45,21 +44,22 @@ class TriageController extends Controller
                 'user_id' => $currentUser->id,
             ]);
 
-            $triage = $this->triageService->updateOrCreate(['patient_id' => $patientId], $validated);
+            $triage = $this->triageService->updateOrCreate(
+                ['patient_id' => $patientId],
+                $validated
+            );
 
             $visit->update(['stage' => 'consultation']);
             Patient::where('patient_type', 'new')->update(['patient_type' => 'existing']);
 
-            $dataToLog = [
-                'causer_id' => $user->id,
-                'action_id' => $patientId,
-                'action' => 'Create/Update',
-                'action_type' => "Models\Patient",
-                'log_name' => "Triage recorded successfully",
-                'description' => "{$user->firstname} {$user->lastname} recorded or updated triage details successfully",
-            ];
-
-            GeneralHelper::storeAuditLog($dataToLog);
+            GeneralHelper::storeAuditLog([
+                'causer_id'     => $user->id,
+                'action_id'     => $patientId,
+                'action'        => 'Create/Update',
+                'action_type'   => "Models\Patient",
+                'log_name'      => "Triage recorded successfully",
+                'description'   => "{$user->firstname} {$user->lastname} recorded or updated triage details successfully",
+            ]);
 
             DB::connection('tenant')->commit();
             return JsonResponser::send(false, 'Triage recorded successfully', $triage, 201);
@@ -68,6 +68,7 @@ class TriageController extends Controller
             return JsonResponser::send(true, 'Internal server error', [], 500, $e);
         }
     }
+
 
     public function show($patientId)
     {
