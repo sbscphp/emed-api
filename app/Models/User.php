@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laratrust\Contracts\LaratrustUser;
 use Laratrust\Traits\HasRolesAndPermissions;
 // use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Sanctum\HasApiTokens;
@@ -42,6 +41,8 @@ class User extends Authenticatable implements JWTSubject
      */
     protected $guarded = ['id'];
     protected $connection = 'tenant';
+    protected $appends = ['role_names'];
+
 
     /**
      * The attributes that should be hidden for serialization.
@@ -111,8 +112,9 @@ class User extends Authenticatable implements JWTSubject
         return $this->belongsToMany(Permission::class, 'permission_user', 'user_id', 'permission_id');
     }
 
-    public function getRoleAttribute()
+
+    public function getRoleNamesAttribute()
     {
-        return $this->roles->first()?->name ?? '';
+        return $this->roles->pluck('name');
     }
 }

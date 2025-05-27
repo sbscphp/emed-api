@@ -7,6 +7,7 @@ use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\AdminLoginRequest;
 use App\Http\Requests\Auth\TenantOnboardingRequest;
+use App\Http\Resources\UserResource;
 use App\Mail\TenantEmailVerification;
 use App\Models\Registration;
 use App\Models\Role;
@@ -228,10 +229,76 @@ class RegistrationController extends Controller
     }
 
     //LOGIN::THROUGH LANDLORD DB
+    // public function adminLogin(AdminLoginRequest $request)
+    // {
+    //     try {
+    //         $credentials = $request->only('email', 'password');
+
+    //         $user = User::where('email', $credentials['email'])->first();
+
+    //         if (!$user) {
+    //             return JsonResponser::send(false, 'Invalid credentials', [], 401);
+    //         }
+
+    //         if (!$user->is_verified) {
+    //             return JsonResponser::send(false, 'Your email has not been verified. Please check your email for verification.', [], 403);
+    //         }
+
+    //         if (!$token = JWTAuth::attempt($credentials)) {
+    //             return JsonResponser::send(false, 'Invalid credentials', [], 401);
+    //         }
+
+    //         $user = Auth::user()->load('roles');
+
+    //         $tenant = Tenant::find($user->tenant_id);
+    //         if (!$tenant) {
+    //             JWTAuth::setToken($token)->invalidate();
+    //             return JsonResponser::send(false, 'Tenant not found for this user', [], 404);
+    //         }
+
+    //         $hospital = User::where('tenant_id', $tenant->id)->first();
+    //         if (!$hospital) {
+    //             JWTAuth::setToken($token)->invalidate();
+    //             return JsonResponser::send(false, 'No hospital information found for this tenant', [], 404);
+    //         }
+
+    //         // Update if logging in first time after verification
+    //         if (!$user->email_verified_at) {
+    //             $user->update([
+    //                 'email_verified_at' => now(),
+    //                 'status' => 'active',
+    //                 'is_verified' => true,
+    //                 'can_login' => true,
+    //                 'is_active' => true,
+    //             ]);
+    //         }
+
+    //         return JsonResponser::send(
+    //             true,
+    //             'Admin logged in successfully',
+    //             [
+    //                 'user' => $user,
+    //                 'tenant' => $tenant,
+    //                 'hospital_registration' => $hospital,
+    //                 'token' => $token,
+    //             ],
+    //             200
+    //         );
+    //     } catch (\Exception $e) {
+    //         return JsonResponser::send(
+    //             false,
+    //             'An error occurred during Login. ' . $e->getMessage(),
+    //             null,
+    //             500
+    //         );
+    //     }
+    // }
+
     public function adminLogin(AdminLoginRequest $request)
     {
         try {
             $credentials = $request->only('email', 'password');
+
 
             $user = User::where('email', $credentials['email'])->first();
 
@@ -247,9 +314,18 @@ class RegistrationController extends Controller
                 return JsonResponser::send(false, 'Invalid credentials', [], 401);
             }
 
-            $user = Auth::user()->load('roles');
 
-            $tenant = Tenant::find($user->tenant_id);
+            $landlordUser = (new \App\Models\User())
+                ->setConnection('landlord')
+                ->newQuery()
+                ->with('roles')
+                ->find($user->id);
+
+            if (!$landlordUser) {
+                return JsonResponser::send(false, 'User not found in landlord DB', [], 404);
+            }
+
+            $tenant = Tenant::find($landlordUser->tenant_id);
             if (!$tenant) {
                 JWTAuth::setToken($token)->invalidate();
                 return JsonResponser::send(false, 'Tenant not found for this user', [], 404);
@@ -261,9 +337,9 @@ class RegistrationController extends Controller
                 return JsonResponser::send(false, 'No hospital information found for this tenant', [], 404);
             }
 
-            // Update if logging in first time after verification
-            if (!$user->email_verified_at) {
-                $user->update([
+
+            if (!$landlordUser->email_verified_at) {
+                $landlordUser->update([
                     'email_verified_at' => now(),
                     'status' => 'active',
                     'is_verified' => true,
@@ -271,12 +347,11 @@ class RegistrationController extends Controller
                     'is_active' => true,
                 ]);
             }
-
             return JsonResponser::send(
                 true,
                 'Admin logged in successfully',
                 [
-                    'user' => $user,
+                    'user' => new UserResource($user),
                     'tenant' => $tenant,
                     'hospital_registration' => $hospital,
                     'token' => $token,
@@ -292,6 +367,7 @@ class RegistrationController extends Controller
             );
         }
     }
+
 
     //LOGIN THROUGH INDIVIDUAL TENANT DB
 

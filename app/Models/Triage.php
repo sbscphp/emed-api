@@ -14,14 +14,17 @@ class Triage extends Model
     protected $fillable = [
         'patient_id',
         'user_id',
-        'blood_pressure_systolic',
-        'blood_pressure_diastolic',
+        'blood_pressure',
         'pulse_bpm',
         'sugar_level',
         'weight_kg',
         'temperature',
         'severity',
     ];
+    protected $casts = [
+        'blood_pressure' => 'array',
+    ];
+
 
     public function patient()
     {

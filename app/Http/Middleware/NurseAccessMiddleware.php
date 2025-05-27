@@ -19,15 +19,21 @@ class NurseAccessMiddleware
      */
     public function handle($request, Closure $next)
     {
-        $user = Auth::user();
-        if (!$user) {
+        $authUser = auth()->user();
+
+        if (!$authUser) {
             return JsonResponser::send(true, 'Authentication required. Please sign in.', [], 401);
+        };
+
+        if (!$authUser) {
+            return JsonResponser::send(true, 'User not found in landlord context', [], 401);
         }
-        if (!$user->hasRole(['admin', 'super admin', 'nurse'])) {
+
+        if (!$authUser->hasRole(['admin', 'super admin', 'nurse'])) {
             ErrorLog::create([
                 'causer'         => $user->id ?? 'Guest',
                 'model'          => 'Permission',
-                'error_message'  => "Unauthorized access attempt by {$user->fullname}",
+                'error_message'  => "Unauthorized access attempt by {$authUser->fullname}",
                 'error_line'     => __LINE__,
                 'error_trace'    => '',
                 'request_url'    => $request->fullUrl() ?? 'N/A',

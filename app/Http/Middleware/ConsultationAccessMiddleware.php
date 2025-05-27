@@ -25,7 +25,7 @@ class ConsultationAccessMiddleware
             return JsonResponser::send(true, 'Authentication required. Please sign in.', [], 401);
         }
 
-        if (!$user->hasRole(['admin', 'super admin'])) {
+        if (!$user->hasRole(['admin', 'super admin', 'consultant'])) {
             ErrorLog::create([
                 'causer'        => $user->id ?? 'Guest',
                 'model'         => 'Permission',

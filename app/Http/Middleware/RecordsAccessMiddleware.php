@@ -22,7 +22,7 @@ class RecordsAccessMiddleware
             return JsonResponser::send(true, 'Authentication required. Please sign in.', [], 401);
         }
 
-        if (!$user->hasRole(['admin', 'super admin'])) {
+        if (!$user->hasRole(['admin', 'super admin', 'record'])) {
             ErrorLog::create([
                 'causer'        => $user->id ?? 'Guest',
                 'model'         => 'Permission',

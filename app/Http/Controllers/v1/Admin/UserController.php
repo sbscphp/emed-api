@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -110,48 +111,60 @@ class UserController extends Controller
             $currentUser = Auth::user();
             $data = $request->validated();
 
+            // Validate tenant-side role
             $tenantRole = Role::where('name', $data['role'])->first();
             if (!$tenantRole) {
-                return JsonResponser::send(true, 'Invalid role provided.', [], 422);
+                return JsonResponser::send(true, 'Invalid role provided (tenant).', [], 422);
             }
 
+            // Prepare user data
+            $uuid = (string) Str::uuid();
+            $hashedPassword = Hash::make($data['password']);
             $userData = [
-                'tenant_id' => $currentUser->tenant_id,
-                'uuid' => (string) Str::uuid(),
-                'fullname' => $data['fullname'],
-                'email' => $data['email'],
-                'role'  => $data['role'],
-                'phone_number' => $data['phone_number'],
-                'date_of_birth' => $data['date_of_birth'],
+                'tenant_id'         => $currentUser->tenant_id,
+                'uuid'              => $uuid,
+                'fullname'          => $data['fullname'],
+                'email'             => $data['email'],
+                'role'              => $data['role'],
+                'phone_number'      => $data['phone_number'],
+                'date_of_birth'     => $data['date_of_birth'],
                 'email_verified_at' => now(),
-                'can_login' => 1,
-                'is_verified' => 1,
-                'is_active' => 1,
-                'password' => Hash::make($data['password']),
+                'can_login'         => 1,
+                'is_verified'       => 1,
+                'is_active'         => 1,
+                'password'          => $hashedPassword,
             ];
 
             $tenantUser = User::create($userData);
             $tenantUser->roles()->attach($tenantRole->id);
 
-            $landlordUser = new ModelsLandlordUser($userData);
+            $landlordUser = new \App\Models\Landlord\User($userData);
+            $landlordUser->id = $tenantUser->id;
             $landlordUser->save();
 
-            $landlordRole = ModelsLandlordRole::where('name', $data['role'])->first();
+            $landlordRole = \App\Models\Landlord\Role::where('name', $data['role'])->first();
             if ($landlordRole) {
                 $landlordUser->roles()->attach($landlordRole->id);
+            } else {
+                DB::connection('tenant')->rollBack();
+                DB::connection('landlord')->rollBack();
+                return JsonResponser::send(true, 'Role not found in landlord DB.', [], 422);
             }
 
             DB::connection('tenant')->commit();
             DB::connection('landlord')->commit();
+
+
 
             return JsonResponser::send(false, 'User created successfully.', $tenantUser, 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
             DB::connection('landlord')->rollBack();
 
-            return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
+            return JsonResponser::send(true, 'Internal server error.', [], 500);
         }
     }
+
 
     public function viewUser($id)
     {
