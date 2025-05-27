@@ -5,7 +5,9 @@ namespace App\Services\Triage;
 use App\Helpers\ExportHelper;
 use App\Models\BillingLog;
 use App\Models\PatientVisit;
+use App\Models\Triage;
 use App\Repositories\Triage\TriageInterface;
+use App\Responser\JsonResponser;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -164,24 +166,54 @@ class TriageService
         ];
     }
 
-    public function exportTriagePatients($patients, $filename)
+    public function exportTriagePatientsByService(string $serviceId, ?string $format = 'csv', ?string $search = null, ?string $startDate = null, ?string $endDate = null)
     {
+        $query = Triage::with(['patient.visits'])
+            ->whereHas('patient', function ($q) use ($serviceId) {
+                $q->where('service_id', $serviceId);
+            });
+        if ($search) {
+            $query->whereHas('patient', function ($q) use ($search) {
+                $q->where('firstname', 'like', "%$search%")
+                    ->orWhere('lastname', 'like', "%$search%")
+                    ->orWhere('cardno', 'like', "%$search%");
+            });
+        }
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('arrival_date', [$startDate, $endDate]);
+        }
+
+        $patients = $query->get();
+
+        if ($patients->isEmpty()) {
+            return JsonResponser::send(true, 'No triage records found for export.', null, 404);
+        }
+
         $exportData = $patients->map(function ($p) {
+            $visit = $p->patient->visits->first() ?? null;
             return [
-                'Firstname' => $p->firstname,
-                'Lastname' => $p->lastname,
-                'Card No' => $p->cardno,
-                'Patient Type' => $p->patient_type,
-                'Patient No' => $p->patientno,
-                'Arrival Time' => $p->arrival_date,
-                'Departure Time' => $p->departure_date,
-                'Acuity' => $p->acuity,
-                'Payment Status' => $p->payment_status,
-                'Patient Status' => $p->patient_status
+                'Firstname'       => $p->firstname ?? $p->patient->firstname ?? '',
+                'Lastname'        => $p->lastname ?? $p->patient->lastname ?? '',
+                'Card No'         => $p->cardno ?? $p->patient->cardno ?? '',
+                'Patient Type'    => $p->patient_type ?? $p->patient->patient_type ?? '',
+                'Patient No'      => $p->patientno ?? $p->patient->patientno ?? '',
+                'Arrival Date'    => $visit->arrival_date ?? '',
+                'Departure Date'  => $visit->departure_date ?? '',
+                'Acuity'          => $p->acuity,
+                'Patient Status'  => $p->patient_status ?? $p->patient->status ?? '',
             ];
         })->toArray();
 
-        return ExportHelper::streamCsv($exportData, null, 'nurse_export.csv');
+        $filename = 'triage_export_' . now()->format('Y-m-d_H-i-s');
+
+        switch (strtolower($format)) {
+            case 'pdf':
+                return ExportHelper::downloadPdf($exportData, "{$filename}.pdf", 'exports.triage_patients');
+            case 'csv':
+            default:
+                return ExportHelper::streamCsv($exportData, null, "{$filename}.csv");
+        }
     }
 
     private function generateServiceStats($serviceId, $today)
@@ -294,23 +326,5 @@ class TriageService
             'patients' => $patients,
             'stats' => $stats
         ];
-    }
-
-
-    public function exportInvestigationOrders($patients, $filename)
-    {
-        $exportData = $patients->map(function ($p) {
-            return [
-                'Firstname' => $p->firstname,
-                'Lastname' => $p->lastname,
-                'Card No' => $p->cardno,
-                'Patient No' => $p->patientno,
-                'Patient Type' => $p->patient_type,
-                'Order Date' => $p->order_date,
-                'Patient Status' => ucfirst($p->stage),
-            ];
-        })->toArray();
-
-        return ExportHelper::streamCsv($exportData, null,  $filename);
     }
 }

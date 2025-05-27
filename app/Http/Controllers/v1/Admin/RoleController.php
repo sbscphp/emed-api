@@ -6,6 +6,7 @@ use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreRoleRequest;
 use App\Http\Requests\Admin\UpdateRoleRequest;
+use App\Models\Role;
 use App\Responser\JsonResponser;
 use App\Services\Role\RoleService;
 use App\Services\User\UserService;
@@ -68,32 +69,45 @@ class RoleController extends Controller
             'created_by' => $currentUser->id,
         ]);
 
+        DB::connection('tenant')->beginTransaction();
+        DB::connection('landlord')->beginTransaction();
+
         try {
-            $role = DB::connection('tenant')->transaction(function () use ($validated, $request, $user) {
-                $role = $this->roleService->create($validated);
+            $tenantRole = new Role($validated);
+            $tenantRole->setConnection('tenant');
+            $tenantRole->save();
 
-                if ($request->has('permissions')) {
-                    $role->syncPermissions($request->permissions);
-                }
+            $landlordRole = new Role();
+            $landlordRole->setConnection('landlord');
+            $landlordRole->fill($validated);
+            $landlordRole->id = $tenantRole->id;
+            $landlordRole->save();
 
-                $dataToLog = [
-                    'causer_id' => $user->id,
-                    'action_id' => $role->id,
-                    'action' => 'Create',
-                    'action_type' => "Models\Role",
-                    'log_name' => "Role created successfully",
-                    'description' => "{$user->firstname} {$user->lastname} created a new role: {$role->name}",
-                ];
-                GeneralHelper::storeAuditLog($dataToLog);
+            if ($request->has('permissions')) {
+                $tenantRole->syncPermissions($request->permissions);
+            }
 
-                return $role;
-            });
+            GeneralHelper::storeAuditLog([
+                'causer_id' => $user->id,
+                'action_id' => $tenantRole->id,
+                'action' => 'Create',
+                'action_type' => "Models\Role",
+                'log_name' => "Role created successfully",
+                'description' => "{$user->fullname} created a new role: {$tenantRole->name}",
+            ]);
 
-            return JsonResponser::send(false, 'Role created successfully with permissions.', $role, 201);
-        } catch (\Exception $e) {
+            DB::connection('tenant')->commit();
+            DB::connection('landlord')->commit();
+
+            return JsonResponser::send(false, 'Role created successfully with permissions.', $tenantRole, 201);
+        } catch (\Throwable $e) {
+            DB::connection('tenant')->rollBack();
+            DB::connection('landlord')->rollBack();
             return JsonResponser::send(true, 'Failed to create role. Please try again.', null, 500);
         }
     }
+
+
 
 
     /**

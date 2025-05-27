@@ -36,13 +36,13 @@ class AuditLogController extends Controller
 
             $logs = $this->auditLogService->getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate);
 
-            if($logs->isEmpty()){
+            if ($logs->isEmpty()) {
                 return JsonResponser::send(true, 'Record(s) not found.', null, 404);
             }
 
             $response = [
                 'logs' => $logs,
-                'total' => $logs->total()
+                'total' => $paginate ? $logs->total() : $logs->count()
             ];
 
             return JsonResponser::send(true, 'Record(s) found successfully.', $response);
@@ -65,11 +65,11 @@ class AuditLogController extends Controller
 
             $logs = $this->auditLogService->getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate);
 
-            if($logs->isEmpty()){
+            if ($logs->isEmpty()) {
                 return JsonResponser::send(true, 'Record(s) not found for download.', null, 404);
             }
 
-            switch(strtolower($downloadType)){
+            switch (strtolower($downloadType)) {
                 case 'csv':
                     return $this->exportCsv($logs);
                     break;
@@ -90,16 +90,16 @@ class AuditLogController extends Controller
 
     private function exportCsv($logs)
     {
-        $filename = 'audit_logs_'. now()->format('YmdHis') . '.csv';
+        $filename = 'audit_logs_' . now()->format('YmdHis') . '.csv';
 
         $headers = [
             "Content-Type" => "text/csv",
             "Content-Disposition" => "attachment; filename=$filename",
         ];
 
-        $callback = function() use ($logs){
+        $callback = function () use ($logs) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['ID', 'User ID', 'User Role', 'Action', 'Module Accessed', 'Date']); // Headers
+            fputcsv($file, ['ID', 'User ID', 'User Role', 'Action', 'Module Accessed', 'Date']);
 
             foreach ($logs as $log) {
                 fputcsv($file, [

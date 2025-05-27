@@ -50,10 +50,6 @@ class BillingController extends Controller
             $currentUser = Auth::user();
             $user = $this->userService->find($currentUser->id);
 
-            if (!in_array($user->role, ['Super Admin', 'Admin'])) {
-                return JsonResponser::send(false, 'Forbidden! User has no permission to create a billing record', [], 403);
-            }
-
             $validated = array_merge($request->validated(), [
                 'created_by' => $currentUser->id,
             ]);
