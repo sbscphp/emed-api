@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Helpers\ExportHelper;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\TriageRequest;
@@ -38,10 +39,6 @@ class TriageController extends Controller
 
             $currentUser = Auth::user();
             $user = $this->userService->find($currentUser->id);
-
-            if (!in_array($user->role, ['Super Admin', 'Admin'])) {
-                return JsonResponser::send(false, 'Forbidden! User has no permission to register a patient', [], 403);
-            }
 
             $validated = array_merge($request->validated(), [
                 'patient_id' => $patientId,
@@ -83,18 +80,12 @@ class TriageController extends Controller
         try {
             $serviceId = $request->input('service_id');
             $search = $request->input('search');
-            $export = $request->boolean('export', false);
 
             if (!$serviceId) {
                 return JsonResponser::send(true, 'Service ID is required.', null, 400);
             }
 
             $result = $this->triageService->getPatientsAndStatsByService($serviceId, $search);
-
-            if ($export) {
-                $filename = 'triage-patients-' . now()->format('Y-m-d_H-i-s') . '.xlsx';
-                return $this->triageService->exportTriagePatients($result['patients'], $filename);
-            }
 
             return JsonResponser::send(false, 'Patients fetched successfully', [
                 'service_id' => $serviceId,
@@ -110,14 +101,8 @@ class TriageController extends Controller
     {
         try {
             $search = $request->input('search');
-            $export = $request->boolean('export', false);
 
             $result = $this->triageService->getAllInvestigationOrders($search);
-
-            if ($export) {
-                $filename = 'investigation-orders-' . now()->format('Y-m-d_H-i-s') . '.xlsx';
-                return $this->triageService->exportInvestigationOrders($result['patients'], $filename);
-            }
 
             return JsonResponser::send(false, 'Investigation Orders fetched successfully', [
                 'stats' => $result['stats'],
@@ -126,5 +111,19 @@ class TriageController extends Controller
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Internal server error', [], 500, $e);
         }
+    }
+
+    public function exportTriagePatients(Request $request, string $format)
+    {
+        $serviceId = $request->input('service_id');
+        $search = $request->input('search');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        if (!$serviceId) {
+            return JsonResponser::send(true, 'Service ID is required.', null, 400);
+        }
+
+        return $this->triageService->exportTriagePatientsByService($serviceId, $format, $search, $startDate, $endDate);
     }
 }

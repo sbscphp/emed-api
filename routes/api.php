@@ -45,15 +45,10 @@ Route::group(["prefix" => "v1"], function () {
     });
 
     Route::group(["middleware" => ["auth:api"]], function () {
-        // Route::group(['prefix' => 'admin'], function () {
-        //     Route::post('/register', [RegistrationController::class, 'onboardTenant']);
-
-        // });
-
         Route::group(['middleware' => ["tenant"]], function () {
             Route::group(['prefix' => 'admin', "namespace" => "v1\Admin"], function () {
                 //Record routes
-                Route::group(['prefix' => 'record'], function () {
+                Route::group(['prefix' => 'record',  'middleware' => 'role.record'], function () {
                     Route::post('/patient', [RecordManagementController::class, 'store']);
                     Route::put('/patient-update/{id}', [RecordManagementController::class, 'update']);
                     Route::post('/next-of-kin/{id}', [RecordManagementController::class, 'addNextOfKin']);
@@ -65,19 +60,19 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/all-records', [RecordManagementController::class, 'allRecords']);
                     Route::post('/initiate-visit/{id}', [RecordManagementController::class, 'initiateVisit']);
                     Route::get('/record-stats', [RecordManagementController::class, 'recordStats']);
-                    Route::get('/export', [RecordManagementController::class, 'exportPatients']);
+                    Route::post('/export/{format}', [RecordManagementController::class, 'exportPatients']);
                 });
 
-                Route::group(['prefix' => 'nurse'], function () {
+                Route::group(['prefix' => 'nurse', 'middleware' => 'role.nurse'], function () {
                     Route::post('/triage/{patientId}', [TriageController::class, 'store']);
                     Route::get('/single-triage/{patientId}', [TriageController::class, 'show']);
                     Route::get('/all-records', [TriageController::class, 'getPatientsByService']);
                     Route::get('/investigation-order', [TriageController::class, 'getInvestigationOrders']);
-                    // Route::get('/patient-statistics/{serviceId}', [TriageController::class, 'getPatientStatistics']);
+                    Route::post('/export/{format}', [TriageController::class, 'exportTriagePatients']);
                 });
 
                 //Consultant routes
-                Route::group(['prefix' => 'consultant'], function () {
+                Route::group(['prefix' => 'consultant',  'middleware' => 'role.consultant'], function () {
                     Route::post('/patients', [ConsultationController::class, 'patientsForConsultation']);
                     Route::get('/patient/{visitNo}', [ConsultationController::class, 'show']);
                     Route::post('/patient/{visitNo}/store', [ConsultationController::class, 'storeConsultationInfo']);
@@ -90,7 +85,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/patient/drug/{patientId}', [ConsultationController::class, 'storeDrugHistory']);
                 });
 
-                Route::prefix('pharmacy')->group(function () {
+                Route::group(['prefix' => 'pharmacy', 'middleware' => 'role.pharmacy'], function () {
                     Route::post('/create', [PharmacyController::class, 'store']);
                     Route::get('/lists', [PharmacyController::class, 'index']);
                     Route::get('/list/{id}', [PharmacyController::class, 'show']);
@@ -100,7 +95,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/stats', [PharmacyController::class, 'pharmacyDashboardStats']);
                 });
 
-                Route::prefix('medicine')->group(function () {
+                Route::group(['prefix' => 'medicine', 'middleware' => 'role.billing'], function () {
                     Route::post('/create', [MedicationController::class, 'store']);
                     Route::get('/lists', [MedicationController::class, 'index']);
                     Route::get('/list/{id}', [MedicationController::class, 'show']);
@@ -110,7 +105,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/vendors', [MedicationController::class, 'listVendors']);
                 });
 
-                Route::prefix('medicine-inventory')->group(function () {
+                Route::group(['prefix' => 'medicine-inventory', 'middleware' => 'role.billing'], function () {
                     Route::get('/', [MedicationInventoryController::class, 'index']);
                     Route::get('/{id}', [MedicationInventoryController::class, 'show']);
                     Route::post('/', [MedicationInventoryController::class, 'store']);
@@ -118,7 +113,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/dashboard/stats', [MedicationInventoryController::class, 'shipmentStat']);
                 });
 
-                Route::prefix('billing')->group(function () {
+                Route::group(['prefix' => 'billing', 'middleware' => 'role.billing'], function () {
                     Route::get('/', [BillingController::class, 'index']);
                     Route::post('/', [BillingController::class, 'store']);
                     Route::get('/{id}', [BillingController::class, 'show']);
@@ -129,7 +124,8 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/service-unit/{id}', [BillingController::class, 'getBillingByServiceUnit']);
                     Route::get('/service-type/all', [BillingController::class, 'getBillingByServiceType']);
                 });
-                Route::prefix('report')->group(function () {
+
+                Route::group(['prefix' => 'report', 'middleware' => 'admin.superadmin'], function () {
                     Route::get('/dashboard/stats', [ReportController::class, 'getReportStatistics']);
                     Route::get('/', [ReportController::class, 'index']);
                     Route::get('/patient', [ReportController::class, 'getPatientReport']);
@@ -145,13 +141,13 @@ Route::group(["prefix" => "v1"], function () {
                 });
 
                 //Audit Log Routes
-                Route::prefix('auditLog')->group(function () {
+                Route::group(['prefix' => 'auditLog', 'middleware' => 'admin.superadmin'], function () {
                     Route::post('/logs', [AuditLogController::class, 'userActivity']);
                     Route::get('/logs-download/{type}', [AuditLogController::class, 'downloadAuditLog']);
                 });
 
                 //Roles Routes
-                Route::prefix('role')->group(function () {
+                Route::group(['prefix' => 'role', 'middleware' => 'admin.superadmin'], function () {
                     Route::get('/all', [RoleController::class, 'index']);
                     Route::post('/create', [RoleController::class, 'store']);
                     Route::get('/view/{id}', [RoleController::class, 'show']);
@@ -159,7 +155,7 @@ Route::group(["prefix" => "v1"], function () {
                 });
 
                 //Users Routes
-                Route::prefix('users')->group(function () {
+                Route::group(['prefix' => 'users', 'middleware' => 'admin.superadmin'], function () {
                     Route::get('/all', [UserController::class, 'allUsers']);
                     Route::post('/create', [UserController::class, 'addUser']);
                     Route::get('/view/{id}', [UserController::class, 'viewUser']);

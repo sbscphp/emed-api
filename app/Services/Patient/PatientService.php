@@ -166,16 +166,38 @@ class PatientService
      *
      * @return \Illuminate\Support\Collection
      */
-    public function getExportData(): Collection
+    public function getExportData($search = null, $startDate = null, $endDate = null): array
     {
-        return Patient::select([
+        $query = Patient::select([
             'firstname',
             'lastname',
             'email',
             'phoneno',
             'patientno',
-        ])->get()->map(function ($patient) {
-            return $patient->toArray(); // Ensures only model attributes are exported
-        });
+            'created_at',
+        ]);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('firstname', 'like', "%$search%")
+                    ->orWhere('lastname', 'like', "%$search%")
+                    ->orWhere('email', 'like', "%$search%");
+            });
+        }
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        }
+
+        return $query->latest()->get()->map(function ($patient) {
+            return [
+                'First Name'      => $patient->firstname,
+                'Last Name'       => $patient->lastname,
+                'Email'           => $patient->email,
+                'Phone Number'    => $patient->phoneno,
+                'Patient Number'  => $patient->patientno,
+                'Registered Date' => $patient->created_at->format('Y-m-d H:i'),
+            ];
+        })->toArray();
     }
 }

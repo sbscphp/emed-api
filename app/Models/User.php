@@ -16,7 +16,10 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 class User extends Authenticatable implements JWTSubject
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasRolesAndPermissions, HasFactory, Notifiable, HasApiTokens;
+    /**
+     * @method bool hasRole(string|array $roles)
+     */
+    use  HasRolesAndPermissions, HasFactory, Notifiable, HasApiTokens;
     protected $fillable = [
         'uuid',
         'fullname',
@@ -106,5 +109,10 @@ class User extends Authenticatable implements JWTSubject
     public function permissions(): BelongsToMany
     {
         return $this->belongsToMany(Permission::class, 'permission_user', 'user_id', 'permission_id');
+    }
+
+    public function getRoleAttribute()
+    {
+        return $this->roles->first()?->name ?? '';
     }
 }

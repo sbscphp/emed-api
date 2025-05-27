@@ -2,6 +2,7 @@
 
 namespace App\Helpers;
 
+use Barryvdh\DomPDF\Facade\Pdf;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExportHelper
@@ -44,5 +45,11 @@ class ExportHelper
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
         ]);
+    }
+
+    public static function downloadPdf($data, $filename = 'export.pdf')
+    {
+        $pdf = PDF::loadView('exports.patients', ['patients' => $data]);
+        return $pdf->download($filename);
     }
 }

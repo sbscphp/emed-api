@@ -66,10 +66,6 @@ class MedicationController extends Controller
             $currentUser = Auth::user();
             $user = $this->userService->find($currentUser->id);
 
-            if (!in_array($user->role, ['Super Admin', 'Admin'])) {
-                return JsonResponser::send(false, 'Forbidden! User has no permission to register a patient', [], 403);
-            }
-
             $validated = array_merge($request->validated(), [
                 'created_by' => $currentUser->id,
             ]);
@@ -99,9 +95,6 @@ class MedicationController extends Controller
     {
         try {
             $user = Auth::user();
-            if (!in_array($user->role, ['Admin', 'Super Admin'])) {
-                return JsonResponser::send(true, 'Forbidden. You do not have permission to change medicine status.', null, 403);
-            }
 
             $med = $this->medicationService->find($id);
             if (!$med) {

@@ -67,12 +67,6 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
 
-            //Validate if user has permission to register new patient
-            if (!$this->userHasPermission($user)) {
-                return JsonResponser::send(true, 'Forbidden! User has no permission to register a patient', null, 403);
-            }
-
-            // Validate if patient firstname and lastname exists already
             $patientExists = $this->patientService->findUserByFirstnameAndLastname($request->firstname, $request->lastname);
             if ($patientExists) {
                 return JsonResponser::send(true, 'A patient with the same firstname and lastname already exists.', null, 422);
@@ -149,10 +143,6 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
 
-            //Validate if user has permission to register new patient
-            if (!$this->userHasPermission($user)) {
-                return JsonResponser::send(true, 'Forbidden! User has no permission to register a patient', null, 403);
-            }
 
             $patientInfo = $this->patientService->find($id);
             if (is_null($patientInfo)) {
@@ -208,11 +198,6 @@ class RecordManagementController extends Controller
             $user = $this->userService->find($currentUser->id);
             if (is_null($user)) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
-            }
-
-            //Validate if user has permission to register new patient
-            if (!$this->userHasPermission($user)) {
-                return JsonResponser::send(true, 'Forbidden! User has no permission to register a patient', null, 403);
             }
 
             $patient = $this->patientService->find($patienId);
@@ -271,11 +256,6 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
 
-            //Validate if user has permission to register new patient
-            if (!$this->userHasPermission($user)) {
-                return JsonResponser::send(true, 'Forbidden! User has no permission to register a patient', null, 403);
-            }
-
             $nextOfKinInfo = $this->nextOfKinService->find($id);
             if (is_null($nextOfKinInfo)) {
                 return JsonResponser::send(true, 'Record not found', null, 404);
@@ -325,10 +305,6 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
 
-            //Validate if user has permission to register new patient
-            if (!$this->userHasPermission($user)) {
-                return JsonResponser::send(true, 'Forbidden! User has no permission to register a patient', null, 403);
-            }
 
             $patient = $this->patientService->find($patienId);
             if (is_null($patient)) {
@@ -399,11 +375,6 @@ class RecordManagementController extends Controller
             $user = $this->userService->find($currentUser->id);
             if (is_null($user)) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
-            }
-
-            //Validate if user has permission to register new patient
-            if (!$this->userHasPermission($user)) {
-                return JsonResponser::send(true, 'Forbidden! User has no permission to register a patient', null, 403);
             }
 
             $emergencyContactInfo = $this->nextOfKinService->find($id);
@@ -530,44 +501,6 @@ class RecordManagementController extends Controller
         }
     }
 
-    // public function allRecords(Request $request)
-    // {
-    //     try {
-    //         DB::connection('tenant');
-
-    //         $search = $request->search;
-    //         $paginate = $request->paginate ?? false;
-    //         $perPage = $request->perPage ?? 10;
-
-    //         $currentUser = Auth::user();
-    //         $user = $this->userService->find($currentUser->id);
-    //         if (is_null($user)) {
-    //             return JsonResponser::send(false, 'User not found.', null, 404);
-    //         }
-
-    //         $records = $this->patientService->getAllRecordFiltered($search, $paginate, $perPage);
-
-    //         if ($records->isEmpty()) {
-    //             return JsonResponser::send(false, 'Record(s) not found.', null, 404);
-    //         }
-
-    //         $records->load(['service', 'visits']);
-
-    //         $records->each(function ($record) {
-    //             $record->show_url = route('record.show', ['id' => $record->id]);
-    //             $record->latest_visit = $record->visits->sortByDesc('created_at')->first();
-    //         });
-
-    //         $summary = $this->patientService->getRecordStats();
-    //         return JsonResponser::send(false, 'Record(s) found successfully.', [
-    //             'records' => $records,
-    //             'summary' => $summary,
-    //         ], 200);
-    //     } catch (\Throwable $th) {
-    //         return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
-    //     }
-    // }
-
     public function allRecords(Request $request)
     {
         try {
@@ -608,7 +541,6 @@ class RecordManagementController extends Controller
 
             $records->each(function ($record) {
                 $serviceId = $record->service_id;
-
                 $record->visits->each(function ($visit) use ($serviceId) {
                     $billingLog = \App\Models\BillingLog::where('patient_id', $visit->patient_id)
                         ->where('service_type_id', $serviceId)
@@ -658,15 +590,32 @@ class RecordManagementController extends Controller
         return $acronym;
     }
 
-    private function userHasPermission($user)
-    {
-        return $user->role === 'Admin' && $user->is_active && $user->is_verified && $user->tenant_id !== null;
-    }
+    // private function userHasPermission($user)
+    // {
+    //     return $user->role === 'Admin' && $user->is_active && $user->is_verified && $user->tenant_id !== null;
+    // }
 
-    public function exportPatients()
+    public function exportPatients(Request $request, string $format)
     {
-        $patients = $this->patientService->getExportData();
+        $search = $request->input('search');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
 
-        return ExportHelper::streamCsv($patients, null, 'patients_export.csv');
+        $patients = $this->patientService->getExportData($search, $startDate, $endDate);
+
+        if (empty($patients)) {
+            return JsonResponser::send(true, 'No records found for export.', null, 404);
+        }
+
+        switch (strtolower($format)) {
+            case 'csv':
+                return ExportHelper::streamCsv($patients, null, 'patients_export.csv');
+
+            case 'pdf':
+                return ExportHelper::downloadPdf($patients, 'patients_export.pdf');
+
+            default:
+                return JsonResponser::send(true, 'Invalid export format.', null, 400);
+        }
     }
 }

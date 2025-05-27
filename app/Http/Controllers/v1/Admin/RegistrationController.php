@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Responser\JsonResponser;
 use App\Services\Registration\RegistrationService;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -237,11 +238,7 @@ class RegistrationController extends Controller
             if (!$user) {
                 return JsonResponser::send(false, 'Invalid credentials', [], 401);
             }
-            // $tenantDatabase = app()->environment('production')
-            //     ? 'tenant_john_hospital'
-            //     : 'tenant_' . Str::slug($data['name'], '_') . '_' . Str::random(4);
-            // Log::info('Current environment: ' . app()->environment());
-            // Log::info('Assigned tenant database: ' . $tenantDatabase);
+
             if (!$user->is_verified) {
                 return JsonResponser::send(false, 'Your email has not been verified. Please check your email for verification.', [], 403);
             }
@@ -250,8 +247,9 @@ class RegistrationController extends Controller
                 return JsonResponser::send(false, 'Invalid credentials', [], 401);
             }
 
-            $tenant = Tenant::find($user->tenant_id);
+            $user = Auth::user()->load('roles');
 
+            $tenant = Tenant::find($user->tenant_id);
             if (!$tenant) {
                 JWTAuth::setToken($token)->invalidate();
                 return JsonResponser::send(false, 'Tenant not found for this user', [], 404);
@@ -263,7 +261,7 @@ class RegistrationController extends Controller
                 return JsonResponser::send(false, 'No hospital information found for this tenant', [], 404);
             }
 
-            // Updating user fields when logging in for the first time after verification
+            // Update if logging in first time after verification
             if (!$user->email_verified_at) {
                 $user->update([
                     'email_verified_at' => now(),

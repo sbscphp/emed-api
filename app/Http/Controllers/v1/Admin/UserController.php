@@ -6,7 +6,11 @@ use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
+use App\Models\Landlord\LandLordUser;
+use App\Models\Landlord\User as ModelsLandlordUser;
+use App\Models\Landlord\Role as ModelsLandlordRole;
 use App\Models\Role;
+use App\Models\User;
 use App\Responser\JsonResponser;
 use App\Services\User\UserService;
 use Illuminate\Http\Request;
@@ -51,56 +55,103 @@ class UserController extends Controller
         }
     }
 
+    // public function addUser(StoreUserRequest $request)
+    // {
+    //     DB::connection('tenant')->beginTransaction();
+
+    //     try {
+    //         $currentUser = Auth::user();
+
+    //         $data = $request->validated();
+
+    //         $role = Role::where('name', $data['role'])->first();
+    //         if (!$role) {
+    //             return JsonResponser::send(true, 'Invalid role provided.', [], 422);
+    //         }
+
+    //         $data['tenant_id'] = $currentUser->tenant_id;
+    //         $data['uuid'] = (string) Str::uuid();
+    //         $data['email_verified_at'] = now();
+    //         $data['can_login'] = 1;
+    //         $data['is_verified'] = 1;
+    //         $data['is_active'] = 1;
+    //         $data['password'] = Hash::make($data['password']);
+
+    //         $user = $this->userService->create($data);
+
+    //         $user->roles()->attach($role->id);
+
+    //         $dataToLog = [
+    //             'causer_id' => $user->id,
+    //             'action_id' => $user->id,
+    //             'action' => 'Create',
+    //             'action_type' => "Models\User",
+    //             'log_name' => "User created successfully",
+    //             'description' => "{$currentUser->first_name} {$currentUser->last_name} created a new user: {$user->first_name} {$user->last_name}",
+    //         ];
+
+    //         GeneralHelper::storeAuditLog($dataToLog);
+
+    //         DB::connection('tenant')->commit();
+
+    //         return JsonResponser::send(false, 'User created successfully.', $user, 201);
+    //     } catch (\Throwable $th) {
+    //         DB::connection('tenant')->rollBack();
+    //         return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
+    //     }
+    // }
+
     public function addUser(StoreUserRequest $request)
     {
         DB::connection('tenant')->beginTransaction();
+        DB::connection('landlord')->beginTransaction();
 
         try {
             $currentUser = Auth::user();
-
-            if (!$currentUser->hasRole(['super_admin', 'admin'])) {
-                return JsonResponser::send(true, 'Unauthorized action.', [], 403);
-            }
-
             $data = $request->validated();
 
-            $role = Role::where('name', $data['role'])->first();
-            if (!$role) {
+            $tenantRole = Role::where('name', $data['role'])->first();
+            if (!$tenantRole) {
                 return JsonResponser::send(true, 'Invalid role provided.', [], 422);
             }
 
-            $data['tenant_id'] = $currentUser->tenant_id;
-            $data['uuid'] = (string) Str::uuid();
-            $data['email_verified_at'] = now();
-            $data['can_login'] = 1;
-            $data['is_verified'] = 1;
-            $data['is_active'] = 1;
-            $data['password'] = Hash::make($data['password']);
-
-            $user = $this->userService->create($data);
-
-            $user->roles()->attach($role->id);
-
-            $dataToLog = [
-                'causer_id' => $user->id,
-                'action_id' => $user->id,
-                'action' => 'Create',
-                'action_type' => "Models\User",
-                'log_name' => "User created successfully",
-                'description' => "{$currentUser->first_name} {$currentUser->last_name} created a new user: {$user->first_name} {$user->last_name}",
+            $userData = [
+                'tenant_id' => $currentUser->tenant_id,
+                'uuid' => (string) Str::uuid(),
+                'fullname' => $data['fullname'],
+                'email' => $data['email'],
+                'role'  => $data['role'],
+                'phone_number' => $data['phone_number'],
+                'date_of_birth' => $data['date_of_birth'],
+                'email_verified_at' => now(),
+                'can_login' => 1,
+                'is_verified' => 1,
+                'is_active' => 1,
+                'password' => Hash::make($data['password']),
             ];
 
-            GeneralHelper::storeAuditLog($dataToLog);
+            $tenantUser = User::create($userData);
+            $tenantUser->roles()->attach($tenantRole->id);
+
+            $landlordUser = new ModelsLandlordUser($userData);
+            $landlordUser->save();
+
+            $landlordRole = ModelsLandlordRole::where('name', $data['role'])->first();
+            if ($landlordRole) {
+                $landlordUser->roles()->attach($landlordRole->id);
+            }
 
             DB::connection('tenant')->commit();
+            DB::connection('landlord')->commit();
 
-            return JsonResponser::send(false, 'User created successfully.', $user, 201);
+            return JsonResponser::send(false, 'User created successfully.', $tenantUser, 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
+            DB::connection('landlord')->rollBack();
+
             return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
         }
     }
-
 
     public function viewUser($id)
     {
@@ -123,10 +174,6 @@ class UserController extends Controller
 
         try {
             $currentUser = Auth::user();
-
-            if (!$currentUser->hasRole(['super_admin', 'admin'])) {
-                return JsonResponser::send(true, 'Unauthorized action.', [], 403);
-            }
 
             $user = $this->userService->find($id);
             if (!$user) {
@@ -173,10 +220,6 @@ class UserController extends Controller
     {
         try {
             $currentUser = Auth::user();
-
-            if (!$currentUser->hasRole(['super_admin', 'admin'])) {
-                return JsonResponser::send(true, 'Unauthorized action.', [], 403);
-            }
 
             $user = $this->userService->find($id);
             if (!$user) {
