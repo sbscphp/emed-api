@@ -2,6 +2,7 @@
 
 namespace App\Repositories\MedicationInventory;
 
+use App\Helpers\ExportHelper;
 use App\Models\MedicationInventory;
 
 class MedicationInventoryRepository implements MedicationInventoryRepositoryInterface
@@ -12,7 +13,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         return MedicationInventory::create($data);
     }
 
-    public function getAllWithFilters(array $filters = [])
+    public function getAllWithFilters(array $filters = [], ?string $export = null)
     {
         $query = MedicationInventory::with(['medication', 'pharmacy']);
 
@@ -36,7 +37,42 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
             });
         }
 
-        return $query->latest()->paginate(10);
+        $transformItem = function ($item) {
+            $sellingPrice = optional($item->medication)->selling_price ?? 0;
+            $totalPrice = $item->received_qty * $sellingPrice;
+
+            return [
+                'Batch No' => $item->batch_no,
+                'Shipment Status' => $item->shipment_status,
+                'Medicine Name' => $item->medication->medicine_name ?? '',
+                'Brand Name' => $item->medication->brand_name ?? '',
+                'Generic Name' => $item->medication->generic_name ?? '',
+                'Pharmacy' => $item->pharmacy->name ?? '',
+                'Received Qty' => $item->received_qty,
+                'Selling Price' => $sellingPrice,
+                'Total Price' => $totalPrice,
+                'Created At' => $item->created_at->toDateTimeString(),
+            ];
+        };
+
+        if ($export) {
+            $items = $query->latest()->get()->map($transformItem);
+
+            if ($export === 'csv') {
+                return ExportHelper::streamCsv($items->toArray(), null, 'medication_inventory.csv');
+            }
+
+            if ($export === 'pdf') {
+                return ExportHelper::downloadPdf($items->toArray(), 'medication_inventory.pdf');
+            }
+
+            throw new \InvalidArgumentException('Invalid export format specified');
+        }
+
+        $paginated = $query->latest()->paginate(10);
+        $paginated->getCollection()->transform($transformItem);
+
+        return $paginated;
     }
 
 

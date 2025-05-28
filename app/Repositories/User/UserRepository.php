@@ -9,8 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\SystemReportExport;
-
-
+use App\Helpers\ExportHelper;
 
 /**
  * Class UserRepository
@@ -24,10 +23,52 @@ class UserRepository implements UserRepositoryInterface
      * 
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    public function all()
+    public function all($filters = [], $search = null, $export = null, $paginate = true, $perPage = 20)
     {
-        return User::paginate(20);
+        $query = User::query();
+
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('fullname', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone_number', 'like', "%{$search}%");
+            });
+        }
+
+        if (!empty($filters['role'])) {
+            $query->where('role', $filters['role']);
+        }
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if ($export) {
+            $users = $query->get();
+
+            $exportData = $users->map(function ($user) {
+                return [
+                    'ID' => $user->id,
+                    'Fullname' => $user->fullname,
+                    'Email' => $user->email,
+                    'PhoneNumber' => $user->phone_number,
+                    'Role' => $user->role,
+                    'Status' => $user->status,
+                    'Created At' => $user->created_at,
+                ];
+            })->toArray();
+
+            if (strtolower($export) === 'csv') {
+                return ExportHelper::streamCsv($exportData, null, 'users.csv');
+            }
+            if (strtolower($export) === 'pdf') {
+                return ExportHelper::downloadPdf($exportData, 'users.pdf');
+            }
+            throw new \Exception('Invalid export format.');
+        }
+
+        return $paginate ? $query->paginate($perPage) : $query->get();
     }
+
 
     /**
      * Create a new user in the database.

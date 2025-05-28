@@ -65,10 +65,10 @@ interface AuditLogInterface
     public function findByAttribute($attr, $value);
 
 
-     /**
+    /**
      * Fetch all AuditLog fron the database
      *
      * @param \App\Models\AuditLog
      */
-    public function getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate);
+    public function getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate, $export = null);
 }

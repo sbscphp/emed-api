@@ -17,7 +17,7 @@ interface UserRepositoryInterface
      * 
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    public function all();
+    public function all($filters = [], $search = null, $export = null, $paginate = true, $perPage = 20);
 
     /**
      * Create a new user in the database.

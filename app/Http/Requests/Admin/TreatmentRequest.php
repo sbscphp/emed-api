@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class TreatmentRequest extends FormRequest
 {
@@ -33,6 +34,11 @@ class TreatmentRequest extends FormRequest
             'medications.*.duration' => 'required|string',
             'medications.*.route' => 'nullable|string',
             'medications.*.remark' => 'nullable|string',
+            'medications.*.pharmacy_id' => [
+                'required',
+                'integer',
+                Rule::exists('tenant.pharmacies', 'id'),
+            ],
         ];
     }
 
@@ -57,7 +63,4 @@ class TreatmentRequest extends FormRequest
             'medications.*.remark.string' => 'The remark must be a valid string.',
         ];
     }
-
-
-
 }

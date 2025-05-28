@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\FinancialReportExport;
-
+use App\Helpers\ExportHelper;
 
 class BillingLogRepository implements BillingLogRepositoryInterface
 {
@@ -17,10 +17,76 @@ class BillingLogRepository implements BillingLogRepositoryInterface
         return BillingLog::create($data);
     }
 
-    public function all()
+    public function all(Request $request)
     {
-        return BillingLog::with(['serviceType', 'serviceUnit', 'patient.service'])->latest()->paginate(10);
+        $query = BillingLog::with(['serviceType', 'serviceUnit', 'patient.service']);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('invoice_number', 'like', "%$search%")
+                    ->orWhere('item_name', 'like', "%$search%")
+                    ->orWhere('payment_status', 'like', "%$search%")
+                    ->orWhereHas('patient', function ($pq) use ($search) {
+                        $pq->where('firstname', 'like', "%$search%")
+                            ->orWhere('lastname', 'like', "%$search%")
+                            ->orWhere('patientno', 'like', "%$search%")
+                            ->orWhere('cardno', 'like', "%$search%");
+                    });
+            });
+        }
+
+        if ($request->filled('payment_status')) {
+            $query->where('payment_status', $request->payment_status);
+        }
+
+        if ($request->filled('service_type_id')) {
+            $query->where('service_type_id', $request->service_type_id);
+        }
+
+        if ($request->filled('service_unit_id')) {
+            $query->where('service_unit_id', $request->service_unit_id);
+        }
+
+        if ($request->has('export')) {
+            $billings = $query->get();
+
+            $exportData = $billings->map(function ($item) {
+                return [
+                    'Invoice Number' => $item->invoice_number,
+                    'Patient Name' => $item->patient->firstname . ' ' . $item->patient->lastname,
+                    'Patient No' => $item->patient->patientno,
+                    'Card No' => $item->patient->cardno,
+                    'Billing Date' => $item->billing_date,
+                    'Item Name' => $item->item_name,
+                    'Quantity' => $item->quantity,
+                    'Unit Price' => $item->unit_price,
+                    'Sub Total' => $item->sub_total,
+                    'Tax Amount' => $item->tax_amount,
+                    'Grand Total' => $item->grand_total,
+                    'Payment Method' => $item->payment_method,
+                    'Payment Status' => $item->payment_status,
+                    'Service Type' => $item->serviceType->name ?? '',
+                    'Service Unit' => $item->serviceUnit->name ?? '',
+                    'Created At' => $item->created_at->toDateTimeString(),
+                ];
+            });
+
+            if ($request->export === 'csv') {
+                return ExportHelper::streamCsv($exportData->toArray(), null, 'billing-records.csv');
+            }
+
+            if ($request->export === 'pdf') {
+                return ExportHelper::downloadPdf($exportData->toArray(), 'billing-records.pdf');
+            }
+
+            return JsonResponser::send(true, 'Invalid export format specified.', null, 400);
+        }
+
+        // Default paginate
+        return $query->latest()->paginate(10);
     }
+
 
     public function find($id)
     {

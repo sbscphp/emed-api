@@ -11,9 +11,54 @@ class PharmacyRepository implements PharmacyInterface
      * 
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    public function all()
+    // public function all()
+    // {
+    //     return Pharmacy::with(['state:id,state_name', 'pharmacist:id,fullname,email'])->paginate(10);
+    // }
+
+    public function all($request = null)
     {
-        return Pharmacy::with(['state:id,state_name', 'pharmacist:id,fullname,email'])->paginate(10);
+        $export = false;
+        $filters = [];
+
+        if ($request && method_exists($request, 'has')) {
+            $export = $request->has('export');
+            $filters = $request->only([
+                'pharmacy_name',
+                'patient_name',
+                'drug',
+                'patient_status',
+            ]);
+        }
+
+        $query = Pharmacy::with([
+            'state:id,state_name',
+            'pharmacist:id,fullname,email',
+            'treatments' => function ($q) use ($filters) {
+                $q->with('patient');
+
+                if (!empty($filters['drug'])) {
+                    $q->where('drug', 'like', '%' . $filters['drug'] . '%');
+                }
+            }
+        ]);
+
+        if (!empty($filters['pharmacy_name'])) {
+            $query->where('name', 'like', '%' . $filters['pharmacy_name'] . '%');
+        }
+
+        if (!empty($filters['patient_name']) || !empty($filters['patient_status'])) {
+            $query->whereHas('treatments.patient', function ($q) use ($filters) {
+                if (!empty($filters['patient_name'])) {
+                    $q->whereRaw("CONCAT(firstname, ' ', lastname) LIKE ?", ['%' . $filters['patient_name'] . '%']);
+                }
+                if (!empty($filters['patient_status'])) {
+                    $q->where('status', $filters['patient_status']);
+                }
+            });
+        }
+
+        return $export ? $query->get() : $query->paginate(10);
     }
 
 
@@ -65,7 +110,13 @@ class PharmacyRepository implements PharmacyInterface
      */
     public function find($id)
     {
-        return Pharmacy::with('state:id,state_name')->find($id);
+        return Pharmacy::with([
+            'state:id,state_name',
+            'pharmacist:id,fullname,email',
+            'treatments.patient' => function ($query) {
+                $query->select('id', 'firstname', 'lastname', 'patientno', 'status');
+            }
+        ])->find($id);
     }
 
 

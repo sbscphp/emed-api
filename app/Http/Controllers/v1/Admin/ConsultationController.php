@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\v1\Admin;
 
 use App\Enums\PatientVisitStageEnums;
+use App\Helpers\ExportHelper;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ConsultationRequest;
@@ -11,6 +12,7 @@ use App\Http\Requests\Admin\TreatmentRequest;
 use App\Models\DrugHistory;
 use App\Models\FamilyHistory;
 use App\Models\MedicalHistory;
+use App\Models\PatientVisit;
 use App\Models\SocialHistory;
 use App\Responser\JsonResponser;
 use App\Services\Admission\AdmissionService;
@@ -94,6 +96,7 @@ class ConsultationController extends Controller
             return JsonResponser::send(true, 'Internal server error.', null, 500, $th);
         }
     }
+
 
     public function show($visitNo)
     {
@@ -369,7 +372,8 @@ class ConsultationController extends Controller
                     'period' => $med['period'],
                     'duration' => $med['duration'],
                     'route' => $med['route'],
-                    'remark' => $med['remark']
+                    'remark' => $med['remark'],
+                    'pharmacy_id' => $med['pharmacy_id'] ?? null,
                 ];
                 $treatment = $this->treatmentService->create($data);
 

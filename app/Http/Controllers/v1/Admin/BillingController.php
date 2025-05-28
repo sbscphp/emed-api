@@ -27,10 +27,16 @@ class BillingController extends Controller
         $this->userService = $userService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         try {
-            $billings = $this->billingService->all();
+            $billings = $this->billingService->all($request);
+            if (
+                $billings instanceof \Symfony\Component\HttpFoundation\BinaryFileResponse ||
+                $billings instanceof \Symfony\Component\HttpFoundation\StreamedResponse
+            ) {
+                return $billings;
+            }
 
             if ($billings->isEmpty()) {
                 return JsonResponser::send(true, 'No billing records found.', [], 404);

@@ -94,12 +94,13 @@ class AuditLogService
         return $this->AuditLogInterface->findByAttribute($attr, $value);
     }
 
-     /**
+    /**
      * Fetch all AuditLog fron the database
      *
      * @param \App\Models\AuditLog
      */
-    public function getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate){
-        return $this->AuditLogInterface->getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate);
+    public function getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate, $export)
+    {
+        return $this->AuditLogInterface->getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate, $export);
     }
 }
