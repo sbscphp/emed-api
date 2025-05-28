@@ -20,9 +20,9 @@ class MedicationInventoryService
         return $this->inventoryRepository->create($data);
     }
 
-    public function all(array $filters = [])
+    public function all(array $filters = [], ?string $export = null)
     {
-        return $this->inventoryRepository->getAllWithFilters($filters);
+        return $this->inventoryRepository->getAllWithFilters($filters, $export);
     }
 
     public function find($id)

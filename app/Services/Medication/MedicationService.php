@@ -14,9 +14,9 @@ class MedicationService
         $this->medicationRepo = $medicationRepo;
     }
 
-    public function all()
+    public function all($data)
     {
-        return $this->medicationRepo->all();
+        return $this->medicationRepo->all($data);
     }
 
     public function create(array $data)

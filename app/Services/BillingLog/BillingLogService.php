@@ -44,9 +44,9 @@ class BillingLogService
     }
 
 
-    public function all()
+    public function all($request)
     {
-        return $this->repo->all();
+        return $this->repo->all($request);
     }
 
     public function find($id)

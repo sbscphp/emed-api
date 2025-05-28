@@ -2,13 +2,69 @@
 
 namespace App\Repositories\Medication;
 
+use App\Helpers\ExportHelper;
 use App\Models\Medication;
+use App\Responser\JsonResponser;
+use Illuminate\Http\Request;
 
 class MedicationRepository implements MedicationRepositoryInterface
 {
-    public function all()
+
+    public function all(Request $request)
     {
-        return Medication::with('pharmacy')->paginate(10);
+        $query = Medication::with('pharmacy:id,name');
+
+        $filters = $request->only([
+            'generic_name',
+            'brand_name',
+            'medicine_name',
+            'medicine_type',
+            'medicine_status',
+        ]);
+
+        foreach ($filters as $key => $value) {
+            if (!empty($value)) {
+                if ($key === 'medicine_status') {
+                    // Exact match for status
+                    $query->where($key, $value);
+                } else {
+                    // Partial match for text fields
+                    $query->where($key, 'like', '%' . $value . '%');
+                }
+            }
+        }
+
+        if ($request->has('export')) {
+            $medications = $query->get();
+
+            $exportData = $medications->map(function ($med) {
+                return [
+                    'Generic Name' => $med->generic_name,
+                    'Brand Name' => $med->brand_name,
+                    'Medicine Name' => $med->medicine_name,
+                    'Medicine Type' => $med->medicine_type,
+                    'Cost Price' => $med->cost_price,
+                    'Selling Price' => $med->selling_price,
+                    'Registration No' => $med->reg_no,
+                    'Manufacturer' => $med->manufacturer,
+                    'Medicine Status' => $med->medicine_status,
+                    'Pharmacy' => $med->pharmacy->name ?? '',
+                    'Created At' => $med->created_at->toDateTimeString(),
+                ];
+            });
+
+            if ($request->export === 'csv') {
+                return ExportHelper::streamCsv($exportData->toArray(), null, 'medications.csv');
+            }
+
+            if ($request->export === 'pdf') {
+                return ExportHelper::downloadPdf($exportData->toArray(), 'medications.pdf');
+            }
+
+            return JsonResponser::send(true, 'Invalid export format specified', null, 400);
+        }
+
+        return $query->paginate(10);
     }
 
 

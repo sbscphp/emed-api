@@ -13,6 +13,7 @@ class Treatment extends Model
         'patient_id',
         'admin_id',
         'consultation_id',
+        'pharmacy_id',
         'visitno',
         'drug',
         'qualifier',
@@ -30,5 +31,10 @@ class Treatment extends Model
     public function patient()
     {
         return $this->belongsTo(Patient::class);
+    }
+
+    public function pharmacy()
+    {
+        return $this->belongsTo(Pharmacy::class);
     }
 }

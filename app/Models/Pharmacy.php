@@ -36,4 +36,34 @@ class Pharmacy extends Model
     {
         return $this->belongsTo(User::class, 'assigned_pharmacist');
     }
+
+    public function treatments()
+    {
+        return $this->hasMany(Treatment::class);
+    }
+
+    public function consultations()
+    {
+        return $this->hasManyThrough(
+            Consultation::class,
+            Treatment::class,
+            'pharmacy_id',
+            'id',
+            'id',
+            'consultation_id'
+        );
+    }
+
+    public function patients()
+    {
+        return $this->hasManyThrough(
+            Patient::class,
+            Treatment::class,
+            'pharmacy_id',
+            'id',
+            'id',
+            'patient_id'
+        )
+            ->selectRaw('patients.id as patient_id, patients.firstname, patients.lastname, patients.patientno, patients.status');
+    }
 }

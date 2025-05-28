@@ -23,10 +23,15 @@ class MedicationController extends Controller
         $this->medicationService = $medicationService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         try {
-            $data = $this->medicationService->all();
+            $data = $this->medicationService->all($request);
+
+            if ($data instanceof \Symfony\Component\HttpFoundation\Response) {
+                return $data;
+            }
+
             if ($data->isEmpty()) {
                 return JsonResponser::send(true, 'No Medications found.', [], 404);
             }
@@ -56,6 +61,7 @@ class MedicationController extends Controller
             return JsonResponser::send(true, 'Internal server error', [], 500, $e);
         }
     }
+
 
 
     public function store(MedicationRequest $request)

@@ -31,9 +31,11 @@ class UserController extends Controller
         $this->userService = $userService;
     }
 
-    public function allUsers()
+    public function allUsers(Request $request)
     {
         try {
+            DB::connection('tenant');
+
             $currentUser = Auth::user();
             $user = $this->userService->find($currentUser->id);
 
@@ -41,20 +43,39 @@ class UserController extends Controller
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
 
-            $users = $this->userService->all();
+            $filters = [
+                'status' => $request->status,
+                'role' => $request->role,
+            ];
 
-            if ($users->isEmpty()) {
+            $search = $request->search;
+            $export = $request->export;
+            $paginate = $request->boolean('paginate', true);
+            $perPage = $request->get('per_page', 20);
+
+            $result = $this->userService->all($filters, $search, $export, $paginate, $perPage);
+
+            if (
+                $result instanceof \Symfony\Component\HttpFoundation\BinaryFileResponse ||
+                $result instanceof \Symfony\Component\HttpFoundation\StreamedResponse
+            ) {
+                return $result;
+            }
+
+            if ($result->isEmpty()) {
                 return JsonResponser::send(true, 'No users found.', null, 404);
             }
 
             return JsonResponser::send(false, 'Users retrieved successfully.', [
-                'records' => $users,
-                'total' => $users->count()
+                'records' => $result,
+                'total' => $paginate ? $result->total() : $result->count(),
             ], 200);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
         }
     }
+
+
 
     // public function addUser(StoreUserRequest $request)
     // {

@@ -62,9 +62,9 @@ class UserService
      * 
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    public function all()
+    public function all($filters, $search, $export, $paginate, $perPage)
     {
-        return $this->userRepositoryInterface->all();
+        return $this->userRepositoryInterface->all($filters, $search, $export, $paginate, $perPage);
     }
 
     /**

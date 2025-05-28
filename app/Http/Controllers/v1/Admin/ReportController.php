@@ -24,16 +24,22 @@ class ReportController extends Controller
         $this->patientService = $patientService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         try {
-            $billings = $this->billingService->all();
+            $records = $this->billingService->all($request);
+            if (
+                $records instanceof \Symfony\Component\HttpFoundation\BinaryFileResponse ||
+                $records instanceof \Symfony\Component\HttpFoundation\StreamedResponse
+            ) {
+                return $records;
+            }
 
-            if ($billings->isEmpty()) {
+            if ($records->isEmpty()) {
                 return JsonResponser::send(true, 'No reports found.', [], 404);
             }
 
-            return JsonResponser::send(false, 'Reports logs retrieved successfully', $billings, 200);
+            return JsonResponser::send(false, 'Reports logs retrieved successfully', $records, 200);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Internal server error', [], 500, $e);
         }

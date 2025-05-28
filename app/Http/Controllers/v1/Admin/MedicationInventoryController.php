@@ -57,31 +57,26 @@ class MedicationInventoryController extends Controller
     {
         try {
             $filters = $request->only(['shipment_status', 'search']);
-            $data = $this->inventoryService->all($filters);
+            $export = $request->input('export');
 
-            if (!$data || $data->isEmpty()) {
+            $data = $this->inventoryService->all($filters, $export);
+
+            if ($data instanceof \Symfony\Component\HttpFoundation\Response) {
+                return $data;
+            }
+
+            if ($data->isEmpty()) {
                 return JsonResponser::send(true, 'Shipment not found.', null, 404);
             }
 
-            // Transform and paginate
-            $transformedData = $data->getCollection()->transform(function ($item) {
-                $sellingPrice = optional($item->medication)->selling_price ?? 0;
-                $totalPrice = $item->received_qty * $sellingPrice;
-
-                return array_merge(
-                    $item->toArray(),
-                    ['total_price' => $totalPrice]
-                );
-            });
-
-            $paginated = $data->toArray();
-            $paginated['data'] = $transformedData;
-
-            return JsonResponser::send(false, 'Shipment list fetched successfully', $paginated);
+            return JsonResponser::send(false, 'Shipment list fetched successfully', $data);
+        } catch (\InvalidArgumentException $e) {
+            return JsonResponser::send(true, $e->getMessage(), null, 400);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Internal server error', [], 500, $e);
         }
     }
+
 
     public function show($id)
     {

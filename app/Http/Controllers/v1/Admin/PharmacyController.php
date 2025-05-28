@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Helpers\ExportHelper;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\PharmacyRequest;
@@ -26,13 +27,50 @@ class PharmacyController extends Controller
         $this->pharmacyService = $pharmacyService;
     }
 
-    public function index()
+    // public function index()
+    // {
+    //     try {
+    //         $pharmacies = $this->pharmacyService->all();
+
+    //         if ($pharmacies->isEmpty()) {
+    //             return JsonResponser::send(true, 'No pharmacies found.', [], 404);
+    //         }
+
+    //         return JsonResponser::send(false, 'Pharmacies retrieved successfully', $pharmacies, 200);
+    //     } catch (\Exception $e) {
+    //         return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+    //     }
+    // }
+
+    public function index(Request $request)
     {
         try {
-            $pharmacies = $this->pharmacyService->all();
+            $pharmacies = $this->pharmacyService->all($request);
 
             if ($pharmacies->isEmpty()) {
                 return JsonResponser::send(true, 'No pharmacies found.', [], 404);
+            }
+
+            if ($request->has('export')) {
+                $exportData = $pharmacies->map(function ($pharmacy) {
+                    return [
+                        'Pharmacy Name' => $pharmacy->name ?? '',
+                        'State' => $pharmacy->state->state_name ?? '',
+                        'Pharmacist' => $pharmacy->pharmacist->fullname ?? '',
+                        'Pharmacist Email' => $pharmacy->pharmacist->email ?? '',
+                        'Patients Assigned' => $pharmacy->treatments->pluck('patient.firstname')->unique()->join(', ')
+                    ];
+                });
+
+                if ($request->export === 'csv') {
+                    return ExportHelper::streamCsv($exportData->toArray(), null, 'pharmacies.csv');
+                }
+
+                if ($request->export === 'pdf') {
+                    return ExportHelper::downloadPdf($exportData->toArray(), 'pharmacies.pdf');
+                }
+
+                return JsonResponser::send(true, 'Invalid export format specified.', [], 400);
             }
 
             return JsonResponser::send(false, 'Pharmacies retrieved successfully', $pharmacies, 200);
