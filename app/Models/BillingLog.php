@@ -12,6 +12,7 @@ class BillingLog extends Model
     protected $connection = 'tenant';
     protected $fillable = [
         'invoice_number',
+        'visit_id',
         'patient_id',
         'patient_name',
         'billing_date',

@@ -9,27 +9,26 @@ use App\Http\Requests\Auth\AdminLoginRequest;
 use App\Http\Requests\Auth\TenantOnboardingRequest;
 use App\Http\Resources\UserResource;
 use App\Mail\TenantEmailVerification;
-use App\Models\Registration;
-use App\Models\Role;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Responser\JsonResponser;
 use App\Services\Registration\RegistrationService;
+use App\Services\Role\RoleService;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class RegistrationController extends Controller
 {
     protected RegistrationService $registrationService;
+    protected RoleService $roleService;
 
-    public function __construct(RegistrationService $registrationService)
+    public function __construct(RegistrationService $registrationService, RoleService $roleService)
     {
         $this->registrationService = $registrationService;
+        $this->roleService = $roleService;
     }
 
     //create a central tenant DB for all onboard tenant for testing on production or manually create on local
@@ -39,7 +38,7 @@ class RegistrationController extends Controller
             DB::connection('landlord')->beginTransaction();
 
             $data = $request->validated();
-            $adminRole = Role::where('name', 'admin')->first();
+            $adminRole = $this->roleService->getAdminRole();
 
             $registrationData = [
                 'name' => $data['name'],
@@ -57,7 +56,7 @@ class RegistrationController extends Controller
                 );
             }
 
-            $registration = Registration::create($registrationData);
+            $registration = $this->registrationService->create($registrationData);
 
             $domain = Str::slug($data['name'], '-') . '.emed.com';
             $existingTenant = Tenant::where('domain', $domain)->first();

@@ -2,6 +2,7 @@
 
 namespace App\Services\PatientVisit;
 
+use App\Models\PatientVisit;
 use App\Repositories\PatientVisit\PatientVisitInterface;
 
 /**
@@ -104,11 +105,13 @@ class PatientVisitService
         return $this->PatientVisitInterface->getPatientForConsultation($search, $sortBy, $date, $paginate, $perPage);
     }
 
-    public function getPatientVisits($patientId){
+    public function getPatientVisits($patientId)
+    {
         return $this->PatientVisitInterface->getPatientVisits($patientId);
     }
 
-    public function getPatientPreviousVisits($patientId, $visitNo){
+    public function getPatientPreviousVisits($patientId, $visitNo)
+    {
         return $this->PatientVisitInterface->getPatientPreviousVisits($patientId, $visitNo);
     }
 
@@ -117,4 +120,147 @@ class PatientVisitService
         return $this->PatientVisitInterface->getPatients($search, $sortBy, $stage, $status, $date, $paginate, $perPage);
     }
 
+    public function getByPatientId($patientId): ?PatientVisit
+    {
+        return PatientVisit::where('patient_id', $patientId)->first();
+    }
+
+    public function updateStage(PatientVisit $visit, string $stage): void
+    {
+        $visit->update(['stage' => $stage]);
+    }
+
+    public function getAllFiltered(?string $search, bool $paginate, int $perPage, array $filters = [])
+    {
+        $query = PatientVisit::with([
+            'patient:id,firstname,lastname,patientno,service_id',
+            'patient.service:id,name',
+        ])->orderBy('created_at', 'desc');
+
+        if (!empty($search)) {
+            $query->whereHas('patient', function ($q) use ($search) {
+                $q->where('firstname', 'like', "%$search%")
+                    ->orWhere('lastname', 'like', "%$search%")
+                    ->orWhere('patientno', 'like', "%$search%");
+            });
+        }
+
+        if (!empty($filters['stage'])) {
+            $query->where('stage', $filters['stage']);
+        }
+
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('created_at', '>=', $filters['date_from']);
+        }
+
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('created_at', '<=', $filters['date_to']);
+        }
+
+        return $paginate ? $query->paginate($perPage) : $query->get();
+    }
+
+    public function getVisitRecordsForPatient(
+        int $patientId,
+        ?string $search = null,
+        ?string $filter = null,
+        bool $paginate = false,
+        int $perPage = 20,
+        ?string $export = null
+    ) {
+        $query = PatientVisit::with(['patient.service'])
+            ->where('patient_id', $patientId)
+            ->orderBy('created_at', 'desc');
+
+        if (!empty($search)) {
+            $query->whereHas('patient', function ($q) use ($search) {
+                $q->where('firstname', 'like', "%$search%")
+                    ->orWhere('lastname', 'like', "%$search%")
+                    ->orWhere('patientno', 'like', "%$search%");
+            });
+        }
+
+        if (!empty($filter)) {
+            $query->where('stage', $filter);
+        }
+
+        if ($paginate) {
+            $paginated = $query->paginate($perPage);
+
+            $paginated->getCollection()->transform(function ($visit) {
+                $serviceId = $visit->patient->service_id ?? null;
+
+                $billingLog = $visit->billingLogs()
+                    ->where('service_type_id', $serviceId)
+                    ->first();
+
+                return [
+                    'id'             => $visit->id,
+                    'patient_id'     => $visit->patient->id,
+                    'fullname'       => "{$visit->patient->firstname} {$visit->patient->lastname}",
+                    'date'           => $visit->created_at->format('Y-m-d'),
+                    'visit_number'   => $visit->visitno,
+                    'service_type'   => $visit->patient->service->name ?? 'Nil',
+                    'referral'       => 'Nil',
+                    'payment_status' => $billingLog->payment_status ?? 'pending',
+                    'payment_method' => $billingLog->payment_method ?? 'pending',
+                ];
+            });
+
+            return $paginated;
+        }
+
+        $records = $query->get();
+
+        $formatted = $records->map(function ($visit) {
+            $serviceId = $visit->patient->service_id ?? null;
+
+            $billingLog = $visit->billingLogs()
+                ->where('service_type_id', $serviceId)
+                ->first();
+
+            return [
+                'id'             => $visit->id,
+                'patient_id'     => $visit->patient->id,
+                'fullname'       => "{$visit->patient->firstname} {$visit->patient->lastname}",
+                'date'           => $visit->created_at->format('Y-m-d'),
+                'visit_number'   => $visit->visitno,
+                'service_type'   => $visit->patient->service->name ?? 'Nil',
+                'referral'       => 'Nil',
+                'payment_status' => $billingLog->payment_status ?? 'pending',
+                'payment_method' => $billingLog->payment_method ?? 'pending',
+            ];
+        });
+
+        return $formatted->values()->toArray();
+    }
+
+    // public function getVisitDetailWithBilling(int $patientId, int $visitId)
+    // {
+    //     return PatientVisit::with([
+    //         'patient:id,firstname,lastname,patientno,service_id',
+    //         'patient.service:id,name',
+    //         'billingLogs'
+    //     ])
+    //         ->where('patient_id', $patientId)
+    //         ->where('id', $visitId)
+    //         ->first();
+    // }
+    public function getVisitDetailWithBilling(int $patientId, int $visitId)
+    {
+        $visit = PatientVisit::with([
+            'patient:id,firstname,lastname,patientno,service_id',
+            'patient.service:id,name',
+            'billingLogsForPatient'
+        ])
+            ->where('patient_id', $patientId)
+            ->where('id', $visitId)
+            ->first();
+
+        return $visit;
+    }
 }

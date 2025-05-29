@@ -7,10 +7,10 @@ use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\TriageRequest;
 use App\Responser\JsonResponser;
+use App\Services\Patient\PatientService;
+use App\Services\PatientVisit\PatientVisitService;
 use App\Services\Triage\TriageService;
 use App\Services\User\UserService;
-use App\Models\Patient;
-use App\Models\PatientVisit;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
@@ -19,11 +19,15 @@ class TriageController extends Controller
 {
     protected $triageService;
     protected $userService;
+    protected $patientVisitService;
+    protected $patientService;
 
-    public function __construct(TriageService $triageService, UserService $userService)
+    public function __construct(TriageService $triageService, UserService $userService, PatientVisitService $patientVisitService, PatientService $patientService)
     {
         $this->triageService = $triageService;
         $this->userService = $userService;
+        $this->patientVisitService = $patientVisitService;
+        $this->patientService = $patientService;
     }
 
     public function store(TriageRequest $request, $patientId)
@@ -31,7 +35,7 @@ class TriageController extends Controller
         DB::connection('tenant')->beginTransaction();
 
         try {
-            $visit = PatientVisit::where('patient_id', $patientId)->first();
+            $visit = $this->patientVisitService->getByPatientId($patientId);
             if (!$visit) {
                 return JsonResponser::send(true, 'Patient not found or visit not yet initiated.', null, 404);
             }
@@ -49,8 +53,8 @@ class TriageController extends Controller
                 $validated
             );
 
-            $visit->update(['stage' => 'consultation']);
-            Patient::where('patient_type', 'new')->update(['patient_type' => 'existing']);
+            $this->patientVisitService->updateStage($visit, 'consultation');
+            $this->patientService->updateNewToExisting();
 
             GeneralHelper::storeAuditLog([
                 'causer_id'     => $user->id,
@@ -68,7 +72,6 @@ class TriageController extends Controller
             return JsonResponser::send(true, 'Internal server error', [], 500, $e);
         }
     }
-
 
     public function show($patientId)
     {

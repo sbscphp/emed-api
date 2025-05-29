@@ -200,4 +200,9 @@ class PatientService
             ];
         })->toArray();
     }
+
+    public function updateNewToExisting(): void
+    {
+        Patient::where('patient_type', 'new')->update(['patient_type' => 'existing']);
+    }
 }
