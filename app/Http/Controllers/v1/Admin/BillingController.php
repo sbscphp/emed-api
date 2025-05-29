@@ -5,26 +5,25 @@ namespace App\Http\Controllers\v1\Admin;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\BillingLogRequest;
-use App\Models\BillingLog;
-use App\Models\ServiceDepartment;
-use App\Models\ServiceUnit;
 use App\Responser\JsonResponser;
 use App\Services\BillingLog\BillingLogService;
+use App\Services\ServiceDepartment\ServiceDepartmentService;
 use App\Services\User\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class BillingController extends Controller
 {
     protected $billingService;
     protected $userService;
+    protected $serviceFetch;
 
-    public function __construct(BillingLogService $billingService, UserService $userService)
+    public function __construct(BillingLogService $billingService, UserService $userService,  ServiceDepartmentService $serviceFetch)
     {
         $this->billingService = $billingService;
         $this->userService = $userService;
+        $this->serviceFetch = $serviceFetch;
     }
 
     public function index(Request $request)
@@ -130,8 +129,8 @@ class BillingController extends Controller
     public function getAllServiceUnitsAndTypes()
     {
         try {
-            $serviceUnits = ServiceUnit::select('id', 'name')->get();
-            $serviceTypes = ServiceDepartment::select('id', 'name')->get();
+            $serviceUnits = $this->serviceFetch->getUnits(['id', 'name']);
+            $serviceTypes = $this->serviceFetch->getTypes(['id', 'name']);
 
             $data = [
                 'service_units' => $serviceUnits,
@@ -148,10 +147,8 @@ class BillingController extends Controller
     {
         try {
             /** @var LengthAwarePaginator $billingLogs */
-            $billingLogs = BillingLog::with(['patient', 'serviceType', 'serviceUnit'])
-                ->where('service_unit_id', $serviceUnitId)
-                ->latest()
-                ->paginate(10);
+
+            $billingLogs = $this->billingService->getByServiceUnit($serviceUnitId);
 
             if ($billingLogs->isEmpty()) {
                 return JsonResponser::send(true, 'No billing records found for this service unit.', [], 404);
@@ -174,9 +171,9 @@ class BillingController extends Controller
             });
 
             $billingLogs->setCollection($transformed);
+            $totalPatients = $this->billingService->sumByServiceUnit($serviceUnitId, 'patient_id');
+            $totalAmount = $this->billingService->sumByServiceUnit($serviceUnitId, 'grand_total');
 
-            $totalPatients = BillingLog::where('service_unit_id', $serviceUnitId)->sum('patient_id');
-            $totalAmount = BillingLog::where('service_unit_id', $serviceUnitId)->sum('grand_total');
 
             $response = [
                 'logs' => $billingLogs,
@@ -195,14 +192,7 @@ class BillingController extends Controller
     public function getBillingByServiceType(Request $request)
     {
         try {
-            /** @var LengthAwarePaginator $billingLogs */
-            $query = BillingLog::with(['patient', 'serviceType', 'serviceUnit']);
-
-            if ($request->has('service_type_id') && $request->service_type_id !== 'all') {
-                $query->where('service_type_id', $request->service_type_id);
-            }
-
-            $billingLogs = $query->paginate(10);
+            $billingLogs = $this->billingService->getByServiceType($request->input('service_type_id'));
 
             $logs = collect($billingLogs->items())->map(function ($log) {
                 return [
@@ -250,19 +240,9 @@ class BillingController extends Controller
     public function getBillingStatistics()
     {
         try {
-            $query = BillingLog::query();
+            $stats = $this->billingService->getStatistics();
 
-            $totalRevenue = (clone $query)->sum('grand_total');
-            $pendingPayment = (clone $query)->where('payment_status', 'pending')->sum('grand_total');
-            $completedPayment = (clone $query)->where('payment_status', 'paid')->sum('grand_total');
-            $insuranceClaimed = (clone $query)->where('payment_method', 'insurance')->count();
-
-            return JsonResponser::send(false, 'Billing stats fetched successfully.', [
-                'total_revenue' => $totalRevenue,
-                'pending_payment' => $pendingPayment,
-                'completed_payment' => $completedPayment,
-                'insurance_claimed' => $insuranceClaimed,
-            ]);
+            return JsonResponser::send(false, 'Billing stats fetched successfully.', $stats);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Error fetching billing stats.', [], 500, $e);
         }

@@ -4,6 +4,7 @@ namespace App\Services\BillingLog;
 
 use App\Models\BillingLog;
 use App\Repositories\BillingLog\BillingLogRepositoryInterface;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class BillingLogService
 {
@@ -117,5 +118,41 @@ class BillingLogService
     public function getFinancialReport($request)
     {
         return $this->repo->getFinancialReport($request);
+    }
+
+    public function getByServiceUnit(int $serviceUnitId, int $perPage = 10): LengthAwarePaginator
+    {
+        return BillingLog::with(['patient', 'serviceType', 'serviceUnit'])
+            ->where('service_unit_id', $serviceUnitId)
+            ->latest()
+            ->paginate($perPage);
+    }
+
+    public function getByServiceType(?int $serviceTypeId, int $perPage = 10): LengthAwarePaginator
+    {
+        $query = BillingLog::with(['patient', 'serviceType', 'serviceUnit']);
+
+        if ($serviceTypeId && $serviceTypeId !== 'all') {
+            $query->where('service_type_id', $serviceTypeId);
+        }
+
+        return $query->paginate($perPage);
+    }
+
+    public function sumByServiceUnit(int $serviceUnitId, string $column)
+    {
+        return BillingLog::where('service_unit_id', $serviceUnitId)->sum($column);
+    }
+
+    public function getStatistics(): array
+    {
+        $query = BillingLog::query();
+
+        return [
+            'total_revenue' => (clone $query)->sum('grand_total'),
+            'pending_payment' => (clone $query)->where('payment_status', 'pending')->sum('grand_total'),
+            'completed_payment' => (clone $query)->where('payment_status', 'paid')->sum('grand_total'),
+            'insurance_claimed' => (clone $query)->where('payment_method', 'insurance')->count(),
+        ];
     }
 }

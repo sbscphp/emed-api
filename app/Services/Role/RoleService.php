@@ -2,6 +2,7 @@
 
 namespace App\Services\Role;
 
+use App\Models\Role;
 use App\Repositories\Role\RoleInterface;
 
 /**
@@ -92,5 +93,10 @@ class RoleService
     public function findByAttribute($attr, $value)
     {
         return $this->RoleInterface->findByAttribute($attr, $value);
+    }
+
+    public function getAdminRole(): Role
+    {
+        return Role::where('name', 'admin')->firstOrFail();
     }
 }

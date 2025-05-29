@@ -61,6 +61,9 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/initiate-visit/{id}', [RecordManagementController::class, 'initiateVisit']);
                     Route::get('/record-stats', [RecordManagementController::class, 'recordStats']);
                     Route::post('/export/{format}', [RecordManagementController::class, 'exportPatients']);
+                    Route::post('/visits/all', [RecordManagementController::class, 'allVisitRecords']);
+                    Route::post('/patient/visit/{id}', [RecordManagementController::class, 'patientVisitRecords']);
+                    Route::get('/patient/{patientId}/visit/{visitId}', [RecordManagementController::class, 'patientVisitDetailWithBilling']);
                 });
 
                 Route::group(['prefix' => 'nurse', 'middleware' => 'role.nurse'], function () {
@@ -151,6 +154,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/create', [RoleController::class, 'store']);
                     Route::get('/view/{id}', [RoleController::class, 'show']);
                     Route::put('/update/{id}', [RoleController::class, 'update']);
+                    Route::delete('/delete/{id}', [RoleController::class, 'destroy']);
                 });
 
                 Route::group(['prefix' => 'users', 'middleware' => 'admin.superadmin'], function () {

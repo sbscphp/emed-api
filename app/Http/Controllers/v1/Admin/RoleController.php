@@ -202,12 +202,29 @@ class RoleController extends Controller
             return JsonResponser::send(true, 'Role not found.', null, 404);
         }
 
-        if ($role->users()->count() > 0) {
-            return JsonResponser::send(true, 'Cannot delete role with assigned users.', null, 400);
+        DB::connection('tenant')->beginTransaction();
+        DB::connection('landlord')->beginTransaction();
+
+        try {
+            $role->users()->detach();
+
+            $role->delete();
+
+            $landlordRole = Role::on('landlord')->find($id);
+            if ($landlordRole) {
+                $landlordRole->users()->detach();
+                $landlordRole->delete();
+            }
+
+            DB::connection('tenant')->commit();
+            DB::connection('landlord')->commit();
+
+            return JsonResponser::send(false, 'Role and associated user mappings deleted successfully.', null, 200);
+        } catch (\Throwable $e) {
+            DB::connection('tenant')->rollBack();
+            DB::connection('landlord')->rollBack();
+
+            return JsonResponser::send(true, 'Failed to delete role. Please try again.', null, 500);
         }
-
-        $this->roleService->delete($id);
-
-        return JsonResponser::send(false, 'Role deleted successfully.', null, 200);
     }
 }

@@ -47,6 +47,7 @@ class RegistrationService
     }
 
 
+
     /**
      * Update an existing Registration with the provided data.
      * 

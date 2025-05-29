@@ -19,13 +19,14 @@ use App\Services\NextOfKin\NextOfKinService;
 use App\Services\Patient\PatientService;
 use App\Services\PatientVisit\PatientVisitService;
 use App\Services\User\UserService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Spatie\Multitenancy\Models\Tenant;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\PatientVisitExport;
 
 class RecordManagementController extends Controller
 {
@@ -113,7 +114,6 @@ class RecordManagementController extends Controller
             ];
 
             $patient = $this->patientService->create($data);
-            // dd($user['fullname']);
             $dataToLog = [
                 'causer_id' => $user->id,
                 'action_id' => $patient->id,
@@ -539,20 +539,6 @@ class RecordManagementController extends Controller
                 }
             ]);
 
-            $records->each(function ($record) {
-                $serviceId = $record->service_id;
-                $record->visits->each(function ($visit) use ($serviceId) {
-                    $billingLog = \App\Models\BillingLog::where('patient_id', $visit->patient_id)
-                        ->where('service_type_id', $serviceId)
-                        ->latest()
-                        ->first();
-
-                    $visit->payment_status = $billingLog->payment_status ?? 'pending';
-                });
-
-                $record->latest_visit = $record->visits->sortByDesc('created_at')->first();
-            });
-
             $summary = $this->patientService->getRecordStats();
             return JsonResponser::send(false, 'Record(s) found successfully.', [
                 'records' => $records,
@@ -590,11 +576,6 @@ class RecordManagementController extends Controller
         return $acronym;
     }
 
-    // private function userHasPermission($user)
-    // {
-    //     return $user->role === 'Admin' && $user->is_active && $user->is_verified && $user->tenant_id !== null;
-    // }
-
     public function exportPatients(Request $request, string $format)
     {
         $search = $request->input('search');
@@ -616,6 +597,118 @@ class RecordManagementController extends Controller
 
             default:
                 return JsonResponser::send(true, 'Invalid export format.', null, 400);
+        }
+    }
+
+    public function allVisitRecords(Request $request)
+    {
+        try {
+            DB::connection('tenant');
+
+            $search   = $request->input('search');
+            $paginate = filter_var($request->input('paginate'), FILTER_VALIDATE_BOOLEAN);
+            $perPage  = $request->input('perPage', 50);
+            $export   = $request->input('export');
+
+            $filters = [
+                'stage'     => $request->input('stage'),
+                'status'    => $request->input('status'),
+                'date_from' => $request->input('date_from'),
+                'date_to'   => $request->input('date_to'),
+            ];
+
+            $visits = $this->patientVisitService->getAllFiltered($search, $paginate, $perPage, $filters);
+
+            if ($export === 'csv') {
+                return Excel::download(new PatientVisitExport($visits), 'patient_visits.csv');
+            }
+
+            if ($export === 'pdf') {
+                $pdf = Pdf::loadView('exports.patient_visits_pdf', ['visits' => $visits]);
+                return $pdf->download('patient_visits.pdf');
+            }
+
+            if ($visits->isEmpty()) {
+                return JsonResponser::send(false, 'No patient visit records found.', [], 404);
+            }
+
+            return JsonResponser::send(false, 'Patient Visit Records Fetched Successfully.', [
+                'visits' => $visits,
+            ], 200);
+        } catch (\Throwable $e) {
+            return JsonResponser::send(true, 'Internal server error.', [], 500, $e);
+        }
+    }
+
+
+    public function patientVisitRecords(Request $request, int $patientId)
+    {
+        try {
+            DB::connection('tenant');
+
+            $search = $request->input('search');
+            $filter = $request->input('filter');
+            $paginate = filter_var($request->input('paginate', false), FILTER_VALIDATE_BOOLEAN);
+            $perPage = (int) $request->input('perPage', 20);
+            $export = $request->input('export');
+
+            $currentUser = Auth::user();
+            $user = $this->userService->find($currentUser->id);
+
+            if (is_null($user)) {
+                return JsonResponser::send(true, 'User not found.', null, 404);
+            }
+
+            $visitRecords = $this->patientVisitService->getVisitRecordsForPatient(
+                $patientId,
+                $search,
+                $filter,
+                $paginate,
+                $perPage,
+                $export
+            );
+            $dataForExport = $visitRecords instanceof \Illuminate\Contracts\Pagination\Paginator
+                ? $visitRecords->items()
+                : ($visitRecords instanceof \Illuminate\Support\Collection ? $visitRecords->toArray() : (array)$visitRecords);
+
+            $filename = "patient_{$patientId}_visits_" . date('Ymd_His') . '.' . $export;
+
+            if ($export === 'csv') {
+                return ExportHelper::streamCsv($dataForExport, null, $filename);
+            }
+
+            if ($export === 'pdf') {
+                return ExportHelper::downloadPdf($dataForExport, $filename);
+            }
+
+
+            return JsonResponser::send(false, 'Patient visit records fetched successfully.', $visitRecords, 200);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
+        }
+    }
+
+    public function patientVisitDetailWithBilling(Request $request, int $patientId, int $visitId)
+    {
+        try {
+            DB::connection('tenant');
+
+            $currentUser = Auth::user();
+            $user = $this->userService->find($currentUser->id);
+
+            if (is_null($user)) {
+                return JsonResponser::send(true, 'User not found.', null, 404);
+            }
+
+            $visitDetail = $this->patientVisitService->getVisitDetailWithBilling($patientId, $visitId);
+
+            if (is_null($visitDetail)) {
+                return JsonResponser::send(true, 'Visit record not found for this patient.', null, 404);
+            }
+
+            return JsonResponser::send(false, 'Patient visit detail with billing fetched successfully.', $visitDetail, 200);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
         }
     }
 }

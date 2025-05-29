@@ -6,9 +6,6 @@ use App\Helpers\ExportHelper;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\PharmacyRequest;
-use App\Models\Medication;
-use App\Models\MedicationInventory;
-use App\Models\Pharmacy;
 use App\Responser\JsonResponser;
 use App\Services\Pharmacy\PharmacyService;
 use App\Services\User\UserService;
@@ -26,21 +23,6 @@ class PharmacyController extends Controller
         $this->userService = $userService;
         $this->pharmacyService = $pharmacyService;
     }
-
-    // public function index()
-    // {
-    //     try {
-    //         $pharmacies = $this->pharmacyService->all();
-
-    //         if ($pharmacies->isEmpty()) {
-    //             return JsonResponser::send(true, 'No pharmacies found.', [], 404);
-    //         }
-
-    //         return JsonResponser::send(false, 'Pharmacies retrieved successfully', $pharmacies, 200);
-    //     } catch (\Exception $e) {
-    //         return JsonResponser::send(true, 'Internal server error', [], 500, $e);
-    //     }
-    // }
 
     public function index(Request $request)
     {
@@ -174,15 +156,7 @@ class PharmacyController extends Controller
     public function pharmacyDashboardStats()
     {
         try {
-            $stats = [
-                'total_medications' => Medication::count(),
-                'available_medications' => Medication::where('medicine_status', 'available')->count(),
-                'near_expiry_medications' => MedicationInventory::whereBetween('expiry_date', [now(), now()->addDays(30)])
-                    ->distinct('medication_id')
-                    ->count('medication_id'),
-                'low_stock_alert' => MedicationInventory::where('current_stock', '<', 10)->count(),
-                'total_pharmacies' => Pharmacy::count(),
-            ];
+            $stats = $this->pharmacyService->getDashboardStats();
 
             return JsonResponser::send(false, 'Pharmacy dashboard stats fetched successfully', $stats);
         } catch (\Exception $e) {

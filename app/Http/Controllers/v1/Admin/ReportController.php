@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\v1\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\BillingLog;
 use App\Responser\JsonResponser;
 use App\Services\BillingLog\BillingLogService;
 use App\Services\Patient\PatientService;

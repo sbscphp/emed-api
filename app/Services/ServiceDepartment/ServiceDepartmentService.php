@@ -2,6 +2,8 @@
 
 namespace App\Services\ServiceDepartment;
 
+use App\Models\ServiceDepartment;
+use App\Models\ServiceUnit;
 use App\Repositories\ServiceDepartment\ServiceDepartmentInterface;
 
 /**
@@ -92,5 +94,15 @@ class ServiceDepartmentService
     public function findByAttribute($attr, $value)
     {
         return $this->ServiceDepartmentInterface->findByAttribute($attr, $value);
+    }
+
+    public function getUnits(array $columns = ['*'])
+    {
+        return ServiceUnit::select($columns)->get();
+    }
+
+    public function getTypes(array $columns = ['*'])
+    {
+        return ServiceDepartment::select($columns)->get();
     }
 }

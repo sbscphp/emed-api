@@ -2,6 +2,9 @@
 
 namespace App\Services\Pharmacy;
 
+use App\Models\Medication;
+use App\Models\MedicationInventory;
+use App\Models\Pharmacy;
 use App\Repositories\Pharmacy\PharmacyInterface;
 
 /**
@@ -92,5 +95,18 @@ class PharmacyService
     public function findByAttribute($attr, $value)
     {
         return $this->PharmacyInterface->findByAttribute($attr, $value);
+    }
+
+    public function getDashboardStats(): array
+    {
+        return [
+            'total_medications' => Medication::count(),
+            'available_medications' => Medication::where('medicine_status', 'available')->count(),
+            'near_expiry_medications' => MedicationInventory::whereBetween('expiry_date', [now(), now()->addDays(30)])
+                ->distinct('medication_id')
+                ->count('medication_id'),
+            'low_stock_alert' => MedicationInventory::where('current_stock', '<', 10)->count(),
+            'total_pharmacies' => Pharmacy::count(),
+        ];
     }
 }

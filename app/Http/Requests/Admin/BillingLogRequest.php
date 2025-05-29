@@ -14,6 +14,7 @@ class BillingLogRequest extends FormRequest
     public function rules()
     {
         return [
+            'visit_id'         => 'required|exists:tenant.patient_visits,id|unique:tenant.billing_logs,visit_id',
             'patient_id'       => 'required|exists:tenant.patients,id',
             'patient_name' => 'required|string',
             'billing_date' => 'required|date',

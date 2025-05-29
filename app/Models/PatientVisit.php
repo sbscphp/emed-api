@@ -21,9 +21,14 @@ class PatientVisit extends Model
         return $this->hasOne(Consultation::class, 'visitno');
     }
 
-    public function billingLog()
+    public function billingLogs()
     {
-        return $this->hasOne(BillingLog::class, 'patient_id', 'patient_id')
-            ->whereColumn('billing_logs.service_unit_id', 'patient_visits.service_unit_id');
+        return $this->hasMany(BillingLog::class, 'patient_id', 'patient_id')
+            ->where('service_type_id', $this->patient->service_id ?? null);
+    }
+
+    public function billingLogsForPatient()
+    {
+        return $this->hasOne(BillingLog::class, 'visit_id', 'id');
     }
 }
