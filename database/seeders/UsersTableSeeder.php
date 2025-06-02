@@ -29,97 +29,91 @@ class UsersTableSeeder extends Seeder
     public function run()
     {
         $superAdminRole = Role::where('name', 'super_admin')->first();
-        $customerRole = Role::where('name', 'customer')->first();
-        $guestRole = Role::where('name', 'guest')->first();
+        $adminRole = Role::where('name', 'admin')->first();
+        $nurseRole = Role::where('name', 'nurse')->first();
+        $consultantRole = Role::where('name', 'consultant')->first();
+        $laboratoryRole = Role::where('name', 'laboratory')->first();
+        $pharmacyRole = Role::where('name', 'pharmacy')->first();
+        $billingRole = Role::where('name', 'billing')->first();
+        $recordRole = Role::where('name', 'record')->first();
 
         /*
-         * Add Users
-         *
-         */
-        if (User::where('email', '=', 'superadmin@' . Str::slug(env('APP_NAME')) . '.com')->first() === null) {
-            $newUser = User::updateOrCreate(
-                [
-                    'email' => 'superadmin@' . Str::slug(env('APP_NAME')) . '.com',
+     * Add Users for each role
+     */
+        $users = [
+            [
+                'role' => $superAdminRole,
+                'email' => 'superadmin@' . Str::slug(env('APP_NAME')) . '.com',
+                'fullname' => 'Super Admin',
+                'role_name' => 'Super Admin'
+            ],
+            [
+                'role' => $adminRole,
+                'email' => 'admin@' . Str::slug(env('APP_NAME')) . '.com',
+                'fullname' => 'Admin',
+                'role_name' => 'Admin'
+            ],
+            [
+                'role' => $nurseRole,
+                'email' => 'nurse@' . Str::slug(env('APP_NAME')) . '.com',
+                'fullname' => 'Nurse',
+                'role_name' => 'Nurse'
+            ],
+            [
+                'role' => $consultantRole,
+                'email' => 'consultant@' . Str::slug(env('APP_NAME')) . '.com',
+                'fullname' => 'Consultant',
+                'role_name' => 'Consultant'
+            ],
+            [
+                'role' => $laboratoryRole,
+                'email' => 'laboratory@' . Str::slug(env('APP_NAME')) . '.com',
+                'fullname' => 'Laboratory',
+                'role_name' => 'Laboratory'
+            ],
+            [
+                'role' => $pharmacyRole,
+                'email' => 'pharmacy@' . Str::slug(env('APP_NAME')) . '.com',
+                'fullname' => 'Pharmacy',
+                'role_name' => 'Pharmacy'
+            ],
+            [
+                'role' => $billingRole,
+                'email' => 'billing@' . Str::slug(env('APP_NAME')) . '.com',
+                'fullname' => 'Billing',
+                'role_name' => 'Billing'
+            ],
+            [
+                'role' => $recordRole,
+                'email' => 'record@' . Str::slug(env('APP_NAME')) . '.com',
+                'fullname' => 'Record',
+                'role_name' => 'Record'
+            ]
+        ];
 
-                ],
-                [
-                    'uuid' => Str::uuid(),
-                    'fullname'     => 'Super-Admin',
-                    'role'  => "Super Admin",
-                    'password' => bcrypt('password'),
-                    'phone_number' => fake()->phoneNumber,
-                    'status' => GeneralEnums::ACTIVE->value,
-                    'can_login' => true,
-                    'is_active' => true,
-                    'is_verified' => true,
-                    'is_completed' => true,
-                    '2fa' => true
-                ]
-            );
-            $newUser->addRole($superAdminRole);
-            $newUser->permissions()->sync($superAdminRole->permissions);
-        }
-
-        if (User::where('email', '=', 'customer@' . Str::slug(env('APP_NAME')) . '.com')->first() === null) {
-            $newUser = User::updateOrCreate(
-                [
-                    'email' => 'customer@' . Str::slug(env('APP_NAME')) . '.com',
-                ],
-                [
-                    'uuid' => Str::uuid(),
-                    'fullname'     => 'Customer',
-                    'role'  => "Customer",
-                    'password' => bcrypt('password'),
-                    'phone_number' => fake()->phoneNumber,
-                    'status' => GeneralEnums::ACTIVE->value,
-                    'can_login' => true,
-                    'is_active' => true,
-                    'is_verified' => true,
-                    'is_completed' => true,
-                    '2fa' => true
-                ]
-            );
-
-            $newUser->addRole($customerRole);
-            $newUser->permissions()->sync($customerRole->permissions);
-        }
-
-        if (User::where('email', '=', 'guest@' . Str::slug(env('APP_NAME')) . '.com')->first() === null) {
-            $newUser = User::updateOrCreate(
-                [
-                    'email' => 'guest@' . Str::slug(env('APP_NAME')) . '.com',
-                ],
-                [
-                    'uuid' => Str::uuid(),
-                    'fullname'     => 'Guest',
-                    'role'  => "Guest",
-                    'password' => bcrypt('password'),
-                    'phone_number' => fake()->phoneNumber,
-                    'status' => GeneralEnums::ACTIVE->value,
-                    'can_login' => true,
-                    'is_active' => true,
-                    'is_verified' => true,
-                    'is_completed' => true,
-                    '2fa' => true
-                ]
-            );
-
-            $newUser->addRole($guestRole);
-            $newUser->permissions()->sync($guestRole->permissions);
-
-            $this->userInformationService->create([
-                'user_id' => $newUser->id,
-                'uuid' => Str::uuid(),
-                'phone_number' => $newUser->phone_number,
-                'date_of_birth' => fake()->date(),
-                'address' => fake()->address,
-                'city' => fake()->city,
-                'post_code' => fake()->postcode,
-                'state' => fake()->state,
-                'country' => fake()->country,
-                'profile_picture' => null,
-                'status' => GeneralEnums::ACTIVE->value,
-            ]);
+        foreach ($users as $userData) {
+            if ($userData['role'] && User::where('email', '=', $userData['email'])->first() === null) {
+                $newUser = User::updateOrCreate(
+                    [
+                        'email' => $userData['email'],
+                    ],
+                    [
+                        'uuid' => Str::uuid(),
+                        'fullname' => $userData['fullname'],
+                        'role' => $userData['role_name'],
+                        'password' => bcrypt('password'),
+                        'phone_number' => fake()->phoneNumber,
+                        'status' => GeneralEnums::ACTIVE->value,
+                        'can_login' => true,
+                        'is_active' => true,
+                        'is_verified' => true,
+                        'is_completed' => true,
+                        '2fa' => true
+                    ]
+                );
+                $newUser->addRole($userData['role']);
+                $newUser->permissions()->sync($userData['role']->permissions);
+            }
         }
     }
 }
