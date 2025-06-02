@@ -31,10 +31,18 @@ class RolePermissionSeeder extends Seeder
                 $description = 'Super admin has full access to everything including global settings.';
             } else if ($key == 'admin') {
                 $description = 'Admin can access all the modules of the software and have all the privileges within the system.';
-            } else if ($key == 'guest') {
-                $description = 'Guest can access all the modules of the software and have all the privileges within the system.';
-            } else if ($key == 'customer') {
-                $description = 'Customer can access all the modules of the software and have all the privileges within the system.';
+            } else if ($key == 'nurse') {
+                $description = 'Nurse can access all the nurse modules of the software and have all the privileges within the system.';
+            } else if ($key == 'billing') {
+                $description = 'Billing user role can access all the billing modules of the software and have all the privileges within the system.';
+            } else if ($key == 'consultant') {
+                $description = 'Consultant user role can access all the consultant modules of the software and have all the privileges within the system.';
+            } else if ($key == 'pharmacy') {
+                $description = 'Pharmacy user role can access all the pharmacy modules of the software and have all the privileges within the system.';
+            } else if ($key == 'billing') {
+                $description = 'Billing user role can access all the billing modules of the software and have all the privileges within the system.';
+            } else if ($key == 'record') {
+                $description = 'Record user role can access all the record modules of the software and have all the privileges within the system.';
             } else {
                 $description = 'All the privileges within the system has been imported.';
             }

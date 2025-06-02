@@ -49,23 +49,48 @@ return [
             'logo' => 'c,r,u,d',
             'bank' => 'c,r,u,d',
         ],
-        
-        'customer' => [
-            'category' => 'c,r,u,d',
-            'subcategory' => 'c,r,u,d',
-            'orders' => 'c,r,u,d',
-            'invoices' => 'c,r,u,d',
-            'payments' => 'c,r,u,d',
-            'calendar' => 'c,r,u,d',
-            'productions' => 'c,r,u,d',
-            'products' => 'c,r,u,d',
-            'users' => 'c,r,u,d',
+
+        // 'customer' => [
+        //     'category' => 'c,r,u,d',
+        //     'subcategory' => 'c,r,u,d',
+        //     'orders' => 'c,r,u,d',
+        //     'invoices' => 'c,r,u,d',
+        //     'payments' => 'c,r,u,d',
+        //     'calendar' => 'c,r,u,d',
+        //     'productions' => 'c,r,u,d',
+        //     'products' => 'c,r,u,d',
+        //     'users' => 'c,r,u,d',
+        //     'profile' => 'r,u',
+        // ],
+        // 'guest' => [
+        //     'category' => 'c,r,u,d',
+        //     'subcategory' => 'c,r,u,d',
+        //     'products' => 'c,r,u,d',
+        // ],
+        'nurse' => [
+            'patients' => 'c,r,u,d',
+            'appointments' => 'c,r,u,d',
+            'vitals' => 'c,r,u,d',
             'profile' => 'r,u',
         ],
-        'guest' => [
-            'category' => 'c,r,u,d',
-            'subcategory' => 'c,r,u,d',
-            'products' => 'c,r,u,d',
+        'billing' => [
+            'invoices' => 'c,r,u,d',
+            'payments' => 'c,r,u,d',
+            'billing_reports' => 'c,r,u,d',
+        ],
+        'consultant' => [
+            'consultations' => 'c,r,u,d',
+            'patients' => 'r,u',
+            'reports' => 'r',
+        ],
+        'pharmacy' => [
+            'drugs' => 'c,r,u,d',
+            'inventory' => 'c,r,u,d',
+            'dispense' => 'c,r,u,d',
+        ],
+        'record' => [
+            'records' => 'c,r,u,d',
+            'patients' => 'r,u',
         ],
     ],
 
