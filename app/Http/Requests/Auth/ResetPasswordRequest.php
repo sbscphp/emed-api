@@ -30,7 +30,6 @@ class ResetPasswordRequest extends FormRequest
             'token' => 'required|string',
             'email' => 'required|email|exists:tenant.users,email',
             'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()->symbols()],
-            'password_confirmation' => 'required',
         ];
     }
 
@@ -48,7 +47,6 @@ class ResetPasswordRequest extends FormRequest
             'email.exists' => 'The provided email does not exist in our records.',
             'password.required' => 'Password is required.',
             'password.confirmed' => 'Password confirmation does not match.',
-            'password_confirmation.required' => 'Password confirmation is required.',
         ];
     }
 
