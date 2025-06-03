@@ -17,9 +17,9 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             UsersTableSeeder::class,
             TenantUserSeeder::class,
-            ServicesTableSeeder::class,
-            StateSeeder::class,
-            ServiceUnitSeeder::class,
+            // ServicesTableSeeder::class,
+            // StateSeeder::class,
+            // ServiceUnitSeeder::class,
         ]);
     }
 }
