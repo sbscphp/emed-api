@@ -34,9 +34,9 @@ Route::group(["prefix" => "v1"], function () {
         Route::post('/login', [LoginController::class, 'login']);
         Route::post('/request-reset-password', [ForgotPasswordController::class, 'resetPasswordLink']);
         Route::post('/reset-password', [ForgotPasswordController::class, 'resetPassword']);
-        Route::middleware(['auth:sanctum'])->group(function () {
-            Route::get('logout', [LoginController::class, 'logout']);
-        });
+        // Route::middleware(['auth:sanctum'])->group(function () {
+        //     Route::get('logout', [LoginController::class, 'logout']);
+        // });
     });
 
     Route::group(['prefix' => 'admin'], function () {
@@ -49,6 +49,8 @@ Route::group(["prefix" => "v1"], function () {
 
     Route::group(["middleware" => ["auth:api"]], function () {
         Route::group(['middleware' => ["tenant"]], function () {
+            Route::get('/me', [RegistrationController::class, 'me']);
+            Route::post('/logout', [RegistrationController::class, 'logout']);
             Route::group(['prefix' => 'admin', "namespace" => "v1\Admin"], function () {
                 //Record routes
                 Route::group(['prefix' => 'record',  'middleware' => 'role.record'], function () {

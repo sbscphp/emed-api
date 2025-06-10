@@ -21,7 +21,10 @@ class MedicationInventory extends Model
         'vendor',
         'shipment_status',
         'date_of_shipment',
-        'expected_delivery_date'
+        'expected_delivery_date',
+        'active_ingredient',
+        'brand_name',
+        'price',
     ];
 
     protected $casts = [

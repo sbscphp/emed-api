@@ -25,7 +25,7 @@ class BillingAccessMiddleware
             return JsonResponser::send(true, 'Authentication required. Please sign in.', [], 401);
         }
 
-        if (!$user->hasRole(['admin', 'super admin', 'billing'])) {
+        if (!$user->hasRole(['admin', 'super_admin', 'billing'])) {
             ErrorLog::create([
                 'causer'        => $user->id ?? 'Guest',
                 'model'         => 'Permission',

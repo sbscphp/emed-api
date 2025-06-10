@@ -29,7 +29,7 @@ class NurseAccessMiddleware
             return JsonResponser::send(true, 'User not found in landlord context', [], 401);
         }
 
-        if (!$authUser->hasRole(['admin', 'super admin', 'nurse'])) {
+        if (!$authUser->hasRole(['admin', 'super_admin', 'nurse'])) {
             ErrorLog::create([
                 'causer'         => $user->id ?? 'Guest',
                 'model'          => 'Permission',
