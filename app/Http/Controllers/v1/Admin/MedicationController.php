@@ -4,6 +4,7 @@ namespace App\Http\Controllers\v1\Admin;
 
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\MedicationCsvUploadRequest;
 use App\Http\Requests\Admin\MedicationRequest;
 use App\Responser\JsonResponser;
 use App\Services\Medication\MedicationService;
@@ -61,8 +62,6 @@ class MedicationController extends Controller
             return JsonResponser::send(true, 'Internal server error', [], 500, $e);
         }
     }
-
-
 
     public function store(MedicationRequest $request)
     {
@@ -187,6 +186,45 @@ class MedicationController extends Controller
             return JsonResponser::send(false, 'Vendors retrieved successfully', $vendors);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Error retrieving vendors', [], 500, $e);
+        }
+    }
+
+    public function uploadCsv(MedicationCsvUploadRequest $request)
+    {
+        try {
+            $file = $request->file('file');
+            $handle = fopen($file, 'r');
+
+            if (!$handle) {
+                return JsonResponser::send(true, 'Unable to open the file.', [], 422);
+            }
+
+            $header = fgetcsv($handle);
+            $validColumns = ['generic_name', 'brand_name', 'medicine_name', 'medicine_type', 'cost_price', 'selling_price', 'reg_no', 'manufacturer'];
+
+            if ($header !== $validColumns) {
+                return JsonResponser::send(true, 'Invalid CSV format. Expected columns: ' . implode(', ', $validColumns), [], 422);
+            }
+
+            $medications = [];
+
+            while (($row = fgetcsv($handle)) !== false) {
+                $data = array_combine($header, $row);
+
+                $data['created_by'] = Auth::id();
+
+                $medications[] = $data;
+            }
+
+            fclose($handle);
+
+            foreach ($medications as $med) {
+                $this->medicationService->create($med);
+            }
+
+            return JsonResponser::send(false, 'Medications uploaded successfully.', [], 201);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Internal server error during CSV import.', [], 500, $e);
         }
     }
 }

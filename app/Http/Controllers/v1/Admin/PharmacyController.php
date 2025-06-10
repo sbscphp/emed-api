@@ -5,6 +5,7 @@ namespace App\Http\Controllers\v1\Admin;
 use App\Helpers\ExportHelper;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\FulfillTreatmentRequest;
 use App\Http\Requests\Admin\PharmacyRequest;
 use App\Responser\JsonResponser;
 use App\Services\Pharmacy\PharmacyService;
@@ -36,20 +37,24 @@ class PharmacyController extends Controller
             if ($request->has('export')) {
                 $exportData = $pharmacies->map(function ($pharmacy) {
                     return [
-                        'Pharmacy Name' => $pharmacy->name ?? '',
-                        'State' => $pharmacy->state->state_name ?? '',
-                        'Pharmacist' => $pharmacy->pharmacist->fullname ?? '',
-                        'Pharmacist Email' => $pharmacy->pharmacist->email ?? '',
-                        'Patients Assigned' => $pharmacy->treatments->pluck('patient.firstname')->unique()->join(', ')
+                        'Pharmacy Name'       => $pharmacy->name ?? '',
+                        'Personal Information' => $pharmacy->pharmacist->fullname . ' (' . $pharmacy->pharmacist->email . ')' ?? '',
+                        'Pharmacy ID'         => $pharmacy->pharmacy_id ?? '',
+                        'Location'            => $pharmacy->address ?? '',
+                        'Phone'             => $pharmacy->phone_number ?? '',
+                        'License Number'      => $pharmacy->license_number ?? '',
+                        'Prescribed Drug'     => $pharmacy->treatments->pluck('drug')->unique()->join(', '),
+                        'Operating Hours'     => $pharmacy->opening_time . ' (' . $pharmacy->closing_time . ')' ?? '',
+                        'Status'              => $pharmacy->active ?? '',
                     ];
                 });
 
                 if ($request->export === 'csv') {
-                    return ExportHelper::streamCsv($exportData->toArray(), null, 'pharmacies.csv');
+                    return ExportHelper::streamCsv($exportData->toArray(), null, 'pharmacies_' . now()->format('Ymd_His') . '.csv');
                 }
 
                 if ($request->export === 'pdf') {
-                    return ExportHelper::downloadPdf($exportData->toArray(), 'pharmacies.pdf');
+                    return ExportHelper::downloadPdf($exportData->toArray(), 'pharmacies_' . now()->format('Ymd_His') . '.pdf');
                 }
 
                 return JsonResponser::send(true, 'Invalid export format specified.', [], 400);
@@ -61,6 +66,70 @@ class PharmacyController extends Controller
         }
     }
 
+
+    public function treatmentLogs(Request $request)
+    {
+        try {
+            $search = $request->input('search');
+            $treatments = $this->pharmacyService->treatmentLogall($search);
+
+            if ($treatments->isEmpty()) {
+                return JsonResponser::send(true, 'No treatment logs found.', [], 404);
+            }
+
+            if ($request->has('export')) {
+                $exportData = $treatments->map(function ($treatment) {
+                    return [
+                        'Patient Name'     => $treatment->patient->firstname . ' ' . $treatment->patient->lastname,
+                        'Card No'          => $treatment->patient->cardno ?? '',
+                        'Patient Type'     => $treatment->patient->patient_type ?? '',
+                        'Patient No'       => $treatment->patient->patientno ?? '',
+                        'Pharmacy Name'    => $treatment->pharmacy->name ?? '',
+                        'Prescribed Drug'  => $treatment->drug ?? '',
+                        'Patient Status'   => $treatment->patient->status ?? '',
+                        'Status'           => $treatment->receiptno ? 'Fulfilled' : 'Not Fulfilled',
+                    ];
+                });
+
+                if ($request->export === 'csv') {
+                    return ExportHelper::streamCsv($exportData->toArray(), null, 'treatment_logs.csv');
+                }
+
+                if ($request->export === 'pdf') {
+                    return ExportHelper::downloadPdf($exportData->toArray(), 'treatment_logs.pdf');
+                }
+
+                return JsonResponser::send(true, 'Invalid export format specified.', [], 400);
+            }
+
+            return JsonResponser::send(false, 'Treatment logs retrieved successfully', $treatments, 200);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+        }
+    }
+
+    public function showPatientTreatment(Request $request, $patientId)
+    {
+        try {
+            $patient = $this->pharmacyService->getPatientTreatmentWithDetails($patientId);
+
+            if (!$patient) {
+                return JsonResponser::send(true, 'Patient not found.', [], 404);
+            }
+
+            return JsonResponser::send(false, 'Patient Treatment Record Fetched.', [
+                'patient' => $patient,
+                'treatments' => $patient->treatments
+            ], 200);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+        }
+    }
+
+    public function fulfillTreatment(FulfillTreatmentRequest $request)
+    {
+        return $this->pharmacyService->fulfillPrescription($request->validated());
+    }
 
     public function store(PharmacyRequest $request)
     {

@@ -29,6 +29,8 @@ use App\Repositories\Medication\MedicationRepository;
 use App\Repositories\Medication\MedicationRepositoryInterface;
 use App\Repositories\MedicationInventory\MedicationInventoryRepository;
 use App\Repositories\MedicationInventory\MedicationInventoryRepositoryInterface;
+use App\Repositories\MedicineType\MedicineTypeInterface;
+use App\Repositories\MedicineType\MedicineTypeRepository;
 use App\Repositories\NextOfKin\NextOfKinInterface;
 use App\Repositories\NextOfKin\NextOfKinRepository;
 use App\Repositories\Patient\PatientInterface;
@@ -39,6 +41,10 @@ use App\Repositories\Radiology\RadiologyInterface;
 use App\Repositories\Radiology\RadiologyRepository;
 use App\Repositories\Pharmacy\PharmacyInterface;
 use App\Repositories\Pharmacy\PharmacyRepository;
+use App\Repositories\PharmacyRequest\PharmacyRequestInterface;
+use App\Repositories\PharmacyRequest\PharmacyRequestRepository;
+use App\Repositories\PharmacySupplier\PharmacySupplyRepository;
+use App\Repositories\PharmacySupplier\PharmacySupplyRepositoryInterface;
 use App\Repositories\Registration\RegistrationInterface;
 use App\Repositories\Registration\RegistrationRepository;
 use App\Repositories\Role\RoleInterface;
@@ -69,6 +75,9 @@ use Laravel\Sanctum\PersonalAccessToken as SanctumPersonalAccessToken;
 use Laravel\Sanctum\Sanctum;
 use App\Services\Medication\MedicationService;
 use App\Services\MedicationInventoryService\MedicationInventoryService;
+use App\Services\MedicineType\MedicineTypeService;
+use App\Services\PharmacyRequest\PharmacyRequestService;
+use App\Services\PharmacySupplier\PharmacySupplyService;
 use App\Services\Role\RoleService;
 
 class AppServiceProvider extends ServiceProvider
@@ -100,6 +109,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AuditLogInterface::class, AuditLogRepository::class);
         $this->app->bind(RoleInterface::class, RoleRepository::class);
         $this->app->bind(UserRepositoryInterface::class, UserRepository::class);
+        $this->app->bind(PharmacySupplyRepositoryInterface::class, PharmacySupplyRepository::class);
+        $this->app->bind(PharmacyRequestInterface::class, PharmacyRequestRepository::class);
+        $this->app->bind(MedicineTypeInterface::class, MedicineTypeRepository::class);
 
 
         $this->app->bind(UserInformationService::class, function ($app) {
@@ -167,6 +179,18 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->bind(UserService::class, function ($app) {
             return new UserService($app->make(UserRepositoryInterface::class));
+        });
+
+        $this->app->bind(PharmacySupplyService::class, function ($app) {
+            return new PharmacySupplyService($app->make(PharmacySupplyRepositoryInterface::class));
+        });
+
+        $this->app->bind(PharmacyRequestService::class, function ($app) {
+            return new PharmacyRequestService($app->make(PharmacyRequestInterface::class));
+        });
+
+        $this->app->bind(MedicineTypeService::class, function ($app) {
+            return new MedicineTypeService($app->make(MedicineTypeInterface::class));
         });
     }
 

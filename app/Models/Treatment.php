@@ -37,4 +37,9 @@ class Treatment extends Model
     {
         return $this->belongsTo(Pharmacy::class);
     }
+
+    public function fulfillment()
+    {
+        return $this->hasOne(TreatmentFulfillment::class);
+    }
 }

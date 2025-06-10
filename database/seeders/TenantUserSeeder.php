@@ -32,7 +32,7 @@ class TenantUserSeeder extends Seeder
         foreach ($tenants as $tenantData) {
             DB::beginTransaction();
             try {
-                
+
                 $existingTenant = Tenant::where('domain', $tenantData['domain'])->first();
 
                 if ($existingTenant) {
@@ -62,15 +62,15 @@ class TenantUserSeeder extends Seeder
                     '--force' => true,
                     '--verbose' => true,
                 ]);
-                
+
                 $output = Artisan::output();
                 $this->command->info("Seeding output for {$tenant->name}: $output");
-                
+
                 if ($seedingExitCode !== 0) {
                     $this->command->error("Seeding failed for tenant: {$tenant->name}");
                     throw new \Exception("Seeding failed for tenant: {$tenant->name}");
                 }
-                
+
                 $this->command->info("Seeded default data for tenant: {$tenant->name}");
 
                 $tenant->forget();

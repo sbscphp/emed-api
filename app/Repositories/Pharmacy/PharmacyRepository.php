@@ -2,7 +2,13 @@
 
 namespace App\Repositories\Pharmacy;
 
+use App\Models\BillingLog;
+use App\Models\Patient;
 use App\Models\Pharmacy;
+use App\Models\Treatment;
+use App\Models\TreatmentFulfillment;
+use App\Responser\JsonResponser;
+use Illuminate\Support\Facades\DB;
 
 class PharmacyRepository implements PharmacyInterface
 {
@@ -11,54 +17,96 @@ class PharmacyRepository implements PharmacyInterface
      * 
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    // public function all()
-    // {
-    //     return Pharmacy::with(['state:id,state_name', 'pharmacist:id,fullname,email'])->paginate(10);
-    // }
-
-    public function all($request = null)
+    public function all()
     {
-        $export = false;
-        $filters = [];
+        return Pharmacy::with(['state:id,state_name', 'pharmacist:id,fullname,email'])->paginate(10);
+    }
 
-        if ($request && method_exists($request, 'has')) {
-            $export = $request->has('export');
-            $filters = $request->only([
-                'pharmacy_name',
-                'patient_name',
-                'drug',
-                'patient_status',
-            ]);
-        }
 
-        $query = Pharmacy::with([
-            'state:id,state_name',
-            'pharmacist:id,fullname,email',
-            'treatments' => function ($q) use ($filters) {
-                $q->with('patient');
+    public function treatmentLogall($search = null)
+    {
+        DB::connection('tenant');
 
-                if (!empty($filters['drug'])) {
-                    $q->where('drug', 'like', '%' . $filters['drug'] . '%');
-                }
-            }
+        $query = Treatment::with([
+            'patient:id,firstname,lastname,cardno,patient_type,patientno,status',
+            'pharmacy:id,name'
         ]);
 
-        if (!empty($filters['pharmacy_name'])) {
-            $query->where('name', 'like', '%' . $filters['pharmacy_name'] . '%');
-        }
 
-        if (!empty($filters['patient_name']) || !empty($filters['patient_status'])) {
-            $query->whereHas('treatments.patient', function ($q) use ($filters) {
-                if (!empty($filters['patient_name'])) {
-                    $q->whereRaw("CONCAT(firstname, ' ', lastname) LIKE ?", ['%' . $filters['patient_name'] . '%']);
-                }
-                if (!empty($filters['patient_status'])) {
-                    $q->where('status', $filters['patient_status']);
-                }
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('drug', 'like', "%{$search}%")
+                    ->orWhereHas('pharmacy', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('patient', function ($q3) use ($search) {
+                        $q3->whereRaw("CONCAT(firstname, ' ', lastname) LIKE ?", ["%{$search}%"])
+                            ->orWhere('cardno', 'like', "%{$search}%")
+                            ->orWhere('patientno', 'like', "%{$search}%")
+                            ->orWhere('status', 'like', "%{$search}%");
+                    });
             });
         }
 
-        return $export ? $query->get() : $query->paginate(10);
+        $treatments = $query->orderBy('created_at', 'desc')->paginate(10);
+
+        foreach ($treatments as $treatment) {
+            $billingLog = BillingLog::where('patient_id', $treatment->patient->id)
+                ->latest()
+                ->first();
+
+            $treatment->payment_status = $billingLog->payment_status ?? 'pending';
+            $treatment->status = $treatment->receiptno ? 'Fulfilled' : 'Not Fulfilled';
+        }
+
+        return $treatments;
+    }
+
+    public function getPatientTreatmentDetails($patientId)
+    {
+        $patient = Patient::with([
+            'treatments.pharmacy',
+            'triage'
+        ])->find($patientId);
+
+        return $patient;
+    }
+
+    public function fulfillPrescription(array $data)
+    {
+        DB::connection('tenant');
+
+        $treatment = Treatment::with('fulfillment', 'patient')->find($data['treatment_id']);
+
+        if (!$treatment) {
+            return JsonResponser::send(true, 'Treatment not found.', [], 404);
+        }
+
+        if (!is_null($treatment->receiptno)) {
+            return JsonResponser::send(true, 'This treatment has already been fulfilled.', [], 422);
+        }
+
+        $receiptno = 'RCPT-' . strtoupper(uniqid());
+        $treatment->receiptno = $receiptno;
+        $treatment->save();
+
+        $patient = $treatment->patient;
+
+        $fulfillment = TreatmentFulfillment::create([
+            'treatment_id' => $treatment->id,
+            'dispensing_pharmacist' => $data['dispensing_pharmacist'],
+            'dispensing_date' => $data['dispensing_date'],
+            'quantity_dispensed' => $data['quantity_dispensed'],
+            'batch_number' => $data['batch_number'],
+            'expiry_date' => $data['expiry_date'],
+            'prescription_status' => $data['prescription_status'],
+            'payment_status' => $data['payment_status'],
+        ]);
+
+        return JsonResponser::send(false, 'Treatment prescription fulfilled successfully.', [
+            'receiptno' => $receiptno,
+            'fulfillment' => $fulfillment,
+        ]);
     }
 
 
@@ -113,9 +161,9 @@ class PharmacyRepository implements PharmacyInterface
         return Pharmacy::with([
             'state:id,state_name',
             'pharmacist:id,fullname,email',
-            'treatments.patient' => function ($query) {
-                $query->select('id', 'firstname', 'lastname', 'patientno', 'status');
-            }
+            // 'treatments.patient' => function ($query) {
+            //     $query->select('id', 'firstname', 'lastname', 'patientno', 'status');
+            // }
         ])->find($id);
     }
 
@@ -131,5 +179,10 @@ class PharmacyRepository implements PharmacyInterface
     public function findByAttribute($attr, $value)
     {
         return Pharmacy::where($attr, $value)->first();
+    }
+
+    protected function generateReceiptNumber()
+    {
+        return 'RX' . strtoupper(uniqid()); // You can customize format
     }
 }
