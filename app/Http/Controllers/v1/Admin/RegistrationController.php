@@ -159,20 +159,39 @@ class RegistrationController extends Controller
                     'remember_token' => Str::random(60),
                 ]);
 
-                $adminData = [
-                    'id' => $adminLandlord->id,
-                    'uuid' => $adminLandlord->uuid,
-                    'fullname' => $adminLandlord->fullname,
-                    'role' => $adminLandlord->role,
-                    'phone_number' => $adminLandlord->phone_number,
-                    'email' => $adminLandlord->email,
-                    'password' => $adminLandlord->password,
-                    'tenant_id' => $tenant->id,
-                    'remember_token' => $adminLandlord->remember_token,
-                ];
+                // $adminData = [
+                //     'id' => $adminLandlord->id,
+                //     'uuid' => $adminLandlord->uuid,
+                //     'fullname' => $adminLandlord->fullname,
+                //     'role' => $adminLandlord->role,
+                //     'phone_number' => $adminLandlord->phone_number,
+                //     'email' => $adminLandlord->email,
+                //     'password' => $adminLandlord->password,
+                //     'tenant_id' => $tenant->id,
+                //     'remember_token' => $adminLandlord->remember_token,
+                // ];
+                $existingTenantUser = DB::connection('tenant')->table('users')->where('id', $adminLandlord->id)->first();
 
-                $adminTenantId = DB::connection('tenant')->table('users')->insertGetId($adminData);
-                $adminTenant = User::on('tenant')->find($adminTenantId);
+                if (!$existingTenantUser) {
+                    $adminData = [
+                        'id' => $adminLandlord->id,
+                        'uuid' => $adminLandlord->uuid,
+                        'fullname' => $adminLandlord->fullname,
+                        'role' => $adminLandlord->role,
+                        'phone_number' => $adminLandlord->phone_number,
+                        'email' => $adminLandlord->email,
+                        'password' => $adminLandlord->password,
+                        'tenant_id' => $tenant->id,
+                        'remember_token' => $adminLandlord->remember_token,
+                    ];
+
+                    DB::connection('tenant')->table('users')->insert($adminData);
+                }
+
+
+                // $adminTenantId = DB::connection('tenant')->table('users')->insertGetId($adminData);
+                // $adminTenant = User::on('tenant')->find($adminTenantId);
+                $adminTenant = User::on('tenant')->find($adminLandlord->id);
 
                 $adminTenant->addRole($adminRole);
                 $adminTenant->permissions()->sync($adminRole->permissions);
