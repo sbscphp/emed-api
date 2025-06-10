@@ -24,7 +24,7 @@ class DashboardAccessMiddleware
             return JsonResponser::send(true, 'Authentication required. Please sign in.', [], 401);
         }
 
-        if (!$user->hasRole(['admin', 'super admin'])) {
+        if (!$user->hasRole(['admin', 'super_admin'])) {
             ErrorLog::create([
                 'causer'        => $user->id ?? 'Guest',
                 'model'         => 'Permission',

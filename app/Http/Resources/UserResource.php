@@ -33,7 +33,7 @@ class UserResource extends JsonResource
             'deleted_at' => $this->deleted_at,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            'roles' => $this->roles,
+            // 'roles' => $this->roles,
 
             // 'roles' => $this->whenLoaded('roles', function () {
             //     return $this->roles->map(function ($role) {

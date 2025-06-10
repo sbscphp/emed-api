@@ -19,6 +19,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class RegistrationController extends Controller
@@ -107,13 +108,13 @@ class RegistrationController extends Controller
                 //     '--path' => 'database/migrations/tenant',
                 //     '--force' => true,
                 // ]);
-                // if (!Schema::connection('tenant')->hasTable('tenants')) {
-                //     Artisan::call('migrate', [
-                //         '--database' => 'tenant',
-                //         '--path' => 'database/migrations/tenant',
-                //         '--force' => true,
-                //     ]);
-                // }
+                if (!Schema::connection('tenant')->hasTable('tenants')) {
+                    Artisan::call('migrate', [
+                        '--database' => 'tenant',
+                        '--path' => 'database/migrations/tenant',
+                        '--force' => true,
+                    ]);
+                }
 
                 // Run seeders
                 Artisan::call('db:seed', [
@@ -140,11 +141,11 @@ class RegistrationController extends Controller
                     '--force' => true,
                 ]);
 
-                // Artisan::call('db:seed', [
-                //     '--database' => 'tenant',
-                //     '--class' => 'UsersTableSeeder',
-                //     '--force' => true,
-                // ]);
+                Artisan::call('db:seed', [
+                    '--database' => 'tenant',
+                    '--class' => 'UsersTableSeeder',
+                    '--force' => true,
+                ]);
 
                 // Insert tenant metadata into tenant database
                 DB::connection('tenant')->table('tenants')->insert([
@@ -326,34 +327,96 @@ class RegistrationController extends Controller
     //     }
     // }
 
+    // public function adminLogin(AdminLoginRequest $request)
+    // {
+    //     DB::connection('tenant')->beginTransaction();
+    //     try {
+    //         $credentials = $request->only('email', 'password');
+
+    //         $user = User::where('email', $credentials['email'])->first();
+
+    //         if (!$user) {
+    //             return JsonResponser::send(false, 'Invalid credentials', [], 401);
+    //         }
+
+    //         if (!$user->is_verified) {
+    //             return JsonResponser::send(false, 'Your email has not been verified. Please check your email for verification.', [], 403);
+    //         }
+
+    //         if (!$token = JWTAuth::attempt($credentials)) {
+    //             return JsonResponser::send(false, 'Invalid credentials', [], 401);
+    //         }
+
+    //         $landlordUser = (new \App\Models\User())
+    //             ->setConnection('landlord')
+    //             ->newQuery()
+    //             ->with('roles')
+    //             ->find($user->id);
+
+    //         if (!$landlordUser) {
+    //             return JsonResponser::send(false, 'User not found in landlord DB', [], 404);
+    //         }
+
+    //         $tenant = Tenant::find($landlordUser->tenant_id);
+    //         if (!$tenant) {
+    //             JWTAuth::setToken($token)->invalidate();
+    //             return JsonResponser::send(false, 'Tenant not found for this user', [], 404);
+    //         }
+
+    //         $hospital = User::where('tenant_id', $tenant->id)->first();
+    //         if (!$hospital) {
+    //             JWTAuth::setToken($token)->invalidate();
+    //             return JsonResponser::send(false, 'No hospital information found for this tenant', [], 404);
+    //         }
+
+    //         if (!$landlordUser->email_verified_at) {
+    //             $landlordUser->update([
+    //                 'email_verified_at' => now(),
+    //                 'status' => 'active',
+    //                 'is_verified' => true,
+    //                 'can_login' => true,
+    //                 'is_active' => true,
+    //             ]);
+    //         }
+    //         // $user->roles;
+    //         return JsonResponser::send(
+    //             true,
+    //             'Admin logged in successfully',
+    //             [
+    //                 'user' => new UserResource($user),
+    //                 'tenant' => $tenant,
+    //                 'hospital_registration' => $hospital,
+    //                 'token' => $token,
+    //             ],
+    //             200
+    //         );
+    //     } catch (\Exception $e) {
+    //         return JsonResponser::send(
+    //             false,
+    //             'An error occurred during Login. ' . $e->getMessage(),
+    //             null,
+    //             500
+    //         );
+    //     }
+    // }
+
     public function adminLogin(AdminLoginRequest $request)
     {
         DB::connection('tenant')->beginTransaction();
         try {
             $credentials = $request->only('email', 'password');
 
-            $user = User::where('email', $credentials['email'])->first();
-
-            if (!$user) {
+            $landlordUser = User::on('landlord')->where('email', $credentials['email'])->first();
+            if (!$landlordUser) {
                 return JsonResponser::send(false, 'Invalid credentials', [], 401);
             }
 
-            if (!$user->is_verified) {
+            if (!$landlordUser->is_verified) {
                 return JsonResponser::send(false, 'Your email has not been verified. Please check your email for verification.', [], 403);
             }
 
             if (!$token = JWTAuth::attempt($credentials)) {
                 return JsonResponser::send(false, 'Invalid credentials', [], 401);
-            }
-
-            $landlordUser = (new \App\Models\User())
-                ->setConnection('landlord')
-                ->newQuery()
-                ->with('roles')
-                ->find($user->id);
-
-            if (!$landlordUser) {
-                return JsonResponser::send(false, 'User not found in landlord DB', [], 404);
             }
 
             $tenant = Tenant::find($landlordUser->tenant_id);
@@ -362,7 +425,22 @@ class RegistrationController extends Controller
                 return JsonResponser::send(false, 'Tenant not found for this user', [], 404);
             }
 
-            $hospital = User::where('tenant_id', $tenant->id)->first();
+            $tenant->makeCurrent();
+            config(['database.connections.tenant.database' => $tenant->database]);
+            DB::purge('tenant');
+            DB::reconnect('tenant');
+
+            $tenantUser = User::on('tenant')
+                ->with('roles.permissions')
+                ->where('email', $landlordUser->email)
+                ->first();
+
+            if (!$tenantUser) {
+                JWTAuth::setToken($token)->invalidate();
+                return JsonResponser::send(false, 'User not found in tenant DB', [], 404);
+            }
+
+            $hospital = User::on('tenant')->where('tenant_id', $tenant->id)->first();
             if (!$hospital) {
                 JWTAuth::setToken($token)->invalidate();
                 return JsonResponser::send(false, 'No hospital information found for this tenant', [], 404);
@@ -377,28 +455,46 @@ class RegistrationController extends Controller
                     'is_active' => true,
                 ]);
             }
-            // $user->roles;
+
+            $permissions = [];
+            foreach ($tenantUser->roles as $role) {
+                foreach ($role->permissions as $permission) {
+                    $permissions[] = [
+                        'id' => $permission->id,
+                        'name' => $permission->name,
+                        'slug' => $permission->slug,
+                        'description' => $permission->description,
+                        'created_at' => $permission->created_at ? $permission->created_at->toISOString() : null,
+                        'updated_at' => $permission->updated_at ? $permission->updated_at->toISOString() : null,
+                    ];
+                }
+            }
+
+            DB::connection('tenant')->commit();
+
             return JsonResponser::send(
                 true,
                 'Admin logged in successfully',
                 [
-                    'user' => new UserResource($user),
+                    'user' => new UserResource($tenantUser),
                     'tenant' => $tenant,
                     'hospital_registration' => $hospital,
+                    'roles' => $tenantUser->roles->pluck('name'),
+                    'permissions' => $permissions,
                     'token' => $token,
                 ],
                 200
             );
         } catch (\Exception $e) {
+            DB::connection('tenant')->rollBack();
             return JsonResponser::send(
                 false,
-                'An error occurred during Login. ' . $e->getMessage(),
+                'An error occurred during login: ' . $e->getMessage(),
                 null,
                 500
             );
         }
     }
-
 
     //LOGIN THROUGH INDIVIDUAL TENANT DB
 
@@ -576,6 +672,75 @@ class RegistrationController extends Controller
                 null,
                 500
             );
+        }
+    }
+
+    public function me()
+    {
+        try {
+            $landlordUser = JWTAuth::parseToken()->authenticate();
+            if (!$landlordUser) {
+                return JsonResponser::send(false, 'User not authenticated', [], 401);
+            }
+
+            $tenant = \App\Models\Tenant::find($landlordUser->tenant_id);
+            if (!$tenant) {
+                return JsonResponser::send(false, 'Tenant not found', [], 404);
+            }
+
+            // Step 3: Set tenant context and switch DB
+            // $tenant->makeCurrent();
+            // config(['database.connections.tenant.database' => $tenant->database]);
+            // DB::purge('tenant');
+            // DB::reconnect('tenant');
+
+            $tenantUser = User::on('tenant')->with('roles.permissions')->find($landlordUser->id);
+            if (!$tenantUser) {
+                return JsonResponser::send(false, 'User not found in tenant DB', [], 404);
+            }
+
+            $hospital = User::on('tenant')->where('tenant_id', $tenant->id)->first();
+            if (!$hospital) {
+                return JsonResponser::send(false, 'No hospital information found for this tenant', [], 404);
+            }
+
+            $permissions = $tenantUser->roles->flatMap(function ($role) {
+                return $role->permissions->map(function ($permission) {
+                    return [
+                        'id' => $permission->id,
+                        'name' => $permission->name,
+                        'slug' => $permission->slug,
+                        'description' => $permission->description,
+                        'created_at' => optional($permission->created_at)->toISOString(),
+                        'updated_at' => optional($permission->updated_at)->toISOString(),
+                    ];
+                });
+            })->unique('id')->values();
+
+            return JsonResponser::send(true, 'User information retrieved successfully', [
+                'user' => new UserResource($tenantUser),
+                'tenant' => $tenant,
+                'hospital_registration' => $hospital,
+                'roles' => $tenantUser->roles->pluck('name'),
+                'permissions' => $permissions,
+            ], 200);
+        } catch (\Exception $e) {
+            return JsonResponser::send(
+                false,
+                'An error occurred while retrieving user information: ' . $e->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    public function logout()
+    {
+        try {
+            JWTAuth::parseToken()->invalidate();
+            return JsonResponser::send(true, 'User logged out successfully', [], 200);
+        } catch (\Exception $e) {
+            return JsonResponser::send(false, 'An error occurred during logout: ' . $e->getMessage(), null, 500);
         }
     }
 }

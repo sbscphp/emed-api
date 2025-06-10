@@ -24,7 +24,7 @@ class PharmacyAccessMiddleware
             return JsonResponser::send(true, 'Authentication required. Please sign in.', [], 401);
         }
 
-        if (!$user->hasRole(['admin', 'super admin', 'pharmacy'])) {
+        if (!$user->hasRole(['admin', 'super_admin', 'pharmacy'])) {
             ErrorLog::create([
                 'causer'        => $user->id ?? 'Guest',
                 'model'         => 'Permission',

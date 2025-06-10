@@ -114,6 +114,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(MedicineTypeInterface::class, MedicineTypeRepository::class);
 
 
+
         $this->app->bind(UserInformationService::class, function ($app) {
             return new UserInformationService($app->make(UserInformationInterface::class));
         });

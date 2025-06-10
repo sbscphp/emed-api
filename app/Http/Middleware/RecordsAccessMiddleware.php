@@ -6,6 +6,7 @@ use App\Models\ErrorLog;
 use App\Responser\JsonResponser;
 use Closure;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class RecordsAccessMiddleware
 {
@@ -22,7 +23,7 @@ class RecordsAccessMiddleware
             return JsonResponser::send(true, 'Authentication required. Please sign in.', [], 401);
         }
 
-        if (!$user->hasRole(['admin', 'super admin', 'record'])) {
+        if (!$user->hasRole(['admin', 'super_admin', 'record'])) {
             ErrorLog::create([
                 'causer'        => $user->id ?? 'Guest',
                 'model'         => 'Permission',
