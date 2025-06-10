@@ -14,9 +14,9 @@ class Role extends RoleModel
     /**
      * @property \Illuminate\Database\Eloquent\Collection|\App\Models\User[] $users
      */
-    public function users(): BelongsToMany
+    public function users()
     {
-        return $this->belongsToMany(User::class, 'role_user', 'role_id', 'user_id');
+        return $this->belongsToMany(User::class, 'role_user', 'role_id', 'user_id'); // if your pivot table has timestamps
     }
 
     /**

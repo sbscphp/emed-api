@@ -42,6 +42,7 @@ class User extends Authenticatable implements JWTSubject
     protected $guarded = ['id'];
     protected $connection = 'tenant';
     protected $appends = ['role_names'];
+    protected $with = ['roles'];
 
 
     /**
@@ -102,9 +103,9 @@ class User extends Authenticatable implements JWTSubject
         return $this->belongsTo(Tenant::class);
     }
 
-    public function roles(): BelongsToMany
+    public function roles()
     {
-        return $this->belongsToMany(Role::class, 'role_user', 'user_id', 'role_id');
+        return $this->belongsToMany(Role::class, 'role_user', 'user_id', 'role_id'); // if your pivot table has timestamps
     }
 
     public function permissions(): BelongsToMany
