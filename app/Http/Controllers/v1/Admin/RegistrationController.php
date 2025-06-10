@@ -327,96 +327,34 @@ class RegistrationController extends Controller
     //     }
     // }
 
-    // public function adminLogin(AdminLoginRequest $request)
-    // {
-    //     DB::connection('tenant')->beginTransaction();
-    //     try {
-    //         $credentials = $request->only('email', 'password');
-
-    //         $user = User::where('email', $credentials['email'])->first();
-
-    //         if (!$user) {
-    //             return JsonResponser::send(false, 'Invalid credentials', [], 401);
-    //         }
-
-    //         if (!$user->is_verified) {
-    //             return JsonResponser::send(false, 'Your email has not been verified. Please check your email for verification.', [], 403);
-    //         }
-
-    //         if (!$token = JWTAuth::attempt($credentials)) {
-    //             return JsonResponser::send(false, 'Invalid credentials', [], 401);
-    //         }
-
-    //         $landlordUser = (new \App\Models\User())
-    //             ->setConnection('landlord')
-    //             ->newQuery()
-    //             ->with('roles')
-    //             ->find($user->id);
-
-    //         if (!$landlordUser) {
-    //             return JsonResponser::send(false, 'User not found in landlord DB', [], 404);
-    //         }
-
-    //         $tenant = Tenant::find($landlordUser->tenant_id);
-    //         if (!$tenant) {
-    //             JWTAuth::setToken($token)->invalidate();
-    //             return JsonResponser::send(false, 'Tenant not found for this user', [], 404);
-    //         }
-
-    //         $hospital = User::where('tenant_id', $tenant->id)->first();
-    //         if (!$hospital) {
-    //             JWTAuth::setToken($token)->invalidate();
-    //             return JsonResponser::send(false, 'No hospital information found for this tenant', [], 404);
-    //         }
-
-    //         if (!$landlordUser->email_verified_at) {
-    //             $landlordUser->update([
-    //                 'email_verified_at' => now(),
-    //                 'status' => 'active',
-    //                 'is_verified' => true,
-    //                 'can_login' => true,
-    //                 'is_active' => true,
-    //             ]);
-    //         }
-    //         // $user->roles;
-    //         return JsonResponser::send(
-    //             true,
-    //             'Admin logged in successfully',
-    //             [
-    //                 'user' => new UserResource($user),
-    //                 'tenant' => $tenant,
-    //                 'hospital_registration' => $hospital,
-    //                 'token' => $token,
-    //             ],
-    //             200
-    //         );
-    //     } catch (\Exception $e) {
-    //         return JsonResponser::send(
-    //             false,
-    //             'An error occurred during Login. ' . $e->getMessage(),
-    //             null,
-    //             500
-    //         );
-    //     }
-    // }
-
     public function adminLogin(AdminLoginRequest $request)
     {
         DB::connection('tenant')->beginTransaction();
         try {
             $credentials = $request->only('email', 'password');
 
-            $landlordUser = User::on('landlord')->where('email', $credentials['email'])->first();
-            if (!$landlordUser) {
+            $user = User::where('email', $credentials['email'])->first();
+
+            if (!$user) {
                 return JsonResponser::send(false, 'Invalid credentials', [], 401);
             }
 
-            if (!$landlordUser->is_verified) {
+            if (!$user->is_verified) {
                 return JsonResponser::send(false, 'Your email has not been verified. Please check your email for verification.', [], 403);
             }
 
             if (!$token = JWTAuth::attempt($credentials)) {
                 return JsonResponser::send(false, 'Invalid credentials', [], 401);
+            }
+
+            $landlordUser = (new \App\Models\User())
+                ->setConnection('landlord')
+                ->newQuery()
+                ->with('roles')
+                ->find($user->id);
+
+            if (!$landlordUser) {
+                return JsonResponser::send(false, 'User not found in landlord DB', [], 404);
             }
 
             $tenant = Tenant::find($landlordUser->tenant_id);
@@ -425,18 +363,7 @@ class RegistrationController extends Controller
                 return JsonResponser::send(false, 'Tenant not found for this user', [], 404);
             }
 
-            $tenant->makeCurrent();
-            config(['database.connections.tenant.database' => $tenant->database]);
-            DB::purge('tenant');
-            DB::reconnect('tenant');
-
-            $tenantUser = User::on('tenant')->with('roles.permissions')->find($landlordUser->id);
-            if (!$tenantUser) {
-                JWTAuth::setToken($token)->invalidate();
-                return JsonResponser::send(false, 'User not found in tenant DB', [], 404);
-            }
-
-            $hospital = User::on('tenant')->where('tenant_id', $tenant->id)->first();
+            $hospital = User::where('tenant_id', $tenant->id)->first();
             if (!$hospital) {
                 JWTAuth::setToken($token)->invalidate();
                 return JsonResponser::send(false, 'No hospital information found for this tenant', [], 404);
@@ -451,46 +378,28 @@ class RegistrationController extends Controller
                     'is_active' => true,
                 ]);
             }
-
-            $permissions = [];
-            foreach ($tenantUser->roles as $role) {
-                foreach ($role->permissions as $permission) {
-                    $permissions[] = [
-                        'id' => $permission->id,
-                        'name' => $permission->name,
-                        'slug' => $permission->slug,
-                        'description' => $permission->description,
-                        'created_at' => $permission->created_at ? $permission->created_at->toISOString() : null,
-                        'updated_at' => $permission->updated_at ? $permission->updated_at->toISOString() : null,
-                    ];
-                }
-            }
-
-            DB::connection('tenant')->commit();
-
+            // $user->roles;
             return JsonResponser::send(
                 true,
                 'Admin logged in successfully',
                 [
-                    'user' => new UserResource($tenantUser),
+                    'user' => new UserResource($user),
                     'tenant' => $tenant,
                     'hospital_registration' => $hospital,
-                    'roles' => $tenantUser->roles->pluck('name'),
-                    'permissions' => $permissions,
                     'token' => $token,
                 ],
                 200
             );
         } catch (\Exception $e) {
-            DB::connection('tenant')->rollBack();
             return JsonResponser::send(
                 false,
-                'An error occurred during login: ' . $e->getMessage(),
+                'An error occurred during Login. ' . $e->getMessage(),
                 null,
                 500
             );
         }
     }
+
 
     //LOGIN THROUGH INDIVIDUAL TENANT DB
 
