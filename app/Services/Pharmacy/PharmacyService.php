@@ -5,6 +5,9 @@ namespace App\Services\Pharmacy;
 use App\Models\Medication;
 use App\Models\MedicationInventory;
 use App\Models\Pharmacy;
+use App\Models\PharmacyRequest;
+use App\Models\PharmacySupply;
+use App\Models\Treatment;
 use App\Repositories\Pharmacy\PharmacyInterface;
 
 /**
@@ -35,6 +38,23 @@ class PharmacyService
     {
         return $this->PharmacyInterface->all();
     }
+
+    public function treatmentLogall()
+    {
+        return $this->PharmacyInterface->treatmentLogall();
+    }
+
+    public function getPatientTreatmentWithDetails($patientId)
+    {
+        return $this->PharmacyInterface->getPatientTreatmentDetails($patientId);
+    }
+
+    public function fulfillPrescription(array $data)
+    {
+        return $this->PharmacyInterface->fulfillPrescription($data);
+    }
+
+
 
     /**
      * Create a new Pharmacy using the data provided.
@@ -102,10 +122,17 @@ class PharmacyService
         return [
             'total_medications' => Medication::count(),
             'available_medications' => Medication::where('medicine_status', 'available')->count(),
-            'near_expiry_medications' => MedicationInventory::whereBetween('expiry_date', [now(), now()->addDays(30)])
-                ->distinct('medication_id')
-                ->count('medication_id'),
-            'low_stock_alert' => MedicationInventory::where('current_stock', '<', 10)->count(),
+            'prescriptions_fulfilled_today' => Treatment::whereDate('updated_at', now())
+                ->whereNotNull('receiptno')
+                ->count(),
+
+            'total_supply' => PharmacySupply::count(),
+            'total_request' => PharmacyRequest::count(),
+
+            // 'near_expiry_medications' => MedicationInventory::whereBetween('expiry_date', [now(), now()->addDays(30)])
+            //     ->distinct('medication_id')
+            //     ->count('medication_id'),
+            // 'low_stock_alert' => MedicationInventory::where('current_stock', '<', 10)->count(),
             'total_pharmacies' => Pharmacy::count(),
         ];
     }

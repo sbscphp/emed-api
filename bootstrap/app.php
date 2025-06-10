@@ -35,7 +35,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'role.laboratory' => LaboratoryAccessMiddleware::class,
             'role.dashboard' => DashboardAccessMiddleware::class,
             'admin.superadmin' => CheckAdminOrSuperAdmin::class,
-            // add any other middleware aliases you have
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

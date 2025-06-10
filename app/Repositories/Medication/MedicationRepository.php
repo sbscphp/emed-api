@@ -49,7 +49,7 @@ class MedicationRepository implements MedicationRepositoryInterface
                     'Manufacturer' => $med->manufacturer,
                     'Medicine Status' => $med->medicine_status,
                     'Pharmacy' => $med->pharmacy->name ?? '',
-                    'Created At' => $med->created_at->toDateTimeString(),
+                    'Created At' => $med->created_at,
                 ];
             });
 

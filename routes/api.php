@@ -6,7 +6,10 @@ use App\Http\Controllers\v1\Admin\MedicationInventoryController;
 use App\Http\Controllers\v1\Admin\ConsultationController;
 use App\Http\Controllers\v1\Admin\LabController;
 use App\Http\Controllers\v1\Admin\MedicationController;
+use App\Http\Controllers\v1\Admin\MedicineTypeController;
 use App\Http\Controllers\v1\Admin\PharmacyController;
+use App\Http\Controllers\v1\Admin\PharmacyRequestController;
+use App\Http\Controllers\v1\Admin\PharmacySupplyController;
 use App\Http\Controllers\v1\Admin\RecordManagementController;
 use App\Http\Controllers\v1\Admin\RegistrationController;
 use App\Http\Controllers\v1\Admin\ReportController;
@@ -92,12 +95,23 @@ Route::group(["prefix" => "v1"], function () {
                 Route::group(['prefix' => 'pharmacy', 'middleware' => 'role.pharmacy'], function () {
                     Route::post('/create', [PharmacyController::class, 'store']);
                     Route::post('/lists', [PharmacyController::class, 'index']);
+                    Route::post('/patient/lists', [PharmacyController::class, 'treatmentLogs']);
+                    Route::get('/patient/{patientId}', [PharmacyController::class, 'showPatientTreatment']);
+                    Route::post('/patient/fulfill', [PharmacyController::class, 'fulfillTreatment']);
                     Route::get('/list/{id}', [PharmacyController::class, 'show']);
                     Route::put('/update/{id}', [PharmacyController::class, 'update']);
                     Route::delete('/delete/{id}', [PharmacyController::class, 'destroy']);
                     Route::patch('/{id}/toggle-status', [PharmacyController::class, 'toggleStatus']);
                     Route::get('/stats', [PharmacyController::class, 'pharmacyDashboardStats']);
+                    Route::post('/supplies', [PharmacySupplyController::class, 'store']);
+                    Route::post('/all/supplies', [PharmacySupplyController::class, 'index']);
+                    Route::get('/supplies/{id}', [PharmacySupplyController::class, 'show']);
+
+                    Route::post('/request', [PharmacyRequestController::class, 'store']);
+                    Route::post('/all/request', [PharmacyRequestController::class, 'index']);
+                    Route::get('/request/{id}', [PharmacyRequestController::class, 'show']);
                 });
+
 
                 Route::group(['prefix' => 'medicine', 'middleware' => 'role.pharmacy'], function () {
                     Route::post('/create', [MedicationController::class, 'store']);
@@ -106,7 +120,14 @@ Route::group(["prefix" => "v1"], function () {
                     Route::put('/update/{id}', [MedicationController::class, 'update']);
                     Route::delete('/delete/{id}', [MedicationController::class, 'destroy']);
                     Route::patch('/{id}/toggle-status', [MedicationController::class, 'changeStatus']);
+                    Route::post('/upload-csv', [MedicationController::class, 'uploadCsv']);
                     Route::get('/vendors', [MedicationController::class, 'listVendors']);
+
+                    Route::post('/type', [MedicineTypeController::class, 'store']);
+                    Route::post('/all/type', [MedicineTypeController::class, 'index']);
+                    Route::get('/type/{id}', [MedicineTypeController::class, 'show']);
+                    Route::put('/type/{id}', [MedicineTypeController::class, 'update']);
+                    Route::delete('/type/{id}', [MedicineTypeController::class, 'destroy']);
                 });
 
                 Route::group(['prefix' => 'medicine-inventory', 'middleware' => 'role.pharmacy'], function () {
