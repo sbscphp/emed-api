@@ -3,6 +3,8 @@
 namespace App\Services\Medication;
 
 use App\Models\Medication;
+use App\Models\MedicationInventory;
+use App\Models\PharmacySupply;
 use App\Repositories\Medication\MedicationRepositoryInterface;
 
 class MedicationService
@@ -45,5 +47,17 @@ class MedicationService
             ->distinct()
             ->orderBy('brand_name')
             ->pluck('brand_name');
+    }
+
+    public function getMedicineDashboardStats(): array
+    {
+        return [
+            'total_medications' => Medication::count(),
+            'total_supply_today' => PharmacySupply::whereDate('supplied_date', now())->count(),
+            'near_expiry_medications' => MedicationInventory::whereBetween('expiry_date', [now(), now()->addDays(30)])
+                ->distinct('medication_id')
+                ->count('medication_id'),
+            'low_stock_alert' => MedicationInventory::where('current_stock', '<', 10)->count(),
+        ];
     }
 }

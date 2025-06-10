@@ -125,15 +125,21 @@ class PharmacyService
             'prescriptions_fulfilled_today' => Treatment::whereDate('updated_at', now())
                 ->whereNotNull('receiptno')
                 ->count(),
-
             'total_supply' => PharmacySupply::count(),
             'total_request' => PharmacyRequest::count(),
-
-            // 'near_expiry_medications' => MedicationInventory::whereBetween('expiry_date', [now(), now()->addDays(30)])
-            //     ->distinct('medication_id')
-            //     ->count('medication_id'),
-            // 'low_stock_alert' => MedicationInventory::where('current_stock', '<', 10)->count(),
             'total_pharmacies' => Pharmacy::count(),
+        ];
+    }
+
+    public function getMedicineDashboardStats(): array
+    {
+        return [
+            'total_medications' => Medication::count(),
+            'total_supply' => PharmacySupply::count(),
+            'near_expiry_medications' => MedicationInventory::whereBetween('expiry_date', [now(), now()->addDays(30)])
+                ->distinct('medication_id')
+                ->count('medication_id'),
+            'low_stock_alert' => MedicationInventory::where('current_stock', '<', 10)->count(),
         ];
     }
 }
