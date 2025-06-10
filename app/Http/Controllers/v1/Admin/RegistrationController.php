@@ -17,6 +17,7 @@ use App\Services\Role\RoleService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -101,11 +102,18 @@ class RegistrationController extends Controller
                 DB::reconnect('tenant');
 
                 // Run migrations
-                Artisan::call('migrate', [
-                    '--database' => 'tenant',
-                    '--path' => 'database/migrations/tenant',
-                    '--force' => true,
-                ]);
+                // Artisan::call('migrate', [
+                //     '--database' => 'tenant',
+                //     '--path' => 'database/migrations/tenant',
+                //     '--force' => true,
+                // ]);
+                // if (!Schema::connection('tenant')->hasTable('tenants')) {
+                //     Artisan::call('migrate', [
+                //         '--database' => 'tenant',
+                //         '--path' => 'database/migrations/tenant',
+                //         '--force' => true,
+                //     ]);
+                // }
 
                 // Run seeders
                 Artisan::call('db:seed', [
@@ -320,9 +328,9 @@ class RegistrationController extends Controller
 
     public function adminLogin(AdminLoginRequest $request)
     {
+        DB::connection('tenant')->beginTransaction();
         try {
             $credentials = $request->only('email', 'password');
-
 
             $user = User::where('email', $credentials['email'])->first();
 
@@ -337,7 +345,6 @@ class RegistrationController extends Controller
             if (!$token = JWTAuth::attempt($credentials)) {
                 return JsonResponser::send(false, 'Invalid credentials', [], 401);
             }
-
 
             $landlordUser = (new \App\Models\User())
                 ->setConnection('landlord')
@@ -361,7 +368,6 @@ class RegistrationController extends Controller
                 return JsonResponser::send(false, 'No hospital information found for this tenant', [], 404);
             }
 
-
             if (!$landlordUser->email_verified_at) {
                 $landlordUser->update([
                     'email_verified_at' => now(),
@@ -371,6 +377,7 @@ class RegistrationController extends Controller
                     'is_active' => true,
                 ]);
             }
+            // $user->roles;
             return JsonResponser::send(
                 true,
                 'Admin logged in successfully',
