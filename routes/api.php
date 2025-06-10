@@ -121,6 +121,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::delete('/delete/{id}', [MedicationController::class, 'destroy']);
                     Route::patch('/{id}/toggle-status', [MedicationController::class, 'changeStatus']);
                     Route::post('/upload-csv', [MedicationController::class, 'uploadCsv']);
+                    Route::get('/stats', [MedicationController::class, 'medicineDashboardStats']);
                     Route::get('/vendors', [MedicationController::class, 'listVendors']);
 
                     Route::post('/type', [MedicineTypeController::class, 'store']);

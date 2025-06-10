@@ -132,11 +132,11 @@ class RegistrationController extends Controller
                     '--force' => true,
                 ]);
 
-                Artisan::call('db:seed', [
-                    '--database' => 'tenant',
-                    '--class' => 'UsersTableSeeder',
-                    '--force' => true,
-                ]);
+                // Artisan::call('db:seed', [
+                //     '--database' => 'tenant',
+                //     '--class' => 'UsersTableSeeder',
+                //     '--force' => true,
+                // ]);
 
                 // Insert tenant metadata into tenant database
                 DB::connection('tenant')->table('tenants')->insert([

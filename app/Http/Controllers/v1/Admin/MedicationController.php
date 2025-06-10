@@ -227,4 +227,15 @@ class MedicationController extends Controller
             return JsonResponser::send(true, 'Internal server error during CSV import.', [], 500, $e);
         }
     }
+
+    public function medicineDashboardStats()
+    {
+        try {
+            $stats = $this->medicationService->getMedicineDashboardStats();
+
+            return JsonResponser::send(false, 'Medicine dashboard stats fetched successfully', $stats);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Failed to fetch medicine dashboard stats', [], 500, $e);
+        }
+    }
 }
