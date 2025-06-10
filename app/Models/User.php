@@ -42,7 +42,6 @@ class User extends Authenticatable implements JWTSubject
     protected $guarded = ['id'];
     protected $connection = 'tenant';
     protected $appends = ['role_names'];
-    protected $with = ['roles'];
 
 
     /**
@@ -103,7 +102,7 @@ class User extends Authenticatable implements JWTSubject
         return $this->belongsTo(Tenant::class);
     }
 
-    public function roles()
+    public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class, 'role_user', 'user_id', 'role_id');
     }

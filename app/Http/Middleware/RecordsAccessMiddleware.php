@@ -18,7 +18,7 @@ class RecordsAccessMiddleware
     public function handle($request, Closure $next)
     {
         $user = Auth::user();
-
+        Log::info($user);
         if (!$user) {
             return JsonResponser::send(true, 'Authentication required. Please sign in.', [], 401);
         }
