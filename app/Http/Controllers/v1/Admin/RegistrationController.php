@@ -430,7 +430,12 @@ class RegistrationController extends Controller
             DB::purge('tenant');
             DB::reconnect('tenant');
 
-            $tenantUser = User::on('tenant')->with('roles.permissions')->find($landlordUser->id);
+            // $tenantUser = User::on('tenant')->with('roles.permissions')->find($landlordUser->id);
+            $tenantUser = User::on('tenant')
+                ->with('roles.permissions')
+                ->where('email', $landlordUser->email)
+                ->first();
+
             // if (!$tenantUser) {
             //     JWTAuth::setToken($token)->invalidate();
             //     return JsonResponser::send(false, 'User not found in tenant DB', [], 404);

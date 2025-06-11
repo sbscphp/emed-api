@@ -19,21 +19,22 @@ class NurseAccessMiddleware
      */
     public function handle($request, Closure $next)
     {
-        $authUser = auth()->user();
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
 
-        if (!$authUser) {
+        if (!$user) {
             return JsonResponser::send(true, 'Authentication required. Please sign in.', [], 401);
-        };
-
-        if (!$authUser) {
-            return JsonResponser::send(true, 'User not found in landlord context', [], 401);
         }
 
-        if (!$authUser->hasRole(['admin', 'super_admin', 'nurse'])) {
+        if (!$user->relationLoaded('roles')) {
+            $user->load('roles');
+        }
+
+        if (!$user->hasRole(['admin', 'super_admin', 'nurse'])) {
             ErrorLog::create([
                 'causer'         => $user->id ?? 'Guest',
                 'model'          => 'Permission',
-                'error_message'  => "Unauthorized access attempt by {$authUser->fullname}",
+                'error_message'  => "Unauthorized access attempt by {$user->fullname}",
                 'error_line'     => __LINE__,
                 'error_trace'    => '',
                 'request_url'    => $request->fullUrl() ?? 'N/A',
@@ -43,7 +44,7 @@ class NurseAccessMiddleware
                 'user_agent'     => $request->header('User-Agent') ?? 'N/A',
             ]);
 
-            Auth::logout();
+            // Auth::logout();
 
             return JsonResponser::send(true, 'Access Denied: You do not have the permission.', [], 403);
         }
