@@ -92,11 +92,9 @@ class UsersTableSeeder extends Seeder
         ];
 
         foreach ($users as $userData) {
-            if ($userData['role'] && User::where('email', '=', $userData['email'])->first() === null) {
+            if ($userData['role']) {
                 $newUser = User::updateOrCreate(
-                    [
-                        'email' => $userData['email'],
-                    ],
+                    ['email' => $userData['email']],
                     [
                         'uuid' => Str::uuid(),
                         'fullname' => $userData['fullname'],
@@ -111,7 +109,9 @@ class UsersTableSeeder extends Seeder
                         '2fa' => true
                     ]
                 );
-                $newUser->addRole($userData['role']);
+
+                // ✅ Ensure role is assigned even if the user exists
+                $newUser->roles()->sync([$userData['role']->id]);
                 $newUser->permissions()->sync($userData['role']->permissions);
             }
         }
