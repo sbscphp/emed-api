@@ -7,7 +7,6 @@ use Illuminate\Support\Str;
 
 class Tenant extends BaseTenant
 {
-    protected $connection = 'central';
     protected $fillable = [
         'name',
         'domain',
