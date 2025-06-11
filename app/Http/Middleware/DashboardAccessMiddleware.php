@@ -18,10 +18,15 @@ class DashboardAccessMiddleware
      */
     public function handle($request, Closure $next)
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         if (!$user) {
             return JsonResponser::send(true, 'Authentication required. Please sign in.', [], 401);
+        }
+
+        if (!$user->relationLoaded('roles')) {
+            $user->load('roles');
         }
 
         if (!$user->hasRole(['admin', 'super_admin'])) {
@@ -37,7 +42,6 @@ class DashboardAccessMiddleware
                 'request_ip'    => $request->ip() ?? 'N/A',
                 'user_agent'    => $request->header('User-Agent') ?? 'N/A',
             ]);
-            Auth::logout();
 
             return JsonResponser::send(true, 'Access Denied: You do not have the permission.', [], 403);
         }

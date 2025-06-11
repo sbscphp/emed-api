@@ -18,10 +18,15 @@ class PharmacyAccessMiddleware
      */
     public function handle($request, Closure $next)
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         if (!$user) {
             return JsonResponser::send(true, 'Authentication required. Please sign in.', [], 401);
+        }
+
+        if (!$user->relationLoaded('roles')) {
+            $user->load('roles');
         }
 
         if (!$user->hasRole(['admin', 'super_admin', 'pharmacy'])) {
