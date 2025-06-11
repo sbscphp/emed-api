@@ -121,9 +121,7 @@ class UsersTableSeeder extends Seeder
                     $newUser->permissions()->sync($role->permissions);
                 }
             }
-
-
-            app(Multitenancy::class)->end();
+            $tenant->forgetCurrent();
         }
     }
 }
