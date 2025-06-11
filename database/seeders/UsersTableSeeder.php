@@ -98,7 +98,7 @@ class UsersTableSeeder extends Seeder
             $tenant->makeCurrent();
 
             foreach ($users as $userData) {
-                $role = $roles[$userData['role_key']] ?? null;
+                $role = $roles[$userData['role_name']] ?? null;
 
                 if ($role && User::on('tenant')->where('email', $userData['email'])->doesntExist()) {
                     $newUser = User::on('tenant')->updateOrCreate(
@@ -106,7 +106,7 @@ class UsersTableSeeder extends Seeder
                         [
                             'uuid' => Str::uuid(),
                             'fullname' => $userData['fullname'],
-                            'role' => ucfirst($userData['role_key']),
+                            'role' => ucfirst($userData['role_name']),
                             'password' => bcrypt('password'),
                             'phone_number' => fake()->phoneNumber,
                             'status' => GeneralEnums::ACTIVE->value,
