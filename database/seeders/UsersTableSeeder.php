@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\UserInformation\UserInformationService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
+use Spatie\Multitenancy\Multitenancy;
 
 class UsersTableSeeder extends Seeder
 {
@@ -91,29 +92,38 @@ class UsersTableSeeder extends Seeder
             ]
         ];
 
-        foreach ($users as $userData) {
-            if ($userData['role']) {
-                $newUser = User::updateOrCreate(
-                    ['email' => $userData['email']],
-                    [
-                        'uuid' => Str::uuid(),
-                        'fullname' => $userData['fullname'],
-                        'role' => $userData['role_name'],
-                        'password' => bcrypt('password'),
-                        'phone_number' => fake()->phoneNumber,
-                        'status' => GeneralEnums::ACTIVE->value,
-                        'can_login' => true,
-                        'is_active' => true,
-                        'is_verified' => true,
-                        'is_completed' => true,
-                        '2fa' => true
-                    ]
-                );
+        // Loop through all tenants
+        $tenants = Tenant::all();
+        foreach ($tenants as $tenant) {
+            $tenant->makeCurrent();
 
-                // ✅ Ensure role is assigned even if the user exists
-                $newUser->roles()->sync([$userData['role']->id]);
-                $newUser->permissions()->sync($userData['role']->permissions);
+            foreach ($users as $userData) {
+                $role = $roles[$userData['role_key']] ?? null;
+
+                if ($role && User::on('tenant')->where('email', $userData['email'])->doesntExist()) {
+                    $newUser = User::on('tenant')->updateOrCreate(
+                        ['email' => $userData['email']],
+                        [
+                            'uuid' => Str::uuid(),
+                            'fullname' => $userData['fullname'],
+                            'role' => ucfirst($userData['role_key']),
+                            'password' => bcrypt('password'),
+                            'phone_number' => fake()->phoneNumber,
+                            'status' => GeneralEnums::ACTIVE->value,
+                            'can_login' => true,
+                            'is_active' => true,
+                            'is_verified' => true,
+                            'is_completed' => true,
+                            '2fa' => true
+                        ]
+                    );
+                    $newUser->addRole($role);
+                    $newUser->permissions()->sync($role->permissions);
+                }
             }
+
+
+            app(Multitenancy::class)->end();
         }
     }
 }
