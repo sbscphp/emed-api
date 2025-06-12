@@ -23,6 +23,8 @@ use App\Repositories\Consultation\ConsultationInterface;
 use App\Repositories\Consultation\ConsultationRepository;
 use App\Repositories\EmergencyContact\EmergencyContactInterface;
 use App\Repositories\EmergencyContact\EmergencyContactRepository;
+use App\Repositories\Inventory\InventoryInterface;
+use App\Repositories\Inventory\InventoryRepository;
 use App\Repositories\Laboratory\LaboratoryInterface;
 use App\Repositories\Laboratory\LaboratoryRepository;
 use App\Repositories\Medication\MedicationRepository;
@@ -55,12 +57,15 @@ use App\Repositories\Treatment\TreatmentInterface;
 use App\Repositories\Treatment\TreatmentRepository;
 use App\Repositories\Triage\TriageInterface;
 use App\Repositories\Triage\TriageRepository;
+use App\Repositories\Vendor\VendorInterface;
+use App\Repositories\Vendor\VendorRepository;
 use App\Services\Admission\AdmissionService;
 use App\Services\Appointment\AppointmentService;
 use App\Services\AuditLog\AuditLogService;
 use App\Services\BillingLog\BillingLogService;
 use App\Services\Consultation\ConsultationService;
 use App\Services\EmergencyContact\EmergencyContactService;
+use App\Services\Inventory\InventoryService;
 use App\Services\Laboratory\LaboratoryService;
 use App\Services\NextOfKin\NextOfKinService;
 use App\Services\Patient\PatientService;
@@ -79,6 +84,7 @@ use App\Services\MedicineType\MedicineTypeService;
 use App\Services\PharmacyRequest\PharmacyRequestService;
 use App\Services\PharmacySupplier\PharmacySupplyService;
 use App\Services\Role\RoleService;
+use App\Services\Vendor\VendorService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -112,6 +118,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(PharmacySupplyRepositoryInterface::class, PharmacySupplyRepository::class);
         $this->app->bind(PharmacyRequestInterface::class, PharmacyRequestRepository::class);
         $this->app->bind(MedicineTypeInterface::class, MedicineTypeRepository::class);
+        $this->app->bind(InventoryInterface::class, InventoryRepository::class);
+        $this->app->bind(VendorInterface::class, VendorRepository::class);
 
 
 
@@ -192,6 +200,14 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(MedicineTypeService::class, function ($app) {
             return new MedicineTypeService($app->make(MedicineTypeInterface::class));
+        });
+
+        $this->app->bind(InventoryService::class, function ($app) {
+            return new InventoryService($app->make(InventoryInterface::class));
+        });
+
+        $this->app->bind(VendorService::class, function ($app) {
+            return new VendorService($app->make(VendorInterface::class));
         });
     }
 

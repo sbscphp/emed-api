@@ -76,7 +76,7 @@ class AuditLogController extends Controller
             $activityType = $request->activity_type;
             $paginate = false;
 
-            $logs = $this->auditLogService->getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate);
+            $logs = $this->auditLogService->getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate, $downloadType);
 
             if ($logs->isEmpty()) {
                 return JsonResponser::send(true, 'Record(s) not found for download.', null, 404);
