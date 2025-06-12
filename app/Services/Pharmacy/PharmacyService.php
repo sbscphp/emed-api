@@ -142,4 +142,11 @@ class PharmacyService
             'low_stock_alert' => MedicationInventory::where('current_stock', '<', 10)->count(),
         ];
     }
+
+    public function generatePharmacyId(): string
+    {
+        $latest = Pharmacy::latest('id')->first();
+        $nextNumber = $latest ? $latest->id + 1 : 1;
+        return 'PHA-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+    }
 }

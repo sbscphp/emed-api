@@ -4,6 +4,7 @@ use App\Http\Controllers\v1\Admin\AuditLogController;
 use App\Http\Controllers\v1\Admin\BillingController;
 use App\Http\Controllers\v1\Admin\MedicationInventoryController;
 use App\Http\Controllers\v1\Admin\ConsultationController;
+use App\Http\Controllers\v1\Admin\InventoryController;
 use App\Http\Controllers\v1\Admin\LabController;
 use App\Http\Controllers\v1\Admin\MedicationController;
 use App\Http\Controllers\v1\Admin\MedicineTypeController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\v1\Admin\ReportController;
 use App\Http\Controllers\v1\Admin\RoleController;
 use App\Http\Controllers\v1\Admin\TriageController;
 use App\Http\Controllers\v1\Admin\UserController;
+use App\Http\Controllers\v1\Admin\VendorController;
 use App\Http\Controllers\v1\Auth\ForgotPasswordController;
 use App\Http\Controllers\v1\Auth\LoginController;
 use Illuminate\Http\Request;
@@ -112,6 +114,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/request', [PharmacyRequestController::class, 'store']);
                     Route::post('/all/request', [PharmacyRequestController::class, 'index']);
                     Route::get('/request/{id}', [PharmacyRequestController::class, 'show']);
+                    Route::get('users/pharmacists', [UserController::class, 'getPharmacists']);
                 });
 
 
@@ -139,6 +142,25 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/', [MedicationInventoryController::class, 'store']);
                     Route::patch('/{id}/status', [MedicationInventoryController::class, 'updateStatus']);
                     Route::get('/dashboard/stats', [MedicationInventoryController::class, 'shipmentStat']);
+                });
+
+                Route::group(['prefix' => 'inventory', 'middleware' => 'role.pharmacy'], function () {
+                    Route::post('/lists', [InventoryController::class, 'index']);
+                    Route::get('/{id}', [InventoryController::class, 'show']);
+                    Route::post('/', [InventoryController::class, 'store']);
+                    Route::delete('/delete/{id}', [InventoryController::class, 'delete']);
+                    Route::put('/update/{id}', [InventoryController::class, 'update']);
+                    Route::get('/dashboard/stats', [InventoryController::class, 'getInventoryStats']);
+                });
+
+
+                Route::group(['prefix' => 'vendor', 'middleware' => 'role.pharmacy'], function () {
+                    Route::post('/lists', [VendorController::class, 'index']);
+                    Route::get('/{id}', [VendorController::class, 'show']);
+                    Route::post('/', [VendorController::class, 'store']);
+                    Route::delete('/delete/{id}', [VendorController::class, 'delete']);
+                    Route::put('/update/{id}', [VendorController::class, 'update']);
+                    Route::get('/dashboard/stats', [VendorController::class, 'getInventoryStats']);
                 });
 
                 Route::group(['prefix' => 'billing', 'middleware' => 'role.billing'], function () {

@@ -217,4 +217,23 @@ class UserController extends Controller
             return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
         }
     }
+
+    public function getPharmacists()
+    {
+        try {
+            $pharmacists = User::whereHas('roles', fn($q) => $q->where('name', 'pharmacy'))
+                ->get()
+                ->map(function ($user) {
+                    return [
+                        'id' => $user->id,
+                        'name' => "{$user->fullname}",
+                        'email' => $user->email,
+                    ];
+                });
+
+            return JsonResponser::send(false, 'Pharmacists fetched successfully.', $pharmacists);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Failed to fetch pharmacists.', [], 500, $e);
+        }
+    }
 }

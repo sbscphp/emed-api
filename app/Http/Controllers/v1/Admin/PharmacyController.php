@@ -140,6 +140,7 @@ class PharmacyController extends Controller
             $user = $this->userService->find($currentUser->id);
 
             $validated = array_merge($request->validated(), [
+                'pharmacy_id' => $this->pharmacyService->generatePharmacyId(),
                 'created_by' => $currentUser->id,
             ]);
 

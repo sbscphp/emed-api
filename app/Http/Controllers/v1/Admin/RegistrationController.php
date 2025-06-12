@@ -364,6 +364,17 @@ class RegistrationController extends Controller
             $credentials = $request->only('email', 'password');
 
             $tenantDomain = $request->input('tenant_domain');
+
+            //  $fullHost = $request->getHost(); // e.g. danking-hospitals.emed.com
+            // $mainDomain = config('app.central_domain', 'emed.com'); // set in config/app.php or .env
+
+            // if (!str_ends_with($fullHost, $mainDomain)) {
+            //     return JsonResponser::send(false, 'Invalid tenant domain.', [], 400);
+            // }
+
+            // $subdomain = str_replace('.' . $mainDomain, '', $fullHost); // e.g. danking-hospitals
+            // $tenantDomain = $subdomain . '.' . $mainDomain;
+
             if (!$tenantDomain) {
                 return JsonResponser::send(false, 'Tenant domain is required.', [], 400);
             }

@@ -32,7 +32,7 @@ class PharmacyRequest extends FormRequest
             'assigned_pharmacist' => 'nullable|exists:users,id',
             'license_number' => 'nullable|string|max:255',
             'email_address' => 'nullable|email|max:255|unique:tenant.pharmacies,email_address',
-            'pharmacy_id' => 'required|string|unique:tenant.pharmacies,pharmacy_id',
+            // 'pharmacy_id' => 'required|string|unique:tenant.pharmacies,pharmacy_id',
 
             'active' => 'boolean',
         ];
