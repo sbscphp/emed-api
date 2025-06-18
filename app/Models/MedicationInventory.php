@@ -10,6 +10,7 @@ class MedicationInventory extends Model
     protected $connection = 'tenant';
     protected $guarded = ['id'];
     protected $fillable = [
+        'id',
         'medication_id',
         'pharmacy_id',
         'shipment_no',
@@ -18,7 +19,7 @@ class MedicationInventory extends Model
         'expiry_date',
         'received_qty',
         'current_stock',
-        'vendor',
+        'vendor_id',
         'shipment_status',
         'date_of_shipment',
         'expected_delivery_date',
@@ -42,5 +43,10 @@ class MedicationInventory extends Model
     public function pharmacy()
     {
         return $this->belongsTo(Pharmacy::class);
+    }
+
+    public function vendor()
+    {
+        return $this->belongsTo(Vendor::class);
     }
 }
