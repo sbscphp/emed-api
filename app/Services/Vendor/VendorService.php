@@ -119,5 +119,9 @@ class VendorService
             'most_supplied_item' => $mostSuppliedItem ? $mostSuppliedItem->brand_name : null,
             'most_supplied_qty' => $mostSuppliedItem ? (int) $mostSuppliedItem->total : 0,
         ];
+
+
+
+
     }
 }

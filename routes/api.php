@@ -205,7 +205,7 @@ Route::group(["prefix" => "v1"], function () {
                 });
 
                 Route::group(['prefix' => 'users', 'middleware' => 'admin.superadmin'], function () {
-                    Route::post('/all', [UserController::class, 'allUsers']);
+                    Route::get('/all', [UserController::class, 'allUsers']);
                     Route::post('/create', [UserController::class, 'addUser']);
                     Route::get('/view/{id}', [UserController::class, 'viewUser']);
                     Route::put('/update/{id}', [UserController::class, 'updateUser']);
