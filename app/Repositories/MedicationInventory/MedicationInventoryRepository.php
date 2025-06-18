@@ -42,16 +42,17 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
             $totalPrice = $item->received_qty * $sellingPrice;
 
             return [
-                'Batch No' => $item->batch_no,
-                'Shipment Status' => $item->shipment_status,
-                'Medicine Name' => $item->medication->medicine_name ?? '',
-                'Brand Name' => $item->medication->brand_name ?? '',
-                'Generic Name' => $item->medication->generic_name ?? '',
+                'id' => $item->id,
+                'BatchNo' => $item->batch_no,
+                'ShipmentStatus' => $item->shipment_status,
+                'MedicineName' => $item->medication->medicine_name ?? '',
+                'BrandName' => $item->medication->brand_name ?? '',
+                'GenericName' => $item->medication->generic_name ?? '',
                 'Pharmacy' => $item->pharmacy->name ?? '',
-                'Received Qty' => $item->received_qty,
-                'Selling Price' => $sellingPrice,
-                'Total Price' => $totalPrice,
-                'Created At' => $item->created_at->toDateTimeString(),
+                'ReceivedQty' => $item->received_qty,
+                'SellingPrice' => $sellingPrice,
+                'TotalPrice' => $totalPrice,
+                'CreatedAt' => $item->created_at->toDateTimeString(),
             ];
         };
 
