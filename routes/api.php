@@ -161,7 +161,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/', [VendorController::class, 'store']);
                     Route::delete('/delete/{id}', [VendorController::class, 'delete']);
                     Route::put('/update/{id}', [VendorController::class, 'update']);
-                    Route::get('/dashboard/stats', [VendorController::class, 'getInventoryStats']);
+                    Route::get('/dashboard/stats', [VendorController::class, 'getVendorStats']);
                 });
 
                 Route::group(['prefix' => 'billing', 'middleware' => 'role.billing'], function () {

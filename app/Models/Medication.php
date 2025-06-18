@@ -11,6 +11,7 @@ class Medication extends Model
     protected $connection = 'tenant';
     protected $guarded = ['id'];
     protected $fillable = [
+        'id',
         'generic_name',
         'brand_name',
         'medicine_name',
