@@ -28,12 +28,13 @@ class VendorRepository implements VendorInterface
         }
 
         $transform = fn($vendor) => [
-            'Vendor Name'     => $vendor->vendor_name,
-            'Contact Person'  => $vendor->contact_person,
-            'Phone Number'    => $vendor->phone_number,
-            'Email Address'   => $vendor->email,
+            'id'     => $vendor->id,
+            'VendorName'     => $vendor->vendor_name,
+            'ContactPerson'  => $vendor->contact_person,
+            'PhoneNumber'    => $vendor->phone_number,
+            'EmailAddress'   => $vendor->email,
             'Address'         => $vendor->address,
-            'Registration No' => $vendor->reg,
+            'RegistrationNo' => $vendor->reg,
             'Status'          => ucfirst($vendor->status),
             'Created At'      => $vendor->created_at->toDateTimeString(),
         ];

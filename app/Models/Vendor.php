@@ -9,6 +9,7 @@ class Vendor extends Model
     protected $guarded = ['id'];
     protected $connection = 'tenant';
     protected $fillable = [
+        'id',
         'vendor_name',
         'contact_person',
         'phone_number',

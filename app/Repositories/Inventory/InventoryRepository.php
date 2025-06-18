@@ -31,13 +31,14 @@ class InventoryRepository implements InventoryInterface
 
         $transformItem = function ($item) {
             return [
-                'Batch No' => $item->batch_no,
-                'Item Name' => $item->item_name,
-                'Medicine Type' => $item->medicineType->type_name ?? '',
+                'id'    => $item->id,
+                'BatchNo' => $item->batch_no,
+                'ItemName' => $item->item_name,
+                'MedicineType' => $item->medicineType->type_name ?? '',
                 'Quantity' => $item->quantity,
-                'Reorder Level' => $item->reorder_level,
+                'ReorderLevel' => $item->reorder_level,
                 'Supplier' => $item->supplier,
-                'Expiry Date' => $item->expiry_date,
+                'ExpiryDate' => $item->expiry_date,
                 'Note' => $item->note,
                 'Created At' => $item->created_at->toDateTimeString(),
             ];
