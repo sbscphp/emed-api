@@ -107,8 +107,7 @@ class UsersTableSeeder extends Seeder
                         'is_verified' => true,
                         'is_completed' => true,
                         '2fa' => true
-                    ]
-                );
+                    ]);
 
                 // Assign role and permissions
                 $newUser->roles()->sync([$userData['role']->id]);

@@ -1,0 +1,7 @@
+superadmin@emed.com password: password
+admin@emed.com password: password
+nurse@emed.com password: password
+consultant@emed.com password: password
+pharmacy@emed.com password: password
+billing@emed.com password: password
+record@emed.com password: password

@@ -393,7 +393,7 @@ class RegistrationController extends Controller
             if (!$user) {
                 return JsonResponser::send(false, 'Invalid credentials', [], 401);
             }
-
+              dd(json_encode($user));
             if (!$user->is_verified) {
                 return JsonResponser::send(false, 'Your email has not been verified. Please check your email for verification.', [], 403);
             }

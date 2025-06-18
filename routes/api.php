@@ -134,6 +134,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/type/{id}', [MedicineTypeController::class, 'show']);
                     Route::put('/type/{id}', [MedicineTypeController::class, 'update']);
                     Route::delete('/type/{id}', [MedicineTypeController::class, 'destroy']);
+                    Route::get('/fetch_medical_log', [AuditLogController::class, 'fetch_medical_log']);
                 });
 
                 Route::group(['prefix' => 'medicine-inventory', 'middleware' => 'role.pharmacy'], function () {
