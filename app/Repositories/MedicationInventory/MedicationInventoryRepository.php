@@ -150,20 +150,19 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
 
     return [
         'id' => $item->id,
-        'BatchNo' => $item->batch_no,
-        'ShipmentStatus' => $item->shipment_status,
+        'batch_no' => $item->batch_no,
+        'shipment_status' => $item->shipment_status,
         'received_qty' => $item->received_qty,
         'price' => $item->price,
-        'shipment_no'=>$item->shipment_no,
+        'total_price' => $totalPrice,
 
         // Medication Info
-         'MedicineName' => $medication->medicine_name,
+        'medication_name' => $medication->medicine_name,
         'medication_type' => $medication->medicine_type,
         'selling_price' => $medication->selling_price,
-         'BrandName' => $medication->brand_name,
-         'GenericName' => $medication->generic_name,
+
         // Pharmacy Info
-        'Pharmacy' => $pharmacy->name,
+        'pharmacy_name' => $pharmacy->name,
         'pharmacy_address' => $pharmacy->address,
         'pharmacy_phone' => $pharmacy->phone_number,
 
@@ -172,22 +171,11 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         'expiry_date' => optional($item->expiry_date)->toDateString(),
         'date_of_shipment' => optional($item->date_of_shipment)->toDateString(),
         'expected_delivery_date' => optional($item->expected_delivery_date)->toDateString(),
-
-        'ReceivedQty' => $item->received_qty,
-        'SellingPrice' => (float) $sellingPrice,
-        'total_price' => $totalPrice,
-        'CreatedAt' => optional($item->created_at)->toDateTimeString(),
-        'links' => [
-                'first' => $paginated->url(1),
-                'last' => $paginated->url($paginated->lastPage()),
-                'prev' => $paginated->previousPageUrl(),
-                'next' => $paginated->nextPageUrl(),
-            ],
     ];
 });
 
 
-        return $shipments; 
+        return $$shipments; 
     }
 
 
