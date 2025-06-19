@@ -138,7 +138,7 @@ Route::group(["prefix" => "v1"], function () {
                 });
 
                 Route::group(['prefix' => 'medicine-inventory', 'middleware' => 'role.pharmacy'], function () {
-                    Route::get('/lists', [MedicationInventoryController::class, 'index']);
+                    Route::post('/lists', [MedicationInventoryController::class, 'index']);
                     Route::get('/{id}', [MedicationInventoryController::class, 'show']);
                     Route::post('/', [MedicationInventoryController::class, 'store']);
                     Route::patch('/{id}/status', [MedicationInventoryController::class, 'updateStatus']);
