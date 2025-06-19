@@ -129,43 +129,47 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
 
     //    return $paginated->getCollection(); 
 
-    // $shipments = $paginated->getCollection()->map(function ($item) {
-    //       $medication = optional($item->medication);
-    // $pharmacy = optional($item->pharmacy);
-    // $sellingPrice = $medication->selling_price ?? 0;
-    // $totalPrice = $item->received_qty * $sellingPrice; 
-    // return [
-    // 'id' => $item->id, 
-    // 'BatchNo' => $item->batch_no, 
-    // 'shipment_no'=>$item->shipment_no,
-    // 'ShipmentStatus' => $item->shipment_status,
-    // 'MedicineName' => $medication->medicine_name,
-    // 'BrandName' => $item->brand_name,
-    // 'GenericName' => $medication->generic_name,
-    // 'Pharmacy' => $pharmacy->name,
-    // 'ReceivedQty' => $item->received_qty,
-    // 'SellingPrice' => (float) $sellingPrice,
-    // 'TotalPrice' => (float) $totalPrice,
-    // 'CreatedAt' => optional($item->created_at)->toDateTimeString(),
+    $shipments = $paginated->getCollection()->map(function ($item) {
+          $medication = optional($item->medication);
+    $pharmacy = optional($item->pharmacy);
+    $sellingPrice = $medication->selling_price ?? 0;
+    $totalPrice = $item->received_qty * $sellingPrice; 
+    return [
+    'id' => $item->id, 
+    'batch_no' => $item->batch_no, 
+    'shipment_no'=>$item->shipment_no,
+    'shipment_status' => $item->shipment_status,
+    'medicine_name' => $medication->medicine_name,
+    'vendor' => $item->vendor,
+    'manufacturer'=>$medication->manufacturer,
+    'brand_name' => $item->brand_name,
+    'generic_name' => $medication->generic_name,
+    'pharmacy' => $pharmacy->name,
+    'medicine_type'=> $medication->medicine_type,
+    'received_qty' => $item->received_qty,
+    'selling_price' => (float) $sellingPrice,
+    'total_Price' => (float) $totalPrice,
+    'createdAt' => optional($item->created_at)->toDateTimeString(),
     
-    // ];
+    ];
 
-    // });
-    // $shipments[] = [
-    //     'current_page' => $paginated->currentPage(),
-    //     'last_page' => $paginated->lastPage(),
-    //     'per_page' => $paginated->perPage(),
-    //     'total' => $paginated->total(),
-    // ];
-    //  $shipments[] = [
-    //     'first' => $paginated->url(1),
-    //     'last' => $paginated->url($paginated->lastPage()),
-    //     'prev' => $paginated->previousPageUrl(),
-    //     'next' => $paginated->nextPageUrl(),
-    //  ];
-    // return $shipments;
+    });
+    $shipments[] = [
+        'current_page' => $paginated->currentPage(),
+        'last_page' => $paginated->lastPage(),
+        'per_page' => $paginated->perPage(),
+        'total' => $paginated->total(),
+    ];
+     $shipments[] = [
+        'first' => $paginated->url(1),
+        'last' => $paginated->url($paginated->lastPage()),
+        'prev' => $paginated->previousPageUrl(),
+        'next' => $paginated->nextPageUrl(),
+     ];
+     
+    return $shipments;
 
-      return $paginated->getCollection();
+    //   return $paginated->getCollection();
     }
 
 
