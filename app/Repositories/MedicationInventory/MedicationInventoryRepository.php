@@ -119,7 +119,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         //     ]
         // ];
 
-        return $paginated->items();
+        return $paginated->getCollection();
     }
 
 
