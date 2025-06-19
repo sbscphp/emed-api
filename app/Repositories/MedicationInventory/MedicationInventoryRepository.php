@@ -15,7 +15,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
 
     public function getAllWithFilters(array $filters = [], ?string $export = null)
     {
-        $query = MedicationInventory::with(['medication', 'pharmacy'])->orderBy('created_at', 'desc');
+        $query = MedicationInventory::with(['medication', 'pharmacy'])->orderBy('created_at', 'asc');
 
         if (!empty($filters['shipment_status'])) {
             $query->where('shipment_status', $filters['shipment_status']);
@@ -72,7 +72,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         // $paginated = $query->latest()->paginate(10);
 
         $page = request()->get('page', 1);
-        $paginated = $query->latest()->paginate(10, ['*'], 'page', $page);
+        $paginated = $query->paginate(10, ['*'], 'page', $page);
         
         // $paginated->getCollection()->transform($transformItem);
     //     $medical = MedicationInventoryResource::collection($paginated)->toArray(request());
