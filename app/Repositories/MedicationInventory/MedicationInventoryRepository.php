@@ -15,7 +15,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
 
     public function getAllWithFilters(array $filters = [], ?string $export = null)
     {
-        $query = MedicationInventory::with(['medication', 'pharmacy'])->orderBy('created_at', 'asc');
+        $query = MedicationInventory::with(['medication', 'pharmacy'])->orderBy('created_at', 'desc');
 
         if (!empty($filters['shipment_status'])) {
             $query->where('shipment_status', $filters['shipment_status']);
@@ -88,6 +88,20 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
     //   return $data; 
     
     $medical = MedicationInventoryResource::collection($paginated)->toArray(request());
+
+         if ($export) {
+            // $items = $query->latest()->get()->map($transformItem);
+
+            if ($export === 'csv') {
+                return ExportHelper::streamCsv($medical, null, 'medication_inventory.csv');
+            }
+
+            if ($export === 'pdf') {
+                return ExportHelper::downloadPdf($medical, 'medication_inventory.pdf');
+            }
+
+            throw new \InvalidArgumentException('Invalid export format specified');
+        }
 
         $data = [
             'data' => $medical,
