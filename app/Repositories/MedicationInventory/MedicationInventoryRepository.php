@@ -105,17 +105,20 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
 
 
       $medical[] = [
+             'link'=>[
         'current_page' => $paginated->currentPage(),
         'last_page' => $paginated->lastPage(),
         'per_page' => $paginated->perPage(),
         'total' => $paginated->total(),
-        ];
-        $medical[]= [
+             ],
+            'link'=>[
         'first' => $paginated->url(1),
         'last' => $paginated->url($paginated->lastPage()),
         'prev' => $paginated->previousPageUrl(),
         'next' => $paginated->nextPageUrl(),
+        ]
         ];
+       
        
 
     //     $arr = [];
