@@ -75,7 +75,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         $paginated = $query->paginate(10, ['*'], 'page', $page);
         
         // $paginated->getCollection()->transform($transformItem);
-        $medical = MedicationInventoryResource::collection($paginated->items())->toArray(request());
+        //$medical = MedicationInventoryResource::collection($paginated->items())->toArray(request());
 
     //  $data =   [
     // 'data' => $medical,
@@ -119,7 +119,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         //     ]
         // ];
 
-        return response()->json($medical);
+        return $paginated->items();
     }
 
 
