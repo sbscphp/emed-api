@@ -87,7 +87,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
     // ]];
     //   return $data; 
     
-    $medical = MedicationInventoryResource::collection($paginated)->resolve();
+    // $medical = MedicationInventoryResource::collection($paginated);
 
         //  if ($export) {
         //     // $items = $query->latest()->get()->map($transformItem);
@@ -119,7 +119,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         //     ]
         // ];
 
-        return $medical;
+        return $paginated;
     }
 
 
