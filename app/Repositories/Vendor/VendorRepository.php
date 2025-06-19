@@ -4,7 +4,7 @@ namespace App\Repositories\Vendor;
 
 use App\Helpers\ExportHelper;
 use App\Models\Vendor;
-
+use Illuminate\Support\Facades\DB;
 class VendorRepository implements VendorInterface
 {
     /**
@@ -92,15 +92,26 @@ class VendorRepository implements VendorInterface
     {
         $record = Vendor::findOrFail($id);
         // $record->update($data);
+          $record = DB::table('vendors')->where('id', $id)->first();
+
         if($record){
-           $record->vendor_name = $data['vendor_name'];
-           $record->contact_person = $data['contact_person'];
-           $record->email = $data['email'];
-           $record->address = $data['address'];
-           $record->phone_number = $data['phone_number'];
-           $record->registration_no = $data['registration_no'];
-           $record->status = $data['status'];
-           $record->save();
+           DB::table('vendors')->where('id', $id)->update([
+        'vendor_name'      => $data['vendor_name'],
+        'contact_person'   => $data['contact_person'],
+        'phone_number'     => $data['phone_number'],
+        'email'            => $data['email'],
+        'address'          => $data['address'],
+        'registration_no'  => $data['registration_no'],
+        'status'           => $data['status']
+          ]);
+        //    $record->vendor_name = $data['vendor_name'];
+        //    $record->contact_person = $data['contact_person'];
+        //    $record->email = $data['email'];
+        //    $record->address = $data['address'];
+        //    $record->phone_number = $data['phone_number'];
+        //    $record->registration_no = $data['registration_no'];
+        //    $record->status = $data['status'];
+        //    $record->save();
           return $record;
         }
        
