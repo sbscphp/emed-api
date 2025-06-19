@@ -145,6 +145,7 @@ class VendorController extends Controller
 
     public function update_status(UpdateStatusVendorRequest $request, $id){
    //  try {
+          dd([$request->all(), $id]);
          $validated = $request->validated();
           $result = $this->service->update_status($validated, $id);
         return JsonResponser::send(false, 'Vendor stats fetched successfully', $result);
