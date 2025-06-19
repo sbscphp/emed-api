@@ -102,7 +102,9 @@ class VendorRepository implements VendorInterface
         'email'            => $data['email'],
         'address'          => $data['address'],
         'registration_no'  => $data['registration_no'],
-        'status'           => $data['status']
+        'status'           => $data['status'],
+        'created_at'       => now(),
+        'updated_at'       => now()
           ]);
         //    $record->vendor_name = $data['vendor_name'];
         //    $record->contact_person = $data['contact_person'];
