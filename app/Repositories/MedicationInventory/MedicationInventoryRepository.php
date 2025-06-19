@@ -70,7 +70,10 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         //     throw new \InvalidArgumentException('Invalid export format specified');
         // }
 
-        $paginated = $query->latest()->paginate(10);
+        // $paginated = $query->latest()->paginate(10);
+
+        $page = request()->get('page', 1);
+        $paginated = $query->latest()->paginate(10, ['*'], 'page', $page);
         // $paginated->getCollection()->transform($transformItem);
 
         return $paginated;
