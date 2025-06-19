@@ -89,35 +89,35 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
     
     $medical = MedicationInventoryResource::collection($paginated)->resolve();
 
-         if ($export) {
-            // $items = $query->latest()->get()->map($transformItem);
+        //  if ($export) {
+        //     // $items = $query->latest()->get()->map($transformItem);
 
-            if ($export === 'csv') {
-                return ExportHelper::streamCsv($medical, null, 'medication_inventory.csv');
-            }
+        //     if ($export === 'csv') {
+        //         return ExportHelper::streamCsv($medical, null, 'medication_inventory.csv');
+        //     }
 
-            if ($export === 'pdf') {
-                return ExportHelper::downloadPdf($medical, 'medication_inventory.pdf');
-            }
+        //     if ($export === 'pdf') {
+        //         return ExportHelper::downloadPdf($medical, 'medication_inventory.pdf');
+        //     }
 
-            throw new \InvalidArgumentException('Invalid export format specified');
-        }
+        //     throw new \InvalidArgumentException('Invalid export format specified');
+        // }
 
-        $data = [
-            'data' => $medical,
-            'meta' => [
-                'current_page' => $paginated->currentPage(),
-                'last_page' => $paginated->lastPage(),
-                'per_page' => $paginated->perPage(),
-                'total' => $paginated->total(),
-                 'links' => [
-                'first' => $paginated->url(1),
-                'last' => $paginated->url($paginated->lastPage()),
-                'prev' => $paginated->previousPageUrl(),
-                'next' => $paginated->nextPageUrl(),
-            ],
-            ]
-        ];
+        // $data = [
+        //     'data' => $medical,
+        //     'meta' => [
+        //         'current_page' => $paginated->currentPage(),
+        //         'last_page' => $paginated->lastPage(),
+        //         'per_page' => $paginated->perPage(),
+        //         'total' => $paginated->total(),
+        //          'links' => [
+        //         'first' => $paginated->url(1),
+        //         'last' => $paginated->url($paginated->lastPage()),
+        //         'prev' => $paginated->previousPageUrl(),
+        //         'next' => $paginated->nextPageUrl(),
+        //     ],
+        //     ]
+        // ];
 
         return $medical;
     }
