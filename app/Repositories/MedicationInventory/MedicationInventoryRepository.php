@@ -147,7 +147,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
     'pharmacy' => $pharmacy->name,
     'medicine_type'=> $medication->medicine_type,
     'received_qty' => $item->received_qty,
-    'price' => $item->price,
+    'price' => (float)$item->price,
     'selling_price' => (float) $sellingPrice,
     'total_price' => (float) $totalPrice,
     'createdAt' => optional($item->created_at)->toDateTimeString(),
