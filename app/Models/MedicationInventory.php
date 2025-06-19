@@ -8,7 +8,7 @@ class MedicationInventory extends Model
 {
     protected $table = 'medication_inventory';
     // protected $connection = 'tenant';
-      protected $connection = 'landlord';
+      //protected $connection = 'landlord';
     protected $guarded = ['id'];
     protected $fillable = [
         'id',
