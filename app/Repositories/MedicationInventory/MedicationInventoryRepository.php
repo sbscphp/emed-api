@@ -159,7 +159,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
  
 
      $data  = [
-       '$shipments'=>$shipments,
+       'shipments'=>$shipments,
          [
         'current_page' => $paginated->currentPage(),
         'last_page' => $paginated->lastPage(),
