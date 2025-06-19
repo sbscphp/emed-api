@@ -87,7 +87,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
     // ]];
     //   return $data; 
     
-    $medical = MedicationInventoryResource::collection($paginated)->toArray(request());
+    $medical = MedicationInventoryResource::collection($paginated)->toArray();
 
          if ($export) {
             // $items = $query->latest()->get()->map($transformItem);
