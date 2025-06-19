@@ -40,15 +40,15 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
          $query->when(!empty($filters['search']), function ($q) use ($filters) {
                 $search = $filters['search'];
                 $q->where(function ($q) use ($search) {
-                    $q->where('batch_no', 'like', "%{$search}%")
-                    ->orWhere('shipment_status', 'like', "%{$search}%")
+                    $q->where('batch_no',  $search)
+                    ->orWhere('shipment_status', $search)
                     ->orWhereHas('medication', function ($mq) use ($search) {
-                        $mq->where('medicine_name', 'like', "%{$search}%")
-                            ->orWhere('brand_name', 'like', "%{$search}%")
-                            ->orWhere('generic_name', 'like', "%{$search}%");
+                        $mq->where('medicine_name', $search)
+                            ->orWhere('brand_name', $search)
+                            ->orWhere('generic_name', $search);
                     })
                     ->orWhereHas('pharmacy', function ($pq) use ($search) {
-                        $pq->where('name', 'like', "%{$search}%");
+                        $pq->where('name', $search);
                     });
                 });
             });
