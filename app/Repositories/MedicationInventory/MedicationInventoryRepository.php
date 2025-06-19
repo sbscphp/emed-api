@@ -141,7 +141,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
           ];
         }
 
-        return $arr;
+        return response()->json($arr);
     }
 
 
