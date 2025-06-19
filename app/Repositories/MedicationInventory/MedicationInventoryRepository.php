@@ -103,21 +103,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         //     throw new \InvalidArgumentException('Invalid export format specified');
         // }
 
-        // $data = [
-        //     'data' => $medical,
-        //     'meta' => [
-        //         'current_page' => $paginated->currentPage(),
-        //         'last_page' => $paginated->lastPage(),
-        //         'per_page' => $paginated->perPage(),
-        //         'total' => $paginated->total(),
-        //          'links' => [
-        //         'first' => $paginated->url(1),
-        //         'last' => $paginated->url($paginated->lastPage()),
-        //         'prev' => $paginated->previousPageUrl(),
-        //         'next' => $paginated->nextPageUrl(),
-        //     ],
-        //     ]
-        // ];
+       
 
         $arr = [];
         foreach ($paginated->getCollection() as $item) {
@@ -141,7 +127,8 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
           ];
         }
 
-       return $paginated->getCollection(); 
+    //    return $paginated->getCollection(); 
+    return $paginated;
     }
 
 
