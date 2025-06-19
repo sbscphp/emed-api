@@ -54,7 +54,8 @@ class MedicationInventoryController extends Controller
     }
 
     public function index(Request $request)
-    {
+    {  
+         DB::connection('landlord')->beginTransaction();
         try {
             $filters = $request->only(['shipment_status', 'search']);
             $export = $request->input('export');
@@ -68,7 +69,7 @@ class MedicationInventoryController extends Controller
             if ($data->isEmpty()) {
                 return JsonResponser::send(true, 'Shipment not found.', null, 404);
             }
-
+               DB::connection('landlord')->commit();
             return JsonResponser::send(false, 'Shipment list fetched successfully', $data);
         } catch (\InvalidArgumentException $e) {
             return JsonResponser::send(true, $e->getMessage(), null, 400);

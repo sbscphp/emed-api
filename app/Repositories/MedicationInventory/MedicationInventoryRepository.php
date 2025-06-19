@@ -104,15 +104,12 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
 
         // $paginated = $query->latest()->paginate(10);
         // $paginated->getCollection()->transform($transformItem);
-        //    return $paginated;
-        $paginated = $query->latest()->paginate(200);
-        $paginated->getCollection()->transform(function ($item) use ($transformItem) {
-                return $transformItem($item);
-            });
 
-            return response()->json($paginated);
+        $paginated = $query->latest()->paginate(10);
+        $paginated->getCollection()->transform($transformItem);
+        return response()->json($paginated);
 
-      
+        return $paginated;
     }
 
 
