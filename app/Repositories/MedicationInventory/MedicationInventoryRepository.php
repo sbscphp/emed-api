@@ -147,9 +147,16 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
     'SellingPrice' => (float) $sellingPrice,
     'TotalPrice' => (float) $totalPrice,
     'CreatedAt' => optional($item->created_at)->toDateTimeString(),
+    
     ];
 
     });
+    $shipments['link'] = [
+        'current_page' => $paginated->currentPage(),
+        'last_page' => $paginated->lastPage(),
+        'per_page' => $paginated->perPage(),
+        'total' => $paginated->total(),
+    ];
     return $shipments;
     }
 
