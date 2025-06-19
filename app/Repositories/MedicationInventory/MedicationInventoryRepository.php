@@ -96,7 +96,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
                 'last_page' => $paginated->lastPage(),
                 'per_page' => $paginated->perPage(),
                 'total' => $paginated->total(),
-                'link' => $paginated->link()
+                'link' => $paginated->links()
             ]
         ];
 
