@@ -119,63 +119,29 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         //     ]
         // ];
 
-    //     $arr = [];
-    //     foreach ($paginated->getCollection() as $item) {
-    //  $medication = optional($item->medication);
-    // $pharmacy = optional($item->pharmacy);
-    // $sellingPrice = $medication->selling_price ?? 0;
-    // $totalPrice = $item->received_qty * $sellingPrice;
-    //         $arr[] = [
-    //     'id' => $item->id,
-    //     'BatchNo' => $item->batch_no,
-    //     'shipment_no'=>$item->shipment_no,
-    //     'ShipmentStatus' => $item->shipment_status,
-    //     'MedicineName' => $medication->medicine_name ?? '',
-    //     'BrandName' => $medication->brand_name ?? '',
-    //     'GenericName' => $medication->generic_name ?? '',
-    //     'Pharmacy' => $pharmacy->name ?? '',
-    //     'ReceivedQty' => $item->received_qty,
-    //     'SellingPrice' => (float) $sellingPrice,
-    //     'TotalPrice' => (float) $totalPrice,
-    //     'CreatedAt' => optional($item->created_at)->toDateTimeString(),
-    //       ];
-    //     }
-
-
-    $shipments = $paginated->getCollection()->map(function ($item) {
-    $medication = optional($item->medication);
+        $arr = [];
+        foreach ($paginated->getCollection() as $item) {
+     $medication = optional($item->medication);
     $pharmacy = optional($item->pharmacy);
-    $sellingPrice = (float) ($medication->selling_price ?? 0);
+    $sellingPrice = $medication->selling_price ?? 0;
     $totalPrice = $item->received_qty * $sellingPrice;
-
-    return [
+            $arr[] = [
         'id' => $item->id,
-        'batch_no' => $item->batch_no,
-        'shipment_status' => $item->shipment_status,
-        'received_qty' => $item->received_qty,
-        'price' => $item->price,
-        'total_price' => $totalPrice,
+        'BatchNo' => $item->batch_no,
+        'shipment_no'=>$item->shipment_no,
+        'ShipmentStatus' => $item->shipment_status,
+        'MedicineName' => $medication->medicine_name ?? '',
+        'BrandName' => $medication->brand_name ?? '',
+        'GenericName' => $medication->generic_name ?? '',
+        'Pharmacy' => $pharmacy->name ?? '',
+        'ReceivedQty' => $item->received_qty,
+        'SellingPrice' => (float) $sellingPrice,
+        'TotalPrice' => (float) $totalPrice,
+        'CreatedAt' => optional($item->created_at)->toDateTimeString(),
+          ];
+        }
 
-        // Medication Info
-        'medication_name' => $medication->medicine_name,
-        'medication_type' => $medication->medicine_type,
-        'selling_price' => $medication->selling_price,
-
-        // Pharmacy Info
-        'pharmacy_name' => $pharmacy->name,
-        'pharmacy_address' => $pharmacy->address,
-        'pharmacy_phone' => $pharmacy->phone_number,
-
-        // Dates (formatted if needed)
-        'mfg_date' => optional($item->mfg_date)->toDateString(),
-        'expiry_date' => optional($item->expiry_date)->toDateString(),
-        'date_of_shipment' => optional($item->date_of_shipment)->toDateString(),
-        'expected_delivery_date' => optional($item->expected_delivery_date)->toDateString(),
-    ];
-});
-
-
-        return $$shipments; 
+       return $paginated->getCollection(); 
     }
 
 
