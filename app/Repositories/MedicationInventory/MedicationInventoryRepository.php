@@ -15,7 +15,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
 
     public function getAllWithFilters(array $filters = [], ?string $export = null)
     {
-        $query = MedicationInventory::with(['medication', 'pharmacy'])->paginate(10);
+        $query = MedicationInventory::with(['medication', 'pharmacy']);
 
         if (!empty($filters['shipment_status'])) {
             $query->where('shipment_status', $filters['shipment_status']);
