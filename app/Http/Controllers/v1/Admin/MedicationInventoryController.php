@@ -62,13 +62,13 @@ class MedicationInventoryController extends Controller
 
             $data = $this->inventoryService->all($filters, $export);
 
-            // if ($data instanceof \Symfony\Component\HttpFoundation\Response) {
-            //     return $data;
-            // }
+            if ($data instanceof \Symfony\Component\HttpFoundation\Response) {
+                return $data;
+            }
 
-            // if ($data->isEmpty()) {
-            //     return JsonResponser::send(true, 'Shipment not found.', null, 404);
-            // }
+            if ($data->isEmpty()) {
+                return JsonResponser::send(true, 'Shipment not found.', null, 404);
+            }
               // DB::connection('landlord')->commit();
             return JsonResponser::send(false, 'Shipment list fetched successfully', $data);
         } catch (\InvalidArgumentException $e) {
