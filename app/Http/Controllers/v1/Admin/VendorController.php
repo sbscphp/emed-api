@@ -144,12 +144,12 @@ class VendorController extends Controller
     }
 
     public function update_status(UpdateStatusVendorRequest $request, $id){
-     try {
+   //  try {
          $validated = $request->validated();
           $result = $this->service->update_status($validated, $id);
         return JsonResponser::send(false, 'Vendor stats fetched successfully', $result);
-     } catch (\Throwable $th) {
-     return JsonResponser::send(true, 'Internal server error', [], 500, $th);
-     }
+    //  } catch (\Throwable $th) {
+    //  return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+    //  }
     }
 }
