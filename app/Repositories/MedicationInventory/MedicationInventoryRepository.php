@@ -73,8 +73,8 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         // $paginated = $query->latest()->paginate(10);
 
         $page = request()->get('page', 1);
-        dd($page);
         $paginated = $query->latest()->paginate(10, ['*'], 'page', $page);
+         dd($paginated);
         // $paginated->getCollection()->transform($transformItem);
 
         return $paginated;
