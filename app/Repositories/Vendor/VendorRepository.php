@@ -92,10 +92,10 @@ class VendorRepository implements VendorInterface
     {
         $record = Vendor::findOrFail($id);
         // $record->update($data);
-          $record = DB::table('vendors')->where('id', $id)->first();
+          $record = DB::connection('tenant')->table('vendors')->where('id', $id)->first();
 
         if($record){
-           DB::table('vendors')->where('id', $id)->update([
+           DB::connection('tenant')->table('vendors')->where('id', $id)->update([
         'vendor_name'      => $data['vendor_name'],
         'contact_person'   => $data['contact_person'],
         'phone_number'     => $data['phone_number'],
