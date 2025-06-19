@@ -99,29 +99,48 @@ class VendorService
 
     public function getVendorStats()
     {
-        $totalVendors = Vendor::count();
+        // $totalVendors = Vendor::count();
 
-        $totalSpend = MedicationInventory::sum(DB::raw('received_qty * price'));
+        // $totalSpend = MedicationInventory::sum(DB::raw('received_qty * price'));
 
-        $pendingSupplyOrders = MedicationInventory::whereHas('vendor', function ($q) {
-            $q->where('status', 'active');
-        })->where('shipment_status', 'pending')->count();
+        // $pendingSupplyOrders = MedicationInventory::whereHas('vendor', function ($q) {
+        //     $q->where('status', 'active');
+        // })->where('shipment_status', 'pending')->count();
 
-        $mostSuppliedItem = MedicationInventory::select('brand_name', DB::raw('SUM(received_qty) as total'))
-            ->groupBy('brand_name')
-            ->orderByDesc('total')
-            ->first();
+        // $mostSuppliedItem = MedicationInventory::select('brand_name', DB::raw('SUM(received_qty) as total'))
+        //     ->groupBy('brand_name')
+        //     ->orderByDesc('total')
+        //     ->first();
 
-        return [
-            'total_vendors' => $totalVendors,
-            'total_spend' => $totalSpend,
-            'pending_supply_orders' => $pendingSupplyOrders,
-            'most_supplied_item' => $mostSuppliedItem ? $mostSuppliedItem->brand_name : null,
-            'most_supplied_qty' => $mostSuppliedItem ? (int) $mostSuppliedItem->total : 0,
-        ];
+        // return [
+        //     'total_vendors' => $totalVendors,
+        //     'total_spend' => $totalSpend,
+        //     'pending_supply_orders' => $pendingSupplyOrders,
+        //     'most_supplied_item' => $mostSuppliedItem ? $mostSuppliedItem->brand_name : null,
+        //     'most_supplied_qty' => $mostSuppliedItem ? (int) $mostSuppliedItem->total : 0,
+        // ];
 
 
+              $totalVendors = Vendor::count();
 
+            $totalSpend = MedicationInventory::sum(DB::raw('received_qty * price'));
+
+            $pendingSupplyOrders = MedicationInventory::whereHas('vendor', function ($q) {
+                $q->where('status', 'active');
+            })->where('shipment_status', 'pending')->count();
+
+            $mostSuppliedItem = MedicationInventory::select('brand_name', DB::raw('SUM(received_qty) as total'))
+                ->groupBy('brand_name')
+                ->orderByDesc('total')
+                ->first();
+
+            return [
+                'total_vendors' => $totalVendors,
+                'total_spend' => (float) $totalSpend,
+                'pending_supply_orders' => $pendingSupplyOrders,
+                'most_supplied_item' => optional($mostSuppliedItem)->brand_name,
+                'most_supplied_qty' => optional($mostSuppliedItem)->total ? (int) $mostSuppliedItem->total : 0,
+            ];
 
     }
 }
