@@ -161,7 +161,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/', [VendorController::class, 'store']);
                     Route::delete('/delete/{id}', [VendorController::class, 'delete']);
                     Route::put('/update/{id}', [VendorController::class, 'update']);
-                    Route::patch('/update_status/{id}', [VendorController::class, 'update_status']);
+                    Route::post('/update_status/{id}', [VendorController::class, 'update_status']);
                     Route::get('/dashboard/stats', [VendorController::class, 'getVendorStats']);
                 });
 
