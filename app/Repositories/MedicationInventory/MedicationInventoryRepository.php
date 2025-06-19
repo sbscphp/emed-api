@@ -119,7 +119,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         //     ]
         // ];
 
-        return $medical;
+        return response()->json($medical);
     }
 
 
