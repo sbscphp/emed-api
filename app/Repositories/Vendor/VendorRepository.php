@@ -90,7 +90,7 @@ class VendorRepository implements VendorInterface
      */
     public function update(array $data, $id)
     {
-        $record = Vendor::findOrFail($id);
+        
         // $record->update($data);
           $record = DB::connection('tenant')->table('vendors')->where('id', $id)->first();
 
@@ -112,7 +112,8 @@ class VendorRepository implements VendorInterface
         //    $record->registration_no = $data['registration_no'];
         //    $record->status = $data['status'];
         //    $record->save();
-          return $record;
+        $recordx = Vendor::findOrFail($record->id);
+          return $recordx;
         }
        
     }
