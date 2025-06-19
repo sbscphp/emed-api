@@ -21,21 +21,38 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
             $query->where('shipment_status', $filters['shipment_status']);
         }
 
-        if (!empty($filters['search'])) {
-            $search = $filters['search'];
-            $query->where(function ($q) use ($search) {
-                $q->where('batch_no', 'like', "%$search%")
-                    ->orWhere('shipment_status', 'like', "%$search%")
+        // if (!empty($filters['search'])) {
+        //     $search = $filters['search'];
+        //     $query->where(function ($q) use ($search) {
+        //         $q->where('batch_no', 'like', "%$search%")
+        //             ->orWhere('shipment_status', 'like', "%$search%")
+        //             ->orWhereHas('medication', function ($mq) use ($search) {
+        //                 $mq->where('medicine_name', 'like', "%$search%")
+        //                     ->orWhere('brand_name', 'like', "%$search%")
+        //                     ->orWhere('generic_name', 'like', "%$search%");
+        //             })
+        //             ->orWhereHas('pharmacy', function ($pq) use ($search) {
+        //                 $pq->where('name', 'like', "%$search%");
+        //             });
+        //     });
+        // }
+
+         $query->when(!empty($filters['search']), function ($q) use ($filters) {
+                $search = $filters['search'];
+                $q->where(function ($q) use ($search) {
+                    $q->where('batch_no', 'like', "%{$search}%")
+                    ->orWhere('shipment_status', 'like', "%{$search}%")
                     ->orWhereHas('medication', function ($mq) use ($search) {
-                        $mq->where('medicine_name', 'like', "%$search%")
-                            ->orWhere('brand_name', 'like', "%$search%")
-                            ->orWhere('generic_name', 'like', "%$search%");
+                        $mq->where('medicine_name', 'like', "%{$search}%")
+                            ->orWhere('brand_name', 'like', "%{$search}%")
+                            ->orWhere('generic_name', 'like', "%{$search}%");
                     })
                     ->orWhereHas('pharmacy', function ($pq) use ($search) {
-                        $pq->where('name', 'like', "%$search%");
+                        $pq->where('name', 'like', "%{$search}%");
                     });
+                });
             });
-        }
+
 
         $transformItem = function ($item) {
             $sellingPrice = optional($item->medication)->selling_price ?? 0;
