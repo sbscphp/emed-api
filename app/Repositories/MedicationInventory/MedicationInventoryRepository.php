@@ -4,7 +4,7 @@ namespace App\Repositories\MedicationInventory;
 
 use App\Helpers\ExportHelper;
 use App\Models\MedicationInventory;
-
+use App\Http\Resources\MedicationInventoryResource;
 class MedicationInventoryRepository implements MedicationInventoryRepositoryInterface
 {
     public function create(array $data)
@@ -36,7 +36,6 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
                     });
             });
         }
-
         // $transformItem = function ($item) {
         //     $sellingPrice = optional($item->medication)->selling_price ?? 0;
         //     $totalPrice = $item->received_qty * $sellingPrice;
@@ -76,8 +75,8 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         $paginated = $query->latest()->paginate(3, ['*'], 'page', $page);
         
         // $paginated->getCollection()->transform($transformItem);
-
-        return $paginated;
+        return MedicationInventoryResource::collection($paginated);
+         
     }
 
 
