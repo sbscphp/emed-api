@@ -75,7 +75,14 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         $paginated = $query->latest()->paginate(3, ['*'], 'page', $page);
         
         // $paginated->getCollection()->transform($transformItem);
-        return MedicationInventoryResource::collection($paginated);
+        return MedicationInventoryResource::collection($paginated)->additional([
+        'meta' => [
+            'current_page' => $paginated->currentPage(),
+            'last_page' => $paginated->lastPage(),
+            'per_page' => $paginated->perPage(),
+            'total' => $paginated->total(),
+        ]
+    ]);
          
     }
 

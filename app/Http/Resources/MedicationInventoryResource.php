@@ -39,6 +39,7 @@ class MedicationInventoryResource extends JsonResource
     return [
         'id' => $this->id,
         'BatchNo' => $this->batch_no,
+        'shipment_no'=>$this->shipment_no,
         'ShipmentStatus' => $this->shipment_status,
         'MedicineName' => $medication->medicine_name ?? '',
         'BrandName' => $medication->brand_name ?? '',
