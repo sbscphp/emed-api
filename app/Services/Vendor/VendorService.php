@@ -146,12 +146,16 @@ class VendorService
 
 
 
-        public function  update_status($validated, $id){
-           $vendor = Vendor::on('tenant')->find($id);
-           if($vendor){
-            $vendor->status = $validated['status'];
-            $vendor->save();
-            return  $vendor;
-           }
-        }
+            public function update_status($validated, $id)
+            {
+                $vendor = Vendor::on('tenant')->find($id);
+
+                if ($vendor) {
+                    $vendor->status = $validated['status'];
+                    $vendor->save();
+                    return $vendor;
+                }
+
+                return null; 
+            }
 }
