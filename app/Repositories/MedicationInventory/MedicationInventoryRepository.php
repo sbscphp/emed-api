@@ -140,7 +140,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
     'shipment_no'=>$item->shipment_no,
     'ShipmentStatus' => $item->shipment_status,
     'MedicineName' => $medication->medicine_name,
-    'BrandName' => $medication->brand_name,
+    'BrandName' => $item->brand_name,
     'GenericName' => $medication->generic_name,
     'Pharmacy' => $pharmacy->name,
     'ReceivedQty' => $item->received_qty,
