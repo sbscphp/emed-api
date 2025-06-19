@@ -119,7 +119,29 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         //     ]
         // ];
 
-        return $paginated->getCollection();
+        $arr = [];
+        foreach ($paginated->getCollection() as $item) {
+     $medication = optional($item->medication);
+    $pharmacy = optional($item->pharmacy);
+    $sellingPrice = $medication->selling_price ?? 0;
+    $totalPrice = $item->received_qty * $sellingPrice;
+            $arr[] = [
+        'id' => $item->id,
+        'BatchNo' => $item->batch_no,
+        'shipment_no'=>$item->shipment_no,
+        'ShipmentStatus' => $item->shipment_status,
+        'MedicineName' => $medication->medicine_name ?? '',
+        'BrandName' => $medication->brand_name ?? '',
+        'GenericName' => $medication->generic_name ?? '',
+        'Pharmacy' => $pharmacy->name ?? '',
+        'ReceivedQty' => $item->received_qty,
+        'SellingPrice' => (float) $sellingPrice,
+        'TotalPrice' => (float) $totalPrice,
+        'CreatedAt' => optional($item->created_at)->toDateTimeString(),
+          ];
+        }
+
+        return $arr;
     }
 
 
