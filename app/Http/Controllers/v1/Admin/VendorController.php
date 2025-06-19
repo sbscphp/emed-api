@@ -7,6 +7,7 @@ use App\Responser\JsonResponser;
 use App\Helpers\GeneralHelper;
 use App\Http\Requests\Admin\StoreVendorRequest;
 use App\Http\Requests\Admin\UpdateVendorRequest;
+use App\Http\Requests\Admin\UpdateStatusVendorRequest;
 use App\Services\Vendor\VendorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -140,5 +141,15 @@ class VendorController extends Controller
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Internal server error', [], 500, $e);
         }
+    }
+
+    public function update_status(UpdateStatusVendorRequest $request, $id){
+     try {
+         $validated = $request->validated();
+          $result = $this->service->update_status($validated, $id);
+        return JsonResponser::send(false, 'Vendor stats fetched successfully', $result);
+     } catch (\Throwable $th) {
+     return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+     }
     }
 }

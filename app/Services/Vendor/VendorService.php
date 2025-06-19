@@ -143,4 +143,15 @@ class VendorService
             ];
 
     }
+
+
+
+        public function  update_status($validated, $id){
+           $vendor = Vendor::find($id);
+           if($vendor){
+            $vendor->status = $validated['status'];
+            $vendor->save();
+            return  $vendor;
+           }
+        }
 }

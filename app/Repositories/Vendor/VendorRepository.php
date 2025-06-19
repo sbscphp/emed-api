@@ -90,32 +90,20 @@ class VendorRepository implements VendorInterface
      */
     public function update(array $data, $id)
     {
-        
+        $record = Vendor::findOrFail($id);
         // $record->update($data);
-          $record = DB::connection('tenant')->table('vendors')->where('id', $id)->first();
+          $record = DB::table('vendors')->where('id', $id)->first();
 
         if($record){
-           DB::connection('tenant')->table('vendors')->where('id', $id)->update([
-        'vendor_name'      => $data['vendor_name'],
-        'contact_person'   => $data['contact_person'],
-        'phone_number'     => $data['phone_number'],
-        'email'            => $data['email'],
-        'address'          => $data['address'],
-        'registration_no'  => $data['registration_no'],
-        'status'           => $data['status'],
-        'created_at'       => now(),
-        'updated_at'       => now()
-          ]);
-        //    $record->vendor_name = $data['vendor_name'];
-        //    $record->contact_person = $data['contact_person'];
-        //    $record->email = $data['email'];
-        //    $record->address = $data['address'];
-        //    $record->phone_number = $data['phone_number'];
-        //    $record->registration_no = $data['registration_no'];
-        //    $record->status = $data['status'];
-        //    $record->save();
-        $recordx = Vendor::findOrFail($record->id);
-          return $recordx;
+           $record->vendor_name = $data['vendor_name'];
+           $record->contact_person = $data['contact_person'];
+           $record->email = $data['email'];
+           $record->address = $data['address'];
+           $record->phone_number = $data['phone_number'];
+           $record->registration_no = $data['registration_no'];
+           $record->status = $data['status'];
+           $record->save();
+          return $record;
         }
        
     }
