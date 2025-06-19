@@ -104,7 +104,8 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         }
 
 
-      $medical[] = [
+      $fetch = [
+              'data'=>$medical,
              'pages'=>[
         'current_page' => $paginated->currentPage(),
         'last_page' => $paginated->lastPage(),
@@ -193,7 +194,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
     //  ]
     //  ];
 
-    return   collect($medical);
+    return   collect($fetch);
 
     //   return $paginated->getCollection();
     }
