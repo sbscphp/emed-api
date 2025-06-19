@@ -148,9 +148,9 @@ class VendorService
 
             public function update_status($validated, $id)
             {
-                  dd([$validated['status'], $id]);
-                $vendor = Vendor::find($id);
-
+                 
+                $vendor = Vendor::find(intval($id));
+                  dd([$validated['status'], $vendor]);
                 if ($vendor) {
                     $vendor->status = $validated['status'];
                     $vendor->save();
