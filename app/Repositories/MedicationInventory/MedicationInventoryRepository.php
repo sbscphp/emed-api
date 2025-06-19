@@ -71,7 +71,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         // }
 
         $paginated = $query->latest()->paginate(10);
-        $paginated->getCollection()->transform($transformItem);
+        // $paginated->getCollection()->transform($transformItem);
 
         return $paginated;
     }
