@@ -151,12 +151,18 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
     ];
 
     });
-    $shipments['link'] = [
+    $shipments['meta'] = [
         'current_page' => $paginated->currentPage(),
         'last_page' => $paginated->lastPage(),
         'per_page' => $paginated->perPage(),
         'total' => $paginated->total(),
     ];
+     $shipments['link'] = [
+        'first' => $paginated->url(1),
+        'last' => $paginated->url($paginated->lastPage()),
+        'prev' => $paginated->previousPageUrl(),
+        'next' => $paginated->nextPageUrl(),
+     ];
     return $shipments;
     }
 
