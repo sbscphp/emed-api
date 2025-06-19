@@ -146,7 +146,7 @@ class VendorRepository implements VendorInterface
         return Vendor::where($attr, $value)->first();
     }
 
-    public function  update_status (){
+    public function  update_status ($validated, $id){
          $vendor = DB::connection('tenant')->table('vendors')->where('id', $id)->first();
                   dd([$validated['status'], $vendor]);
                 if ($vendor) {
