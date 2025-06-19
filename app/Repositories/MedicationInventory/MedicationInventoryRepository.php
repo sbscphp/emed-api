@@ -147,27 +147,34 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
     'pharmacy' => $pharmacy->name,
     'medicine_type'=> $medication->medicine_type,
     'received_qty' => $item->received_qty,
+    'price' => $item->price,
     'selling_price' => (float) $sellingPrice,
-    'total_Price' => (float) $totalPrice,
+    'total_price' => (float) $totalPrice,
     'createdAt' => optional($item->created_at)->toDateTimeString(),
     
     ];
 
     });
-    $shipments[] = [
+  
+ 
+
+     $data  = [
+       '$shipments'=>$shipments,
+         [
         'current_page' => $paginated->currentPage(),
         'last_page' => $paginated->lastPage(),
         'per_page' => $paginated->perPage(),
         'total' => $paginated->total(),
-    ];
-     $shipments[] = [
+         ],
+           [
         'first' => $paginated->url(1),
         'last' => $paginated->url($paginated->lastPage()),
         'prev' => $paginated->previousPageUrl(),
         'next' => $paginated->nextPageUrl(),
+     ]
      ];
-     
-    return $shipments;
+
+    return collect($data);
 
     //   return $paginated->getCollection();
     }
