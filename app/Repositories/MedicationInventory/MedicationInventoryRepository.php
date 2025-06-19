@@ -71,9 +71,9 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
 
         // $paginated = $query->latest()->paginate(10);
 
-        // $page = request()->get('page', 1);
-        // $paginated = $query->paginate(10, ['*'], 'page', $page);
-        return $query->get();
+        $page = request()->get('page', 1);
+        $paginated = $query->paginate(10, ['*'], 'page', $page);
+        
         // $paginated->getCollection()->transform($transformItem);
         //$medical = MedicationInventoryResource::collection($paginated->items())->toArray(request());
 
@@ -128,7 +128,29 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
     //     }
 
     //    return $paginated->getCollection(); 
-    
+
+    $shipments = $paginated->getCollection()->map(function ($item) {
+          $medication = optional($item->medication);
+    $pharmacy = optional($item->pharmacy);
+    $sellingPrice = $medication->selling_price ?? 0;
+    $totalPrice = $item->received_qty * $sellingPrice; 
+    return [
+    'id' => $item->id, 
+    'BatchNo' => $item->batch_no, 
+    'shipment_no'=>$item->shipment_no,
+    'ShipmentStatus' => $item->shipment_status,
+    'MedicineName' => $medication->medicine_name,
+    'BrandName' => $medication->brand_name,
+    'GenericName' => $medication->generic_name,
+    'Pharmacy' => $pharmacy->name,
+    'ReceivedQty' => $item->received_qty,
+    'SellingPrice' => (float) $sellingPrice,
+    'TotalPrice' => (float) $totalPrice,
+    'CreatedAt' => optional($item->created_at)->toDateTimeString(),
+    ];
+
+    });
+    return $shipments;
     }
 
 
