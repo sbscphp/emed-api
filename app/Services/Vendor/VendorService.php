@@ -148,16 +148,7 @@ class VendorService
 
             public function update_status($validated, $id)
             {
-                 
-                 $vendor = DB::connection('tenant')->table('vendors')->where('id', $id)->first();
-                  dd([$validated['status'], $vendor]);
-                if ($vendor) {
-                    DB::connection('tenant')->table('vendors')->where('id', $id)->update([
-                      'status'=> $validated['status']
-                    ]);
-                    return DB::connection('tenant')->table('vendors')->where('id', $vendor->id)->first();;
-                }
 
-                return null; 
+                return $this->VendorInterface->update_status($validated, $id);
             }
 }

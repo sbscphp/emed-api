@@ -63,4 +63,7 @@ interface VendorInterface
      * @return \App\Models\Vendor
      */
     public function findByAttribute($attr, $value);
+
+               
+    public function update_status($validated, $id);
 }
