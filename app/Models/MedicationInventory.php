@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class MedicationInventory extends Model
 {
     protected $table = 'medication_inventory';
-    // protected $connection = 'tenant';
+     protected $connection = 'tenant';
       //protected $connection = 'landlord';
     protected $guarded = ['id'];
     protected $fillable = [
