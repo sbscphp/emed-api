@@ -166,7 +166,7 @@ class VendorRepository implements VendorInterface
          
         DB::connection('tenant')->beginTransaction();
 
-        // Force the connection to 'tenant'
+        
         $vendor = Vendor::on('tenant')->find(intval($id));
 
         if ($vendor) {
