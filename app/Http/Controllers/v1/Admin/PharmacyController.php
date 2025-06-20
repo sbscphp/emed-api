@@ -199,7 +199,7 @@ class PharmacyController extends Controller
     public function update(PharmacyRequest $request, $id)
     {
         try {
-           
+           config(['database.default' => 'tenant']);
             $data = $request->all();
             $pharmacy = $this->pharmacyService->find($id);
             if (!$pharmacy) {

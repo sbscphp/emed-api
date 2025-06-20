@@ -3,7 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 class PharmacyRequest extends FormRequest
 {
     /**
@@ -34,12 +34,27 @@ class PharmacyRequest extends FormRequest
           //  'email_address' => 'nullable|email|max:255|exists:tenant.pharmacies,email_address',
           // 'email_address' => 'nullable|email|max:255|exists:pharmacies,email_address',
             // 'pharmacy_id' => 'required|string|unique:tenant.pharmacies,pharmacy_id',
-           'email_address' => [
-                    'nullable',
-                    'email',
-                    'max:255',
-                    Rule::exists('pharmacies', 'email_address')->connection('tenant'),
-                ],
+        //    'email_address' => [
+        //             'nullable',
+        //             'email',
+        //             'max:255',
+        //             Rule::exists('pharmacies', 'email_address')->connection('tenant'),
+        //         ],
+        'email_address' => [
+                'nullable',
+                'email',
+                'max:255',
+                function ($attribute, $value, $fail) {
+                    $exists = DB::connection('tenant')
+                        ->table('pharmacies')
+                        ->where('email_address', $value)
+                        ->exists();
+
+                    if (!$exists) {
+                        $fail('The selected email address is invalid.');
+                    }
+                },
+            ],
             'active' => 'boolean',
         ];
     }
