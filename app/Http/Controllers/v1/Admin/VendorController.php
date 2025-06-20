@@ -145,10 +145,10 @@ class VendorController extends Controller
 
     public function update_status(UpdateStatusVendorRequest $request, $id){
    //  try {
-         DB::connection('landlord')->beginTransaction();
+         //DB::connection('landlord')->beginTransaction();
          $validated = $request->validated();
           $result = $this->service->update_status($validated, $id);
-           DB::connection('landlord')->commit();
+        //    DB::connection('landlord')->commit();
         return JsonResponser::send(false, 'Vendor stats fetched successfully', $result);
     //  } catch (\Throwable $th) {
     // DB::connection('landlord')->rollBack();
