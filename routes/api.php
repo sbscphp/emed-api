@@ -32,7 +32,7 @@ Route::group(["prefix" => "v1"], function () {
         return "Data Cache is cleared";
     });
 
-//  Route::post('/update_status/{id}', [VendorController::class, 'update_status']);
+ Route::post('/update_status/{id}', [VendorController::class, 'update_status']);
     Route::group(['prefix' => 'auth', "namespace" => "v1\Auth"], function () {
         Route::post('/login', [LoginController::class, 'login']);
         Route::post('/request-reset-password', [ForgotPasswordController::class, 'resetPasswordLink']);
