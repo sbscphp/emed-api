@@ -66,7 +66,7 @@ class ConsultationController extends Controller
     public function patientsForConsultation(Request $request)
     {
         try {
-
+            config(['database.default' => 'tenant']);
             DB::connection('tenant');
             $currentUser = Auth::user();
             $user = $this->userService->find($currentUser->id);
@@ -101,7 +101,7 @@ class ConsultationController extends Controller
     public function show($visitNo)
     {
         try {
-
+            config(['database.default' => 'tenant']);
             DB::connection('tenant');
             $currentUser = Auth::user();
             $user = $this->userService->find($currentUser->id);
@@ -150,6 +150,7 @@ class ConsultationController extends Controller
     public function storeConsultationInfo(ConsultationRequest $request, $visitno)
     {
         try {
+             config(['database.default' => 'tenant']);
             DB::connection('tenant')->beginTransaction();
             $currentUser = Auth::user();
             $user = $this->userService->find($currentUser->id);
@@ -239,6 +240,7 @@ class ConsultationController extends Controller
     public function storeLabInfo(LabRequest $request, $visitno)
     {
         try {
+             config(['database.default' => 'tenant']);
             DB::connection('tenant')->beginTransaction();
             $currentUser = Auth::user();
             $user = $this->userService->find($currentUser->id);
@@ -291,6 +293,7 @@ class ConsultationController extends Controller
     public function storeRadiologyInfo(LabRequest $request, $visitno)
     {
         try {
+             config(['database.default' => 'tenant']);
             DB::connection('tenant')->beginTransaction();
             $currentUser = Auth::user();
             $user = $this->userService->find($currentUser->id);
@@ -344,7 +347,7 @@ class ConsultationController extends Controller
     public function storeTreatmentInfo(TreatmentRequest $request, $visitno)
     {
         try {
-
+           config(['database.default' => 'tenant']);
             DB::connection('tenant')->beginTransaction();
             $currentUser = Auth::user();
             $user = $this->userService->find($currentUser->id);
@@ -406,6 +409,7 @@ class ConsultationController extends Controller
     public function storeMedicalHistory(Request $request, $patientId)
     {
         try {
+             config(['database.default' => 'tenant']);
             $request->validate([
                 'name' => 'required|string',
                 'status' => 'nullable|string',
@@ -460,6 +464,7 @@ class ConsultationController extends Controller
     public function storeFamilyHistory(Request $request, $patientId)
     {
         try {
+            config(['database.default' => 'tenant']);
             $request->validate([
                 'name' => 'required|string',
                 'status' => 'nullable|string',
@@ -514,6 +519,7 @@ class ConsultationController extends Controller
     public function storeSocialHistory(Request $request, $patientId)
     {
         try {
+             config(['database.default' => 'tenant']);
             $request->validate([
                 'name' => 'required|string',
                 'status' => 'nullable|string',
@@ -568,6 +574,7 @@ class ConsultationController extends Controller
     public function storeDrugHistory(Request $request, $patientId)
     {
         try {
+             config(['database.default' => 'tenant']);
             $request->validate([
                 'name' => 'required|string',
                 'status' => 'nullable|string',

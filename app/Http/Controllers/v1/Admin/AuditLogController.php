@@ -103,6 +103,7 @@ class AuditLogController extends Controller
 
     private function exportCsv($logs)
     {
+        config(['database.default' => 'tenant']);
         $filename = 'audit_logs_' . now()->format('YmdHis') . '.csv';
 
         $headers = [
@@ -140,6 +141,7 @@ class AuditLogController extends Controller
     public function fetch_medical_log(){
 
      try {
+            config(['database.default' => 'tenant']);
                 DB::connection('tenant');
                    $medical_log = AuditLog::whereIn('action_type', [
                     'App\Models\MedicalHistory',

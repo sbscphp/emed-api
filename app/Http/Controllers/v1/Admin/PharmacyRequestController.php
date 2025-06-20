@@ -21,6 +21,7 @@ class PharmacyRequestController extends Controller
 
     public function store(CreatePharmacyRequest $request)
     {
+        config(['database.default' => 'tenant']);
         $data = $this->service->create($request->validated());
         return JsonResponser::send(false, 'Pharmacy request submitted successfully.', $data);
     }
@@ -28,6 +29,7 @@ class PharmacyRequestController extends Controller
     public function index(Request $request)
     {
         try {
+            config(['database.default' => 'tenant']);
             $search = $request->input('search');
             $data = $this->service->all($search);
 
@@ -65,6 +67,7 @@ class PharmacyRequestController extends Controller
 
     public function show($id)
     {
+        config(['database.default' => 'tenant']);
         $data = $this->service->find($id);
         return JsonResponser::send(false, 'Pharmacy request retrieved.', $data);
     }

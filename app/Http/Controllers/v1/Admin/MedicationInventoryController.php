@@ -26,6 +26,7 @@ class MedicationInventoryController extends Controller
     public function store(StoreMedicationInventoryRequest $request)
     {
         try {
+             config(['database.default' => 'tenant']);
             $currentUser = Auth::user();
             $user = $this->userService->find($currentUser->id);
 

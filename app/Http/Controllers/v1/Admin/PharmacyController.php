@@ -28,6 +28,7 @@ class PharmacyController extends Controller
     public function index(Request $request)
     {
         try {
+             config(['database.default' => 'tenant']);
             $pharmacies = $this->pharmacyService->all($request);
 
             if ($pharmacies->isEmpty()) {
@@ -70,6 +71,7 @@ class PharmacyController extends Controller
     public function treatmentLogs(Request $request)
     {
         try {
+             config(['database.default' => 'tenant']);
             $search = $request->input('search');
             $treatments = $this->pharmacyService->treatmentLogall($search);
 
@@ -111,6 +113,7 @@ class PharmacyController extends Controller
     public function showPatientTreatment(Request $request, $patientId)
     {
         try {
+             config(['database.default' => 'tenant']);
             $patient = $this->pharmacyService->getPatientTreatmentWithDetails($patientId);
 
             if (!$patient) {
@@ -168,6 +171,7 @@ class PharmacyController extends Controller
     public function toggleStatus($id)
     {
         try {
+             config(['database.default' => 'tenant']);
             $pharmacy = $this->pharmacyService->find($id);
             if (!$pharmacy) {
                 return JsonResponser::send(true, 'Pharmacy not found.', null, 404);
@@ -185,6 +189,7 @@ class PharmacyController extends Controller
     public function show($id)
     {
         try {
+            config(['database.default' => 'tenant']);
             $pharmacy = $this->pharmacyService->find($id);
             if (!$pharmacy) {
                 return JsonResponser::send(true, 'Pharmacy not found.', null, 404);
@@ -228,6 +233,7 @@ class PharmacyController extends Controller
     public function pharmacyDashboardStats()
     {
         try {
+             config(['database.default' => 'tenant']);
             $stats = $this->pharmacyService->getDashboardStats();
 
             return JsonResponser::send(false, 'Pharmacy dashboard stats fetched successfully', $stats);

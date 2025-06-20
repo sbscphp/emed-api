@@ -29,6 +29,7 @@ class BillingController extends Controller
     public function index(Request $request)
     {
         try {
+            config(['database.default' => 'tenant']);
             $billings = $this->billingService->all($request);
             if (
                 $billings instanceof \Symfony\Component\HttpFoundation\BinaryFileResponse ||
@@ -83,6 +84,7 @@ class BillingController extends Controller
     public function show($id)
     {
         try {
+            config(['database.default' => 'tenant']);
             $billing = $this->billingService->find($id);
             if (!$billing) {
                 return JsonResponser::send(true, 'Billing record not found.', null, 404);
@@ -97,6 +99,7 @@ class BillingController extends Controller
     public function update(BillingLogRequest $request, $id)
     {
         try {
+            config(['database.default' => 'tenant']);
             $billing = $this->billingService->find($id);
             if (!$billing) {
                 return JsonResponser::send(true, 'Billing record not found.', null, 404);
@@ -113,6 +116,7 @@ class BillingController extends Controller
     public function destroy($id)
     {
         try {
+             config(['database.default' => 'tenant']);
             $billing = $this->billingService->find($id);
             if (!$billing) {
                 return JsonResponser::send(true, 'Billing record not found.', null, 404);
@@ -129,6 +133,7 @@ class BillingController extends Controller
     public function getAllServiceUnitsAndTypes()
     {
         try {
+              config(['database.default' => 'tenant']);
             $serviceUnits = $this->serviceFetch->getUnits(['id', 'name']);
             $serviceTypes = $this->serviceFetch->getTypes(['id', 'name']);
 
@@ -146,6 +151,7 @@ class BillingController extends Controller
     public function getBillingByServiceUnit($serviceUnitId)
     {
         try {
+            config(['database.default' => 'tenant']);
             /** @var LengthAwarePaginator $billingLogs */
 
             $billingLogs = $this->billingService->getByServiceUnit($serviceUnitId);
@@ -192,6 +198,7 @@ class BillingController extends Controller
     public function getBillingByServiceType(Request $request)
     {
         try {
+              config(['database.default' => 'tenant']);
             $billingLogs = $this->billingService->getByServiceType($request->input('service_type_id'));
 
             $logs = collect($billingLogs->items())->map(function ($log) {
@@ -240,6 +247,7 @@ class BillingController extends Controller
     public function getBillingStatistics()
     {
         try {
+            config(['database.default' => 'tenant']);
             $stats = $this->billingService->getStatistics();
 
             return JsonResponser::send(false, 'Billing stats fetched successfully.', $stats);
