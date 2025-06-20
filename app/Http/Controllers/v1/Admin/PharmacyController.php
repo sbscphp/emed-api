@@ -199,6 +199,7 @@ class PharmacyController extends Controller
     public function update(PharmacyRequest $request, $id)
     {
         try {
+            DB::connection('tenant')->beginTransaction();
             $data = $request->all();
             $pharmacy = $this->pharmacyService->find($id);
             if (!$pharmacy) {
@@ -206,10 +207,11 @@ class PharmacyController extends Controller
             }
 
             $updatedPharmacy = $this->pharmacyService->update($data, $id);
-
+            DB::connection('tenant')->commit();
             return JsonResponser::send(false, 'Pharmacy updated successfully', $updatedPharmacy, 200);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+            DB::connection('tenant')->rollBack();  
         }
     }
 

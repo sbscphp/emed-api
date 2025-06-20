@@ -131,9 +131,16 @@ class PharmacyRepository implements PharmacyInterface
      */
     public function update(array $data, $id)
     {
+         DB::connection('tenant')->beginTransaction();
         $record = Pharmacy::findOrFail($id);
-        $record->update($data);
+        if($record){
+         $record->update($data);
+        DB::connection('tenant')->commit();
         return $record;
+        }else{
+         DB::connection('tenant')->rollBack();  
+        }
+      
     }
 
 
