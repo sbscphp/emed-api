@@ -91,10 +91,8 @@ class VendorRepository implements VendorInterface
     public function update(array $data, $id)
     {
         DB::connection('tenant')->beginTransaction();
-        $record = Vendor::findOrFail($id);
+        $record = Vendor::find(intval($id));
         // $record->update($data);
-          $record = DB::table('vendors')->where('id', $id)->first();
-
         if($record){
            $record->vendor_name = $data['vendor_name'];
            $record->contact_person = $data['contact_person'];
