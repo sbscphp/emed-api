@@ -147,6 +147,7 @@ class VendorRepository implements VendorInterface
     }
 
     public function  update_status ($validated, $id){
+        DB::connection('tenant')->beginTransaction();
          $vendor = Vendor::find(intval($id));
                   dd([$validated['status'], $vendor]);
                 if ($vendor) {
@@ -155,8 +156,11 @@ class VendorRepository implements VendorInterface
                      ]);
 
                      return $vendor;
+                    DB::connection('tenant')->commit();
                 }
 
                 return null; 
+            DB::connection('tenant')->rollBack();
+
     }
 }
