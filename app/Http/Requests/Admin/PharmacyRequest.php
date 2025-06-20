@@ -3,7 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
+// use Illuminate\Validation\Rule;
 class PharmacyRequest extends FormRequest
 {
     /**
@@ -32,10 +32,8 @@ class PharmacyRequest extends FormRequest
             'assigned_pharmacist' => 'nullable|exists:users,id',
             'license_number' => 'nullable|string|max:255',
           //  'email_address' => 'nullable|email|max:255|exists:tenant.pharmacies,email_address',
-            //'email_address' => 'nullable|email|max:255|unique:tenant.pharmacies,email_address',
-              Rule::exists('pharmacies', 'email_address')->connection('tenant'),
+           'email_address' => 'nullable|email|max:255|exists:pharmacies,email_address',
             // 'pharmacy_id' => 'required|string|unique:tenant.pharmacies,pharmacy_id',
-
             'active' => 'boolean',
         ];
     }
