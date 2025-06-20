@@ -34,12 +34,12 @@ class PharmacyRequest extends FormRequest
           //  'email_address' => 'nullable|email|max:255|exists:tenant.pharmacies,email_address',
           // 'email_address' => 'nullable|email|max:255|exists:pharmacies,email_address',
             // 'pharmacy_id' => 'required|string|unique:tenant.pharmacies,pharmacy_id',
-            'email_address' => [
-                'nullable',
-                'email',
-                'max:255',
-                Rule::exists('pharmacies', 'email_address')->connection('tenant'),
-            ],
+           'email_address' => [
+                    'nullable',
+                    'email',
+                    'max:255',
+                    Rule::exists('pharmacies', 'email_address')->connection('tenant'),
+                ],
             'active' => 'boolean',
         ];
     }
