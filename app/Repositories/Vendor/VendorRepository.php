@@ -90,6 +90,7 @@ class VendorRepository implements VendorInterface
      */
     public function update(array $data, $id)
     {
+        DB::connection('tenant')->beginTransaction();
         $record = Vendor::findOrFail($id);
         // $record->update($data);
           $record = DB::table('vendors')->where('id', $id)->first();
@@ -103,7 +104,11 @@ class VendorRepository implements VendorInterface
            $record->registration_no = $data['registration_no'];
            $record->status = $data['status'];
            $record->save();
+         DB::connection('tenant')->commit();
           return $record;
+        }else{
+         DB::connection('tenant')->rollBack();  
+   
         }
        
     }
@@ -146,24 +151,7 @@ class VendorRepository implements VendorInterface
         return Vendor::where($attr, $value)->first();
     }
 
-    public function  update_status ($validated, $id){
-        // DB::connection('tenant')->beginTransaction();
-        //  $vendor = Vendor::find(intval($id));
-        //           dd([$validated['status'], $vendor]);
-        //         if ($vendor) {
-        //              $vendor->update([
-        //                 'status'=> $validated['status']
-        //              ]);
-
-        //              return $vendor;
-        //             DB::connection('tenant')->commit();
-        //         }
-
-        //         return null; 
-        //     DB::connection('tenant')->rollBack();
-
-
-         
+    public function  update_status ($validated, $id){ 
         DB::connection('tenant')->beginTransaction();
 
         
