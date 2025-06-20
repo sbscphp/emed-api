@@ -216,6 +216,7 @@ class PharmacyController extends Controller
 
     public function destroy($id)
     {
+     config(['database.default' => 'tenant']);
         $pharmacy = $this->pharmacyService->find($id);
         if (!$pharmacy) {
             return JsonResponser::send(true, 'Pharmacy not found.', null, 404);
