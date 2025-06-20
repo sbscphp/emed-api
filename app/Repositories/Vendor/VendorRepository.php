@@ -147,20 +147,40 @@ class VendorRepository implements VendorInterface
     }
 
     public function  update_status ($validated, $id){
+        // DB::connection('tenant')->beginTransaction();
+        //  $vendor = Vendor::find(intval($id));
+        //           dd([$validated['status'], $vendor]);
+        //         if ($vendor) {
+        //              $vendor->update([
+        //                 'status'=> $validated['status']
+        //              ]);
+
+        //              return $vendor;
+        //             DB::connection('tenant')->commit();
+        //         }
+
+        //         return null; 
+        //     DB::connection('tenant')->rollBack();
+
+
+         
         DB::connection('tenant')->beginTransaction();
-         $vendor = Vendor::find(intval($id));
-                  dd([$validated['status'], $vendor]);
-                if ($vendor) {
-                     $vendor->update([
-                        'status'=> $validated['status']
-                     ]);
 
-                     return $vendor;
-                    DB::connection('tenant')->commit();
-                }
+        // Force the connection to 'tenant'
+        $vendor = Vendor::on('tenant')->find(intval($id));
 
-                return null; 
-            DB::connection('tenant')->rollBack();
+        if ($vendor) {
+            $vendor->update([
+                'status' => $validated['status'],
+            ]);
+
+            DB::connection('tenant')->commit();
+            return $vendor;
+        } else {
+          DB::connection('tenant')->rollBack();  
+           
+        }
+    
 
     }
 }
