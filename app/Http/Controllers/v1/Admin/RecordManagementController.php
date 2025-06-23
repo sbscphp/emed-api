@@ -191,7 +191,7 @@ class RecordManagementController extends Controller
     public function addNextOfKin(NextOfkinRequest $request, $patienId)
     {
         try {
-
+            config(['database.default' => 'tenant']);
             DB::connection('tenant')->beginTransaction();
 
             $currentUser = Auth::user();
