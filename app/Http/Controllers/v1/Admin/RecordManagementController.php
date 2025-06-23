@@ -135,6 +135,7 @@ class RecordManagementController extends Controller
     public function update(Request $request, $id)
     {
         try {
+            config(['database.default' => 'tenant']);
             DB::connection('tenant')->beginTransaction();
 
             $currentUser = Auth::user();
