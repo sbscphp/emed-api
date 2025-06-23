@@ -70,10 +70,10 @@ class RecordManagementController extends Controller
             }
 
 
-             $checkemail = DB::connection('tenant')->table('patients')->where('email', $request->email)->first();
-             if($checkemail){
-               return JsonResponser::send(true, 'email already exists.', null, 422);
-             }
+            //  $checkemail = DB::connection('tenant')->table('patients')->where('email', $request->email)->first();
+            //  if($checkemail){
+            //    return JsonResponser::send(true, 'email already exists.', null, 422);
+            //  }
 
 
             $patientExists = $this->patientService->findUserByFirstnameAndLastname($request->firstname, $request->lastname);

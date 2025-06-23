@@ -44,8 +44,8 @@ class PatientInfomationRequest extends FormRequest
                         ->where('email', $value)
                         ->exists();
 
-                    if (!$exists) {
-                        $fail('The selected email address is invalid.');
+                    if ($exists) {
+                        $fail('this email already exist');
                     }
                 },
             ],
