@@ -442,6 +442,16 @@ class RecordManagementController extends Controller
 
             $patientDetails->load(['nextOfKin', 'emergencyContact', 'visits', 'service']);
 
+            // {
+            //  ...,
+            //   'nextOfKin':{
+
+            //   },
+            //   'emergencyContact':{
+
+            //   }
+            // }
+
             return JsonResponser::send(false, 'Record retrieved successfully.', $patientDetails, 200);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'An error occurred.', 'Internal server error', 500, $th);

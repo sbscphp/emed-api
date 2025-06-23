@@ -38,9 +38,12 @@ class NextOfKinRepository implements NextOfKinInterface
      */
     public function update(array $data, $id)
     {
-        $record = NextOfKin::findOrFail($id);
+        $record = NextOfKin::where('patient_id',  $id)->first();
+        if( $record){
         $record->update($data);
         return $record;
+        }
+      return null;
     }
 
 
