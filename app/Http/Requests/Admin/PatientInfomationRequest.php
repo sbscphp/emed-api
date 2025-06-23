@@ -33,7 +33,22 @@ class PatientInfomationRequest extends FormRequest
             'gender' => 'required|string',
             'bloodgroup' => 'required|string',
             'genotype' => 'required|string',
-            'email' => 'required|email|unique:patients,email',
+            //'email' => 'required|email|unique:patients,email',
+              'email' => [
+                'required',
+                'email',
+                'max:255',
+                function ($attribute, $value, $fail) {
+                    $exists = DB::connection('tenant')
+                        ->table('patients')
+                        ->where('email', $value)
+                        ->exists();
+
+                    if (!$exists) {
+                        $fail('The selected email address is invalid.');
+                    }
+                },
+            ],
             'patient_type' => 'required|string',
             'marital_status' => 'required|string',
             'phoneno' => 'required|string',
