@@ -69,6 +69,13 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
 
+
+             $checkemail = DB::connection('tenant')->table('patients')->where('email', $request->email)->first();
+             if($checkemail){
+               return JsonResponser::send(true, 'email already exists.', null, 422);
+             }
+
+
             $patientExists = $this->patientService->findUserByFirstnameAndLastname($request->firstname, $request->lastname);
             if ($patientExists) {
                 return JsonResponser::send(true, 'A patient with the same firstname and lastname already exists.', null, 422);
