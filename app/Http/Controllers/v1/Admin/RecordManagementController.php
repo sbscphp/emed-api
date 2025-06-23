@@ -256,7 +256,7 @@ class RecordManagementController extends Controller
     public function updateNextOfKin(Request $request, $id)
     {
         try {
-
+            config(['database.default' => 'tenant']);
             DB::connection('tenant')->beginTransaction();
 
             $currentUser = Auth::user();
@@ -306,6 +306,7 @@ class RecordManagementController extends Controller
     {
 
         try {
+              config(['database.default' => 'tenant']);
             DB::connection('tenant')->beginTransaction();
 
             $currentUser = Auth::user();
@@ -377,7 +378,7 @@ class RecordManagementController extends Controller
     public function updateEmergencyContact(Request $request, $id)
     {
         try {
-
+               config(['database.default' => 'tenant']);
             DB::connection('tenant')->beginTransaction();
 
             $currentUser = Auth::user();
