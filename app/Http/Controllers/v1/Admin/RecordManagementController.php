@@ -60,6 +60,7 @@ class RecordManagementController extends Controller
     {
 
         try {
+            config(['database.default' => 'tenant']);
             DB::connection('tenant')->beginTransaction();
 
             $currentUser = Auth::user();
