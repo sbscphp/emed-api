@@ -446,13 +446,15 @@ class RecordManagementController extends Controller
             $data = $patientDetails->load(['nextOfKin', 'emergencyContact', 'visits', 'service']);
 
 
-                $serviceDate = $patientDetails->service ?? null;
+                $serviceDate = $patientDetails->service->name ?? null;
+                  $servceid =  $patientDetails->service->id?? null;
 
-                $data->visits->transform(function ($visit) use ($serviceDate) {
-                    $visit->service_date = $serviceDate;
+                $data->visits->transform(function ($visit) use ($serviceDate,  $servceid) {
+                    $visit->service_name = $serviceDate;
+                     $visit->service_id = $servceid;
                     return $visit;
                 });
-            
+              unset($data->service);
 
             return JsonResponser::send(false, 'Record retrieved successfully.', collect($data), 200);
         } catch (\Throwable $th) {
