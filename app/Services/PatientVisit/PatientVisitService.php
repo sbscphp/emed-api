@@ -276,7 +276,7 @@ class PatientVisitService
     public function getVisitDetailWithBilling(int $patientId, int $visitId)
     {
         $visit = PatientVisit::with([
-            'patient:id,firstname,lastname,patientno,service_id',
+            'patient:id,firstname,lastname,patientno,service_id,age',
             'patient.service:id,name',
             'billingLogsForPatient',
         ])
