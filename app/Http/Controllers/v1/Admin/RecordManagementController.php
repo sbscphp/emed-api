@@ -27,7 +27,7 @@ use Illuminate\Support\Facades\Auth;
 use Spatie\Multitenancy\Models\Tenant;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\PatientVisitExport;
-
+use App\Http\Resources\PatientDetailResoures;
 class RecordManagementController extends Controller
 {
     protected $userService;
@@ -440,8 +440,8 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'Record not found.', null, 404);
             }
 
-            $patientDetails->load(['nextOfKin', 'emergencyContact', 'visits', 'service']);
-
+             $data =  $patientDetails->load(['nextOfKin', 'emergencyContact', 'visits', 'service']);
+             $fetch = PatientDetailResoures::make($data); 
             // {
             //  ...,
             //   'nextOfKin':{
@@ -452,7 +452,7 @@ class RecordManagementController extends Controller
             //   }
             // }
 
-            return JsonResponser::send(false, 'Record retrieved successfully.', $patientDetails, 200);
+            return JsonResponser::send(false, 'Record retrieved successfully.', $fetch, 200);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'An error occurred.', 'Internal server error', 500, $th);
         }
