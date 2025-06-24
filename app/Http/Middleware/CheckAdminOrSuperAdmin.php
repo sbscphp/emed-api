@@ -31,7 +31,7 @@ class CheckAdminOrSuperAdmin
             $user->load('roles');
         }
 
-        if (!$user->hasRole(['admin', 'super admin'])) {
+        if (!$user->hasRole(['admin', 'super_admin'])) {
             ErrorLog::create([
                 'causer'         => $user->id,
                 'model'          => 'Permission',
