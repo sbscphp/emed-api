@@ -75,6 +75,7 @@ class PatientDetailResoures extends JsonResource
             "emergency_contact_updated_at"=>$emergency_contact?->updated_at??null,
             "emergency_contact_deleted_at"=>$emergency_contact?->deleted_at??null,
             "visits"=>$this->visits??null
+            
         ];
     }
 }

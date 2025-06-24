@@ -441,18 +441,20 @@ class RecordManagementController extends Controller
             }
 
              $data =  $patientDetails->load(['nextOfKin', 'emergencyContact', 'visits', 'service']);
-             $fetch = PatientDetailResoures::make($data); 
-            // {
-            //  ...,
-            //   'nextOfKin':{
+            //  $fetch = PatientDetailResoures::make($data); 
 
-            //   },
-            //   'emergencyContact':{
+            $data = $patientDetails->load(['nextOfKin', 'emergencyContact', 'visits', 'service']);
 
-            //   }
-            // }
 
-            return JsonResponser::send(false, 'Record retrieved successfully.', $fetch, 200);
+                $serviceDate = $patientDetails->service->created_at ?? null;
+
+               $combine = $data->visits->transform(function ($visit) use ($serviceDate) {
+                    $visit->service_date = $serviceDate;
+                    return $visit;
+                });
+            
+
+            return JsonResponser::send(false, 'Record retrieved successfully.', collect($combine), 200);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'An error occurred.', 'Internal server error', 500, $th);
         }
