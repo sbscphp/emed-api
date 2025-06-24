@@ -4,6 +4,7 @@ namespace App\Repositories\PatientVisit;
 
 use App\Models\PatientVisit;
 use Carbon\Carbon;
+use App\Http\Resources\PatientResources;
 
 class PatientVisitRepository implements PatientVisitInterface
 {
@@ -27,7 +28,8 @@ class PatientVisitRepository implements PatientVisitInterface
     public function create(array $data)
     {
         $patientcreate = PatientVisit::create($data);
-        return  $patientcreate?->load('patient');
+        $data = $patientcreate?->load('patient');
+       return  PatientResources::collection($data);
     }
 
 
