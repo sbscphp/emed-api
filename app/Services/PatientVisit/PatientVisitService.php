@@ -255,7 +255,7 @@ class PatientVisitService
         $visit = PatientVisit::with([
             'patient:id,firstname,lastname,patientno,service_id',
             'patient.service:id,name',
-            'billingLogsForPatient'
+            'billingLogsForPatient',
         ])
             ->where('patient_id', $patientId)
             ->where('id', $visitId)

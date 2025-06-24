@@ -26,7 +26,8 @@ class PatientVisitRepository implements PatientVisitInterface
      */
     public function create(array $data)
     {
-        return PatientVisit::create($data);
+        $patientcreate = PatientVisit::create($data);
+        return  $patientcreate?->load('patient');
     }
 
 

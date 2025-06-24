@@ -38,7 +38,8 @@ class EmergencyContactRepository implements EmergencyContactInterface
      */
     public function update(array $data, $id)
     {
-        $record = EmergencyContact::where('patient_id', $id);
+
+        $record = EmergencyContact::where('patient_id', $id)->first();
         if($record){
           $record->update($data);
            return $record;
