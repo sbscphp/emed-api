@@ -214,7 +214,27 @@ class PatientVisitService
 
            $data = PatientVisitResources::collection($paginated)->toArray(request());
 
-            return collect($data);
+
+           $fetch = [
+            "data"=>collect($data),
+             "link"=>[
+                   'first' => $paginated->url(1),
+                    'last'  => $paginated->url($paginated->lastPage()),
+                    'prev'  => $paginated->previousPageUrl(),
+                    'next'  => $paginated->nextPageUrl(),
+             ],
+             "pages"=>[
+                        'current_page' => $paginated->currentPage(),
+                        'from'         => $paginated->firstItem(),
+                        'last_page'    => $paginated->lastPage(),
+                        'path'         => $paginated->path(),
+                        'per_page'     => $paginated->perPage(),
+                        'to'           => $paginated->lastItem(),
+                        'total'        => $paginated->total(),
+             ]
+             ];
+
+            return collect($fetch);
         }
 
         $records = $query->get();
