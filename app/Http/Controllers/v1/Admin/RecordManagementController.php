@@ -443,7 +443,7 @@ class RecordManagementController extends Controller
              $data =  $patientDetails->load(['nextOfKin', 'emergencyContact', 'visits', 'service']);
             //  $fetch = PatientDetailResoures::make($data); 
 
-            $data = $patientDetails->load(['nextOfKin', 'emergencyContact', 'visits', 'service']);
+            $data = $patientDetails->load(['nextOfKin', 'emergencyContact', 'visits', 'service', 'billingLogs']);
 
 
                 $serviceDate = $patientDetails->service->name ?? null;
