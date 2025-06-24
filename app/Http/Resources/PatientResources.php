@@ -23,7 +23,7 @@ class PatientResources extends JsonResource
             "status"=> $this->status,
             "updated_at"=>$this->updated_at,
             "created_at"=>$this->created_at,
-            "patient"=>optional($this->patient)?->age,
+            "patient_age"=>optional($this->patient)?->age,
             "gender"=>optional($this->patient)?->gender
         ];
     }
