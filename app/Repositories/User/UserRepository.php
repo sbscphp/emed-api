@@ -116,7 +116,8 @@ class UserRepository implements UserRepositoryInterface
      */
     public function find(int $id, array $selectAttrs = [])
     {
-        return User::select($selectAttrs ? $selectAttrs : '*')->find($id);
+        return User::find($id);
+       // return User::select($selectAttrs ? $selectAttrs : '*')->find($id);
     }
 
     /**
