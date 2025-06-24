@@ -4,6 +4,7 @@ namespace App\Services\PatientVisit;
 
 use App\Models\PatientVisit;
 use App\Repositories\PatientVisit\PatientVisitInterface;
+use App\Http\Resources\PatientVisitResources;
 
 /**
  * Class PatientVisitService
@@ -191,27 +192,29 @@ class PatientVisitService
         if ($paginate) {
             $paginated = $query->paginate($perPage);
 
-            $paginated->getCollection()->transform(function ($visit) {
-                $serviceId = $visit->patient->service_id ?? null;
+            // $paginated->getCollection()->transform(function ($visit) {
+            //     $serviceId = $visit->patient->service_id ?? null;
 
-                $billingLog = $visit->billingLogs()
-                    ->where('service_type_id', $serviceId)
-                    ->first();
+            //     $billingLog = $visit->billingLogs()
+            //         ->where('service_type_id', $serviceId)
+            //         ->first();
 
-                return [
-                    'id'             => $visit->id,
-                    'patient_id'     => $visit->patient->id,
-                    'fullname'       => "{$visit->patient->firstname} {$visit->patient->lastname}",
-                    'date'           => $visit->created_at->format('Y-m-d'),
-                    'visit_number'   => $visit->visitno,
-                    'service_type'   => $visit->patient->service->name ?? 'Nil',
-                    'referral'       => 'Nil',
-                    'payment_status' => $billingLog->payment_status ?? 'pending',
-                    'payment_method' => $billingLog->payment_method ?? 'pending',
-                ];
-            });
+            //     return [
+            //         'id'             => $visit->id,
+            //         'patient_id'     => $visit->patient->id,
+            //         'fullname'       => "{$visit->patient->firstname} {$visit->patient->lastname}",
+            //         'date'           => $visit->created_at->format('Y-m-d'),
+            //         'visit_number'   => $visit->visitno,
+            //         'service_type'   => $visit->patient->service->name ?? 'Nil',
+            //         'referral'       => 'Nil',
+            //         'payment_status' => $billingLog->payment_status ?? 'pending',
+            //         'payment_method' => $billingLog->payment_method ?? 'pending',
+            //     ];
+            // });
 
-            return $paginated;
+           $data = PatientVisitResources::collection($paginated)->toArray(request());
+
+            return collect($data);
         }
 
         $records = $query->get();

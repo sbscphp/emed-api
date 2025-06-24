@@ -1,7 +1,7 @@
-superadmin@emed.com password: password
-admin@emed.com password: password
-nurse@emed.com password: password
-consultant@emed.com password: password
+email:superadmin@emed.com domain:kolak-hospitals.emed.com password: password
+email:admin@emed.com domain:dannyss-hospitals.emed.com  password: password
+email:nurse@emed.com domain:dannyss-hospitals.emed.com password: password
+email:consultant@emed.com doamin:dannyss-hospitals.emed.com password: password
 pharmacy@emed.com password: password
 billing@emed.com password: password
 record@emed.com password: password
