@@ -548,24 +548,33 @@ class RecordManagementController extends Controller
 
             $records->load([
                 'service',
-                'visits' => function ($query) {
-                    $query->select(
-                        'id',
-                        'patient_id',
-                        'visitno',
-                        'stage',
-                        'status',
-                        'arrival_date',
-                        'departure_date',
-                        'visit_date',
-                        'created_at'
-                    );
-                }
+                'visits_recent',
+                // 'visits' => function ($query) {
+                //     $query->select(
+                //         'id',
+                //         'patient_id',
+                //         'visitno',
+                //         'stage',
+                //         'status',
+                //         'arrival_date',
+                //         'departure_date',
+                //         'visit_date',
+                //         'created_at'
+                //     );
+                // }
             ]);
+
+
+            $serviceDate = $records->data->records?->data ?? null;
+
+               
+
+            
 
             $summary = $this->patientService->getRecordStats();
             return JsonResponser::send(false, 'Record(s) found successfully.', [
-                'records' => $records,
+                // 'records' => $records,
+                'records'=>collect($serviceDate),
                 'summary' => $summary,
             ], 200);
         } catch (\Throwable $th) {
