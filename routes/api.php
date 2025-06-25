@@ -53,6 +53,7 @@ Route::group(["prefix" => "v1"], function () {
     Route::group(["middleware" => ["auth:api"]], function () {
         Route::group(['middleware' => ["tenant"]], function () {
             Route::get('/me', [RegistrationController::class, 'me']);
+            Route::get('/refreshToken', [RegistrationController::class, 'refreshToken']);
             Route::post('/logout', [RegistrationController::class, 'logout']);
             Route::group(['prefix' => 'admin', "namespace" => "v1\Admin"], function () {
                 //Record routes

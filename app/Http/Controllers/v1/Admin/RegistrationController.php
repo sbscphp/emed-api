@@ -465,6 +465,50 @@ class RegistrationController extends Controller
         }
     }
 
+
+public function refreshToken(Request $request)
+{
+    config(['database.default' => 'tenant']);
+    DB::connection('tenant')->beginTransaction();
+
+    try {
+        $user = auth()->user();
+
+        if (!$user) {
+            throw new \Exception("User not authenticated");
+        }
+
+        $newAccessToken = JWTAuth::fromUser($user);
+
+        $data = [
+            'token' => $newAccessToken,
+            'expires_in' => auth()->factory()->getTTL() * 60,
+        ];
+
+        DB::connection('tenant')->commit();
+
+        return JsonResponser::send(
+            true,
+            'New access token',
+            $data,
+            200
+        );
+    } catch (\Exception $e) {
+        DB::connection('tenant')->rollBack();
+
+        return JsonResponser::send(
+            false,
+            $e->getMessage(),
+            null,
+            500
+        );
+    }
+}
+
+
+
+
+
     public function verifyEmail($token)
     {
         try {
