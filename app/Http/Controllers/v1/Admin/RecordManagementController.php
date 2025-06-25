@@ -565,7 +565,7 @@ class RecordManagementController extends Controller
             ]);
 
 
-            $serviceDate = $records->data->records ?? null;
+            $serviceDate = $records->data ?? null;
 
                
 
