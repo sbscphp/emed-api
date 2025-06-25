@@ -466,7 +466,7 @@ class RegistrationController extends Controller
     }
 
 
-public function refreshToken(Request $request)
+public function refreshToken()
 {
     config(['database.default' => 'tenant']);
     DB::connection('tenant')->beginTransaction();
