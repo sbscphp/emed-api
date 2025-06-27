@@ -34,7 +34,7 @@ class UserController extends Controller
             DB::connection('tenant');
 
             $currentUser = Auth::user();
-            $user = User::find($currentUser->id);
+            $user = User::on('tenant')->find($currentUser->id);
              //$this->userService->find();
               dd($user);
             if (!$user) {
