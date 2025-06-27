@@ -388,7 +388,7 @@ class RegistrationController extends Controller
 
             // An Error Occurred During Login. Undefined Variable $tenant
 
-            $user = User::on('landlord')->where('email', $credentials['email'])->first();
+            $user = User::on('tenant')->where('email', $credentials['email'])->first();
             if (!$user) {
                 return JsonResponser::send(false, 'Invalid credentials', [], 401);
             }
