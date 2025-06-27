@@ -516,8 +516,8 @@ class RegistrationController extends Controller
             return JsonResponser::send(false, 'Invalid credentials', [], 401);
         }
 
-        // Optionally fetch additional data like hospital registration if relevant
-        $hospital = $user->tenant; // Or another related model
+     
+        $hospital = $user->tenant; 
 
         if (!$hospital) {
             JWTAuth::setToken($token)->invalidate();
@@ -525,7 +525,6 @@ class RegistrationController extends Controller
             return JsonResponser::send(false, 'No hospital information found for this tenant', [], 404);
         }
 
-        // Verify the email if not done already
         if (!$user->email_verified_at) {
             $user->update([
                 'email_verified_at' => now(),
@@ -536,7 +535,6 @@ class RegistrationController extends Controller
             ]);
         }
 
-        // Extract roles and permissions
         $roles = $user->roles;
         $permissions = [];
 
