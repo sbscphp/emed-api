@@ -37,7 +37,7 @@ class UserController extends Controller
 
             $currentUser = Auth::user();
              
-             $x = User::find($currentUser->id);
+             $x = User::where('email', $currentUser->email)->first();
              dd(json_encode([$currentUser, $x]));
           $user = $this->userService->find($currentUser->id);
 
