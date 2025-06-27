@@ -37,7 +37,7 @@ class UserController extends Controller
 
             $currentUser = Auth::user();
        
-             $this->userService->find($currentUser->id);
+          $user = $this->userService->find($currentUser->id);
 
             if (!$user) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
