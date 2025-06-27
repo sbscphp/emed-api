@@ -37,9 +37,8 @@ class UserController extends Controller
 
             $currentUser = Auth::user();
              
-             $x = User::where('email', $currentUser->email)->first();
-             dd(json_encode([$currentUser, $x]));
-          $user = $this->userService->find($currentUser->id);
+              $user = User::where('email', $currentUser->email)->first();
+
 
             if (!$user) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
