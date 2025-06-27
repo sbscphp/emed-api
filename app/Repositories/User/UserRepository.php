@@ -50,6 +50,7 @@ class UserRepository implements UserRepositoryInterface
                     'ID' => $user->id,
                     'Fullname' => $user->fullname,
                     'Email' => $user->email,
+                    'Date_of_birth'=>$user->date_of_birth,
                     'PhoneNumber' => $user->phone_number,
                     'Role' => $user->role,
                     'Status' => $user->status,
