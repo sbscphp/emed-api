@@ -357,130 +357,246 @@ class RegistrationController extends Controller
 
     //LOGIN THROUGH INDIVIDUAL TENANT DB
 
-    public function adminLogin(AdminLoginRequest $request)
-    {
-        DB::connection('tenant')->beginTransaction();
-        // try {
-            $credentials = $request->only('email', 'password');
+    // public function adminLogin(AdminLoginRequest $request)
+    // {
+    //     DB::connection('tenant')->beginTransaction();
+    //     try {
+    //         $credentials = $request->only('email', 'password');
 
-            // $tenantDomain = $request->input('tenant_domain');
+    //         // $tenantDomain = $request->input('tenant_domain');
 
-            //  $fullHost = $request->getHost(); // e.g. danking-hospitals.emed.com
-            // $mainDomain = config('app.central_domain', 'emed.com'); // set in config/app.php or .env
+    //         //  $fullHost = $request->getHost(); // e.g. danking-hospitals.emed.com
+    //         // $mainDomain = config('app.central_domain', 'emed.com'); // set in config/app.php or .env
 
-            // if (!str_ends_with($fullHost, $mainDomain)) {
-            //     return JsonResponser::send(false, 'Invalid tenant domain.', [], 400);
-            // }
+    //         // if (!str_ends_with($fullHost, $mainDomain)) {
+    //         //     return JsonResponser::send(false, 'Invalid tenant domain.', [], 400);
+    //         // }
 
-            // $subdomain = str_replace('.' . $mainDomain, '', $fullHost); // e.g. danking-hospitals
-            // $tenantDomain = $subdomain . '.' . $mainDomain;
+    //         // $subdomain = str_replace('.' . $mainDomain, '', $fullHost); // e.g. danking-hospitals
+    //         // $tenantDomain = $subdomain . '.' . $mainDomain;
 
-            // if (!$tenantDomain) {
-            //     return JsonResponser::send(false, 'Tenant domain is required.', [], 400);
-            // }
+    //         // if (!$tenantDomain) {
+    //         //     return JsonResponser::send(false, 'Tenant domain is required.', [], 400);
+    //         // }
 
-            // $tenant = Tenant::where('domain', $tenantDomain)->first();
-            // if (!$tenant) {
-            //     return JsonResponser::send(false, 'Tenant not found.', [], 404);
-            // }
+    //         // $tenant = Tenant::where('domain', $tenantDomain)->first();
+    //         // if (!$tenant) {
+    //         //     return JsonResponser::send(false, 'Tenant not found.', [], 404);
+    //         // }
 
            
 
-            // An Error Occurred During Login. Undefined Variable $tenant
+    //         // An Error Occurred During Login. Undefined Variable $tenant
 
-            $user = User::on('tenant')->where('email', $credentials['email'])->first();
-            if (!$user) {
-                  DB::rollBack();
-                return JsonResponser::send(false, 'Invalid credentials', [], 401);
-            }
+    //         $user = User::on('tenant')->where('email', $credentials['email'])->first();
+    //         if (!$user) {
+    //               DB::rollBack();
+    //             return JsonResponser::send(false, 'Invalid credentials', [], 401);
+    //         }
 
-            $tenant =  $user?->tenant;
-            // Tenant::find(tenant_id);
-           if (!$tenant) {
-            DB::rollBack();
-            return JsonResponser::send(false, 'Tenant not found.', [], 404);
-            }
+    //         $tenant =  $user?->tenant;
+    //         // Tenant::find(tenant_id);
+    //        if (!$tenant) {
+    //         DB::rollBack();
+    //         return JsonResponser::send(false, 'Tenant not found.', [], 404);
+    //         }
             
-            if (!$user->is_verified) {
-                  DB::rollBack();
-                return JsonResponser::send(false, 'Your email has not been verified. Please check your email for verification.', [], 403);
-            }
+    //         if (!$user->is_verified) {
+    //               DB::rollBack();
+    //             return JsonResponser::send(false, 'Your email has not been verified. Please check your email for verification.', [], 403);
+    //         }
 
-            if (!$token = JWTAuth::attempt($credentials)) {
-                  DB::rollBack();
-                return JsonResponser::send(false, 'Invalid credentials', [], 401);
-            }
+    //         if (!$token = JWTAuth::attempt($credentials)) {
+    //               DB::rollBack();
+    //             return JsonResponser::send(false, 'Invalid credentials', [], 401);
+    //         }
 
-            $hospital = User::on('tenant')->where('tenant_id', $user->tenant_id)->first();
-            if (!$hospital) {
-                JWTAuth::setToken($token)->invalidate();
-                  DB::rollBack();
-                return JsonResponser::send(false, 'No hospital information found for this tenant', [], 404);
-            }
+    //         $hospital = User::on('tenant')->where('tenant_id', $user->tenant_id)->first();
+    //         if (!$hospital) {
+    //             JWTAuth::setToken($token)->invalidate();
+    //               DB::rollBack();
+    //             return JsonResponser::send(false, 'No hospital information found for this tenant', [], 404);
+    //         }
          
-            //  dd(json_encode());
+    //         //  dd(json_encode());
 
-            // $tenant->makeCurrent();
-            // config(['database.connections.tenant.database' => $tenant->database]);
-            // DB::purge('tenant');
-            // DB::reconnect('tenant');
+    //         // $tenant->makeCurrent();
+    //         // config(['database.connections.tenant.database' => $tenant->database]);
+    //         // DB::purge('tenant');
+    //         // DB::reconnect('tenant');
 
-            if (!$user->email_verified_at) {
-                $user->update([
-                    'email_verified_at' => now(),
-                    'status' => 'active',
-                    'is_verified' => true,
-                    'can_login' => true,
-                    'is_active' => true,
-                ]);
+    //         if (!$user->email_verified_at) {
+    //             $user->update([
+    //                 'email_verified_at' => now(),
+    //                 'status' => 'active',
+    //                 'is_verified' => true,
+    //                 'can_login' => true,
+    //                 'is_active' => true,
+    //             ]);
+    //         }
+
+    //         $roles = $user->roles;
+    //         $permissions = [];
+
+    //         foreach ($roles as $role) {
+    //             foreach ($role->permissions as $permission) {
+    //                 $permissions[] = [
+    //                     'id' => $permission->id,
+    //                     'name' => $permission->name,
+    //                     'slug' => $permission->slug,
+    //                     'description' => $permission->description,
+    //                     'model' => 'Permission',
+    //                     'created_at' =>  $permission->created_at ? $permission->created_at->toISOString() : null,
+    //                     'updated_at' =>  $permission->updated_at ? $permission->updated_at->toISOString() : null,
+    //                     'deleted_at' => $permission->deleted_at ? $permission->deleted_at->toISOString() : null,
+    //                     'is_active' => $permission->is_active ? 'true' : 'false',
+    //                     'is_default' => $permission->is_default ? 'true' : 'false',
+    //                     'pivot' => [
+    //                         'role_id' => $role->id,
+    //                         'permission_id' => $permission->id,
+    //                         'created_at' => $permission->pivot->created_at ? $permission->pivot->created_at->toISOString() : null,
+    //                         'updated_at' => $permission->pivot->updated_at ? $permission->pivot->updated_at->toISOString() : null,
+    //                     ],
+    //                 ];
+    //             }
+    //         }
+
+    //         return JsonResponser::send(
+    //             true,
+    //             'Admin logged in successfully',
+    //             [
+    //                 'user' => $user,
+    //                 'tenant' => $tenant,
+    //                 'hospital_registration' => $hospital,
+    //                 'token' => $token,
+    //             ],
+    //             200
+    //         );
+    //     } catch (\Exception $e) {
+    //         return JsonResponser::send(
+    //             false,
+    //             'An error occurred during Login. ' . $e->getMessage(),
+    //             null,
+    //             500
+    //         );
+    //     }
+    // }
+
+
+
+    public function adminLogin(AdminLoginRequest $request)
+{
+    DB::connection('tenant')->beginTransaction();
+
+    try {
+        $credentials = $request->only('email', 'password');
+
+        // Attempt to find the user in the tenant database
+        $user = User::on('tenant')->where('email', $credentials['email'])->first();
+
+        if (!$user) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(false, 'Invalid credentials', [], 401);
+        }
+
+        $tenant = $user->tenant;
+
+        if (!$tenant) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(false, 'Tenant not found.', [], 404);
+        }
+
+        if (!$user->is_verified) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(false, 'Your email has not been verified. Please check your email.', [], 403);
+        }
+
+        if (!$token = JWTAuth::attempt($credentials)) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(false, 'Invalid credentials', [], 401);
+        }
+
+        // Optionally fetch additional data like hospital registration if relevant
+        $hospital = $user->tenant; // Or another related model
+
+        if (!$hospital) {
+            JWTAuth::setToken($token)->invalidate();
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(false, 'No hospital information found for this tenant', [], 404);
+        }
+
+        // Verify the email if not done already
+        if (!$user->email_verified_at) {
+            $user->update([
+                'email_verified_at' => now(),
+                'status' => 'active',
+                'is_verified' => true,
+                'can_login' => true,
+                'is_active' => true,
+            ]);
+        }
+
+        // Extract roles and permissions
+        $roles = $user->roles;
+        $permissions = [];
+
+        foreach ($roles as $role) {
+            foreach ($role->permissions as $permission) {
+                $permissions[] = [
+                    'id' => $permission->id,
+                    'name' => $permission->name,
+                    'slug' => $permission->slug,
+                    'description' => $permission->description,
+                    'model' => 'Permission',
+                    'created_at' => optional($permission->created_at)->toISOString(),
+                    'updated_at' => optional($permission->updated_at)->toISOString(),
+                    'deleted_at' => optional($permission->deleted_at)->toISOString(),
+                    'is_active' => (bool) $permission->is_active,
+                    'is_default' => (bool) $permission->is_default,
+                    'pivot' => [
+                        'role_id' => $role->id,
+                        'permission_id' => $permission->id,
+                        'created_at' => optional($permission->pivot->created_at)->toISOString(),
+                        'updated_at' => optional($permission->pivot->updated_at)->toISOString(),
+                    ],
+                ];
             }
+        }
 
-            $roles = $user->roles;
-            $permissions = [];
+        DB::connection('tenant')->commit();
 
-            foreach ($roles as $role) {
-                foreach ($role->permissions as $permission) {
-                    $permissions[] = [
-                        'id' => $permission->id,
-                        'name' => $permission->name,
-                        'slug' => $permission->slug,
-                        'description' => $permission->description,
-                        'model' => 'Permission',
-                        'created_at' =>  $permission->created_at ? $permission->created_at->toISOString() : null,
-                        'updated_at' =>  $permission->updated_at ? $permission->updated_at->toISOString() : null,
-                        'deleted_at' => $permission->deleted_at ? $permission->deleted_at->toISOString() : null,
-                        'is_active' => $permission->is_active ? 'true' : 'false',
-                        'is_default' => $permission->is_default ? 'true' : 'false',
-                        'pivot' => [
-                            'role_id' => $role->id,
-                            'permission_id' => $permission->id,
-                            'created_at' => $permission->pivot->created_at ? $permission->pivot->created_at->toISOString() : null,
-                            'updated_at' => $permission->pivot->updated_at ? $permission->pivot->updated_at->toISOString() : null,
-                        ],
-                    ];
-                }
-            }
-
-            return JsonResponser::send(
-                true,
-                'Admin logged in successfully',
-                [
-                    'user' => $user,
-                    'tenant' => $tenant,
-                    'hospital_registration' => $hospital,
-                    'token' => $token,
+        return JsonResponser::send(
+            true,
+            'Admin logged in successfully',
+            [
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'roles' => $roles->pluck('name'),
+                    'permissions' => $permissions,
                 ],
-                200
-            );
-        // } catch (\Exception $e) {
-        //     return JsonResponser::send(
-        //         false,
-        //         'An error occurred during Login. ' . $e->getMessage(),
-        //         null,
-        //         500
-        //     );
-        // }
+                'tenant' => [
+                    'id' => $tenant->id,
+                    'name' => $tenant->name,
+                    'domain' => $tenant->domain,
+                ],
+                'hospital_registration' => $hospital,
+                'token' => $token,
+            ],
+            200
+        );
+    } catch (\Exception $e) {
+        DB::connection('tenant')->rollBack();
+        return JsonResponser::send(
+            false,
+            'An error occurred during Login. ' . $e->getMessage(),
+            null,
+            500
+        );
     }
+}
+
 
 
 public function refreshToken()
