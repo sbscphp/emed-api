@@ -402,7 +402,7 @@ class RegistrationController extends Controller
                 return JsonResponser::send(false, 'Invalid credentials', [], 401);
             }
 
-            $hospital = User::on('tenant')->where('tenant_id', $tenant->id)->first();
+            $hospital = User::on('tenant')->where('tenant_id', $user->tenant_id)->first();
             if (!$hospital) {
                 JWTAuth::setToken($token)->invalidate();
                 return JsonResponser::send(false, 'No hospital information found for this tenant', [], 404);
