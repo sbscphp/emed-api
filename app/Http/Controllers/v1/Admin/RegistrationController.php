@@ -363,7 +363,7 @@ class RegistrationController extends Controller
         try {
             $credentials = $request->only('email', 'password');
 
-            $tenantDomain = $request->input('tenant_domain');
+            // $tenantDomain = $request->input('tenant_domain');
 
             //  $fullHost = $request->getHost(); // e.g. danking-hospitals.emed.com
             // $mainDomain = config('app.central_domain', 'emed.com'); // set in config/app.php or .env
@@ -375,19 +375,19 @@ class RegistrationController extends Controller
             // $subdomain = str_replace('.' . $mainDomain, '', $fullHost); // e.g. danking-hospitals
             // $tenantDomain = $subdomain . '.' . $mainDomain;
 
-            if (!$tenantDomain) {
-                return JsonResponser::send(false, 'Tenant domain is required.', [], 400);
-            }
+            // if (!$tenantDomain) {
+            //     return JsonResponser::send(false, 'Tenant domain is required.', [], 400);
+            // }
 
-            $tenant = Tenant::where('domain', $tenantDomain)->first();
-            if (!$tenant) {
-                return JsonResponser::send(false, 'Tenant not found.', [], 404);
-            }
+            // $tenant = Tenant::where('domain', $tenantDomain)->first();
+            // if (!$tenant) {
+            //     return JsonResponser::send(false, 'Tenant not found.', [], 404);
+            // }
 
-            $tenant->makeCurrent();
-            config(['database.connections.tenant.database' => $tenant->database]);
-            DB::purge('tenant');
-            DB::reconnect('tenant');
+            // $tenant->makeCurrent();
+            // config(['database.connections.tenant.database' => $tenant->database]);
+            // DB::purge('tenant');
+            // DB::reconnect('tenant');
 
             $user = User::on('tenant')->where('email', $credentials['email'])->first();
             if (!$user) {
