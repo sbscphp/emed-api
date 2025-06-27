@@ -28,24 +28,17 @@ class UserController extends Controller
         $this->userService = $userService;
     }
 
-    public function Setdatabase($tenant){
-         $tenant->makeCurrent();
-            config(['database.connections.tenant.database' => $tenant->database]);
-            DB::purge('tenant');
-            DB::reconnect('tenant');  
-    }
-
     public function allUsers(Request $request)
     {
-        config(['database.default' => 'tenant']);
         DB::connection('tenant')->beginTransaction();
         DB::connection('landlord')->beginTransaction();
         try {
+    
 
             $currentUser = Auth::user();
-             $tenant = $currentUser->tenant;
-             $this->userService->find();
-              dd($user);
+       
+             $this->userService->find($currentUser->id);
+
             if (!$user) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
@@ -68,12 +61,13 @@ class UserController extends Controller
             ) {
                 return $result;
             }
+
             if ($result->isEmpty()) {
                    DB::connection('tenant')->rollBack();
                 DB::connection('landlord')->rollBack();
                 return JsonResponser::send(true, 'No users found.', null, 404);
             }
-       
+
             return JsonResponser::send(false, 'Users retrieved successfully.', [
                 'records' => $result,
                 'total' => $paginate ? $result->total() : $result->count(),
