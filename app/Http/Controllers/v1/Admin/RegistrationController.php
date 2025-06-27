@@ -391,25 +391,35 @@ class RegistrationController extends Controller
 
             // An Error Occurred During Login. Undefined Variable $tenant
 
-            $user = User::on('tenant')->where('email', $credentials['email'])->first();
+            $user = User::on('central')->where('email', $credentials['email'])->first();
             if (!$user) {
+                  DB::rollBack();
                 return JsonResponser::send(false, 'Invalid credentials', [], 401);
             }
             
             if (!$user->is_verified) {
+                  DB::rollBack();
                 return JsonResponser::send(false, 'Your email has not been verified. Please check your email for verification.', [], 403);
             }
 
             if (!$token = JWTAuth::attempt($credentials)) {
+                  DB::rollBack();
                 return JsonResponser::send(false, 'Invalid credentials', [], 401);
             }
 
             $hospital = User::on('tenant')->where('tenant_id', $user->tenant_id)->first();
             if (!$hospital) {
                 JWTAuth::setToken($token)->invalidate();
+                  DB::rollBack();
                 return JsonResponser::send(false, 'No hospital information found for this tenant', [], 404);
             }
-           $tenant = Tenant::where('id', $user->tenant_id)->first();
+            $tenant =  $user?->tenant;
+            // Tenant::find(tenant_id);
+           if (!$tenant) {
+            DB::rollBack();
+            return JsonResponser::send(false, 'Tenant not found.', [], 404);
+            }
+
             if (!$user->email_verified_at) {
                 $user->update([
                     'email_verified_at' => now(),
