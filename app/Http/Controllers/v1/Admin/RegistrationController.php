@@ -409,7 +409,7 @@ class RegistrationController extends Controller
                 JWTAuth::setToken($token)->invalidate();
                 return JsonResponser::send(false, 'No hospital information found for this tenant', [], 404);
             }
-
+           $tenant = Tenant::where('id', $user->tenant_id)->first();
             if (!$user->email_verified_at) {
                 $user->update([
                     'email_verified_at' => now(),
