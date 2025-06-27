@@ -31,9 +31,14 @@ class CheckAdminOrSuperAdmin
             $user->load('roles');
         }
 
-        dd(json_encode($user->load('roles')));
+        // dd(json_encode($user->load('roles')));
+        $role = Role::where('display_name', $user->role)->first();
 
-        if (!$user->hasRole(['admin', 'super_admin'])) {
+        if(!$role){
+          return JsonResponser::send(true, 'Access Denied: Admin or Super Admin role required.', [], 403);   
+        }
+
+        if ( !$role?->name ==  'admin' || !$role?->name ==  'super_admin' ) {
             ErrorLog::create([
                 'causer'         => $user->id,
                 'model'          => 'Permission',
