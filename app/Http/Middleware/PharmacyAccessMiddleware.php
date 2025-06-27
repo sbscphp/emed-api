@@ -8,7 +8,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
-
+use App\Models\Role;
 class PharmacyAccessMiddleware
 {
     /**
@@ -29,7 +29,13 @@ class PharmacyAccessMiddleware
             $user->load('roles');
         }
 
-        if (!$user->hasRole(['admin', 'super_admin', 'pharmacy'])) {
+        $role = Role::where('display_name', $user->role)->first();
+
+         if(!$role){
+         return JsonResponser::send(true, 'Access Denied: Admin or Super Admin role required.', [], 403);   
+        }
+
+        if (!$role?->name ==  'admin' || !$role?->name ==  'super_admin' || !$role?->name ==  'pharmacy') {
             ErrorLog::create([
                 'causer'        => $user->id ?? 'Guest',
                 'model'         => 'Permission',

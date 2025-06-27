@@ -7,7 +7,7 @@ use App\Responser\JsonResponser;
 use Closure;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-
+use App\Models\Role;
 class RecordsAccessMiddleware
 {
     /**
@@ -29,7 +29,13 @@ class RecordsAccessMiddleware
             $user->load('roles');
         }
 
-        if (!$user->hasRole(['admin', 'super_admin', 'record'])) {
+          $role = Role::where('display_name', $user->role)->first();
+
+        if(!$role){
+            return JsonResponser::send(true, 'Access Denied: Admin or Super Admin role required.', [], 403);   
+        }
+
+        if (!$role?->name ==  'admin' || !$role?->name ==  'super_admin' || !$role?->name ==  'record') {
             ErrorLog::create([
                 'causer'        => $user->id,
                 'model'         => 'Permission',
