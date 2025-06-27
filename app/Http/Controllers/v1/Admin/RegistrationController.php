@@ -388,12 +388,12 @@ class RegistrationController extends Controller
 
             // An Error Occurred During Login. Undefined Variable $tenant
 
-            $user = User::on('tenant')->where('email', $credentials['email'])->first();
+            $user = User::where('email', $credentials['email'])->first();
             if (!$user) {
                 return JsonResponser::send(false, 'Invalid credentials', [], 401);
             }
-
-            $tenant =  $user?->tenant;
+             $tenant =  $user?->tenant;
+            // Tenant::find(tenant_id);
            if (!$tenant) {
             return JsonResponser::send(false, 'Tenant not found.', [], 404);
             }
@@ -459,7 +459,7 @@ class RegistrationController extends Controller
                     ];
                 }
             }
-              DB::commit();
+
             return JsonResponser::send(
                 true,
                 'Admin logged in successfully',
