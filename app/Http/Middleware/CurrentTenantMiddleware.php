@@ -29,6 +29,8 @@ class CurrentTenantMiddleware
             $tenant = Tenant::where('domain', $request->getHost())->first();
         }
 
+        // An Error Occurred During Login. Undefined Variable $tenant
+
         if ($tenant) {
             $tenant->makeCurrent();
 

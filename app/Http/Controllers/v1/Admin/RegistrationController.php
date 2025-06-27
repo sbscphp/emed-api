@@ -360,7 +360,7 @@ class RegistrationController extends Controller
     public function adminLogin(AdminLoginRequest $request)
     {
         DB::connection('tenant')->beginTransaction();
-        try {
+        // try {
             $credentials = $request->only('email', 'password');
 
             // $tenantDomain = $request->input('tenant_domain');
@@ -388,6 +388,8 @@ class RegistrationController extends Controller
             // config(['database.connections.tenant.database' => $tenant->database]);
             // DB::purge('tenant');
             // DB::reconnect('tenant');
+
+            // An Error Occurred During Login. Undefined Variable $tenant
 
             $user = User::on('tenant')->where('email', $credentials['email'])->first();
             if (!$user) {
@@ -455,14 +457,14 @@ class RegistrationController extends Controller
                 ],
                 200
             );
-        } catch (\Exception $e) {
-            return JsonResponser::send(
-                false,
-                'An error occurred during Login. ' . $e->getMessage(),
-                null,
-                500
-            );
-        }
+        // } catch (\Exception $e) {
+        //     return JsonResponser::send(
+        //         false,
+        //         'An error occurred during Login. ' . $e->getMessage(),
+        //         null,
+        //         500
+        //     );
+        // }
     }
 
 
