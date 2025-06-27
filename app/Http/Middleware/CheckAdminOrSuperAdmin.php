@@ -31,6 +31,8 @@ class CheckAdminOrSuperAdmin
             $user->load('roles');
         }
 
+        dd(json_encode($user->load('roles')));
+
         if (!$user->hasRole(['admin', 'super_admin'])) {
             ErrorLog::create([
                 'causer'         => $user->id,
