@@ -37,6 +37,7 @@ class UserController extends Controller
 
     public function allUsers(Request $request)
     {
+        config(['database.default' => 'tenant']);
         DB::connection('tenant')->beginTransaction();
         DB::connection('landlord')->beginTransaction();
         try {
