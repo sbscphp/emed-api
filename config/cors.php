@@ -6,6 +6,7 @@ return [
     'allowed_origins' => [
         'http://localhost:5173',
         'https://emed-application.vercel.app',
+        'http://127.0.0.1:5500',
     ],
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],
