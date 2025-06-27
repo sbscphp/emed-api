@@ -37,12 +37,12 @@ class UserController extends Controller
 
     public function allUsers(Request $request)
     {
+        DB::connection('tenant')->beginTransaction();
+        DB::connection('landlord')->beginTransaction();
         try {
-         
 
             $currentUser = Auth::user();
              $tenant = $currentUser->tenant;
-             $this->Setdatabase($tenant);
              $this->userService->find();
               dd($user);
             if (!$user) {
@@ -67,16 +67,19 @@ class UserController extends Controller
             ) {
                 return $result;
             }
-
             if ($result->isEmpty()) {
+                   DB::connection('tenant')->rollBack();
+                DB::connection('landlord')->rollBack();
                 return JsonResponser::send(true, 'No users found.', null, 404);
             }
-
+       
             return JsonResponser::send(false, 'Users retrieved successfully.', [
                 'records' => $result,
                 'total' => $paginate ? $result->total() : $result->count(),
             ], 200);
         } catch (\Throwable $th) {
+               DB::connection('tenant')->rollBack();
+                DB::connection('landlord')->rollBack();
             return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
         }
     }
