@@ -359,7 +359,7 @@ class RegistrationController extends Controller
 
     public function adminLogin(AdminLoginRequest $request)
     {
-        DB::connection('tenant')->beginTransaction();
+        
         // try {
             $credentials = $request->only('email', 'password');
 
@@ -390,16 +390,20 @@ class RegistrationController extends Controller
 
             $user = User::on('landlord')->where('email', $credentials['email'])->first();
             if (!$user) {
-                  DB::rollBack();
                 return JsonResponser::send(false, 'Invalid credentials', [], 401);
             }
 
             $tenant =  $user?->tenant;
-            // Tenant::find(tenant_id);
            if (!$tenant) {
-            DB::rollBack();
             return JsonResponser::send(false, 'Tenant not found.', [], 404);
             }
+
+            $tenant->makeCurrent();
+            config(['database.connections.tenant.database' => $tenant->database]);
+            DB::purge('tenant');
+            DB::reconnect('tenant');
+
+            DB::connection('tenant')->beginTransaction();
             
             if (!$user->is_verified) {
                   DB::rollBack();
@@ -418,12 +422,7 @@ class RegistrationController extends Controller
                 return JsonResponser::send(false, 'No hospital information found for this tenant', [], 404);
             }
          
-             dd(json_encode($tenant));
-
-            // $tenant->makeCurrent();
-            // config(['database.connections.tenant.database' => $tenant->database]);
-            // DB::purge('tenant');
-            // DB::reconnect('tenant');
+           
 
             if (!$user->email_verified_at) {
                 $user->update([
@@ -460,7 +459,7 @@ class RegistrationController extends Controller
                     ];
                 }
             }
-
+              DB::commit();
             return JsonResponser::send(
                 true,
                 'Admin logged in successfully',
