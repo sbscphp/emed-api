@@ -31,12 +31,13 @@ class UserController extends Controller
     public function allUsers(Request $request)
     {
         try {
+         config(['database.default' => 'tenant']);
             DB::connection('tenant');
 
             $currentUser = Auth::user();
             $user = User::on('tenant')->find($currentUser->id);
              //$this->userService->find();
-              dd($currentUser);
+              dd($user);
             if (!$user) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
