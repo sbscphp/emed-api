@@ -38,8 +38,7 @@ class UserController extends Controller
     public function allUsers(Request $request)
     {
         try {
-         config(['database.default' => 'tenant']);
-            DB::connection('tenant');
+         
 
             $currentUser = Auth::user();
              $tenant = $currentUser->tenant;
