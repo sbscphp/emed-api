@@ -388,7 +388,7 @@ class RegistrationController extends Controller
 
             // An Error Occurred During Login. Undefined Variable $tenant
 
-            $user = User::on('landlord')->where('email', $credentials['email'])->first();
+            $user = User::on('tenant')->where('email', $credentials['email'])->first();
             if (!$user) {
                   DB::rollBack();
                 return JsonResponser::send(false, 'Invalid credentials', [], 401);
@@ -418,10 +418,12 @@ class RegistrationController extends Controller
                 return JsonResponser::send(false, 'No hospital information found for this tenant', [], 404);
             }
          
-            $tenant->makeCurrent();
-            config(['database.connections.tenant.database' => $tenant->database]);
-            DB::purge('tenant');
-            DB::reconnect('tenant');
+            //  dd(json_encode());
+
+            // $tenant->makeCurrent();
+            // config(['database.connections.tenant.database' => $tenant->database]);
+            // DB::purge('tenant');
+            // DB::reconnect('tenant');
 
             if (!$user->email_verified_at) {
                 $user->update([
