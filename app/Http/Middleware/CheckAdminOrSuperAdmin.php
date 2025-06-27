@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\ErrorLog;
 use App\Responser\JsonResponser;
 use Illuminate\Support\Facades\Log;
-
+use App\Models\Role;
 class CheckAdminOrSuperAdmin
 {
     /**
