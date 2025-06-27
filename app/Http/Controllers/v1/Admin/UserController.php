@@ -28,6 +28,13 @@ class UserController extends Controller
         $this->userService = $userService;
     }
 
+    public function Setdatabase($tenant){
+         $tenant->makeCurrent();
+            config(['database.connections.tenant.database' => $tenant->database]);
+            DB::purge('tenant');
+            DB::reconnect('tenant');  
+    }
+
     public function allUsers(Request $request)
     {
         try {
@@ -35,9 +42,12 @@ class UserController extends Controller
             DB::connection('tenant');
 
             $currentUser = Auth::user();
+             $tenant = $currentUser->tenant;
+             $this->Setdatabase($tenant);
+
             $user = User::on('tenant')->find($currentUser->id);
              //$this->userService->find();
-              dd($currentUser);
+              dd($user);
             if (!$user) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
