@@ -36,7 +36,9 @@ class UserController extends Controller
     
 
             $currentUser = Auth::user();
-             dd(json_encode($currentUser));
+             
+             $x = User::find($currentUser->id);
+             dd(json_encode([$currentUser, $x]));
           $user = $this->userService->find($currentUser->id);
 
             if (!$user) {
