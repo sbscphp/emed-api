@@ -538,7 +538,7 @@ class RecordManagementController extends Controller
 
             $currentUser = Auth::user();
             // $user = $this->userService->find($currentUser->id);
-             $user = User::where('email', $credentials['email'])->first();
+             $user = User::where('email', $currentUser['email'])->first();
 
             if (is_null($user)) {
                 return JsonResponser::send(false, 'User not found.', null, 404);
