@@ -525,10 +525,10 @@ class RegistrationController extends Controller
             return JsonResponser::send(false, 'No hospital information found for this tenant', [], 404);
         }
 
-        //    $tenant->makeCurrent();
-        //     config(['database.connections.tenant.database' => $tenant->database]);
-        //     DB::purge('tenant');
-        //     DB::reconnect('tenant');
+           $tenant->makeCurrent();
+            config(['database.connections.tenant.database' => $tenant->database]);
+            DB::purge('tenant');
+            DB::reconnect('tenant');
 
         if (!$user->email_verified_at) {
             $user->update([
