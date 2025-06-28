@@ -541,10 +541,10 @@ class RecordManagementController extends Controller
             
              //$user = User::on('tenant')->where('email', $credentials['email'])->first();
 
-            if (is_null($user)) {
-                DB::connection('tenant')->rollBack();
-                return JsonResponser::send(false, 'User not found.', null, 404);
-            }
+            // if (is_null($user)) {
+            //     DB::connection('tenant')->rollBack();
+            //     return JsonResponser::send(false, 'User not found.', null, 404);
+            // }
 
             $records = $this->patientService->getAllRecordFiltered($search, $paginate, $perPage);
 
