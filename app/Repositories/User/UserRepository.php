@@ -119,10 +119,10 @@ class UserRepository implements UserRepositoryInterface
     {
       
      $columns = !empty($selectAttrs) ? $selectAttrs : ['*'];
-      $user = User::select($columns)->find( $id);
+      $user = User::select($columns)->find(intval($id));
       if($user){
            dd(json_encode(is_string($user)));
-        return $user;
+        //return $user;
       }
        // return User::select($selectAttrs ? $selectAttrs : '*')->find($id);
     }
