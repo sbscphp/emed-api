@@ -540,8 +540,8 @@ class RecordManagementController extends Controller
             $currentUser = Auth::user();
             //  $user = $this->userService->find($currentUser->id);
              
-             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
-
+             $user = User::on('tenant')->find($currentUser['id']);
+             dd($user);
             if (is_null($user)) {
                 DB::connection('tenant')->rollBack();
                 return JsonResponser::send(false, 'User not found.', null, 404);
