@@ -21,7 +21,6 @@ use App\Services\PatientVisit\PatientVisitService;
 use App\Services\User\UserService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
-use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -29,7 +28,7 @@ use Spatie\Multitenancy\Models\Tenant;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\PatientVisitExport;
 use App\Http\Resources\PatientDetailResoures;
-
+use App\Models\User;
 class RecordManagementController extends Controller
 {
     protected $userService;
@@ -529,28 +528,25 @@ class RecordManagementController extends Controller
 
     public function allRecords(Request $request)
     {
-         DB::connection('tenant')->beginTransaction();
-        try {
         
+        try {
+            DB::connection('tenant');
 
             $search = $request->search;
             $paginate = $request->paginate ?? false;
             $perPage = $request->perPage ?? 10;
 
             $currentUser = Auth::user();
-            //  $user = $this->userService->find($currentUser->id);
-             
-             $user = User::find($currentUser['id']);
-             dd($user);
+            // $user = $this->userService->find($currentUser->id);
+             $user = User::where('email', $credentials['email'])->first();
+
             if (is_null($user)) {
-                DB::connection('tenant')->rollBack();
                 return JsonResponser::send(false, 'User not found.', null, 404);
             }
 
             $records = $this->patientService->getAllRecordFiltered($search, $paginate, $perPage);
 
             if ($records->isEmpty()) {
-                DB::connection('tenant')->rollBack();
                 return JsonResponser::send(false, 'Record(s) not found.', null, 404);
             }
 
