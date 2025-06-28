@@ -570,7 +570,7 @@ class RecordManagementController extends Controller
             ]);
 
 
-            $serviceDate = $records->data ?? null;
+          
 
                
 
@@ -579,7 +579,7 @@ class RecordManagementController extends Controller
             $summary = $this->patientService->getRecordStats();
             return JsonResponser::send(false, 'Record(s) found successfully.', [
                 // 'records' => $records,
-                'records'=>collect($serviceDate),
+                'records'=>collect($records),
                 'summary' => $summary,
             ], 200);
         } catch (\Throwable $th) {
