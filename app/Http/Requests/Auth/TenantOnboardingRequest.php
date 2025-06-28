@@ -3,7 +3,7 @@
 namespace App\Http\Requests\Auth;
 
 use Illuminate\Foundation\Http\FormRequest;
-
+use Illuminate\Support\Facades\DB;
 class TenantOnboardingRequest extends FormRequest
 {
     /**
@@ -25,19 +25,92 @@ class TenantOnboardingRequest extends FormRequest
     {
         return [
             // Hospital Details
-            'name'          => 'required|string',
+            //'name'          => 'required|string',
+
+                'name'=> [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    $exists = DB::connection('tenant')
+                        ->table('registrations')
+                        ->where('name', $value)
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('the name already exist.');
+                    }
+                },
+            ],
             'state_city'             => 'required|string',
             'registration_number'    => 'required|string',
-            'email'         => 'required|email',
-            'phone_number'  => 'required|numeric',
+            //'email'         => 'required|email',
+            //'phone_number'  => 'required|numeric',
+
+                'phone_number'=> [
+                'required',
+                'numeric',
+                function ($attribute, $value, $fail) {
+                    $exists = DB::connection('tenant')
+                        ->table('registrations')
+                        ->where('phone_number', $value)
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('phone number  already exist.');
+                    }
+                },
+            ],
+
+             'email'=> [
+                'required',
+                'email',
+                function ($attribute, $value, $fail) {
+                    $exists = DB::connection('tenant')
+                        ->table('registrations')
+                        ->where('email', $value)
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('email  already exist.');
+                    }
+                },
+            ],
             'address'                => 'required|string',
             'license'                => 'nullable|file|max:3000',
 
             // Admin Details
             'admin_fullname'         => 'required|string',
             'admin_role'             => 'required|string',
-            'admin_phone_number'     => 'required|numeric',
-            'admin_email'            => 'required|email|unique:users,email',
+           // 'admin_phone_number'     => 'required|numeric',
+            'admin_phone_number'=> [
+                'required',
+                'numeric',
+                function ($attribute, $value, $fail) {
+                    $exists = DB::connection('tenant')
+                        ->table('users')
+                        ->where('phone_number', $value)
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('phone number  already exist.');
+                    }
+                },
+            ],
+           // 'admin_email'            => 'required|email|unique:users,email',
+             'admin_email'=> [
+                'required',
+                'email',
+                function ($attribute, $value, $fail) {
+                    $exists = DB::connection('tenant')
+                        ->table('users')
+                        ->where('email', $value)
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('email  already exist.');
+                    }
+                },
+            ],
             'admin_password'      => 'required|confirmed|min:6',
             'admin_password_confirm' => 'sometimes|same:admin_password',
         ];
