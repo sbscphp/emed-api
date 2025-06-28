@@ -538,8 +538,8 @@ class RecordManagementController extends Controller
             $perPage = $request->perPage ?? 10;
 
             $currentUser = Auth::user();
-             $user = $this->userService->find($currentUser->id);
-             //$user = User::where('email', $currentUser['email'])->first();
+             //$user = $this->userService->find($currentUser->id);
+             $user = User::where('email', $currentUser['email'])->first();
 
             if (is_null($user)) {
                 return JsonResponser::send(false, 'User not found.', null, 404);
