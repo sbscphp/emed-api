@@ -540,7 +540,7 @@ class RecordManagementController extends Controller
             $currentUser = Auth::user();
             //  $user = $this->userService->find($currentUser->id);
              
-             $user = User::on('tenant')->where('email', $credentials['email'])->first();
+             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
             if (is_null($user)) {
                 DB::connection('tenant')->rollBack();
