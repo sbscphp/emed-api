@@ -538,7 +538,7 @@ class RecordManagementController extends Controller
 
             $currentUser = Auth::user();
              $user = $this->userService->find($currentUser->id);
-             dd(json_encode($user));
+             dd(json_encode($currentUser->id));
              //$user = User::on('tenant')->where('email', $credentials['email'])->first();
 
             if (is_null($user)) {
