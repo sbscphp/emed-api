@@ -28,6 +28,7 @@ use Spatie\Multitenancy\Models\Tenant;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\PatientVisitExport;
 use App\Http\Resources\PatientDetailResoures;
+
 class RecordManagementController extends Controller
 {
     protected $userService;
@@ -527,22 +528,27 @@ class RecordManagementController extends Controller
 
     public function allRecords(Request $request)
     {
+         DB::connection('tenant')->beginTransaction();
         try {
-            DB::connection('tenant');
+        
 
             $search = $request->search;
             $paginate = $request->paginate ?? false;
             $perPage = $request->perPage ?? 10;
 
             $currentUser = Auth::user();
-            $user = $this->userService->find($currentUser->id);
+             $user = $this->userService->find($currentUser->id);
+             //$user = User::on('tenant')->where('email', $credentials['email'])->first();
+
             if (is_null($user)) {
+                DB::connection('tenant')->rollBack();
                 return JsonResponser::send(false, 'User not found.', null, 404);
             }
 
             $records = $this->patientService->getAllRecordFiltered($search, $paginate, $perPage);
 
             if ($records->isEmpty()) {
+                DB::connection('tenant')->rollBack();
                 return JsonResponser::send(false, 'Record(s) not found.', null, 404);
             }
 
