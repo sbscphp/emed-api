@@ -21,6 +21,7 @@ use App\Services\PatientVisit\PatientVisitService;
 use App\Services\User\UserService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -537,9 +538,9 @@ class RecordManagementController extends Controller
             $perPage = $request->perPage ?? 10;
 
             $currentUser = Auth::user();
-             $user = $this->userService->find($currentUser->id);
-              dd(json_encode($user));
-             //$user = User::on('tenant')->where('email', $credentials['email'])->first();
+            //  $user = $this->userService->find($currentUser->id);
+             
+             $user = User::on('tenant')->where('email', $credentials['email'])->first();
 
             if (is_null($user)) {
                 DB::connection('tenant')->rollBack();
