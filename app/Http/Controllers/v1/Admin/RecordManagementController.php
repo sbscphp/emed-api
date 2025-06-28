@@ -530,7 +530,8 @@ class RecordManagementController extends Controller
     {
         
         try {
-            DB::connection('tenant');
+              config(['database.default' => 'tenant']);
+            DB::connection('tenant')->beginTransaction();
 
             $search = $request->search;
             $paginate = $request->paginate ?? false;
