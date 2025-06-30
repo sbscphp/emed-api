@@ -14,6 +14,7 @@ use App\Models\FamilyHistory;
 use App\Models\MedicalHistory;
 use App\Models\PatientVisit;
 use App\Models\SocialHistory;
+use App\Models\User;
 use App\Responser\JsonResponser;
 use App\Services\Admission\AdmissionService;
 use App\Services\Appointment\AppointmentService;
@@ -153,7 +154,9 @@ class ConsultationController extends Controller
              config(['database.default' => 'tenant']);
             DB::connection('tenant')->beginTransaction();
             $currentUser = Auth::user();
-            $user = $this->userService->find($currentUser->id);
+          //  $user = $this->userService->find($currentUser->id);
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
+
             if (!$user) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
@@ -243,7 +246,8 @@ class ConsultationController extends Controller
              config(['database.default' => 'tenant']);
             DB::connection('tenant')->beginTransaction();
             $currentUser = Auth::user();
-            $user = $this->userService->find($currentUser->id);
+            //$user = $this->userService->find($currentUser->id);
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
             if (!$user) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
@@ -296,7 +300,9 @@ class ConsultationController extends Controller
              config(['database.default' => 'tenant']);
             DB::connection('tenant')->beginTransaction();
             $currentUser = Auth::user();
-            $user = $this->userService->find($currentUser->id);
+            // $user = $this->userService->find($currentUser->id);
+             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
+
             if (!$user) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
@@ -350,7 +356,8 @@ class ConsultationController extends Controller
            config(['database.default' => 'tenant']);
             DB::connection('tenant')->beginTransaction();
             $currentUser = Auth::user();
-            $user = $this->userService->find($currentUser->id);
+            //$user = $this->userService->find($currentUser->id);
+             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
             if (!$user) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
@@ -418,7 +425,8 @@ class ConsultationController extends Controller
 
             DB::connection('tenant')->beginTransaction();
             $currentUser = Auth::user();
-            $user = $this->userService->find($currentUser->id);
+          //  $user = $this->userService->find($currentUser->id);
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
             if (!$user) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
