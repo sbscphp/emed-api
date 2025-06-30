@@ -39,8 +39,8 @@ class MedicationRequest extends FormRequest
                         ->where('id', $value)
                         ->exists();
 
-                    if ($exists) {
-                        $fail('this pharmacy id already exist');
+                    if (!$exists) {
+                        $fail('this pharmacy id does not exist');
                     }
                 },
             ],

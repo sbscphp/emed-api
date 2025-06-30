@@ -25,21 +25,7 @@ class StoreVendorRequest extends FormRequest
             'vendor_name'      => 'required|string|max:255',
             'contact_person'   => 'nullable|string|max:255',
             'phone_number'     => 'required|string|max:20',
-           // 'email'            => 'nullable|email|max:255|unique:tenant.vendors,email',
-            'email' => [
-                'required',
-                'max:255',
-                function ($attribute, $value, $fail) {
-                    $exists = DB::connection('tenant')
-                        ->table('vendors')
-                        ->where('email', $value)
-                        ->exists();
-
-                    if ($exists) {
-                        $fail('this email already exist');
-                    }
-                },
-            ],
+            'email'            => 'nullable|email|max:255|unique:tenant.vendors,email',
             'address'          => 'nullable|string|max:500',
             'registration_no'  => 'nullable|string|max:100',
             'status'           => 'required|in:Active,Inactive',

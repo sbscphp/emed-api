@@ -47,7 +47,7 @@ class StoreUserRequest extends FormRequest
                         ->exists();
 
                     if ($exists) {
-                        $fail('this email already exist');
+                        $fail("The selected role doesn't exist.");
                     }
                 },
             ],
