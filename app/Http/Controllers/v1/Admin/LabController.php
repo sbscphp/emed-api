@@ -12,6 +12,7 @@ use App\Services\User\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\User;
 use Throwable;
 use function PHPUnit\Framework\isEmpty;
 
@@ -48,7 +49,8 @@ class LabController extends Controller
 
             DB::connection('tenant');
             $currentUser = Auth::user();
-            $user = $this->userService->find($currentUser->id);
+            // $user = $this->userService->find($currentUser->id);
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
             if (!$user) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
@@ -77,8 +79,8 @@ class LabController extends Controller
 
             DB::connection('tenant');
             $currentUser = Auth::user();
-            $user = $this->userService->find($currentUser->id);
-
+            //$user = $this->userService->find($currentUser->id);
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
             if (!$user) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
@@ -97,8 +99,8 @@ class LabController extends Controller
 
             DB::connection('tenant');
             $currentUser = Auth::user();
-            $user = $this->userService->find($currentUser->id);
-
+           // $user = $this->userService->find($currentUser->id);
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
             if (!$user) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
