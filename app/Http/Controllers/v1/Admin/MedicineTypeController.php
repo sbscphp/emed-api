@@ -12,6 +12,7 @@ use App\Services\MedicineType\MedicineTypeService;
 use App\Services\User\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class MedicineTypeController extends Controller
 {
@@ -58,8 +59,8 @@ class MedicineTypeController extends Controller
     {
         try {
             $currentUser = Auth::user();
-            $user = $this->userService->find($currentUser->id);
-
+            //$user = $this->userService->find($currentUser->id);
+             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
             $created = $this->medicineTypeService->create($request->validated());
             $dataToLog = [
                 'causer_id' => $user->id,
