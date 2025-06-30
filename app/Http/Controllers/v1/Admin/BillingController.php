@@ -12,7 +12,7 @@ use App\Services\User\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-
+use App\Models\User;
 class BillingController extends Controller
 {
     protected $billingService;
@@ -54,8 +54,8 @@ class BillingController extends Controller
 
         try {
             $currentUser = Auth::user();
-            $user = $this->userService->find($currentUser->id);
-
+            //$user = $this->userService->find($currentUser->id);
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
             $validated = array_merge($request->validated(), [
                 'created_by' => $currentUser->id,
             ]);
