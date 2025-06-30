@@ -88,7 +88,7 @@ class ForgotPasswordController extends Controller
             $user = User::where('email', $validatedData['email'])->first();
 
             if (!$user) {
-                return JsonResponser::send(true, 'User not found.', [], 404);
+                return JsonResponser::send(true, 'User not found.', [], 204);
             }
 
             $user->password = Hash::make($validatedData['password']);

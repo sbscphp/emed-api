@@ -50,7 +50,7 @@ class AuditLogController extends Controller
             }
 
             if ($logs->isEmpty()) {
-                return JsonResponser::send(true, 'Record(s) not found.', null, 404);
+                return JsonResponser::send(true, 'Record(s) not found.', null, 204);
             }
 
             $response = [
@@ -79,7 +79,7 @@ class AuditLogController extends Controller
             $logs = $this->auditLogService->getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate, $downloadType);
 
             if ($logs->isEmpty()) {
-                return JsonResponser::send(true, 'Record(s) not found for download.', null, 404);
+                return JsonResponser::send(true, 'Record(s) not found for download.', null, 204);
             }
 
             switch (strtolower($downloadType)) {

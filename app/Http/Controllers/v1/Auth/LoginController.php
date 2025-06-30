@@ -118,7 +118,7 @@ class LoginController extends Controller
 
             $tenant = Tenant::find($landlordUser->tenant_id);
             if (!$tenant) {
-                return JsonResponser::send(false, 'Tenant not found for this user', [], 404);
+                return JsonResponser::send(false, 'Tenant not found for this user', [], 204);
             }
 
             $tenant->makeCurrent();
@@ -128,12 +128,12 @@ class LoginController extends Controller
 
             $tenantUser = User::on('tenant')->with('roles.permissions')->find($landlordUser->id);
             if (!$tenantUser) {
-                return JsonResponser::send(false, 'User not found in tenant DB', [], 404);
+                return JsonResponser::send(false, 'User not found in tenant DB', [], 204);
             }
 
             $hospital = User::on('tenant')->where('tenant_id', $tenant->id)->first();
             if (!$hospital) {
-                return JsonResponser::send(false, 'No hospital information found for this tenant', [], 404);
+                return JsonResponser::send(false, 'No hospital information found for this tenant', [], 204);
             }
 
             $permissions = [];

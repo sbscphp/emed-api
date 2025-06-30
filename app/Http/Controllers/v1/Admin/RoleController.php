@@ -32,7 +32,7 @@ class RoleController extends Controller
         $roles = $this->roleService->all()->load('permissions', 'users');
 
         if ($roles->isEmpty()) {
-            return JsonResponser::send(true, 'No roles found.', null, 404);
+            return JsonResponser::send(true, 'No roles found.', null, 204);
         }
 
         $totalRoles = $roles->count();
@@ -119,7 +119,7 @@ class RoleController extends Controller
         $role = $this->roleService->find($id)->load(['permissions', 'users']);
 
         if (!$role) {
-            return JsonResponser::send(true, 'Role not found.', null, 404);
+            return JsonResponser::send(true, 'Role not found.', null, 204);
         }
 
         $usersData = $role->users->map(function ($user) {
@@ -164,7 +164,7 @@ class RoleController extends Controller
                 $role = $this->roleService->update($validated, $id);
 
                 if (!$role) {
-                    return JsonResponser::send(true, 'Role not found or update failed.', null, 404);
+                    return JsonResponser::send(true, 'Role not found or update failed.', null, 204);
                 }
 
                 if ($request->has('permissions')) {
@@ -201,7 +201,7 @@ class RoleController extends Controller
         $role = $this->roleService->find($id);
 
         if (!$role) {
-            return JsonResponser::send(true, 'Role not found.', null, 404);
+            return JsonResponser::send(true, 'Role not found.', null, 204);
         }
 
         DB::connection('tenant')->beginTransaction();

@@ -79,7 +79,7 @@ class PharmacyRepository implements PharmacyInterface
         $treatment = Treatment::with('fulfillment', 'patient')->find($data['treatment_id']);
 
         if (!$treatment) {
-            return JsonResponser::send(true, 'Treatment not found.', [], 404);
+            return JsonResponser::send(true, 'Treatment not found.', [], 204);
         }
 
         if (!is_null($treatment->receiptno)) {

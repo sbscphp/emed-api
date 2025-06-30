@@ -35,7 +35,7 @@ class ReportController extends Controller
             }
 
             if ($records->isEmpty()) {
-                return JsonResponser::send(true, 'No reports found.', [], 404);
+                return JsonResponser::send(true, 'No reports found.', [], 204);
             }
 
             return JsonResponser::send(false, 'Reports logs retrieved successfully', $records, 200);

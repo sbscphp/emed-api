@@ -38,7 +38,7 @@ class CurrentTenantMiddleware
             DB::purge('tenant');
             DB::reconnect('tenant');
         } else {
-            return response()->json(['error' => "Tenant not found for domain or user: " . $request->getHost()], 404);
+            return response()->json(['error' => "Tenant not found for domain or user: " . $request->getHost()], 204);
         }
 
         return $next($request);

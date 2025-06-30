@@ -34,7 +34,7 @@ class MedicationController extends Controller
             }
 
             if ($data->isEmpty()) {
-                return JsonResponser::send(true, 'No Medications found.', [], 404);
+                return JsonResponser::send(true, 'No Medications found.', [], 204);
             }
 
             $formatted = $data->getCollection()->transform(function ($med) {
@@ -103,7 +103,7 @@ class MedicationController extends Controller
 
             $med = $this->medicationService->find($id);
             if (!$med) {
-                return JsonResponser::send(true, 'Medicine not found.', null, 404);
+                return JsonResponser::send(true, 'Medicine not found.', null, 204);
             }
 
             $validStatuses = ['available', 'out of stock', 'about to expire', 'expired'];
@@ -127,7 +127,7 @@ class MedicationController extends Controller
         try {
             $medicine = $this->medicationService->find($id);
             if (!$medicine) {
-                return JsonResponser::send(true, 'medicine not found.', null, 404);
+                return JsonResponser::send(true, 'medicine not found.', null, 204);
             }
 
             $formatted = [
@@ -158,7 +158,7 @@ class MedicationController extends Controller
             $data = $request->all();
             $medicine = $this->medicationService->find($id);
             if (!$medicine) {
-                return JsonResponser::send(true, 'medicine not found.', null, 404);
+                return JsonResponser::send(true, 'medicine not found.', null, 204);
             }
 
             $updatedmedicine = $this->medicationService->update($id, $data);
@@ -173,7 +173,7 @@ class MedicationController extends Controller
     {
         $medicine = $this->medicationService->find($id);
         if (!$medicine) {
-            return JsonResponser::send(true, 'medicine not found.', null, 404);
+            return JsonResponser::send(true, 'medicine not found.', null, 204);
         }
         $this->medicationService->delete($id);
         return JsonResponser::send(false, 'medicine deleted successfully', null, 200);

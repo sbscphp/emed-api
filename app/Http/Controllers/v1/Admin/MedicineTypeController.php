@@ -84,7 +84,7 @@ class MedicineTypeController extends Controller
             $type = $this->medicineTypeService->find($id);
 
             if (!$type) {
-                return JsonResponser::send(true, 'Medicine type not found.', [], 404);
+                return JsonResponser::send(true, 'Medicine type not found.', [], 204);
             }
 
             return JsonResponser::send(false, 'Medicine type retrieved successfully.', $type);
@@ -100,7 +100,7 @@ class MedicineTypeController extends Controller
 
             return JsonResponser::send(false, 'Medicine type updated successfully.', $updated);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return JsonResponser::send(true, 'Medicine type not found.', [], 404);
+            return JsonResponser::send(true, 'Medicine type not found.', [], 204);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Internal server error.', [], 500, $e);
         }
@@ -112,7 +112,7 @@ class MedicineTypeController extends Controller
             $deleted = $this->medicineTypeService->delete($id);
             return JsonResponser::send(false, 'Medicine type deleted successfully.');
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return JsonResponser::send(true, 'Medicine type not found.', [], 404);
+            return JsonResponser::send(true, 'Medicine type not found.', [], 204);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Internal server error.', [], 500, $e);
         }

@@ -503,7 +503,7 @@ class RegistrationController extends Controller
 
         if (!$tenant) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(false, 'Tenant not found.', [], 404);
+            return JsonResponser::send(false, 'Tenant not found.', [], 204);
         }
 
         if (!$user->is_verified) {
@@ -735,7 +735,7 @@ public function refreshToken()
 
             $tenant = \App\Models\Tenant::find($landlordUser->tenant_id);
             if (!$tenant) {
-                return JsonResponser::send(false, 'Tenant not found', [], 404);
+                return JsonResponser::send(false, 'Tenant not found', [], 204);
             }
 
             // Step 3: Set tenant context and switch DB
@@ -746,12 +746,12 @@ public function refreshToken()
 
             $tenantUser = User::on('tenant')->with('roles.permissions')->find($landlordUser->id);
             if (!$tenantUser) {
-                return JsonResponser::send(false, 'User not found in tenant DB', [], 404);
+                return JsonResponser::send(false, 'User not found in tenant DB', [], 204);
             }
 
             $hospital = User::on('tenant')->where('tenant_id', $tenant->id)->first();
             if (!$hospital) {
-                return JsonResponser::send(false, 'No hospital information found for this tenant', [], 404);
+                return JsonResponser::send(false, 'No hospital information found for this tenant', [], 204);
             }
 
             $permissions = $tenantUser->roles->flatMap(function ($role) {

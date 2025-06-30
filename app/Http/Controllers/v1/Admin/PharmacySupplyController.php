@@ -33,7 +33,7 @@ class PharmacySupplyController extends Controller
             $supplies = $this->supplyService->listSupplies($search, $isExport);
 
             if ($supplies->isEmpty()) {
-                return JsonResponser::send(true, 'No pharmacy supplies found.', [], 404);
+                return JsonResponser::send(true, 'No pharmacy supplies found.', [], 204);
             }
 
             if ($isExport) {
@@ -72,7 +72,7 @@ class PharmacySupplyController extends Controller
         $supply = $this->supplyService->getSupplyById($id);
 
         if (!$supply) {
-            return JsonResponser::send(true, 'Supply not found.', [], 404);
+            return JsonResponser::send(true, 'Supply not found.', [], 204);
         }
 
         return JsonResponser::send(false, 'Supply retrieved successfully.', $supply);

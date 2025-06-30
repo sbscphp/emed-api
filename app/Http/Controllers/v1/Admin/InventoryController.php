@@ -35,7 +35,7 @@ class InventoryController extends Controller
             }
 
             if ($data->isEmpty()) {
-                return JsonResponser::send(true, 'Inventory not found.', null, 404);
+                return JsonResponser::send(true, 'Inventory not found.', null, 204);
             }
 
             return JsonResponser::send(false, 'Inventory list fetched successfully', $data);

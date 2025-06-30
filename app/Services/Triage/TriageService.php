@@ -187,7 +187,7 @@ class TriageService
         $patients = $query->get();
 
         if ($patients->isEmpty()) {
-            return JsonResponser::send(true, 'No triage records found for export.', null, 404);
+            return JsonResponser::send(true, 'No triage records found for export.', null, 204);
         }
 
         $exportData = $patients->map(function ($p) {
