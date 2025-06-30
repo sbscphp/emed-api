@@ -13,7 +13,7 @@ use App\Services\User\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-
+use App\Models\User;
 class PharmacyController extends Controller
 {
     protected $userService;
@@ -140,8 +140,8 @@ class PharmacyController extends Controller
 
         try {
             $currentUser = Auth::user();
-            $user = $this->userService->find($currentUser->id);
-
+           // $user = $this->userService->find($currentUser->id);
+             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
             $validated = array_merge($request->validated(), [
                 'pharmacy_id' => $this->pharmacyService->generatePharmacyId(),
                 'created_by' => $currentUser->id,
