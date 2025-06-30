@@ -46,7 +46,7 @@ class StoreUserRequest extends FormRequest
                         ->where('name', $value)
                         ->exists();
 
-                    if ($exists) {
+                    if (!$exists) {
                         $fail("The selected role doesn't exist.");
                     }
                 },
