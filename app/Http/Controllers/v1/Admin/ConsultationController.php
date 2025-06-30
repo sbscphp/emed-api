@@ -106,7 +106,8 @@ class ConsultationController extends Controller
             config(['database.default' => 'tenant']);
             DB::connection('tenant');
             $currentUser = Auth::user();
-            $user = $this->userService->find($currentUser->id);
+            //$user = $this->userService->find($currentUser->id);
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
             if (!$user) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
