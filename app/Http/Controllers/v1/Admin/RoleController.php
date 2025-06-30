@@ -12,7 +12,7 @@ use App\Services\Role\RoleService;
 use App\Services\User\UserService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-
+use App\Models\User;
 class RoleController extends Controller
 {
     protected $userService;
@@ -63,7 +63,8 @@ class RoleController extends Controller
     public function store(StoreRoleRequest $request)
     {
         $currentUser = Auth::user();
-        $user = $this->userService->find($currentUser->id);
+       // $user = $this->userService->find($currentUser->id);
+        $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
         $validated = array_merge($request->validated(), [
             'created_by' => $currentUser->id,
@@ -151,7 +152,8 @@ class RoleController extends Controller
     public function update(UpdateRoleRequest $request, $id)
     {
         $currentUser = Auth::user();
-        $user = $this->userService->find($currentUser->id);
+       // $user = $this->userService->find($currentUser->id);
+        $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
         $validated = array_merge($request->validated(), [
             'updated_by' => $currentUser->id,
