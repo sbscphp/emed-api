@@ -61,11 +61,12 @@ class RecordManagementController extends Controller
     {
 
         try {
-            config(['database.default' => 'tenant']);
             DB::connection('tenant')->beginTransaction();
 
             $currentUser = Auth::user();
-            $user = $this->userService->find($currentUser->id);
+            // $user = $this->userService->find($currentUser->id);
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
+
             if (is_null($user)) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
@@ -148,7 +149,9 @@ class RecordManagementController extends Controller
             DB::connection('tenant')->beginTransaction();
 
             $currentUser = Auth::user();
-            $user = $this->userService->find($currentUser->id);
+            // $user = $this->userService->find($currentUser->id);
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
+
             if (is_null($user)) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
@@ -205,7 +208,9 @@ class RecordManagementController extends Controller
 
             $currentUser = Auth::user();
 
-            $user = $this->userService->find($currentUser->id);
+            // $user = $this->userService->find($currentUser->id);
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
+
             if (is_null($user)) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
@@ -261,7 +266,9 @@ class RecordManagementController extends Controller
             DB::connection('tenant')->beginTransaction();
 
             $currentUser = Auth::user();
-            $user = $this->userService->find($currentUser->id);
+            //$user = $this->userService->find($currentUser->id);
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
+
             if (is_null($user)) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
@@ -311,7 +318,9 @@ class RecordManagementController extends Controller
             DB::connection('tenant')->beginTransaction();
 
             $currentUser = Auth::user();
-            $user = $this->userService->find($currentUser->id);
+            //$user = $this->userService->find($currentUser->id);
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
+
             if (is_null($user)) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
@@ -429,7 +438,8 @@ class RecordManagementController extends Controller
     {
         try {
             $currentUser = Auth::user();
-            $user = $this->userService->find($currentUser->id);
+           // $user = $this->userService->find($currentUser->id);
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
             if (is_null($user)) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
@@ -474,7 +484,9 @@ class RecordManagementController extends Controller
             DB::connection('tenant');
 
             $currentUser = Auth::user();
-            $user = $this->userService->find($currentUser->id);
+            //$user = $this->userService->find($currentUser->id);
+           $user = User::on('tenant')->where('email', $currentUser['email'])->first();
+
             if (is_null($user)) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
@@ -691,7 +703,8 @@ class RecordManagementController extends Controller
             $export = $request->input('export');
 
             $currentUser = Auth::user();
-            $user = $this->userService->find($currentUser->id);
+            //$user = $this->userService->find($currentUser->id);
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
             if (is_null($user)) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
@@ -732,7 +745,8 @@ class RecordManagementController extends Controller
             DB::connection('tenant');
 
             $currentUser = Auth::user();
-            $user = $this->userService->find($currentUser->id);
+           // $user = $this->userService->find($currentUser->id);
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
             if (is_null($user)) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
