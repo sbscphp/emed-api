@@ -13,6 +13,7 @@ use App\Services\Triage\TriageService;
 use App\Services\User\UserService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class TriageController extends Controller
@@ -41,7 +42,8 @@ class TriageController extends Controller
             }
 
             $currentUser = Auth::user();
-            $user = $this->userService->find($currentUser->id);
+            //$user = $this->userService->find($currentUser->id);
+              $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
             $validated = array_merge($request->validated(), [
                 'patient_id' => $patientId,
