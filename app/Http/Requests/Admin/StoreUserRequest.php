@@ -20,8 +20,37 @@ class StoreUserRequest extends FormRequest
         return [
             'fullname' => 'required|string|max:255',
             'phone_number' => 'required|string|max:15|unique:tenant.users,phone_number',
-            'email' => 'required|email|unique:tenant.users,email',
-            'role' => 'required|exists:tenant.roles,name',
+           // 'email' => 'required|email|unique:tenant.users,email',
+             'email' => [
+                'required',
+                'email',
+                'max:255',
+                function ($attribute, $value, $fail) {
+                    $exists = DB::connection('tenant')
+                        ->table('users')
+                        ->where('email', $value)
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('this email already exist');
+                    }
+                },
+            ],
+            //'role' => 'required|exists:tenant.roles,name',
+              'role' => [
+                'required',
+                'max:255',
+                function ($attribute, $value, $fail) {
+                    $exists = DB::connection('tenant')
+                        ->table('roles')
+                        ->where('name', $value)
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('this email already exist');
+                    }
+                },
+            ],
             'date_of_birth' => 'required|date|before:today',
             'password' => 'required|string|min:8',
         ];
