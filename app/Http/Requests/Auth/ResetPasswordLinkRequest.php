@@ -4,7 +4,7 @@ namespace App\Http\Requests\Auth;
 
 use App\Rules\Auth\ValidateIdentifier;
 use Illuminate\Foundation\Http\FormRequest;
-
+use Illuminate\Support\Facades\DB;
 class ResetPasswordLinkRequest extends FormRequest
 {
     /**

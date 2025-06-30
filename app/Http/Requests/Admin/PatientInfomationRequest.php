@@ -39,8 +39,8 @@ class PatientInfomationRequest extends FormRequest
                 'email',
                 'max:255',
                 function ($attribute, $value, $fail) {
-                    $exists = DB::connection('tenant')
-                        ->table('patients')
+                    $exists = DB::table('patients')
+                    //connection('tenant')
                         ->where('email', $value)
                         ->exists();
 

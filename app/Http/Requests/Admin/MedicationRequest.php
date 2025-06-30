@@ -4,7 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-
+use Illuminate\Support\Facades\DB;
 class MedicationRequest extends FormRequest
 {
     public function authorize(): bool
@@ -28,7 +28,22 @@ class MedicationRequest extends FormRequest
             ],
             'manufacturer' => 'required|string|max:255',
             'medicine_status'  => 'nullable|in:available,about to expire,out of stock,expired',
-            'pharmacy_id' => 'nullable|exists:tenant.pharmacies,id',
+            // 'pharmacy_id' => 'nullable|exists:tenant.pharmacies,id',
+             'pharmacy_id' => [
+                'nullable',
+                'alpha_num',
+                'max:255',
+                function ($attribute, $value, $fail) {
+                    $exists = DB::connection('tenant')
+                        ->table('pharmacies')
+                        ->where('id', $value)
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('this pharmacy id already exist');
+                    }
+                },
+            ],
         ];
     }
 
