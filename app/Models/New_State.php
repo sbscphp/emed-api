@@ -4,10 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class City extends Model
+class New_State extends Model
 {
-   
-protected $table = 'cities';
+     protected $table = 'states';
 
     protected $primaryKey = 'id';
 
@@ -19,10 +18,13 @@ protected $table = 'cities';
 
     protected $fillable = [
         'name',
-        'state_id',
-        'state_code',
         'country_id',
         'country_code',
+        'fips_code',
+        'iso2',
+        'type',
+        'level',
+        'parent_id',
         'latitude',
         'longitude',
         'flag',
@@ -33,16 +35,13 @@ protected $table = 'cities';
         'latitude' => 'float',
         'longitude' => 'float',
         'flag' => 'boolean',
+        'level' => 'integer',
     ];
 
-    // Relationships 
-    public function state()
-    {
-        return $this->belongsTo(New_State::class);
-    }
-
+    // Relationships
     public function country()
     {
         return $this->belongsTo(Country::class);
     }
+
 }

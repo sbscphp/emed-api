@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('cities', function (Blueprint $table) {
+        Schema::create('regions', function (Blueprint $table) {
             $table->id();
+            $table->string('name', 100);
+            $table->text('translations')->nullable();
+            $table->tinyInteger('flag')->default(1);
+            $table->string('wikiDataId')->nullable()->comment('Rapid API GeoDB Cities');
             $table->timestamps();
         });
     }
@@ -22,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('cities');
+        Schema::dropIfExists('regions');
     }
 };

@@ -135,8 +135,8 @@ class BillingController extends Controller
         try {
               config(['database.default' => 'tenant']);
 
-            $serviceUnits = $this->serviceFetch->getUnits(['id', 'name'], $request->get('service_units_name'));
-            $serviceTypes = $this->serviceFetch->getTypes(['id', 'name'], $request->get('service_types_name'));
+            $serviceUnits = $this->serviceFetch->getUnits(['id', 'name'], $request->get('service_units_name'), $request->get('from'), $request->get('to'));
+            $serviceTypes = $this->serviceFetch->getTypes(['id', 'name'], $request->get('service_types_name'), $request->get('from'), $request->get('to'));
 
             $data = [
                 'service_units' => $serviceUnits,

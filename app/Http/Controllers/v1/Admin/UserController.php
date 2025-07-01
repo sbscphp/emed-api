@@ -244,4 +244,19 @@ class UserController extends Controller
             return JsonResponser::send(true, 'Failed to fetch pharmacists.', [], 500, $e);
         }
     }
+
+    public function fetch_country_state_city(Request $request){
+     DB::connection('tenant')->beginTransaction();
+     DB::connection('landlord')->beginTransaction();
+  
+     try {
+    $data =  $this->userService->fetch_country_state_city($request);
+     return JsonResponser::send(false, 'fetch successful.', $data);
+     } catch (\Throwable $th) {
+     DB::connection('tenant')->rollBack();
+     DB::connection('landlord')->rollBack();
+     return JsonResponser::send(true, 'Internal server error.', [], 500);
+     }
+
+    }
 }

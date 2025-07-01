@@ -1,7 +1,11 @@
 <?php
 
 namespace App\Services\User;
-
+use App\Models\City;
+use App\Models\Country;
+use App\Models\New_State;
+use App\Models\Region;
+use App\Models\Subregions;
 use App\Repositories\User\UserRepositoryInterface;
 
 /**
@@ -105,5 +109,29 @@ class UserService
     public function getSystemReport($request)
     {
         return $this->userRepositoryInterface->getSystemReport($request);
+    }
+
+    public function fetch_country_state_city($request){
+      $city_name = $request->get('city_name');
+        $state_name = $request->get('state_name');
+        $country_name = $request->get('country_name');
+
+       $data = City::with([
+            'state' => function ($query) use ($state_name) {
+                if ($state_name) {
+                    $query->where('name', $state_name);
+                }
+            },
+            'country' => function ($query) use ($country_name) {
+                if ($country_name) {
+                    $query->where('name', $country_name);
+                }
+            }
+        ])
+        ->when($city_name, function ($query, $city_name) {
+            return $query->where('name', $city_name);
+        })
+        ->get();
+      return $data;
     }
 }
