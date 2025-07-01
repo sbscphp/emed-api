@@ -4,6 +4,7 @@ namespace App\Services\ServiceDepartment;
 
 use App\Models\ServiceDepartment;
 use App\Models\ServiceUnit;
+use Carbon\Carbon;
 use App\Repositories\ServiceDepartment\ServiceDepartmentInterface;
 
 /**
@@ -96,17 +97,25 @@ class ServiceDepartmentService
         return $this->ServiceDepartmentInterface->findByAttribute($attr, $value);
     }
 
-    public function getUnits(array $columns = ['*'], $service_units_name)
+    public function getUnits(array $columns = ['*'], $service_units_name, $from, $to)
     {
         return ServiceUnit::select($columns)->when($service_units_name, function ($query, $service_units_name) {
         return $query->where('name', $service_units_name);
-            })->get();
+            })
+            ->when($from && $to, function ($query) use ($from, $to) {
+           return $query->whereBetween('created_at', [Carbon::parse($from), Carbon::parse($to)]);
+            })
+            ->get();
     }
 
     public function getTypes(array $columns = ['*'], $service_types_name)
     {
         return ServiceDepartment::select($columns)->when($service_types_name, function ($query, $service_types_name) {
                return $query->where('name', $service_types_name);
-            })->get();
+            })
+          ->when($from && $to, function ($query) use ($from, $to) {
+           return $query->whereBetween('created_at', [Carbon::parse($from), Carbon::parse($to)]);
+            })
+            ->get();
     }
 }
