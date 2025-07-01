@@ -31,7 +31,7 @@ Route::group(["prefix" => "v1"], function () {
         Artisan::call('optimize:clear');
         return "Data Cache is cleared";
     });
-
+   Route::get('/fetch_country_state_city', [UserController::class,'fetch_country_state_city']);
 //  Route::post('/update_status/{id}', [VendorController::class, 'update_status']);
     Route::group(['prefix' => 'auth', "namespace" => "v1\Auth"], function () {
         Route::post('/login', [LoginController::class, 'login']);
