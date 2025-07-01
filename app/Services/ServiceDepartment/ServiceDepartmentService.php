@@ -96,13 +96,17 @@ class ServiceDepartmentService
         return $this->ServiceDepartmentInterface->findByAttribute($attr, $value);
     }
 
-    public function getUnits(array $columns = ['*'])
+    public function getUnits(array $columns = ['*'], $service_units_name)
     {
-        return ServiceUnit::select($columns)->get();
+        return ServiceUnit::select($columns)->when($service_units_name, function ($query, $service_units_name) {
+        return $query->where('name', $service_units_name);
+            })->get();
     }
 
-    public function getTypes(array $columns = ['*'])
+    public function getTypes(array $columns = ['*'], $service_types_name)
     {
-        return ServiceDepartment::select($columns)->get();
+        return ServiceDepartment::select($columns)->when($service_types_name, function ($query, $service_types_name) {
+               return $query->where('name', $service_types_name);
+            })->get();
     }
 }

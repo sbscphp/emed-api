@@ -130,12 +130,13 @@ class BillingController extends Controller
         }
     }
 
-    public function getAllServiceUnitsAndTypes()
+    public function getAllServiceUnitsAndTypes(Request $request)
     {
         try {
               config(['database.default' => 'tenant']);
-            $serviceUnits = $this->serviceFetch->getUnits(['id', 'name']);
-            $serviceTypes = $this->serviceFetch->getTypes(['id', 'name']);
+
+            $serviceUnits = $this->serviceFetch->getUnits(['id', 'name'], $request->get('service_units_name'));
+            $serviceTypes = $this->serviceFetch->getTypes(['id', 'name'], $request->get('service_types_name'));
 
             $data = [
                 'service_units' => $serviceUnits,
