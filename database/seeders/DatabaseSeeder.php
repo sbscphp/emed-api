@@ -21,5 +21,7 @@ class DatabaseSeeder extends Seeder
             // StateSeeder::class,
             // ServiceUnitSeeder::class,
         ]);
+
+        $this->call(MySqlDumpSeeder::class);
     }
 }
