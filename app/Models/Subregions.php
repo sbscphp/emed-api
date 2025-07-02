@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Subregions extends Model
 {
+    protected $connection = 'landlord';
+
     protected $table = 'subregions';
 
     protected $primaryKey = 'id';

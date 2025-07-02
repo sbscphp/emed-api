@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class New_State extends Model
 {
+    protected $connection = 'landlord';
+    
      protected $table = 'states';
 
     protected $primaryKey = 'id';
