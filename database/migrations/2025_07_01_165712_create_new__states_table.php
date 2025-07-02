@@ -13,20 +13,25 @@ return new class extends Migration
     {
         Schema::create('new__states', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->unsignedMediumInteger('country_id');
-            $table->char('country_code', 2);
-            $table->string('fips_code')->nullable();
-            $table->string('iso2')->nullable();
-            $table->string('type', 191)->nullable();
-            $table->integer('level')->nullable();
-            $table->integer('parent_id')->nullable();
-             $table->decimal('latitude', 10, 8)->nullable();
-            $table->decimal('longitude', 11, 8)->nullable();
-            $table->tinyInteger('flag')->default(1);
-            $table->string('wikiDataId')->nullable()->comment('Rapid API GeoDB Cities');
-            $table->index('country_id', 'country_region');
-            $table->foreign('country_id', 'country_region_final')->references('id')->on('countries');
+$table->string('name');
+$table->unsignedBigInteger('country_id'); // ✅ FIXED
+$table->char('country_code', 2);
+$table->string('fips_code')->nullable();
+$table->string('iso2')->nullable();
+$table->string('type', 191)->nullable();
+$table->integer('level')->nullable();
+$table->integer('parent_id')->nullable();
+$table->decimal('latitude', 10, 8)->nullable();
+$table->decimal('longitude', 11, 8)->nullable();
+$table->tinyInteger('flag')->default(1);
+$table->string('wikiDataId')->nullable()->comment('Rapid API GeoDB Cities');
+
+// Index and foreign key
+$table->index('country_id', 'country_region');
+$table->foreign('country_id', 'country_region_final')
+      ->references('id')
+      ->on('countries')
+      ->onDelete('cascade'); // optional but good practice
             $table->timestamps();
         });
     }

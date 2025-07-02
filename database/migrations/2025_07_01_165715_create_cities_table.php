@@ -14,21 +14,23 @@ return new class extends Migration
 
         Schema::create('cities', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->unsignedMediumInteger('state_id');
-            $table->string('state_code');
-            $table->unsignedMediumInteger('country_id');
-            $table->char('country_code', 2);
-            $table->decimal('latitude', 10, 8);
-            $table->decimal('longitude', 11, 8);
-            $table->tinyInteger('flag')->default(1);
-            $table->string('wikiDataId')->nullable()->comment('Rapid API GeoDB Cities');
-            // Indexes
-            $table->index('state_id', 'cities_test_ibfk_1');
-            $table->index('country_id', 'cities_test_ibfk_2');
-       
-            $table->foreign('state_id', 'cities_ibfk_1')->references('id')->on('states');
-            $table->foreign('country_id', 'cities_ibfk_2')->references('id')->on('countries');
+$table->string('name');
+$table->unsignedBigInteger('state_id');    
+$table->string('state_code');
+$table->unsignedBigInteger('country_id');   
+$table->char('country_code', 2);
+$table->decimal('latitude', 10, 8);
+$table->decimal('longitude', 11, 8);
+$table->tinyInteger('flag')->default(1);
+$table->string('wikiDataId')->nullable()->comment('Rapid API GeoDB Cities');
+
+// Indexes
+$table->index('state_id', 'cities_test_ibfk_1');
+$table->index('country_id', 'cities_test_ibfk_2');
+
+// Foreign keys
+$table->foreign('state_id', 'cities_ibfk_1')->references('id')->on('states')->onDelete('cascade');
+$table->foreign('country_id', 'cities_ibfk_2')->references('id')->on('countries')->onDelete('cascade');
             $table->timestamps();
         });
     }

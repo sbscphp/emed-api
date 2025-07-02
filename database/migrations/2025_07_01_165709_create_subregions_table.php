@@ -15,12 +15,15 @@ return new class extends Migration
             $table->id();
             $table->string('name', 100);
             $table->text('translations')->nullable();
-            $table->unsignedMediumInteger('region_id');
+            $table->unsignedBigInteger('region_id'); // FIXED
             $table->tinyInteger('flag')->default(1);
             $table->string('wikiDataId')->nullable()->comment('Rapid API GeoDB Cities');
             $table->index('region_id', 'subregion_continent');
-            $table->foreign('region_id', 'subregion_continent_final')->references('id')->on('regions');
-            $table->timestamps();
+            $table->foreign('region_id', 'subregion_continent_final')
+                ->references('id')
+                ->on('regions')
+                ->onDelete('cascade');
+                  $table->timestamps();
         });
     }
 

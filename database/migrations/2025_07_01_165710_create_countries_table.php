@@ -25,9 +25,9 @@ return new class extends Migration
             $table->string('tld')->nullable();
             $table->string('native')->nullable();
             $table->string('region')->nullable();
-            $table->unsignedMediumInteger('region_id')->nullable();
             $table->string('subregion')->nullable();
-            $table->unsignedMediumInteger('subregion_id')->nullable();
+         $table->unsignedBigInteger('region_id')->nullable();
+        $table->unsignedBigInteger('subregion_id')->nullable();
             $table->string('nationality')->nullable();
             $table->text('timezones')->nullable();
             $table->text('translations')->nullable();
@@ -39,14 +39,11 @@ return new class extends Migration
             $table->string('wikiDataId')->nullable()->comment('Rapid API GeoDB Cities');
 
             // Indexes
-            $table->index('region_id', 'country_continent');
+           $table->index('region_id', 'country_continent');
             $table->index('subregion_id', 'country_subregion');
-
             // Foreign keys
             $table->foreign('region_id', 'country_continent_final')->references('id')->on('regions');
             $table->foreign('subregion_id', 'country_subregion_final')->references('id')->on('subregions');
-
-
             $table->timestamps();
         });
     }
