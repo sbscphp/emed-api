@@ -23,8 +23,6 @@ return new class extends Migration
             $table->integer('parent_id')->nullable();
              $table->decimal('latitude', 10, 8)->nullable();
             $table->decimal('longitude', 11, 8)->nullable();
-            $table->timestamp('created_at')->nullable();
-            $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
             $table->tinyInteger('flag')->default(1);
             $table->string('wikiDataId')->nullable()->comment('Rapid API GeoDB Cities');
             $table->index('country_id', 'country_region');

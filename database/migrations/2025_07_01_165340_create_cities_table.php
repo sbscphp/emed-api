@@ -21,8 +21,6 @@ return new class extends Migration
             $table->char('country_code', 2);
             $table->decimal('latitude', 10, 8);
             $table->decimal('longitude', 11, 8);
-            $table->timestamp('created_at')->default('2014-01-01 12:01:01');
-            $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
             $table->tinyInteger('flag')->default(1);
             $table->string('wikiDataId')->nullable()->comment('Rapid API GeoDB Cities');
             // Indexes

@@ -16,8 +16,6 @@ return new class extends Migration
             $table->string('name', 100);
             $table->text('translations')->nullable();
             $table->unsignedMediumInteger('region_id');
-            $table->timestamp('created_at')->nullable();
-            $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
             $table->tinyInteger('flag')->default(1);
             $table->string('wikiDataId')->nullable()->comment('Rapid API GeoDB Cities');
             $table->index('region_id', 'subregion_continent');
