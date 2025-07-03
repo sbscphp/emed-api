@@ -136,7 +136,7 @@ class PatientService
         return $this->PatientInterface->getPatientReport($request);
     }
 
-    public function getAllRecordFiltered($search = null, $paginate = false, $perPage = 10)
+    public function getAllRecordFiltered($search = null, $paginate = false, $perPage = 10, $from, $to)
     {
         $query = Patient::query();
 
@@ -153,7 +153,12 @@ class PatientService
                     ->orWhere('homeaddress', 'like', "%$search%");
             });
         }
+   
 
+       $query->when($from && $to, function ($q) use ($from, $to) {
+            $q->whereBetween('created_at', [$from, $to]);
+        });
+        
         if ($paginate) {
             return $query->latest()->paginate($perPage);
         }
