@@ -96,8 +96,8 @@ class UserController extends Controller
             if (!$tenantRole) {
                 return JsonResponser::send(true, 'Invalid role provided (tenant).', [], 422);
             }
-            $userService = new UserService();
-            $password = $userService->generateSecurePassword();
+            
+            $password = $this->userService->generateSecurePassword();
             // Prepare user data
             $uuid = (string) Str::uuid();
            // $hashedPassword = Hash::make($data['password']);
