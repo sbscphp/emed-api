@@ -39,7 +39,7 @@ class UserService
     }
 
 
-        public static function generateSecurePassword(): string
+    public  function generateSecurePassword(): string
       {
         // Define the required character sets
         $lowercase = 'abcdefghijklmnopqrstuvwxyz';
