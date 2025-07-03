@@ -5,7 +5,7 @@ namespace App\Services\Patient;
 use App\Models\Patient;
 use App\Repositories\Patient\PatientInterface;
 use Illuminate\Support\Collection;
-
+use Carbon\Carbon;
 /**
  * Class PatientService
  *
@@ -156,9 +156,9 @@ class PatientService
    
 
        $query->when($from && $to, function ($q) use ($from, $to) {
-            $q->whereBetween('created_at', [$from, $to]);
+            $q->whereBetween('created_at', [Carbon::parse($from), Carbon::parse($to)]);
         });
-        
+
         if ($paginate) {
             return $query->latest()->paginate($perPage);
         }
