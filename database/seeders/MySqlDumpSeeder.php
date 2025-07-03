@@ -11,7 +11,7 @@ class MySqlDumpSeeder extends Seeder
 {
     
 
-
+// when create a new database please uncomment 
 
 public function run(): void
 {

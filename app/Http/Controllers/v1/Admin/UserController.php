@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use App\Events\CreateUserEvent;
 use Throwable;
 
 class UserController extends Controller
@@ -95,10 +96,11 @@ class UserController extends Controller
             if (!$tenantRole) {
                 return JsonResponser::send(true, 'Invalid role provided (tenant).', [], 422);
             }
-
+            $userService = new UserService();
+            $password = $userService->generateSecurePassword();
             // Prepare user data
             $uuid = (string) Str::uuid();
-            $hashedPassword = Hash::make($data['password']);
+           // $hashedPassword = Hash::make($data['password']);
             $userData = [
                 'tenant_id'         => $currentUser->tenant_id,
                 'uuid'              => $uuid,
@@ -111,7 +113,7 @@ class UserController extends Controller
                 'can_login'         => 1,
                 'is_verified'       => 1,
                 'is_active'         => 1,
-                'password'          => $hashedPassword,
+                'password'          => $password,
             ];
 
             $tenantUser = User::create($userData);
@@ -129,11 +131,11 @@ class UserController extends Controller
                 DB::connection('landlord')->rollBack();
                 return JsonResponser::send(true, 'Role not found in landlord DB.', [], 422);
             }
-
+            event( new CreateUserEvent($data['fullname'], $data['email'],  $password));
             DB::connection('tenant')->commit();
             DB::connection('landlord')->commit();
 
-
+           
 
             return JsonResponser::send(false, 'User created successfully.', $tenantUser, 201);
         } catch (\Throwable $th) {

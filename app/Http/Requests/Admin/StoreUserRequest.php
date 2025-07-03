@@ -52,7 +52,7 @@ class StoreUserRequest extends FormRequest
                 },
             ],
             'date_of_birth' => 'required|date|before:today',
-            'password' => 'required|string|min:8',
+            //'password' => 'required|string|min:8',
         ];
     }
 

@@ -38,6 +38,36 @@ class UserService
         return $this->userRepositoryInterface->create($data);
     }
 
+
+        public static function generateSecurePassword(): string
+      {
+        // Define the required character sets
+        $lowercase = 'abcdefghijklmnopqrstuvwxyz';
+        $uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $numbers = '0123456789';
+        $specialChars = '!@#$%^&*()-_=+<>?';
+
+        // Combine all character sets into one
+        $allChars = $lowercase . $uppercase . $numbers . $specialChars;
+
+        // Create a password with required criteria
+        $password = '';
+        $password .= $lowercase[rand(0, strlen($lowercase) - 1)];
+        $password .= $uppercase[rand(0, strlen($uppercase) - 1)];
+        $password .= $numbers[rand(0, strlen($numbers) - 1)];
+        $password .= $specialChars[rand(0, strlen($specialChars) - 1)];
+
+        // Fill the remaining characters randomly from the combined set
+        $remainingLength = rand(4, 16); // Remaining length to meet min and max limits (8 to 20)
+        for ($i = 0; $i < $remainingLength; $i++) {
+            $password .= $allChars[rand(0, strlen($allChars) - 1)];
+        }
+
+        // Shuffle the characters in the password to ensure random distribution
+        return str_shuffle($password);
+     }
+
+
     /**
      * Update an existing user with the provided data.
      * 

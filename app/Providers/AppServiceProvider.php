@@ -85,7 +85,9 @@ use App\Services\PharmacyRequest\PharmacyRequestService;
 use App\Services\PharmacySupplier\PharmacySupplyService;
 use App\Services\Role\RoleService;
 use App\Services\Vendor\VendorService;
-
+use Illuminate\Support\Facades\Event;
+use App\Events\CreateUserEvent;
+use App\Listeners\CreateUserListener;
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -216,6 +218,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+     Event::listen(
+       CreateUserEvent::class,
+       CreateUserListener::class
+      );
+
         Sanctum::usePersonalAccessTokenModel(SanctumPersonalAccessToken::class);
     }
 }
