@@ -87,7 +87,7 @@ class UserController extends Controller
         DB::connection('tenant')->beginTransaction();
         DB::connection('landlord')->beginTransaction();
 
-        try {
+        // try {
             $currentUser = Auth::user();
             $data = $request->validated();
 
@@ -138,12 +138,12 @@ class UserController extends Controller
            
 
             return JsonResponser::send(false, 'User created successfully.', $tenantUser, 201);
-        } catch (\Throwable $th) {
-            DB::connection('tenant')->rollBack();
-            DB::connection('landlord')->rollBack();
+        // } catch (\Throwable $th) {
+        //     DB::connection('tenant')->rollBack();
+        //     DB::connection('landlord')->rollBack();
 
-            return JsonResponser::send(true, 'Internal server error.', [], 500);
-        }
+        //     return JsonResponser::send(true, 'Internal server error.', [], 500);
+        // }
     }
 
 
