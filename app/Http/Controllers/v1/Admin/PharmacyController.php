@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use Carbon\Carbon;
+use App\Models\Pharmacy;
+
 class PharmacyController extends Controller
 {
     protected $userService;
@@ -29,14 +31,22 @@ class PharmacyController extends Controller
     public function index(Request $request)
     {
         try {
-             config(['database.default' => 'tenant']);
-             $from = $request->from;
+            config(['database.default' => 'tenant']);
+            $from = $request->from;
             $to = $request->to;
-            $pharmacies = $this->pharmacyService->new_all($from, $to);
+            //  $pharmacies = $this->pharmacyService->new_all($from, $to);
 
-           
 
-            
+
+            $pharmacies =  Pharmacy::with(['state:id,state_name', 'pharmacist:id,fullname,email'])
+                ->when($from && $to, function ($q) use ($from, $to) {
+                    $q->whereBetween('created_at', [
+                        Carbon::parse($from)->startOfDay(),
+                        Carbon::parse($to)->endOfDay()
+                    ]);
+                })
+                ->paginate(10);
+
 
             if ($pharmacies->isEmpty()) {
                 return JsonResponser::send(true, 'No pharmacies found.', [], 204);
@@ -78,7 +88,7 @@ class PharmacyController extends Controller
     public function treatmentLogs(Request $request)
     {
         try {
-             config(['database.default' => 'tenant']);
+            config(['database.default' => 'tenant']);
             $search = $request->input('search');
             $treatments = $this->pharmacyService->treatmentLogall($search);
 
@@ -120,7 +130,7 @@ class PharmacyController extends Controller
     public function showPatientTreatment(Request $request, $patientId)
     {
         try {
-             config(['database.default' => 'tenant']);
+            config(['database.default' => 'tenant']);
             $patient = $this->pharmacyService->getPatientTreatmentWithDetails($patientId);
 
             if (!$patient) {
@@ -147,8 +157,8 @@ class PharmacyController extends Controller
 
         try {
             $currentUser = Auth::user();
-           // $user = $this->userService->find($currentUser->id);
-             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
+            // $user = $this->userService->find($currentUser->id);
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
             $validated = array_merge($request->validated(), [
                 'pharmacy_id' => $this->pharmacyService->generatePharmacyId(),
                 'created_by' => $currentUser->id,
@@ -178,7 +188,7 @@ class PharmacyController extends Controller
     public function toggleStatus($id)
     {
         try {
-             config(['database.default' => 'tenant']);
+            config(['database.default' => 'tenant']);
             $pharmacy = $this->pharmacyService->find($id);
             if (!$pharmacy) {
                 return JsonResponser::send(true, 'Pharmacy not found.', null, 204);
@@ -211,7 +221,7 @@ class PharmacyController extends Controller
     public function update(PharmacyRequest $request, $id)
     {
         try {
-           config(['database.default' => 'tenant']);
+            config(['database.default' => 'tenant']);
             $data = $request->all();
             $pharmacy = $this->pharmacyService->find($id);
             if (!$pharmacy) {
@@ -219,7 +229,7 @@ class PharmacyController extends Controller
             }
 
             $updatedPharmacy = $this->pharmacyService->update($data, $id);
-         
+
             return JsonResponser::send(false, 'Pharmacy updated successfully', $updatedPharmacy, 200);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Internal server error', [], 500, $e);
@@ -228,7 +238,7 @@ class PharmacyController extends Controller
 
     public function destroy($id)
     {
-     config(['database.default' => 'tenant']);
+        config(['database.default' => 'tenant']);
         $pharmacy = $this->pharmacyService->find($id);
         if (!$pharmacy) {
             return JsonResponser::send(true, 'Pharmacy not found.', null, 204);
@@ -240,7 +250,7 @@ class PharmacyController extends Controller
     public function pharmacyDashboardStats()
     {
         try {
-             config(['database.default' => 'tenant']);
+            config(['database.default' => 'tenant']);
             $stats = $this->pharmacyService->getDashboardStats();
 
             return JsonResponser::send(false, 'Pharmacy dashboard stats fetched successfully', $stats);
