@@ -41,8 +41,8 @@ class PharmacyController extends Controller
             $pharmacies =  Pharmacy::with(['state:id,state_name', 'pharmacist:id,fullname,email'])
                 ->when($from && $to, function ($q) use ($from, $to) {
                     $q->whereBetween('created_at', [
-                        Carbon::parse($from)->startOfDay(),
-                        Carbon::parse($to)->endOfDay()
+                        Carbon::parse($from),
+                        Carbon::parse($to)
                     ]);
                 })
                 ->paginate(10);
