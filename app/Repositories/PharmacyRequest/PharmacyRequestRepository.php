@@ -14,12 +14,12 @@ class PharmacyRequestRepository implements PharmacyRequestInterface
      */
     public function all($search, $from, $to)
     {
-        $query = PharmacyRequest:::query();
-            if (!empty($search)) {
+        $query = PharmacyRequest::query();
+        if (!empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('product', 'like', "%$search%")
-                ->orWhere('category', 'like', "%$search%")
-                ->orWhere('urgency_level', 'like', "%$search%");
+                    ->orWhere('category', 'like', "%$search%")
+                    ->orWhere('urgency_level', 'like', "%$search%");
             });
         }
 
