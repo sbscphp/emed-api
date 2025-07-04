@@ -29,11 +29,13 @@ class MedicationRepository implements MedicationRepositoryInterface
         }
 
         $query->when($request['from'] && $request['to'], function ($q) use ($request) {
-            $q->whereBetween('created_at', [
-                Carbon::parse($request['from'])->startOfDay(),
-                Carbon::parse($request['to'])->endOfDay()
-            ]);
+            $from = Carbon::parse($request['from'])->startOfDay();
+            $to = Carbon::parse($request['to'])->endOfDay();
+            $q->whereBetween('created_at', [$from, $to]);
         });
+
+
+
 
         if ($request['export']) {
             $medications = $query->get();
