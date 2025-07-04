@@ -31,9 +31,9 @@ class InventoryService
      * 
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    public function all(array $filters = [], ?string $export = null)
+    public function all(array $filters = [], ?string $export = null, $from, $to)
     {
-        return $this->InventoryInterface->getAllWithFilters($filters, $export);
+        return $this->InventoryInterface->getAllWithFilters($filters, $export, $from, $to);
     }
 
 

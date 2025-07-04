@@ -4,6 +4,7 @@ namespace App\Repositories\Inventory;
 
 use App\Helpers\ExportHelper;
 use App\Models\Inventory;
+use Carbon\Carbon;
 
 class InventoryRepository implements InventoryInterface
 {
@@ -17,7 +18,7 @@ class InventoryRepository implements InventoryInterface
         return Inventory::all();
     }
 
-    public function getAllWithFilters(array $filters = [], ?string $export = null)
+    public function getAllWithFilters(array $filters = [], ?string $export = null, $from, $to)
     {
         $query = Inventory::with('medicineType');
         if (!empty($filters['search'])) {
@@ -27,6 +28,13 @@ class InventoryRepository implements InventoryInterface
                     ->orWhere('item_name', 'like', "%$search%")
                     ->orWhere('supplier', 'like', "%$search%");
             });
+        }
+
+        if (!empty($from) && !empty($to)) {
+            $query->whereBetween('expiry_date', [
+                Carbon::parse($from)->startOfDay(),
+                Carbon::parse($to)->endOfDay()
+            ]);
         }
 
         $transformItem = function ($item) {

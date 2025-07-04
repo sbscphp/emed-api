@@ -27,8 +27,9 @@ class InventoryController extends Controller
             config(['database.default' => 'tenant']);
             $filters = $request->only(['search']);
             $export = $request->input('export');
-
-            $data = $this->service->all($filters, $export);
+            $from = $request->from;
+            $to = $request->to;
+            $data = $this->service->all($filters, $export, $from, $to);
 
             if ($data instanceof \Symfony\Component\HttpFoundation\Response) {
                 return $data;
@@ -49,13 +50,13 @@ class InventoryController extends Controller
 
     public function show($id)
     {
-         config(['database.default' => 'tenant']);
+        config(['database.default' => 'tenant']);
         return response()->json($this->service->find($id));
     }
 
     public function store(StoreInventoryRequest $request)
     {
-         config(['database.default' => 'tenant']);
+        config(['database.default' => 'tenant']);
         DB::connection('tenant')->beginTransaction();
 
         try {
@@ -85,7 +86,7 @@ class InventoryController extends Controller
 
     public function update(UpdateInventoryRequest $request, $id)
     {
-         config(['database.default' => 'tenant']);
+        config(['database.default' => 'tenant']);
         DB::connection('tenant')->beginTransaction();
 
         try {
@@ -115,7 +116,7 @@ class InventoryController extends Controller
 
     public function destroy($id)
     {
-         config(['database.default' => 'tenant']);
+        config(['database.default' => 'tenant']);
         $deleted = $this->service->delete($id);
         return JsonResponser::send(false, 'Inventory deleted successfully', $deleted);
     }
@@ -123,7 +124,7 @@ class InventoryController extends Controller
     public function getInventoryStats()
     {
         try {
-             config(['database.default' => 'tenant']);
+            config(['database.default' => 'tenant']);
             $stats = $this->service->getInventoryStats();
 
             return JsonResponser::send(
