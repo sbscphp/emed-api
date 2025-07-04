@@ -25,9 +25,9 @@ class PharmacyRepository implements PharmacyInterface
 
     public function treatmentLogall($search = null)
     {
-        DB::connection('tenant');
 
-        $query = Treatment::with([
+
+        $query = Treatment::on('tenant')->with([
             'patient:id,firstname,lastname,cardno,patient_type,patientno,status',
             'pharmacy:id,name'
         ]);
@@ -131,16 +131,15 @@ class PharmacyRepository implements PharmacyInterface
      */
     public function update(array $data, $id)
     {
-         DB::connection('tenant')->beginTransaction();
+        DB::connection('tenant')->beginTransaction();
         $record = Pharmacy::findOrFail($id);
-        if($record){
-         $record->update($data);
-        DB::connection('tenant')->commit();
-        return $record;
-        }else{
-         DB::connection('tenant')->rollBack();  
+        if ($record) {
+            $record->update($data);
+            DB::connection('tenant')->commit();
+            return $record;
+        } else {
+            DB::connection('tenant')->rollBack();
         }
-      
     }
 
 
