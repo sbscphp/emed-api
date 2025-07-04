@@ -33,7 +33,7 @@ class PharmacySupplyController extends Controller
             $to = $request->to;
             $supplies = $this->supplyService->listSupplies($search, $isExport, $from, $to);
 
-            if ($supplies->isEmpty()) {
+            if (!$supplies->exists()) {
                 return JsonResponser::send(true, 'No pharmacy supplies found.', [], 204);
             }
 
