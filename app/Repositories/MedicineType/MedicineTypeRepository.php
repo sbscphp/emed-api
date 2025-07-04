@@ -25,7 +25,7 @@ class MedicineTypeRepository implements MedicineTypeInterface
         }
 
         $query->when($filters['from'] && $filters['to'], function ($q) use ($filters) {
-            $q->whereBetween('patient_visits.arrival_date', [
+            $q->whereBetween('date_added', [
                 Carbon::parse($filters['from'])->startOfDay(),
                 Carbon::parse($filters['to'])->endOfDay()
             ]);
