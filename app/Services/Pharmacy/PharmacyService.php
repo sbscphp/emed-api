@@ -8,7 +8,7 @@ use App\Models\Pharmacy;
 use App\Models\PharmacyRequest;
 use App\Models\PharmacySupply;
 use App\Models\Treatment;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use App\Repositories\Pharmacy\PharmacyInterface;
 
 /**
