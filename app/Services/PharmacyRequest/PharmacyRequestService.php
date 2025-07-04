@@ -28,9 +28,9 @@ class PharmacyRequestService
      * 
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    public function all()
+    public function all($search, $from, $to)
     {
-        return $this->PharmacyRequestInterface->all();
+        return $this->PharmacyRequestInterface->all($search, $from, $to);
     }
 
     /**

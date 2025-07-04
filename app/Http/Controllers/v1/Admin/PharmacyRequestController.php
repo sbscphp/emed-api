@@ -31,7 +31,9 @@ class PharmacyRequestController extends Controller
         try {
             config(['database.default' => 'tenant']);
             $search = $request->input('search');
-            $data = $this->service->all($search);
+            $from = $request->from;
+            $to = $request->to;
+            $data = $this->service->all($search, $from, $to);
 
             if ($request->has('export')) {
                 $exportData = $data->map(function ($item) {
@@ -39,11 +41,11 @@ class PharmacyRequestController extends Controller
                         'Pharmacy Name'       => $item->pharmacy->name ?? '',
                         'Requested By'        => $item->requested_by ?? '',
                         'Requested Date'      => $item->requested_date ?? '',
-                        'Urgency Level'       => ucfirst($item->urgency_level),
-                        'Product/Drug'        => $item->product,
-                        'Category'            => $item->category,
-                        'Quantity Requested'  => $item->quantity_requested,
-                        'Reason'              => $item->reason_for_request,
+                        'Urgency Level'       => ucfirst($item?->urgency_level ?? ""),
+                        'Product/Drug'        => $item->product ?? "",
+                        'Category'            => $item->category ?? "",
+                        'Quantity Requested'  => $item->quantity_requested ?? "",
+                        'Reason'              => $item->reason_for_request ?? "",
                     ];
                 });
 

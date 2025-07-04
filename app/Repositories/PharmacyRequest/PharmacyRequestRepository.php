@@ -3,6 +3,7 @@
 namespace App\Repositories\PharmacyRequest;
 
 use App\Models\PharmacyRequest;
+use Carbon\Carbon;
 
 class PharmacyRequestRepository implements PharmacyRequestInterface
 {
@@ -11,9 +12,21 @@ class PharmacyRequestRepository implements PharmacyRequestInterface
      * 
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    public function all()
+    public function all($search, $from, $to)
     {
-        return PharmacyRequest::all();
+        $query = PharmacyRequest::where(function ($q) use ($search) {
+            $q->where('product', $search)
+                ->orWhere('category', $search)
+                ->orWhere('urgency_level', $search);
+        });
+
+        if (isset($from, $to)) {
+            $from = Carbon::parse($from)->startOfDay();
+            $to = Carbon::parse($to)->endOfDay();
+            $query->whereBetween('created_at', [$from, $to]);
+        }
+
+        return $query->get();
     }
 
 
