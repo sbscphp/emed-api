@@ -16,16 +16,24 @@ class MedicationRepository implements MedicationRepositoryInterface
         $query = Medication::on('tenant')->with('pharmacy:id,name');
         $filters  =  $request;
 
-        foreach ($filters as $key => $value) {
-            if (!empty($value)) {
-                if ($key === 'medicine_status') {
-                    // Exact match for status
-                    $query->where($key, $value);
-                } else {
-                    // Partial match for text fields
-                    $query->where($key, 'like', '%' . $value . '%');
-                }
+        // foreach ($filters as $key => $value) {
+        //     if (!empty($value)) {
+        //         if ($key === 'medicine_status') {
+        //             // Exact match for status
+        //             $query->where($key, $value);
+        //         } else {
+        //             // Partial match for text fields
+        //             $query->where($key, 'like', '%' . $value . '%');
+        //         }
+        //     }
+        // }
+
+        foreach ($request as $key => $value) {
+            if (in_array($key, ['from', 'to']) || empty($value)) {
+                continue;
             }
+
+            $query->where($key, 'like', "%$value%");
         }
 
 
