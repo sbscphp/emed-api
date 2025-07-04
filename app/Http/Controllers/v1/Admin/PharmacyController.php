@@ -38,15 +38,23 @@ class PharmacyController extends Controller
 
 
 
-            $pharmacies =  Pharmacy::with(['state:id,state_name', 'pharmacist:id,fullname,email'])
+            // $pharmacies =  Pharmacy::with(['state:id,state_name', 'pharmacist:id,fullname,email'])
+            //     ->when($from && $to, function ($q) use ($from, $to) {
+            //         $q->whereBetween('created_at', [
+            //             Carbon::parse($from)->startOfDay(),
+            //             Carbon::parse($to)->endOfDay()
+            //         ]);
+            //     })
+            //     ->paginate(10);
+
+            $query = Pharmacy::with(['state:id,state_name', 'pharmacist:id,fullname,email'])
                 ->when($from && $to, function ($q) use ($from, $to) {
                     $q->whereBetween('created_at', [
-                        Carbon::parse($from),
-                        Carbon::parse($to)
+                        Carbon::parse($from)->startOfDay(),
+                        Carbon::parse($to)->endOfDay()
                     ]);
-                })
-                ->paginate(10);
-
+                });
+            dd($query->toSql(), $query->getBindings());
 
             if ($pharmacies->isEmpty()) {
                 return JsonResponser::send(true, 'No pharmacies found.', [], 204);
