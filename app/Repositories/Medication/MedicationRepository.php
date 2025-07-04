@@ -10,17 +10,10 @@ use Illuminate\Http\Request;
 class MedicationRepository implements MedicationRepositoryInterface
 {
 
-    public function all(Request $request)
+    public function all($request)
     {
         $query = Medication::with('pharmacy:id,name');
-
-        $filters = $request->only([
-            'generic_name',
-            'brand_name',
-            'medicine_name',
-            'medicine_type',
-            'medicine_status',
-        ]);
+        $filters  =  $request;
 
         foreach ($filters as $key => $value) {
             if (!empty($value)) {

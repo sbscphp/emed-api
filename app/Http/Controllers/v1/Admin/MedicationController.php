@@ -28,6 +28,14 @@ class MedicationController extends Controller
     public function index(Request $request)
     {
         try {
+            $request = $request->only([
+                'generic_name',
+                'brand_name',
+                'medicine_name',
+                'medicine_type',
+                'medicine_status',
+            ]);
+
             $data = $this->medicationService->all($request);
 
             if ($data instanceof \Symfony\Component\HttpFoundation\Response) {
