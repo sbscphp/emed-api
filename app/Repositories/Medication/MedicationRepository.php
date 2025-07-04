@@ -26,7 +26,7 @@ class MedicationRepository implements MedicationRepositoryInterface
                 }
             }
         }
-
+        dd(json_encode($request));
         if ($request['export']) {
             $medications = $query->get();
 
