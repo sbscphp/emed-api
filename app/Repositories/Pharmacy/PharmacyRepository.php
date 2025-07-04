@@ -51,7 +51,7 @@ class PharmacyRepository implements PharmacyInterface
         $treatments = $query->orderBy('created_at', 'desc')->paginate(10);
 
         foreach ($treatments as $treatment) {
-            $billingLog = BillingLog::where('patient_id', $treatment->patient->id)
+            $billingLog = BillingLog::on('tenant')->where('patient_id', $treatment->patient->id)
                 ->latest()
                 ->first();
 
