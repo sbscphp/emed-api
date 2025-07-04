@@ -9,7 +9,7 @@ use App\Models\Triage;
 use App\Repositories\Triage\TriageInterface;
 use App\Responser\JsonResponser;
 use Illuminate\Support\Facades\DB;
-
+use Carbon\Carbon;
 /**
  * Class TriageService
  * 
@@ -109,7 +109,7 @@ class TriageService
         return $this->TriageInterface->getByPatientId($patientId);
     }
 
-    public function getPatientsAndStatsByService($serviceId, $search = null)
+    public function getPatientsAndStatsByService($serviceId, $search = null, $from, $to)
     {
         DB::connection('tenant');
 
@@ -146,6 +146,10 @@ class TriageService
                     ->orWhere('triages.severity', 'like', "%$search%");
             });
         }
+
+        $query->when($from && $to, function ($q) use ($from, $to) {
+            $q->whereBetween('created_at', [Carbon::parse($from), Carbon::parse($to)]);
+        });
 
         $patients = $query->orderBy('patient_visits.created_at', 'desc')->paginate(10);
 

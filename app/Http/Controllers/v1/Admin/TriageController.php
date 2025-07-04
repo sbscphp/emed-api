@@ -86,12 +86,13 @@ class TriageController extends Controller
         try {
             $serviceId = $request->input('service_id');
             $search = $request->input('search');
-
+            $from = $request->from;
+            $to = $request->to;
             if (!$serviceId) {
                 return JsonResponser::send(true, 'Service ID is required.', null, 400);
             }
 
-            $result = $this->triageService->getPatientsAndStatsByService($serviceId, $search);
+            $result = $this->triageService->getPatientsAndStatsByService($serviceId, $search, $from, $to);
 
             return JsonResponser::send(false, 'Patients fetched successfully', [
                 'service_id' => $serviceId,
