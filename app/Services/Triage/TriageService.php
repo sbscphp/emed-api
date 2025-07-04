@@ -148,7 +148,7 @@ class TriageService
         }
 
         $query->when($from && $to, function ($q) use ($from, $to) {
-            $q->whereBetween('patients.arrival_date', [Carbon::parse($from), Carbon::parse($to)]);
+            $q->whereBetween('patient_visits.created_at', [Carbon::parse($from), Carbon::parse($to)]);
         });
 
         $patients = $query->orderBy('patient_visits.created_at', 'desc')->paginate(10);
