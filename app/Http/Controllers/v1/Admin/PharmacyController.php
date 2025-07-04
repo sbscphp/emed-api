@@ -101,9 +101,9 @@ class PharmacyController extends Controller
         $search = $request->input('search');
         $treatments = $this->pharmacyService->treatmentLogall($search);
 
-        if (!$treatments->exists()) {
-            return JsonResponser::send(true, 'No treatment logs found.', [], 204);
-        }
+        // if (!$treatments->exists()) {
+        //     return JsonResponser::send(true, 'No treatment logs found.', [], 204);
+        // }
 
         if ($request->has('export')) {
             $exportData = $treatments->map(function ($treatment) {
