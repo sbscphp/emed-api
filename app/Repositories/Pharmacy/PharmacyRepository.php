@@ -9,6 +9,7 @@ use App\Models\Treatment;
 use App\Models\TreatmentFulfillment;
 use App\Responser\JsonResponser;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class PharmacyRepository implements PharmacyInterface
 {
@@ -23,41 +24,47 @@ class PharmacyRepository implements PharmacyInterface
     }
 
 
-    public function treatmentLogall($search = null)
+    public function treatmentLogall($search = null, $from,  $to)
     {
         DB::connection('tenant');
 
         $query = Treatment::on('tenant')->with([
             'patient:id,firstname,lastname,cardno,patient_type,patientno,status',
             'pharmacy:id,name'
-        ])->get();
+        ]);
 
 
-        // if ($search) {
-        //     $query->where(function ($q) use ($search) {
-        //         $q->where('drug', 'like', "%{$search}%")
-        //             ->orWhereHas('pharmacy', function ($q2) use ($search) {
-        //                 $q2->where('name', 'like', "%{$search}%");
-        //             })
-        //             ->orWhereHas('patient', function ($q3) use ($search) {
-        //                 $q3->whereRaw("CONCAT(firstname, ' ', lastname) LIKE ?", ["%{$search}%"])
-        //                     ->orWhere('cardno', 'like', "%{$search}%")
-        //                     ->orWhere('patientno', 'like', "%{$search}%")
-        //                     ->orWhere('status', 'like', "%{$search}%");
-        //             });
-        //     });
-        // }
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('drug', 'like', "%{$search}%")
+                    ->orWhereHas('pharmacy', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('patient', function ($q3) use ($search) {
+                        $q3->whereRaw("CONCAT(firstname, ' ', lastname) LIKE ?", ["%{$search}%"])
+                            ->orWhere('cardno', 'like', "%{$search}%")
+                            ->orWhere('patientno', 'like', "%{$search}%")
+                            ->orWhere('status', 'like', "%{$search}%");
+                    });
+            });
+        }
 
-        // $treatments = $query->orderBy('created_at', 'desc')->paginate(10);
+        if (isset($from, $to)) {
+            $from = Carbon::parse($from)->startOfDay();
+            $to = Carbon::parse($to)->endOfDay();
+            $query->whereBetween('created_at', [$from, $to]);
+        }
 
-        // foreach ($treatments as $treatment) {
-        //     $billingLog = BillingLog::on('tenant')->where('patient_id', $treatment->patient->id)
-        //         ->latest()
-        //         ->first();
+        $treatments = $query->orderBy('created_at', 'desc')->paginate(10);
 
-        //     $treatment->payment_status = $billingLog->payment_status ?? 'pending';
-        //     $treatment->status = $treatment->receiptno ? 'Fulfilled' : 'Not Fulfilled';
-        // }
+        foreach ($treatments as $treatment) {
+            $billingLog = BillingLog::on('tenant')->where('patient_id', $treatment->patient->id)
+                ->latest()
+                ->first();
+
+            $treatment->payment_status = $billingLog->payment_status ?? 'pending';
+            $treatment->status = $treatment->receiptno ? 'Fulfilled' : 'Not Fulfilled';
+        }
 
         return $query;
     }

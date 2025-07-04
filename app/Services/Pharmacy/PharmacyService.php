@@ -38,23 +38,23 @@ class PharmacyService
     public function all()
     {
         return $this->PharmacyInterface->all();
-
     }
 
-    public function new_all($from, $to){
-    return Pharmacy::with(['state:id,state_name', 'pharmacist:id,fullname,email'])
-        ->when($from && $to, function ($q) use ($from, $to) {
-            $q->whereBetween('created_at', [
-                Carbon::parse($from)->startOfDay(),
-                Carbon::parse($to)->endOfDay()
-            ]);
-        })
-        ->paginate(10);
-    }
-
-    public function treatmentLogall()
+    public function new_all($from, $to)
     {
-        return $this->PharmacyInterface->treatmentLogall();
+        return Pharmacy::with(['state:id,state_name', 'pharmacist:id,fullname,email'])
+            ->when($from && $to, function ($q) use ($from, $to) {
+                $q->whereBetween('created_at', [
+                    Carbon::parse($from)->startOfDay(),
+                    Carbon::parse($to)->endOfDay()
+                ]);
+            })
+            ->paginate(10);
+    }
+
+    public function treatmentLogall($search, $from,  $to)
+    {
+        return $this->PharmacyInterface->treatmentLogall($search, $from,  $to);
     }
 
     public function getPatientTreatmentWithDetails($patientId)
