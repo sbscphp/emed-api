@@ -22,6 +22,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use App\Http\Requests\ChangePasswordRequest;
+use Illuminate\Support\Facades\Hash;
 
 class RegistrationController extends Controller
 {
@@ -788,13 +790,60 @@ class RegistrationController extends Controller
 
     public function check_is_change_password()
     {
-        $user = Auth::user();
-        return JsonResponser::send(
-            true,
-            'Your email has been verified. You can now log in.',
-            $user,
-            200
-        );
+        DB::connection('tenant')->beginTransaction();
+        DB::connection('landlord')->beginTransaction();
+        try {
+            $user = Auth::user();
+            return JsonResponser::send(
+                true,
+                'Your email has been verified. You can now log in.',
+                $user,
+                200
+            );
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            DB::connection('landlord')->rollBack();
+            return JsonResponser::send(
+                false,
+                'An error occurred while retrieving user information: ' . $th->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
+    public function change_password(ChangePasswordRequest $request)
+    {
+        DB::connection('tenant')->beginTransaction();
+        DB::connection('landlord')->beginTransaction();
+        try {
+            $validated = $request->validated();
+            $user = Auth::user();
+            if ($user) {
+                $user->update([
+                    'is_change_password' => 1,
+                    'password' => Hash::make($validated['password']),
+                ]);
+
+                DB::connection('tenant')->commit();
+                DB::connection('landlord')->commit();
+                return JsonResponser::send(
+                    true,
+                    'Password Changed Successfully.',
+                    $user,
+                    200
+                );
+            }
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            DB::connection('landlord')->rollBack();
+            return JsonResponser::send(
+                false,
+                'An error occurred while retrieving user information: ' . $th->getMessage(),
+                null,
+                500
+            );
+        }
     }
 
     public function logout()
