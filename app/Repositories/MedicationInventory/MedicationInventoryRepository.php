@@ -5,6 +5,8 @@ namespace App\Repositories\MedicationInventory;
 use App\Helpers\ExportHelper;
 use App\Models\MedicationInventory;
 use App\Http\Resources\MedicationInventoryResource;
+use Carbon\Carbon;
+
 class MedicationInventoryRepository implements MedicationInventoryRepositoryInterface
 {
     public function create(array $data)
@@ -36,6 +38,13 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
                     });
             });
         }
+
+        if (isset($filters['from'], $filters['to'])) {
+            $from = Carbon::parse($filters['from'])->startOfDay();
+            $to = Carbon::parse($filters['to'])->endOfDay();
+            $query->whereBetween('created_at', [$from, $to]);
+        }
+
         // if ($export) {
         //     $items = $query->latest()->get()->map($transformItem);
 
@@ -54,10 +63,10 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
 
         $page = request()->get('page', 1);
         $paginated = $query->paginate(10, ['*'], 'page', $page);
-        
-     $medical = MedicationInventoryResource::collection($paginated->getCollection())->toArray(request());
 
-         if ($export) {
+        $medical = MedicationInventoryResource::collection($paginated->getCollection())->toArray(request());
+
+        if ($export) {
             // $items = $query->latest()->get()->map($transformItem);
 
             if ($export === 'csv') {
@@ -72,25 +81,25 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         }
 
 
-      $fetch = [
-              'data'=>$medical,
-             'pages'=>[
-        'current_page' => $paginated->currentPage(),
-        'last_page' => $paginated->lastPage(),
-        'per_page' => $paginated->perPage(),
-        'total' => $paginated->total(),
-             ],
-            'link'=>[
-        'first' => $paginated->url(1),
-        'last' => $paginated->url($paginated->lastPage()),
-        'prev' => $paginated->previousPageUrl(),
-        'next' => $paginated->nextPageUrl(),
-        ]
+        $fetch = [
+            'data' => $medical,
+            'pages' => [
+                'current_page' => $paginated->currentPage(),
+                'last_page' => $paginated->lastPage(),
+                'per_page' => $paginated->perPage(),
+                'total' => $paginated->total(),
+            ],
+            'link' => [
+                'first' => $paginated->url(1),
+                'last' => $paginated->url($paginated->lastPage()),
+                'prev' => $paginated->previousPageUrl(),
+                'next' => $paginated->nextPageUrl(),
+            ]
         ];
 
-    return   collect($fetch);
+        return   collect($fetch);
 
-    //   return $paginated->getCollection();
+        //   return $paginated->getCollection();
     }
 
 
