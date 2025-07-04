@@ -6,6 +6,7 @@ use App\Helpers\ExportHelper;
 use App\Models\Medication;
 use App\Responser\JsonResponser;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class MedicationRepository implements MedicationRepositoryInterface
 {
@@ -26,7 +27,14 @@ class MedicationRepository implements MedicationRepositoryInterface
                 }
             }
         }
-        dd(json_encode($request));
+
+        $query->when($request['from'] && $request['to'], function ($q) use ($request) {
+            $q->whereBetween('patient_visits.arrival_date', [
+                Carbon::parse($request['from'])->startOfDay(),
+                Carbon::parse($request['to'])->endOfDay()
+            ]);
+        });
+
         if ($request['export']) {
             $medications = $query->get();
 
