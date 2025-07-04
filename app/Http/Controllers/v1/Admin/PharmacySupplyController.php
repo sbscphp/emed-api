@@ -33,9 +33,20 @@ class PharmacySupplyController extends Controller
             $to = $request->to;
             $supplies = $this->supplyService->listSupplies($search, $isExport, $from, $to);
 
-            if (!$supplies->isNotEmpty()) {
+            $isEmpty = false;
+
+            if ($isExport && $supplies->isEmpty()) {
+                $isEmpty = true;
+            }
+
+            if (!$isExport && $supplies->total() === 0) {
+                $isEmpty = true;
+            }
+
+            if ($isEmpty) {
                 return JsonResponser::send(true, 'No pharmacy supplies found.', [], 204);
             }
+
 
             if ($isExport) {
                 $exportData = $supplies->map(function ($supply) {
