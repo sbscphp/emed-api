@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use App\Models\User;
+
 class MedicationController extends Controller
 {
     protected $userService;
@@ -57,7 +58,7 @@ class MedicationController extends Controller
             $paginated = $data->toArray();
             $paginated['data'] = $formatted;
 
-            return JsonResponser::send(false, 'Medications retrieved successfully', $paginated);
+            return JsonResponser::send(false, 'Medications retrieved successfully', collect($paginated));
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Internal server error', [], 500, $e);
         }
@@ -69,8 +70,8 @@ class MedicationController extends Controller
 
         try {
             $currentUser = Auth::user();
-           // $user = $this->userService->find($currentUser->id);
-             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
+            // $user = $this->userService->find($currentUser->id);
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
             $validated = array_merge($request->validated(), [
                 'created_by' => $currentUser->id,
             ]);
