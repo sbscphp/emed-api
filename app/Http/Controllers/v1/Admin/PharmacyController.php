@@ -34,6 +34,7 @@ class PharmacyController extends Controller
             config(['database.default' => 'tenant']);
             $from = $request->from;
             $to = $request->to;
+            $limit = $request->limit;
             //  $pharmacies = $this->pharmacyService->new_all($from, $to);
 
 
@@ -53,7 +54,7 @@ class PharmacyController extends Controller
                         Carbon::parse($from)->startOfDay(),
                         Carbon::parse($to)->endOfDay()
                     ]);
-                })->get();
+                })->paginate($limit);
             dd(json_encode($query));
 
             if ($pharmacies->isEmpty()) {
