@@ -34,11 +34,11 @@ class UserController extends Controller
         DB::connection('tenant')->beginTransaction();
         DB::connection('landlord')->beginTransaction();
         try {
-    
+
 
             $currentUser = Auth::user();
-             
-              $user = User::where('email', $currentUser->email)->first();
+
+            $user = User::where('email', $currentUser->email)->first();
 
 
             if (!$user) {
@@ -65,7 +65,7 @@ class UserController extends Controller
             }
 
             if ($result->isEmpty()) {
-                   DB::connection('tenant')->rollBack();
+                DB::connection('tenant')->rollBack();
                 DB::connection('landlord')->rollBack();
                 return JsonResponser::send(true, 'No users found.', null, 204);
             }
@@ -75,8 +75,8 @@ class UserController extends Controller
                 'total' => $paginate ? $result->total() : $result->count(),
             ], 200);
         } catch (\Throwable $th) {
-               DB::connection('tenant')->rollBack();
-                DB::connection('landlord')->rollBack();
+            DB::connection('tenant')->rollBack();
+            DB::connection('landlord')->rollBack();
             return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
         }
     }
@@ -87,7 +87,7 @@ class UserController extends Controller
         DB::connection('tenant')->beginTransaction();
         DB::connection('landlord')->beginTransaction();
 
-        // try {
+        try {
             $currentUser = Auth::user();
             $data = $request->validated();
 
@@ -96,11 +96,11 @@ class UserController extends Controller
             if (!$tenantRole) {
                 return JsonResponser::send(true, 'Invalid role provided (tenant).', [], 422);
             }
-            
+
             $password = $this->userService->generateSecurePassword();
             // Prepare user data
             $uuid = (string) Str::uuid();
-           // $hashedPassword = Hash::make($data['password']);
+            // $hashedPassword = Hash::make($data['password']);
             $userData = [
                 'tenant_id'         => $currentUser->tenant_id,
                 'uuid'              => $uuid,
@@ -113,6 +113,7 @@ class UserController extends Controller
                 'can_login'         => 1,
                 'is_verified'       => 1,
                 'is_active'         => 1,
+                'is_change_password' => 1,
                 'password'          => $password,
             ];
 
@@ -131,20 +132,23 @@ class UserController extends Controller
                 DB::connection('landlord')->rollBack();
                 return JsonResponser::send(true, 'Role not found in landlord DB.', [], 422);
             }
-            event( new CreateUserEvent($data['fullname'], $data['email'],  $password));
+            event(new CreateUserEvent($data['fullname'], $data['email'],  $password));
             DB::connection('tenant')->commit();
             DB::connection('landlord')->commit();
 
-           
+
 
             return JsonResponser::send(false, 'User created successfully.', $tenantUser, 201);
-        // } catch (\Throwable $th) {
-        //     DB::connection('tenant')->rollBack();
-        //     DB::connection('landlord')->rollBack();
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            DB::connection('landlord')->rollBack();
 
-        //     return JsonResponser::send(true, 'Internal server error.', [], 500);
-        // }
+            return JsonResponser::send(true, 'Internal server error.', [], 500);
+        }
     }
+
+
+
 
 
     public function viewUser($id)
@@ -247,18 +251,18 @@ class UserController extends Controller
         }
     }
 
-    public function fetch_country_state_city(Request $request){
-     DB::connection('tenant')->beginTransaction();
-     DB::connection('landlord')->beginTransaction();
-  
-     try {
-    $data =  $this->userService->fetch_country_state_city($request);
-     return JsonResponser::send(false, 'fetch successful.', $data);
-     } catch (\Throwable $th) {
-     DB::connection('tenant')->rollBack();
-     DB::connection('landlord')->rollBack();
-     return JsonResponser::send(true, 'Internal server error.', [], 500);
-     }
+    public function fetch_country_state_city(Request $request)
+    {
+        DB::connection('tenant')->beginTransaction();
+        DB::connection('landlord')->beginTransaction();
 
+        try {
+            $data =  $this->userService->fetch_country_state_city($request);
+            return JsonResponser::send(false, 'fetch successful.', $data);
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            DB::connection('landlord')->rollBack();
+            return JsonResponser::send(true, 'Internal server error.', [], 500);
+        }
     }
 }

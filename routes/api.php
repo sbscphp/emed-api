@@ -31,8 +31,8 @@ Route::group(["prefix" => "v1"], function () {
         Artisan::call('optimize:clear');
         return "Data Cache is cleared";
     });
-   Route::get('/fetch_country_state_city', [UserController::class,'fetch_country_state_city']);
-//  Route::post('/update_status/{id}', [VendorController::class, 'update_status']);
+    Route::get('/fetch_country_state_city', [UserController::class, 'fetch_country_state_city']);
+    //  Route::post('/update_status/{id}', [VendorController::class, 'update_status']);
     Route::group(['prefix' => 'auth', "namespace" => "v1\Auth"], function () {
         Route::post('/login', [LoginController::class, 'login']);
         Route::post('/request-reset-password', [ForgotPasswordController::class, 'resetPasswordLink']);
@@ -53,6 +53,7 @@ Route::group(["prefix" => "v1"], function () {
     Route::group(["middleware" => ["auth:api"]], function () {
         Route::group(['middleware' => ["tenant"]], function () {
             Route::get('/me', [RegistrationController::class, 'me']);
+            Route::get('/check_is_change_password', [RegistrationController::class, 'check_is_change_password']);
             Route::get('/refreshToken', [RegistrationController::class, 'refreshToken']);
             Route::post('/logout', [RegistrationController::class, 'logout']);
             Route::group(['prefix' => 'admin', "namespace" => "v1\Admin"], function () {
