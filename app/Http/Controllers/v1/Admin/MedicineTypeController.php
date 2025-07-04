@@ -27,7 +27,7 @@ class MedicineTypeController extends Controller
     public function index(Request $request)
     {
         try {
-            $filters = $request->only(['search', 'type', 'export']);
+            $filters = $request->only(['search', 'type', 'export', 'from', 'to']);
             $types = $this->medicineTypeService->all($filters);
 
             if (isset($filters['export'])) {
@@ -60,7 +60,7 @@ class MedicineTypeController extends Controller
         try {
             $currentUser = Auth::user();
             //$user = $this->userService->find($currentUser->id);
-             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
             $created = $this->medicineTypeService->create($request->validated());
             $dataToLog = [
                 'causer_id' => $user->id,
