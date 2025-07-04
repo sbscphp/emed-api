@@ -46,17 +46,16 @@ class MedicationRepository implements MedicationRepositoryInterface
                 ];
             });
 
-            if ($request['export'] === 'csv') {
+            if ($request['export'] == 'csv') {
                 return ExportHelper::streamCsv($exportData->toArray(), null, 'medications.csv');
             }
 
-            if ($request['export'] === 'pdf') {
+            if ($request['export'] == 'pdf') {
                 return ExportHelper::downloadPdf($exportData->toArray(), 'medications.pdf');
             }
-
-            return JsonResponser::send(true, 'Invalid export format specified', null, 400);
+            return $query->paginate(10);
+            // return JsonResponser::send(true, 'Invalid export format specified', null, 400);
         }
-
         return $query->paginate(10);
     }
 
