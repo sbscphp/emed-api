@@ -96,44 +96,44 @@ class PharmacyController extends Controller
 
     public function treatmentLogs(Request $request)
     {
-        try {
-            config(['database.default' => 'tenant']);
-            $search = $request->input('search');
-            $treatments = $this->pharmacyService->treatmentLogall($search);
+        // try {
+        config(['database.default' => 'tenant']);
+        $search = $request->input('search');
+        $treatments = $this->pharmacyService->treatmentLogall($search);
 
-            if ($treatments->isEmpty()) {
-                return JsonResponser::send(true, 'No treatment logs found.', [], 204);
-            }
-
-            if ($request->has('export')) {
-                $exportData = $treatments->map(function ($treatment) {
-                    return [
-                        'Patient Name'     => $treatment->patient->firstname . ' ' . $treatment->patient->lastname,
-                        'Card No'          => $treatment->patient->cardno ?? '',
-                        'Patient Type'     => $treatment->patient->patient_type ?? '',
-                        'Patient No'       => $treatment->patient->patientno ?? '',
-                        'Pharmacy Name'    => $treatment->pharmacy->name ?? '',
-                        'Prescribed Drug'  => $treatment->drug ?? '',
-                        'Patient Status'   => $treatment->patient->status ?? '',
-                        'Status'           => $treatment->receiptno ? 'Fulfilled' : 'Not Fulfilled',
-                    ];
-                });
-
-                if ($request->export === 'csv') {
-                    return ExportHelper::streamCsv($exportData->toArray(), null, 'treatment_logs.csv');
-                }
-
-                if ($request->export === 'pdf') {
-                    return ExportHelper::downloadPdf($exportData->toArray(), 'treatment_logs.pdf');
-                }
-
-                return JsonResponser::send(true, 'Invalid export format specified.', [], 400);
-            }
-
-            return JsonResponser::send(false, 'Treatment logs retrieved successfully', $treatments, 200);
-        } catch (\Exception $e) {
-            return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+        if ($treatments->isEmpty()) {
+            return JsonResponser::send(true, 'No treatment logs found.', [], 204);
         }
+
+        if ($request->has('export')) {
+            $exportData = $treatments->map(function ($treatment) {
+                return [
+                    'Patient Name'     => $treatment->patient->firstname . ' ' . $treatment->patient->lastname,
+                    'Card No'          => $treatment->patient->cardno ?? '',
+                    'Patient Type'     => $treatment->patient->patient_type ?? '',
+                    'Patient No'       => $treatment->patient->patientno ?? '',
+                    'Pharmacy Name'    => $treatment->pharmacy->name ?? '',
+                    'Prescribed Drug'  => $treatment->drug ?? '',
+                    'Patient Status'   => $treatment->patient->status ?? '',
+                    'Status'           => $treatment->receiptno ? 'Fulfilled' : 'Not Fulfilled',
+                ];
+            });
+
+            if ($request->export === 'csv') {
+                return ExportHelper::streamCsv($exportData->toArray(), null, 'treatment_logs.csv');
+            }
+
+            if ($request->export === 'pdf') {
+                return ExportHelper::downloadPdf($exportData->toArray(), 'treatment_logs.pdf');
+            }
+
+            return JsonResponser::send(true, 'Invalid export format specified.', [], 400);
+        }
+
+        return JsonResponser::send(false, 'Treatment logs retrieved successfully', $treatments, 200);
+        // } catch (\Exception $e) {
+        //     return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+        // }
     }
 
     public function showPatientTreatment(Request $request, $patientId)
