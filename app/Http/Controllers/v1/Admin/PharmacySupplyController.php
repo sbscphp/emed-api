@@ -35,11 +35,11 @@ class PharmacySupplyController extends Controller
 
             $isEmpty = false;
 
-            if ($isExport && $supplies->isEmpty()) {
+            if ($supplies->isEmpty()) {
                 $isEmpty = true;
             }
 
-            if (!$isExport && $supplies->total() === 0) {
+            if ($supplies->total() === 0) {
                 $isEmpty = true;
             }
 
