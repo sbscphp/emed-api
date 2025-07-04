@@ -29,7 +29,7 @@ class MedicationRepository implements MedicationRepositoryInterface
         }
 
         $query->when($request['from'] && $request['to'], function ($q) use ($request) {
-            $q->whereBetween('patient_visits.arrival_date', [
+            $q->whereBetween('created_at', [
                 Carbon::parse($request['from'])->startOfDay(),
                 Carbon::parse($request['to'])->endOfDay()
             ]);
