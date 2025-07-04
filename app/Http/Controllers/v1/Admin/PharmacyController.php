@@ -30,17 +30,14 @@ class PharmacyController extends Controller
     {
         try {
              config(['database.default' => 'tenant']);
-            $pharmacies = $this->pharmacyService->all($request);
-
-            $from = $request->from;
+             $from = $request->from;
             $to = $request->to;
+            $pharmacies = $this->pharmacyService->new_all($from, $to);
 
-            $pharmacies->when($from && $to, function ($q) use ($from, $to) {
-                    $q->whereBetween('patient_visits.arrival_date', [
-                        Carbon::parse($from)->startOfDay(),
-                        Carbon::parse($to)->endOfDay()
-                    ]);
-                });
+           
+
+            
+
             if ($pharmacies->isEmpty()) {
                 return JsonResponser::send(true, 'No pharmacies found.', [], 204);
             }
