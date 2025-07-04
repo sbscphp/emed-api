@@ -13,7 +13,7 @@ class MedicationRepository implements MedicationRepositoryInterface
 
     public function all($request)
     {
-        $query = Medication::with('pharmacy:id,name');
+        $query = Medication::on('tenant')->with('pharmacy:id,name');
         $filters  =  $request;
 
         foreach ($filters as $key => $value) {
@@ -28,11 +28,21 @@ class MedicationRepository implements MedicationRepositoryInterface
             }
         }
 
-        $query->when(isset($request['from'], $request['to']), function ($q) use ($request) {
+
+        if (isset($request['from'], $request['to'])) {
             $from = Carbon::parse($request['from'])->startOfDay();
             $to = Carbon::parse($request['to'])->endOfDay();
-            $q->whereBetween('created_at', [$from, $to]);
-        });
+            $query->whereBetween('created_at', [$from, $to]);
+        }
+
+
+
+
+        // $query->when(isset($request['from'], $request['to']), function ($q) use ($request) {
+        //     $from = Carbon::parse($request['from'])->startOfDay();
+        //     $to = Carbon::parse($request['to'])->endOfDay();
+        //     $q->whereBetween('created_at', [$from, $to]);
+        // });
 
 
 
