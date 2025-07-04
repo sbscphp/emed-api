@@ -48,13 +48,15 @@ class PharmacyController extends Controller
             //     })
             //     ->paginate(10);
 
-            $pharmacies = Pharmacy::with(['state:id,state_name', 'pharmacist:id,fullname,email'])
-                ->when($from && $to, function ($q) use ($from, $to) {
-                    $q->whereBetween('created_at', [
-                        Carbon::parse($from)->startOfDay(),
-                        Carbon::parse($to)->endOfDay()
-                    ]);
-                })->paginate($limit);
+            $pharmacies = Pharmacy::with(['state:id,state_name', 'pharmacist:id,fullname,email']);
+            if ($from && $to) {
+                $pharmacies->whereBetween('created_at', [
+                    Carbon::parse($from)->startOfDay(),
+                    Carbon::parse($to)->endOfDay()
+                ]);
+            }
+
+            $pharmacies->paginate($limit);
 
 
             if ($pharmacies->isEmpty()) {
@@ -102,7 +104,7 @@ class PharmacyController extends Controller
             $from = $request->from;
             $to = $request->to;
             $treatments = $this->pharmacyService->treatmentLogall($search, $from,  $to);
-
+            //    exists
             if ($treatments->exists()) {
                 return JsonResponser::send(true, 'No treatment logs found.', [], 204);
             }
