@@ -35,7 +35,7 @@ class PharmacyController extends Controller
             $from = $request->from;
             $to = $request->to;
             //  $pharmacies = $this->pharmacyService->new_all($from, $to);
-            dd($from, $to);
+
 
 
             // $pharmacies =  Pharmacy::with(['state:id,state_name', 'pharmacist:id,fullname,email'])
@@ -53,8 +53,8 @@ class PharmacyController extends Controller
                         Carbon::parse($from)->startOfDay(),
                         Carbon::parse($to)->endOfDay()
                     ]);
-                });
-            // dd($query->toSql(), $query->getBindings());
+                })->get();
+            dd(json_encode($query));
 
             if ($pharmacies->isEmpty()) {
                 return JsonResponser::send(true, 'No pharmacies found.', [], 204);
