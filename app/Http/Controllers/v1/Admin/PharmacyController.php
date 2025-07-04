@@ -101,7 +101,7 @@ class PharmacyController extends Controller
         $search = $request->input('search');
         $treatments = $this->pharmacyService->treatmentLogall($search);
 
-        if ($treatments->isEmpty()) {
+        if (!$treatments->exists()) {
             return JsonResponser::send(true, 'No treatment logs found.', [], 204);
         }
 
