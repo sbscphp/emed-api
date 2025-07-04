@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
+use Carbon\Carbon;
 class PharmacyController extends Controller
 {
     protected $userService;
@@ -31,6 +32,15 @@ class PharmacyController extends Controller
              config(['database.default' => 'tenant']);
             $pharmacies = $this->pharmacyService->all($request);
 
+            $from = $request->from;
+            $to = $request->to;
+
+            $pharmacies->when($from && $to, function ($q) use ($from, $to) {
+                    $q->whereBetween('patient_visits.arrival_date', [
+                        Carbon::parse($from)->startOfDay(),
+                        Carbon::parse($to)->endOfDay()
+                    ]);
+                });
             if ($pharmacies->isEmpty()) {
                 return JsonResponser::send(true, 'No pharmacies found.', [], 204);
             }
