@@ -27,7 +27,7 @@ class MedicationRepository implements MedicationRepositoryInterface
             }
         }
 
-        if ($request->has('export')) {
+        if ($request['export'] || !empty($request['export'])) {
             $medications = $query->get();
 
             $exportData = $medications->map(function ($med) {
@@ -46,11 +46,11 @@ class MedicationRepository implements MedicationRepositoryInterface
                 ];
             });
 
-            if ($request->export === 'csv') {
+            if ($request['export'] === 'csv') {
                 return ExportHelper::streamCsv($exportData->toArray(), null, 'medications.csv');
             }
 
-            if ($request->export === 'pdf') {
+            if ($request['export'] === 'pdf') {
                 return ExportHelper::downloadPdf($exportData->toArray(), 'medications.pdf');
             }
 
