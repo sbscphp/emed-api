@@ -25,9 +25,12 @@ class VendorController extends Controller
     public function index(Request $request)
     {
         try {
-              config(['database.default' => 'tenant']);
+            config(['database.default' => 'tenant']);
             $filters = $request->only(['search', 'type', 'export']);
-            $data = $this->service->all($filters, $filters['export'] ?? null);
+            $from = $request->from;
+            $to = $request->to;
+            dd($from, $to);
+            $data = $this->service->all($filters, $filters['export'] ?? null, $from, $to);
 
             if ($data instanceof \Symfony\Component\HttpFoundation\Response) {
                 return $data;
@@ -48,9 +51,9 @@ class VendorController extends Controller
 
     public function show($id)
     {
-        
+
         try {
-             config(['database.default' => 'tenant']);
+            config(['database.default' => 'tenant']);
             $vendor = $this->service->find($id);
 
             if (!$vendor) {
@@ -140,7 +143,7 @@ class VendorController extends Controller
 
     public function getVendorStats()
     {
-          
+
         try {
             config(['database.default' => 'tenant']);
             $stats = $this->service->getVendorStats();
@@ -150,17 +153,18 @@ class VendorController extends Controller
         }
     }
 
-    public function update_status(UpdateStatusVendorRequest $request, $id){
-    try {
-        config(['database.default' => 'tenant']);
-         DB::connection('landlord')->beginTransaction();
-         $validated = $request->validated();
-          $result = $this->service->update_status($validated, $id);
-        //    DB::connection('landlord')->commit();
-        return JsonResponser::send(false, 'Vendor stats fetched successfully', $result);
-     } catch (\Throwable $th) {
-     DB::connection('landlord')->rollBack();
-     return JsonResponser::send(true, 'Internal server error', [], 500, $th);
-     }
+    public function update_status(UpdateStatusVendorRequest $request, $id)
+    {
+        try {
+            config(['database.default' => 'tenant']);
+            DB::connection('landlord')->beginTransaction();
+            $validated = $request->validated();
+            $result = $this->service->update_status($validated, $id);
+            //    DB::connection('landlord')->commit();
+            return JsonResponser::send(false, 'Vendor stats fetched successfully', $result);
+        } catch (\Throwable $th) {
+            DB::connection('landlord')->rollBack();
+            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+        }
     }
 }

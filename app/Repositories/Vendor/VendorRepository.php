@@ -5,6 +5,8 @@ namespace App\Repositories\Vendor;
 use App\Helpers\ExportHelper;
 use App\Models\Vendor;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+
 class VendorRepository implements VendorInterface
 {
     /**
@@ -14,7 +16,7 @@ class VendorRepository implements VendorInterface
      */
 
 
-    public function all(array $filters = [], ?string $export = null)
+    public function all(array $filters = [], ?string $export = null, $from, $to)
     {
         $query = Vendor::query();
 
@@ -25,6 +27,13 @@ class VendorRepository implements VendorInterface
                     ->orWhere('email', 'like', '%' . $filters['search'] . '%')
                     ->orWhere('phone_number', 'like', '%' . $filters['search'] . '%');
             });
+        }
+
+        if (!empty($from) && !empty($to)) {
+            $query->whereBetween('created_at', [
+                Carbon::parse($from)->startOfDay(),
+                Carbon::parse($to)->endOfDay()
+            ]);
         }
 
         $transform = fn($vendor) => [
@@ -93,22 +102,20 @@ class VendorRepository implements VendorInterface
         DB::connection('tenant')->beginTransaction();
         $record = Vendor::find(intval($id));
         // $record->update($data);
-        if($record){
-           $record->vendor_name = $data['vendor_name'];
-           $record->contact_person = $data['contact_person'];
-           $record->email = $data['email'];
-           $record->address = $data['address'];
-           $record->phone_number = $data['phone_number'];
-           $record->registration_no = $data['registration_no'];
-           $record->status = $data['status'];
-           $record->save();
-         DB::connection('tenant')->commit();
-          return $record;
-        }else{
-         DB::connection('tenant')->rollBack();  
-   
+        if ($record) {
+            $record->vendor_name = $data['vendor_name'];
+            $record->contact_person = $data['contact_person'];
+            $record->email = $data['email'];
+            $record->address = $data['address'];
+            $record->phone_number = $data['phone_number'];
+            $record->registration_no = $data['registration_no'];
+            $record->status = $data['status'];
+            $record->save();
+            DB::connection('tenant')->commit();
+            return $record;
+        } else {
+            DB::connection('tenant')->rollBack();
         }
-       
     }
 
 
@@ -149,7 +156,8 @@ class VendorRepository implements VendorInterface
         return Vendor::where($attr, $value)->first();
     }
 
-    public function  update_status ($validated, $id){ 
+    public function  update_status($validated, $id)
+    {
         DB::connection('tenant')->beginTransaction();
         $vendor = Vendor::on('tenant')->find(intval($id));
         if ($vendor) {
@@ -159,10 +167,7 @@ class VendorRepository implements VendorInterface
             DB::connection('tenant')->commit();
             return $vendor;
         } else {
-          DB::connection('tenant')->rollBack();  
-           
+            DB::connection('tenant')->rollBack();
         }
-    
-
     }
 }
