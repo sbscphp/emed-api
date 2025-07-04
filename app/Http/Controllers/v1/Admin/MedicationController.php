@@ -36,6 +36,7 @@ class MedicationController extends Controller
                 'medicine_status' => "nullable|string",
                 'from' => "nullable|date",
                 'to' => "nullable|date",
+                'export' => "nullable|string"
             ]);
 
 
