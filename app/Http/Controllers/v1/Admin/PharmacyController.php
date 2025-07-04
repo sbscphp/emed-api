@@ -48,14 +48,14 @@ class PharmacyController extends Controller
             //     })
             //     ->paginate(10);
 
-            $query = Pharmacy::with(['state:id,state_name', 'pharmacist:id,fullname,email'])
+            $pharmacies = Pharmacy::with(['state:id,state_name', 'pharmacist:id,fullname,email'])
                 ->when($from && $to, function ($q) use ($from, $to) {
                     $q->whereBetween('created_at', [
                         Carbon::parse($from)->startOfDay(),
                         Carbon::parse($to)->endOfDay()
                     ]);
                 })->paginate($limit);
-            dd(json_encode($query));
+
 
             if ($pharmacies->isEmpty()) {
                 return JsonResponser::send(true, 'No pharmacies found.', [], 204);
