@@ -29,7 +29,7 @@ class VendorController extends Controller
             $filters = $request->only(['search', 'type', 'export']);
             $from = $request->from;
             $to = $request->to;
-            dd($from, $to);
+
             $data = $this->service->all($filters, $filters['export'] ?? null, $from, $to);
 
             if ($data instanceof \Symfony\Component\HttpFoundation\Response) {
