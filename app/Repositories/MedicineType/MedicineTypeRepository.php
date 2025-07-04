@@ -3,6 +3,7 @@
 namespace App\Repositories\MedicineType;
 
 use App\Models\MedicineType;
+use Carbon\Carbon;
 
 class MedicineTypeRepository implements MedicineTypeInterface
 {
@@ -22,6 +23,13 @@ class MedicineTypeRepository implements MedicineTypeInterface
         if (isset($filters['type']) && $filters['type'] === 'all') {
             return $query->orderByDesc('date_added')->get();
         }
+
+        $query->when($filters['from'] && $filters['to'], function ($q) use ($filters) {
+            $q->whereBetween('patient_visits.arrival_date', [
+                Carbon::parse($filters['from'])->startOfDay(),
+                Carbon::parse($filters['to'])->endOfDay()
+            ]);
+        });
 
         return $query->orderByDesc('date_added')->paginate(10);
     }
