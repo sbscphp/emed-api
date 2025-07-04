@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
+
 class MedicationInventoryController extends Controller
 {
     protected $userService;
@@ -26,7 +27,7 @@ class MedicationInventoryController extends Controller
     public function store(StoreMedicationInventoryRequest $request)
     {
         try {
-             config(['database.default' => 'tenant']);
+            config(['database.default' => 'tenant']);
             $currentUser = Auth::user();
             //$user = $this->userService->find($currentUser->id);
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
@@ -55,10 +56,10 @@ class MedicationInventoryController extends Controller
     }
 
     public function index(Request $request)
-    {  
+    {
         // DB::connection('landlord')->beginTransaction();
         try {
-            $filters = $request->only(['shipment_status', 'search']);
+            $filters = $request->only(['shipment_status', 'search', 'from', 'to']);
             $export = $request->input('export');
 
             $data = $this->inventoryService->all($filters, $export);
@@ -70,7 +71,7 @@ class MedicationInventoryController extends Controller
             if ($data->isEmpty()) {
                 return JsonResponser::send(true, 'Shipment not found.', null, 204);
             }
-              // DB::connection('landlord')->commit();
+            // DB::connection('landlord')->commit();
             return JsonResponser::send(false, 'Shipment list fetched successfully', $data);
         } catch (\InvalidArgumentException $e) {
             return JsonResponser::send(true, $e->getMessage(), null, 400);
