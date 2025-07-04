@@ -3,6 +3,7 @@
 namespace App\Repositories\PharmacySupplier;
 
 use App\Models\PharmacySupply;
+use Carbon\Carbon;
 
 class PharmacySupplyRepository implements PharmacySupplyRepositoryInterface
 {
@@ -11,7 +12,7 @@ class PharmacySupplyRepository implements PharmacySupplyRepositoryInterface
         return PharmacySupply::create($data);
     }
 
-    public function getAll($search = null, $isExport = false)
+    public function getAll($search = null, $isExport = false, $from, $to)
     {
         $query = PharmacySupply::with('pharmacy');
 
@@ -28,6 +29,12 @@ class PharmacySupplyRepository implements PharmacySupplyRepositoryInterface
                         $qp->where('name', 'like', "%{$search}%");
                     });
             });
+        }
+
+        if (isset($from, $to)) {
+            $from = Carbon::parse($from)->startOfDay();
+            $to = Carbon::parse($to)->endOfDay();
+            $query->whereBetween('created_at', [$from, $to]);
         }
 
         $query->orderByDesc('supplied_date');

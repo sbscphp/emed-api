@@ -29,8 +29,9 @@ class PharmacySupplyController extends Controller
         try {
             $search = $request->input('search');
             $isExport = $request->has('export');
-
-            $supplies = $this->supplyService->listSupplies($search, $isExport);
+            $from = $request->from;
+            $to = $request->to;
+            $supplies = $this->supplyService->listSupplies($search, $isExport, $from, $to);
 
             if ($supplies->isEmpty()) {
                 return JsonResponser::send(true, 'No pharmacy supplies found.', [], 204);
