@@ -27,63 +27,63 @@ class MedicationController extends Controller
 
     public function index(Request $request)
     {
-        try {
-            $validated = $request->validate([
-                'generic_name' => "nullable|string",
-                'brand_name' => "nullable|string",
-                'medicine_name' => "nullable|string",
-                'medicine_type' => "nullable|string",
-                'medicine_status' => "nullable|string",
-                'from' => "nullable|date",
-                'to' => "nullable|date",
-                'export' => "nullable|string"
-            ]);
+        // try {
+        $validated = $request->validate([
+            'generic_name' => "nullable|string",
+            'brand_name' => "nullable|string",
+            'medicine_name' => "nullable|string",
+            'medicine_type' => "nullable|string",
+            'medicine_status' => "nullable|string",
+            'from' => "nullable|date",
+            'to' => "nullable|date",
+            'export' => "nullable|string"
+        ]);
 
 
-            // $request = $request->only([
-            //     'generic_name',
-            //     'brand_name',
-            //     'medicine_name',
-            //     'medicine_type',
-            //     'medicine_status',
-            //     'from',
-            //     'to',
-            // ]);
+        // $request = $request->only([
+        //     'generic_name',
+        //     'brand_name',
+        //     'medicine_name',
+        //     'medicine_type',
+        //     'medicine_status',
+        //     'from',
+        //     'to',
+        // ]);
 
-            $data = $this->medicationService->all($validated);
+        $data = $this->medicationService->all($validated);
 
-            if ($data instanceof \Symfony\Component\HttpFoundation\Response) {
-                return $data;
-            }
-
-            if ($data->isEmpty()) {
-                return JsonResponser::send(true, 'No Medications found.', [], 204);
-            }
-
-            $formatted = $data->getCollection()->transform(function ($med) {
-                return [
-                    'id' => $med->id,
-                    'generic_name' => $med->generic_name,
-                    'brand_name' => $med->brand_name,
-                    'medicine_name' => $med->medicine_name,
-                    'medicine_type' => $med->medicine_type,
-                    'cost_price' => $med->cost_price,
-                    'selling_price' => $med->selling_price,
-                    'reg_no' => $med->reg_no,
-                    'manufacturer' => $med->manufacturer,
-                    'medicine_status' => $med->medicine_status,
-                    'pharmacy' => $med->pharmacy->name ?? null,
-                    'created_at' => $med->created_at,
-                ];
-            });
-
-            $paginated = $data->toArray();
-            $paginated['data'] = $formatted;
-
-            return JsonResponser::send(false, 'Medications retrieved successfully', collect($paginated));
-        } catch (\Exception $e) {
-            return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+        if ($data instanceof \Symfony\Component\HttpFoundation\Response) {
+            return $data;
         }
+
+        if ($data->isEmpty()) {
+            return JsonResponser::send(true, 'No Medications found.', [], 204);
+        }
+
+        $formatted = $data->getCollection()->transform(function ($med) {
+            return [
+                'id' => $med->id,
+                'generic_name' => $med->generic_name,
+                'brand_name' => $med->brand_name,
+                'medicine_name' => $med->medicine_name,
+                'medicine_type' => $med->medicine_type,
+                'cost_price' => $med->cost_price,
+                'selling_price' => $med->selling_price,
+                'reg_no' => $med->reg_no,
+                'manufacturer' => $med->manufacturer,
+                'medicine_status' => $med->medicine_status,
+                'pharmacy' => $med->pharmacy->name ?? null,
+                'created_at' => $med->created_at,
+            ];
+        });
+
+        $paginated = $data->toArray();
+        $paginated['data'] = $formatted;
+
+        return JsonResponser::send(false, 'Medications retrieved successfully', collect($paginated));
+        // } catch (\Exception $e) {
+        //     return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+        // }
     }
 
     public function store(MedicationRequest $request)
