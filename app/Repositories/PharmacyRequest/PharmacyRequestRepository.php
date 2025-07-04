@@ -14,11 +14,14 @@ class PharmacyRequestRepository implements PharmacyRequestInterface
      */
     public function all($search, $from, $to)
     {
-        $query = PharmacyRequest::where(function ($q) use ($search) {
-            $q->where('product', $search)
-                ->orWhere('category', $search)
-                ->orWhere('urgency_level', $search);
-        });
+        $query = PharmacyRequest:::query();
+            if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('product', 'like', "%$search%")
+                ->orWhere('category', 'like', "%$search%")
+                ->orWhere('urgency_level', 'like', "%$search%");
+            });
+        }
 
         if (isset($from, $to)) {
             $from = Carbon::parse($from)->startOfDay();
