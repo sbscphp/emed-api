@@ -299,27 +299,26 @@ class UserController extends Controller
         //     $tenancy->end();
         // });
 
-        $path = 'database/migrations/tenant/2025_07_04_152517_add_column_to_users_table.php';
+        $tenant = Tenant::where('database', 'jkpmjemy_tenant_john_hospital')->first();
 
-        $tenants = Tenant::all();
+        // Or use 'tenancy_db_name' or whatever your actual column name is
+        // $tenant = Tenant::where('tenancy_db_name', 'jkpmjemy_emed')->first();
 
-        $tenants->each(function ($tenant) use ($path) {
-            echo ">>> Initializing tenant: {$tenant->database}\n"; // or $tenant->tenancy_db_name if that's the column
+        if ($tenant) {
+            tenancy()->initialize($tenant); // Switch to tenant's database
 
-            tenancy()->initialize($tenant);
-
-            echo "Connected to DB: " . DB::connection()->getDatabaseName() . "\n";
+            echo "✅ Connected to DB: " . DB::connection()->getDatabaseName() . "\n";
 
             Artisan::call('migrate', [
-                '--path' => $path,
-                '--force' => true
+                '--path' => 'database/migrations/tenant/2025_07_04_152517_add_column_to_users_table.php',
+                '--force' => true,
             ]);
 
             echo Artisan::output();
 
-            tenancy()->end();
-
-            echo ">>> Done with: {$tenant->database}\n\n";
-        });
+            tenancy()->end(); // Switch back to landlord
+        } else {
+            echo "❌ Tenant not found.";
+        }
     }
 }
