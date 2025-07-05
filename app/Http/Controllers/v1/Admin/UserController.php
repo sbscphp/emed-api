@@ -277,26 +277,26 @@ class UserController extends Controller
             "path" => 'required|string'
         ]);
 
-        // Tenant::all()->each(function ($tenant) use ($validated) {
-        //     tenancy()->initialize($tenant);
+        Tenant::all()->each(function ($tenant) use ($validated) {
+            tenancy()->initialize($tenant);
 
-        //     Artisan::call('migrate', [
-        //         '--path' => $validated['path'],
-        //         '--force' => true
-        //     ]);
-
-        //     tenancy()->end();
-        // });
-
-        Tenant::all()->each(function ($tenant) use ($validated, $tenancy) {
-            $tenancy->initialize($tenant);
             Artisan::call('migrate', [
                 '--path' => $validated['path'],
                 '--force' => true
             ]);
 
-            $tenancy->end();
+            tenancy()->end();
         });
+
+        // Tenant::all()->each(function ($tenant) use ($validated, $tenancy) {
+        //     $tenancy->initialize($tenant);
+        //     Artisan::call('migrate', [
+        //         '--path' => $validated['path'],
+        //         '--force' => true
+        //     ]);
+
+        //     $tenancy->end();
+        // });
 
 
         return response()->json(['success' => "successfull"]);
