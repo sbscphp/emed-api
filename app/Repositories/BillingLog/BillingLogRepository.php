@@ -20,7 +20,6 @@ class BillingLogRepository implements BillingLogRepositoryInterface
     public function all($request)
     {
         $query = BillingLog::with(['serviceType', 'serviceUnit', 'patient.service']);
-        dd(json_encode($request));
         if ($request['search']) {
             $search = $request['search'];
             $query->where(function ($q) use ($search) {
