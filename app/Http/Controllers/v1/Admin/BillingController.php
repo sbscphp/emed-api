@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
+
 class BillingController extends Controller
 {
     protected $billingService;
@@ -30,7 +31,15 @@ class BillingController extends Controller
     {
         try {
             config(['database.default' => 'tenant']);
-            $billings = $this->billingService->all($request);
+
+            $validated =  $request->validate([
+                "search" => "nullable|string",
+                "payment_status" => "nullable|numeric",
+                "service_type_id" => "nullable|numeric",
+                "service_unit_id" => "nullable|numeric",
+                "export" => "nullable|string"
+            ]);
+            $billings = $this->billingService->all($validated);
             if (
                 $billings instanceof \Symfony\Component\HttpFoundation\BinaryFileResponse ||
                 $billings instanceof \Symfony\Component\HttpFoundation\StreamedResponse
@@ -116,7 +125,7 @@ class BillingController extends Controller
     public function destroy($id)
     {
         try {
-             config(['database.default' => 'tenant']);
+            config(['database.default' => 'tenant']);
             $billing = $this->billingService->find($id);
             if (!$billing) {
                 return JsonResponser::send(true, 'Billing record not found.', null, 204);
@@ -133,7 +142,7 @@ class BillingController extends Controller
     public function getAllServiceUnitsAndTypes(Request $request)
     {
         try {
-              config(['database.default' => 'tenant']);
+            config(['database.default' => 'tenant']);
 
             $serviceUnits = $this->serviceFetch->getUnits(['id', 'name'], $request->get('service_units_name'), $request->get('from'), $request->get('to'));
             $serviceTypes = $this->serviceFetch->getTypes(['id', 'name'], $request->get('service_types_name'), $request->get('from'), $request->get('to'));
@@ -199,7 +208,7 @@ class BillingController extends Controller
     public function getBillingByServiceType(Request $request)
     {
         try {
-              config(['database.default' => 'tenant']);
+            config(['database.default' => 'tenant']);
             $billingLogs = $this->billingService->getByServiceType($request->input('service_type_id'));
 
             $logs = collect($billingLogs->items())->map(function ($log) {
