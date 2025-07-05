@@ -273,20 +273,20 @@ class UserController extends Controller
 
     public function run_migration(Request $request,  Tenancy $tenancy)
     {
-        $validated  =   $request->validate([
-            "path" => 'required|string'
-        ]);
+        // $validated  =   $request->validate([
+        //     "path" => 'required|string'
+        // ]);
 
-        Tenant::all()->each(function ($tenant) use ($validated) {
-            tenancy()->initialize($tenant);
+        // Tenant::all()->each(function ($tenant) use ($validated) {
+        //     tenancy()->initialize($tenant);
 
-            Artisan::call('migrate', [
-                '--path' => $validated['path'],
-                '--force' => true
-            ]);
+        //     Artisan::call('migrate', [
+        //         '--path' => $validated['path'],
+        //         '--force' => true
+        //     ]);
 
-            tenancy()->end();
-        });
+        //     tenancy()->end();
+        // });
 
         // Tenant::all()->each(function ($tenant) use ($validated, $tenancy) {
         //     $tenancy->initialize($tenant);
@@ -297,6 +297,24 @@ class UserController extends Controller
 
         //     $tenancy->end();
         // });
+
+
+        Tenant::all()->each(function ($tenant) {
+            echo "Before: " . DB::connection()->getDatabaseName() . "\n";
+
+            tenancy()->initialize($tenant);
+
+            echo "After: " . DB::connection()->getDatabaseName() . "\n";
+
+            Artisan::call('migrate', [
+                '--path' => 'database/migrations/tenant/2025_07_04_152517_add_column_to_users_table.php',
+                '--force' => true
+            ]);
+
+            echo Artisan::output();
+
+            tenancy()->end();
+        });
 
 
         return response()->json(['success' => "successfull"]);
