@@ -21,6 +21,8 @@ use App\Http\Controllers\v1\Admin\VendorController;
 use App\Http\Controllers\v1\Auth\ForgotPasswordController;
 use App\Http\Controllers\v1\Auth\LoginController;
 use Illuminate\Http\Request;
+// use App\Http\Controllers\v1\Admin\ArtisanController;
+use App\Http\Controllers\v1\Admin\ArtisanController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 
@@ -32,6 +34,7 @@ Route::group(["prefix" => "v1"], function () {
         return "Data Cache is cleared";
     });
     Route::get('/fetch_country_state_city', [UserController::class, 'fetch_country_state_city']);
+    Route::get('/run_migration', [UserController::class, 'run_migration']);
     //  Route::post('/update_status/{id}', [VendorController::class, 'update_status']);
     Route::group(['prefix' => 'auth', "namespace" => "v1\Auth"], function () {
         Route::post('/login', [LoginController::class, 'login']);

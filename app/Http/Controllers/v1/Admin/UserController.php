@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use App\Events\CreateUserEvent;
 use Throwable;
+use Illuminate\Support\Facades\Artisan;
+use App\Models\Tenant;
 
 class UserController extends Controller
 {
@@ -264,5 +266,25 @@ class UserController extends Controller
             DB::connection('landlord')->rollBack();
             return JsonResponser::send(true, 'Internal server error.', [], 500);
         }
+    }
+
+
+    public function run_migration(Request $request)
+    {
+        $validated  =   $request->validate([
+            "path" => 'required|string'
+        ]);
+        Tenant::all()->each(function ($tenant) use ($validated) {
+            tenancy()->initialize($tenant);
+
+            Artisan::call('migrate', [
+                '--path' => $validated['path'],
+                '--force' => true
+            ]);
+
+            tenancy()->end();
+        });
+
+        return response()->json(['success' => "successfull"]);
     }
 }
