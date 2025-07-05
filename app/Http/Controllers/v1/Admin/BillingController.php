@@ -29,32 +29,34 @@ class BillingController extends Controller
 
     public function index(Request $request)
     {
-        try {
-            config(['database.default' => 'tenant']);
+        // try {
+        config(['database.default' => 'tenant']);
 
-            $validated =  $request->validate([
-                "search" => "nullable|string",
-                "payment_status" => "nullable|numeric",
-                "service_type_id" => "nullable|numeric",
-                "service_unit_id" => "nullable|numeric",
-                "export" => "nullable|string"
-            ]);
-            $billings = $this->billingService->all($validated);
-            if (
-                $billings instanceof \Symfony\Component\HttpFoundation\BinaryFileResponse ||
-                $billings instanceof \Symfony\Component\HttpFoundation\StreamedResponse
-            ) {
-                return $billings;
-            }
-
-            if ($billings->isEmpty()) {
-                return JsonResponser::send(true, 'No billing records found.', [], 204);
-            }
-
-            return JsonResponser::send(false, 'Billing logs retrieved successfully', $billings, 200);
-        } catch (\Exception $e) {
-            return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+        $validated =  $request->validate([
+            "search" => "nullable|string",
+            "payment_status" => "nullable|numeric",
+            "service_type_id" => "nullable|numeric",
+            "service_unit_id" => "nullable|numeric",
+            "export" => "nullable|string",
+            'from' => "nullable|string",
+            'to' => "nullable|string"
+        ]);
+        $billings = $this->billingService->all($validated);
+        if (
+            $billings instanceof \Symfony\Component\HttpFoundation\BinaryFileResponse ||
+            $billings instanceof \Symfony\Component\HttpFoundation\StreamedResponse
+        ) {
+            return $billings;
         }
+
+        if ($billings->isEmpty()) {
+            return JsonResponser::send(true, 'No billing records found.', [], 204);
+        }
+
+        return JsonResponser::send(false, 'Billing logs retrieved successfully', $billings, 200);
+        // } catch (\Exception $e) {
+        //     return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+        // }
     }
 
     public function store(BillingLogRequest $request)

@@ -9,6 +9,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\FinancialReportExport;
 use App\Helpers\ExportHelper;
+use Carbon\Carbon;
 
 class BillingLogRepository implements BillingLogRepositoryInterface
 {
@@ -45,6 +46,14 @@ class BillingLogRepository implements BillingLogRepositoryInterface
 
         if ($request->filled('service_unit_id')) {
             $query->where('service_unit_id', $request['service_unit_id']);
+        }
+
+
+        if (!empty($request['from']) && !empty($request['to'])) {
+            $query->whereBetween('created_at', [
+                Carbon::parse($request['from'])->startOfDay(),
+                Carbon::parse($request['to'])->endOfDay()
+            ]);
         }
 
         if ($request->has('export')) {
