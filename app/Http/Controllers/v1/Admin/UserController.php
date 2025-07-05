@@ -300,32 +300,20 @@ class UserController extends Controller
         // });
 
 
+        $manualTenant = new \App\Models\Tenant(['database' => 'jkpmjemy_tenant_john_hospital']);
 
-        $tenants = Tenant::all()->unique('database');
+        tenancy()->initialize($manualTenant);
 
-        $manualTenantDb = 'jkpmjemy_tenant_john_hospital';
+        echo "Running manually for: " . DB::connection()->getDatabaseName() . "\n";
 
-        if (!$tenants->pluck('database')->contains($manualTenantDb)) {
-            $tenants->push(new Tenant(['database' => $manualTenantDb]));
-        }
+        Artisan::call('migrate', [
+            '--path' => 'database/migrations/tenant/2025_07_04_152517_add_column_to_users_table.php',
+            '--force' => true
+        ]);
 
-        // Run migration for each
-        $tenants->each(function ($tenant) {
-            echo "Before: " . DB::connection()->getDatabaseName() . "\n";
+        echo Artisan::output();
 
-            tenancy()->initialize($tenant);
-
-            echo "After: " . DB::connection()->getDatabaseName() . "\n";
-
-            Artisan::call('migrate', [
-                '--path' => 'database/migrations/tenant/2025_07_04_152517_add_column_to_users_table.php',
-                '--force' => true
-            ]);
-
-            echo Artisan::output();
-
-            tenancy()->end();
-        });
+        tenancy()->end();
         return response()->json(['success' => "successfull"]);
     }
 }
