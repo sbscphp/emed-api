@@ -40,37 +40,37 @@ class LabController extends Controller
 
     public function allLabRecords(Request $request)
     {
-        try {
-            $search = $request->search;
-            $status = $request->status;
-            $paymentStatus = $request->payment_status;
-            $paginate = $request->paginate ?? false;
-            $perPage = $request->perPage;
+        //try {
+        $search = $request->search;
+        $status = $request->status;
+        $paymentStatus = $request->payment_status;
+        $paginate = $request->paginate ?? false;
+        $perPage = $request->perPage;
 
-            DB::connection('tenant');
-            $currentUser = Auth::user();
-            // $user = $this->userService->find($currentUser->id);
-            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
+        DB::connection('tenant');
+        $currentUser = Auth::user();
+        // $user = $this->userService->find($currentUser->id);
+        $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
-            if (!$user) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
-            }
-
-            $labRecords = $this->laboratoryService->getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage);
-
-            if ($labRecords->isEmpty()) {
-                return JsonResponser::send(true, 'Record(s) not found.', null, 204);
-            }
-
-            $response = [
-                'records' => $labRecords,
-                'total' => $labRecords->count()
-            ];
-
-            return JsonResponser::send(false, 'Record(s) found successfully.', $response, 200);
-        } catch (Throwable $th) {
-            return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
+        if (!$user) {
+            return JsonResponser::send(true, 'User not found.', null, 204);
         }
+
+        $labRecords = $this->laboratoryService->getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage);
+
+        if ($labRecords->isEmpty()) {
+            return JsonResponser::send(true, 'Record(s) not found.', null, 204);
+        }
+
+        $response = [
+            'records' => $labRecords,
+            'total' => $labRecords->count()
+        ];
+
+        return JsonResponser::send(false, 'Record(s) found successfully.', $response, 200);
+        // } catch (Throwable $th) {
+        //     return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
+        // }
     }
 
     public function stats()
@@ -99,7 +99,7 @@ class LabController extends Controller
 
             DB::connection('tenant');
             $currentUser = Auth::user();
-           // $user = $this->userService->find($currentUser->id);
+            // $user = $this->userService->find($currentUser->id);
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
             if (!$user) {
                 return JsonResponser::send(true, 'User not found.', null, 204);
