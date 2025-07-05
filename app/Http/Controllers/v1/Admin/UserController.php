@@ -299,22 +299,25 @@ class UserController extends Controller
         // });
 
 
-        Tenant::all()->each(function ($tenant) {
-            echo "Before: " . DB::connection()->getDatabaseName() . "\n";
 
-            tenancy()->initialize($tenant);
+        Tenant::all()
+            ->unique('database')
+            ->each(function ($tenant) {
+                echo "Before: " . DB::connection()->getDatabaseName() . "\n";
 
-            echo "After: " . DB::connection()->getDatabaseName() . "\n";
+                tenancy()->initialize($tenant);
 
-            Artisan::call('migrate', [
-                '--path' => 'database/migrations/tenant/2025_07_04_152517_add_column_to_users_table.php',
-                '--force' => true
-            ]);
+                echo "After: " . DB::connection()->getDatabaseName() . "\n";
 
-            echo Artisan::output();
+                Artisan::call('migrate', [
+                    '--path' => 'database/migrations/tenant/2025_07_04_152517_add_column_to_users_table.php',
+                    '--force' => true
+                ]);
 
-            tenancy()->end();
-        });
+                echo Artisan::output();
+
+                tenancy()->end();
+            });
 
 
         return response()->json(['success' => "successfull"]);
