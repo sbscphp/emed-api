@@ -23,6 +23,7 @@ use App\Models\Tenant;
 // use Stancl\Tenancy\Tenancy;
 use Stancl\Tenancy\Tenancy;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 
 class UserController extends Controller
 {
@@ -298,7 +299,7 @@ class UserController extends Controller
 
         //     $tenancy->end();
         // });
-
+        DB::connection('tenant')->beginTransaction();
         $tenant = Tenant::where('database', 'jkpmjemy_tenant_john_hospital')->first();
 
         // Or use 'tenancy_db_name' or whatever your actual column name is
@@ -310,9 +311,16 @@ class UserController extends Controller
             echo "✅ Connected to DB: " . DB::connection()->getDatabaseName() . "\n";
 
             Artisan::call('migrate', [
-                '--path' => 'database/migrations/tenant/2025_07_04_152517_add_column_to_users_table.php',
+                '--path' => 'database/migrations/tenant/2025_07_04_152517_add_column_to_users_table_v2.php',
                 '--force' => true,
             ]);
+
+            if (!Schema::hasColumn('users', 'is_change_password')) {
+                Artisan::call('migrate', [
+                    '--path' => 'database/migrations/tenant/2025_07_04_152517_add_column_to_users_table.php',
+                    '--force' => true
+                ]);
+            }
 
             echo Artisan::output();
 
