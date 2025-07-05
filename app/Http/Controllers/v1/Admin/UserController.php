@@ -274,9 +274,9 @@ class UserController extends Controller
 
     public function run_migration(Request $request,  Tenancy $tenancy)
     {
-        // $validated  =   $request->validate([
-        //     "path" => 'required|string'
-        // ]);
+        $validated  =   $request->validate([
+            "path" => 'required|string'
+        ]);
 
         // Tenant::all()->each(function ($tenant) use ($validated) {
         //     tenancy()->initialize($tenant);
@@ -300,27 +300,19 @@ class UserController extends Controller
         // });
 
 
-        // Create a temporary Tenant object manually (not from DB)
-        $tenant = new Tenant([
-            'database' => 'jkpmjemy_tenant_john_hospital'
-        ]);
+        $tenants = Tenant::all();
 
-        // Switch to the tenant database
-        tenancy()->initialize($tenant);
+        foreach ($tenants as $tenant) {
+            tenancy()->initialize($tenant);
 
-        // Confirm current DB connection
-        echo "Connected to: " . DB::connection()->getDatabaseName() . "\n";
+            Artisan::call('migrate', [
+                '--path' => $validated['path'],
+                '--force' => true
+            ]);
 
-        // Run the specific migration
-        Artisan::call('migrate', [
-            '--path' => 'database/migrations/tenant/2025_07_04_152517_add_column_to_users_table.php',
-            '--force' => true
-        ]);
+            echo Artisan::output(); // Optional: See migration result
 
-        // Show migration output
-        echo Artisan::output();
-
-        // End the tenancy context
-        tenancy()->end();
+            tenancy()->end(); // Correct way to end the tenant context
+        }
     }
 }
