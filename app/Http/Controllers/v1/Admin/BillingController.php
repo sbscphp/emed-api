@@ -29,6 +29,7 @@ class BillingController extends Controller
 
     public function index(Request $request)
     {
+        DB::connection('tenant')->beginTransaction();
         // try {
         config(['database.default' => 'tenant']);
 
@@ -50,6 +51,7 @@ class BillingController extends Controller
         }
 
         if ($billings->isEmpty()) {
+            DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'No billing records found.', [], 204);
         }
 
