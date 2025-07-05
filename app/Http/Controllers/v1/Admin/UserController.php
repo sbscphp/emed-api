@@ -299,20 +299,27 @@ class UserController extends Controller
         //     $tenancy->end();
         // });
 
+        $path = 'database/migrations/tenant/2025_07_04_152517_add_column_to_users_table.php';
 
         $tenants = Tenant::all();
 
-        foreach ($tenants as $tenant) {
+        $tenants->each(function ($tenant) use ($path) {
+            echo ">>> Initializing tenant: {$tenant->database}\n"; // or $tenant->tenancy_db_name if that's the column
+
             tenancy()->initialize($tenant);
 
+            echo "Connected to DB: " . DB::connection()->getDatabaseName() . "\n";
+
             Artisan::call('migrate', [
-                '--path' => $validated['path'],
+                '--path' => $path,
                 '--force' => true
             ]);
 
-            echo Artisan::output(); // Optional: See migration result
+            echo Artisan::output();
 
-            tenancy()->end(); // Correct way to end the tenant context
-        }
+            tenancy()->end();
+
+            echo ">>> Done with: {$tenant->database}\n\n";
+        });
     }
 }
