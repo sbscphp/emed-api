@@ -299,34 +299,28 @@ class UserController extends Controller
 
         //     $tenancy->end();
         // });
-        DB::connection('tenant')->beginTransaction();
         $tenant = Tenant::where('database', 'jkpmjemy_tenant_john_hospital')->first();
 
-        // Or use 'tenancy_db_name' or whatever your actual column name is
-        // $tenant = Tenant::where('tenancy_db_name', 'jkpmjemy_emed')->first();
+        // or if the column is named tenancy_db_name instead of database, adjust it:
+        # $tenant = Tenant::where('tenancy_db_name', 'jkpmjemy_tenant_john_hospital')->first();
 
         if ($tenant) {
-            tenancy()->initialize($tenant); // Switch to tenant's database
+            echo "Running manually for: {$tenant->database}\n";
 
-            echo "✅ Connected to DB: " . DB::connection()->getDatabaseName() . "\n";
+            tenancy()->initialize($tenant);
+
+            echo "Connected to DB: " . DB::connection()->getDatabaseName() . "\n";
 
             Artisan::call('migrate', [
-                '--path' => 'database/migrations/tenant/2025_07_04_152517_add_column_to_users_table_v2.php',
-                '--force' => true,
+                '--path' => 'database/migrations/tenant/2025_07_04_152517_add_column_to_users_table.php',
+                '--force' => true
             ]);
-
-            if (!Schema::hasColumn('users', 'is_change_password')) {
-                Artisan::call('migrate', [
-                    '--path' => 'database/migrations/tenant/2025_07_04_152517_add_column_to_users_table.php',
-                    '--force' => true
-                ]);
-            }
 
             echo Artisan::output();
 
-            tenancy()->end(); // Switch back to landlord
+            tenancy()->end();
         } else {
-            echo "❌ Tenant not found.";
+            echo "❌ Tenant not found.\n";
         }
     }
 }
