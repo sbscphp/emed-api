@@ -152,7 +152,7 @@ class LaboratoryRepository implements LaboratoryInterface
                 return ExportHelper::downloadPdf($exportData->toArray(), 'lab-records.pdf');
             }
 
-            return JsonResponser::send(true, 'Invalid export format specified.', null, 400);
+            return $paginate ? $query->paginate($perPage ?? 10) : $query->get();
         }
 
         return $paginate ? $query->paginate($perPage ?? 10) : $query->get();
