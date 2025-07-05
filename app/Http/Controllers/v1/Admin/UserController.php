@@ -20,7 +20,8 @@ use App\Events\CreateUserEvent;
 use Throwable;
 use Illuminate\Support\Facades\Artisan;
 use App\Models\Tenant;
-use Stancl\Tenancy\Tenancy;
+// use Stancl\Tenancy\Tenancy;
+use Stancl\Tenancy\Contracts\Tenancy;
 
 class UserController extends Controller
 {
