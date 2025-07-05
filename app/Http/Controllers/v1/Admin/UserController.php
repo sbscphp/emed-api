@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Artisan;
 use App\Models\Tenant;
 // use Stancl\Tenancy\Tenancy;
 use Stancl\Tenancy\Tenancy;
+use Illuminate\Support\Collection;
 
 class UserController extends Controller
 {
@@ -300,26 +301,31 @@ class UserController extends Controller
 
 
 
-        Tenant::all()
-            ->unique('database')
-            ->each(function ($tenant) {
-                echo "Before: " . DB::connection()->getDatabaseName() . "\n";
+        $tenants = Tenant::all()->unique('database');
 
-                tenancy()->initialize($tenant);
+        $manualTenantDb = 'jkpmjemy_tenant_john_hospital';
 
-                echo "After: " . DB::connection()->getDatabaseName() . "\n";
+        if (!$tenants->pluck('database')->contains($manualTenantDb)) {
+            $tenants->push(new Tenant(['database' => $manualTenantDb]));
+        }
 
-                Artisan::call('migrate', [
-                    '--path' => 'database/migrations/tenant/2025_07_04_152517_add_column_to_users_table.php',
-                    '--force' => true
-                ]);
+        // Run migration for each
+        $tenants->each(function ($tenant) {
+            echo "Before: " . DB::connection()->getDatabaseName() . "\n";
 
-                echo Artisan::output();
+            tenancy()->initialize($tenant);
 
-                tenancy()->end();
-            });
+            echo "After: " . DB::connection()->getDatabaseName() . "\n";
 
+            Artisan::call('migrate', [
+                '--path' => 'database/migrations/tenant/2025_07_04_152517_add_column_to_users_table.php',
+                '--force' => true
+            ]);
 
+            echo Artisan::output();
+
+            tenancy()->end();
+        });
         return response()->json(['success' => "successfull"]);
     }
 }
