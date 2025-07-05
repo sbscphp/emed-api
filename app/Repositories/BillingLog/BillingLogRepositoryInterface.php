@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 interface BillingLogRepositoryInterface
 {
     public function create(array $data);
-    public function all(Request $request);
+    public function all($request);
     public function find($id);
     public function update($id, array $data);
     public function delete($id);

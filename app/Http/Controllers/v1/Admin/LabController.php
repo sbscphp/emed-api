@@ -46,7 +46,9 @@ class LabController extends Controller
         $paymentStatus = $request->payment_status;
         $paginate = $request->paginate ?? false;
         $perPage = $request->perPage;
-
+        $from = $request->from;
+        $to  = $request->to;
+        $export = $request->export;
         DB::connection('tenant');
         $currentUser = Auth::user();
         // $user = $this->userService->find($currentUser->id);
@@ -56,7 +58,7 @@ class LabController extends Controller
             return JsonResponser::send(true, 'User not found.', null, 204);
         }
 
-        $labRecords = $this->laboratoryService->getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage);
+        $labRecords = $this->laboratoryService->getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage, $export, $from, $to);
 
         if ($labRecords->isEmpty()) {
             return JsonResponser::send(true, 'Record(s) not found.', null, 204);

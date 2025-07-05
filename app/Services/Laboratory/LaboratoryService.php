@@ -94,9 +94,9 @@ class LaboratoryService
         return $this->LaboratoryInterface->findByAttribute($attr, $value);
     }
 
-    public function getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage)
+    public function getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage, $export, $from, $to)
     {
-        return $this->LaboratoryInterface->getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage);
+        return $this->LaboratoryInterface->getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage, $export, $from, $to);
     }
 
     public function getStats()

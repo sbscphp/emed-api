@@ -17,12 +17,12 @@ class BillingLogRepository implements BillingLogRepositoryInterface
         return BillingLog::create($data);
     }
 
-    public function all(Request $request)
+    public function all($request)
     {
         $query = BillingLog::with(['serviceType', 'serviceUnit', 'patient.service']);
 
-        if ($request->filled('search')) {
-            $search = $request->search;
+        if ($request['search']) {
+            $search = $request['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('invoice_number', 'like', "%$search%")
                     ->orWhere('item_name', 'like', "%$search%")
@@ -37,15 +37,15 @@ class BillingLogRepository implements BillingLogRepositoryInterface
         }
 
         if ($request->filled('payment_status')) {
-            $query->where('payment_status', $request->payment_status);
+            $query->where('payment_status', $request['payment_status']);
         }
 
         if ($request->filled('service_type_id')) {
-            $query->where('service_type_id', $request->service_type_id);
+            $query->where('service_type_id', $request['service_type_id']);
         }
 
         if ($request->filled('service_unit_id')) {
-            $query->where('service_unit_id', $request->service_unit_id);
+            $query->where('service_unit_id', $request['service_unit_id']);
         }
 
         if ($request->has('export')) {
@@ -80,7 +80,7 @@ class BillingLogRepository implements BillingLogRepositoryInterface
                 return ExportHelper::downloadPdf($exportData->toArray(), 'billing-records.pdf');
             }
 
-            return JsonResponser::send(true, 'Invalid export format specified.', null, 400);
+            return $query->latest()->paginate(10);
         }
 
         // Default paginate
