@@ -21,7 +21,7 @@ class BillingLogRepository implements BillingLogRepositoryInterface
     public function all($request)
     {
         $query = BillingLog::with(['serviceType', 'serviceUnit', 'patient.service']);
-        if ($request['search']) {
+        if (!empty($request['search'])) {
             $search = $request['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('invoice_number', 'like', "%$search%")
@@ -36,15 +36,15 @@ class BillingLogRepository implements BillingLogRepositoryInterface
             });
         }
 
-        if ($request->filled('payment_status')) {
+        if ($request['payment_status']) {
             $query->where('payment_status', $request['payment_status']);
         }
 
-        if ($request->filled('service_type_id')) {
+        if ($request['service_type_id']) {
             $query->where('service_type_id', $request['service_type_id']);
         }
 
-        if ($request->filled('service_unit_id')) {
+        if ($request['service_unit_id']) {
             $query->where('service_unit_id', $request['service_unit_id']);
         }
 
@@ -56,7 +56,7 @@ class BillingLogRepository implements BillingLogRepositoryInterface
             ]);
         }
 
-        if ($request->has('export')) {
+        if ($request['export']) {
             $billings = $query->get();
 
             $exportData = $billings->map(function ($item) {
