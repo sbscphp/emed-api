@@ -300,20 +300,27 @@ class UserController extends Controller
         // });
 
 
-        $manualTenant = new \App\Models\Tenant(['database' => 'jkpmjemy_tenant_john_hospital']);
+        // Create a temporary Tenant object manually (not from DB)
+        $tenant = new Tenant([
+            'database' => 'jkpmjemy_tenant_john_hospital'
+        ]);
 
-        tenancy()->initialize($manualTenant);
+        // Switch to the tenant database
+        tenancy()->initialize($tenant);
 
-        echo "Running manually for: " . DB::connection()->getDatabaseName() . "\n";
+        // Confirm current DB connection
+        echo "Connected to: " . DB::connection()->getDatabaseName() . "\n";
 
+        // Run the specific migration
         Artisan::call('migrate', [
             '--path' => 'database/migrations/tenant/2025_07_04_152517_add_column_to_users_table.php',
             '--force' => true
         ]);
 
+        // Show migration output
         echo Artisan::output();
 
+        // End the tenancy context
         tenancy()->end();
-        return response()->json(['success' => "successfull"]);
     }
 }
