@@ -21,7 +21,7 @@ use Throwable;
 use Illuminate\Support\Facades\Artisan;
 use App\Models\Tenant;
 // use Stancl\Tenancy\Tenancy;
-use Stancl\Tenancy\Contracts\Tenancy;
+use Stancl\Tenancy\Tenancy;
 
 class UserController extends Controller
 {
