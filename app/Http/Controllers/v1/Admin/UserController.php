@@ -275,7 +275,7 @@ class UserController extends Controller
         $validated  =   $request->validate([
             "path" => 'required|string'
         ]);
-        $tenancy->initialize($tenant);
+
         // Tenant::all()->each(function ($tenant) use ($validated) {
         //     tenancy()->initialize($tenant);
 
@@ -289,7 +289,6 @@ class UserController extends Controller
 
         Tenant::all()->each(function ($tenant) use ($validated, $tenancy) {
             $tenancy->initialize($tenant);
-
             Artisan::call('migrate', [
                 '--path' => $validated['path'],
                 '--force' => true
