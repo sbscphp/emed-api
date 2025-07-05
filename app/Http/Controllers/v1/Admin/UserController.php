@@ -20,6 +20,7 @@ use App\Events\CreateUserEvent;
 use Throwable;
 use Illuminate\Support\Facades\Artisan;
 use App\Models\Tenant;
+use Stancl\Tenancy\Tenancy;
 
 class UserController extends Controller
 {
@@ -269,21 +270,34 @@ class UserController extends Controller
     }
 
 
-    public function run_migration(Request $request)
+    public function run_migration(Request $request,  Tenancy $tenancy)
     {
         $validated  =   $request->validate([
             "path" => 'required|string'
         ]);
-        Tenant::all()->each(function ($tenant) use ($validated) {
-            tenancy()->initialize($tenant);
+        $tenancy->initialize($tenant);
+        // Tenant::all()->each(function ($tenant) use ($validated) {
+        //     tenancy()->initialize($tenant);
+
+        //     Artisan::call('migrate', [
+        //         '--path' => $validated['path'],
+        //         '--force' => true
+        //     ]);
+
+        //     tenancy()->end();
+        // });
+
+        Tenant::all()->each(function ($tenant) use ($validated, $tenancy) {
+            $tenancy->initialize($tenant);
 
             Artisan::call('migrate', [
                 '--path' => $validated['path'],
                 '--force' => true
             ]);
 
-            tenancy()->end();
+            $tenancy->end();
         });
+
 
         return response()->json(['success' => "successfull"]);
     }

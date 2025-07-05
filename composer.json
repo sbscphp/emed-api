@@ -3,7 +3,10 @@
     "name": "laravel/laravel",
     "type": "project",
     "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "keywords": [
+        "laravel",
+        "framework"
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.2",
@@ -16,6 +19,7 @@
         "maatwebsite/excel": "^3.1",
         "santigarcor/laratrust": "^8.3",
         "spatie/laravel-multitenancy": "^4.0",
+        "stancl/tenancy": "^3.9",
         "tymon/jwt-auth": "^2.1"
     },
     "require-dev": {
