@@ -36,15 +36,15 @@ class BillingLogRepository implements BillingLogRepositoryInterface
             });
         }
 
-        if ($request['payment_status']) {
+        if (!empty($request['payment_status'])) {
             $query->where('payment_status', $request['payment_status']);
         }
 
-        if ($request['service_type_id']) {
+        if (!empty($request['service_type_id'])) {
             $query->where('service_type_id', $request['service_type_id']);
         }
 
-        if ($request['service_unit_id']) {
+        if (!empty($request['service_unit_id'])) {
             $query->where('service_unit_id', $request['service_unit_id']);
         }
 
@@ -56,7 +56,7 @@ class BillingLogRepository implements BillingLogRepositoryInterface
             ]);
         }
 
-        if ($request['export']) {
+        if (!empty($request['export'])) {
             $billings = $query->get();
 
             $exportData = $billings->map(function ($item) {
@@ -80,11 +80,11 @@ class BillingLogRepository implements BillingLogRepositoryInterface
                 ];
             });
 
-            if ($request->export === 'csv') {
+            if ($request['export'] === 'csv') {
                 return ExportHelper::streamCsv($exportData->toArray(), null, 'billing-records.csv');
             }
 
-            if ($request->export === 'pdf') {
+            if ($request['export'] === 'pdf') {
                 return ExportHelper::downloadPdf($exportData->toArray(), 'billing-records.pdf');
             }
 
