@@ -104,56 +104,56 @@ class LaboratoryRepository implements LaboratoryInterface
             'billing_logs.payment_status as billing_status'
         );
 
-        if (!empty($search)) {
-            $query->where(function ($q) use ($search) {
-                $q->where('patients.firstname', 'LIKE', "%{$search}%")
-                    ->orWhere('patients.lastname', 'LIKE', "%{$search}%")
-                    ->orWhere('patients.patientno', 'LIKE', "%{$search}%")
-                    ->orWhere('patients.cardno', 'LIKE', "%{$search}%");
-            });
-        }
+        // if (!empty($search)) {
+        //     $query->where(function ($q) use ($search) {
+        //         $q->where('patients.firstname', 'LIKE', "%{$search}%")
+        //             ->orWhere('patients.lastname', 'LIKE', "%{$search}%")
+        //             ->orWhere('patients.patientno', 'LIKE', "%{$search}%")
+        //             ->orWhere('patients.cardno', 'LIKE', "%{$search}%");
+        //     });
+        // }
 
-        if (!empty($status)) {
-            $query->where('patient_visit_lab.test_status', $status);
-        }
+        // if (!empty($status)) {
+        //     $query->where('patient_visit_lab.test_status', $status);
+        // }
 
-        if (!empty($paymentStatus)) {
-            $query->where('patient_visit_lab.payment_status', $paymentStatus);
-        }
+        // if (!empty($paymentStatus)) {
+        //     $query->where('patient_visit_lab.payment_status', $paymentStatus);
+        // }
 
-        $query->orderBy('patient_visit_lab.created_at', 'desc');
+        // $query->orderBy('patient_visit_lab.created_at', 'desc');
 
-        if ($export) {
-            $records = $query->get();
+        // if ($export) {
+        //     $records = $query->get();
 
-            $exportData = $records->map(function ($item) {
-                return [
-                    'Patient Name' => "{$item->firstname} {$item->lastname}",
-                    'Patient No' => $item->patientno,
-                    'Card No' => $item->cardno,
-                    'Visit No' => $item->visitno,
-                    'Lab Dept' => $item->lab_dept,
-                    'Test Name' => $item->test_name,
-                    'Ordered Tests' => $item->ordered_test,
-                    'Others' => $item->others,
-                    'Test Status' => $item->test_status,
-                    'Payment Status' => $item->payment_status,
-                    'Billing Amount' => $item->billing_amount,
-                    'Billing Status' => $item->billing_status,
-                    'Created At' => $item->created_at->toDateTimeString(),
-                ];
-            });
+        //     $exportData = $records->map(function ($item) {
+        //         return [
+        //             'Patient Name' => "{$item->firstname} {$item->lastname}",
+        //             'Patient No' => $item->patientno,
+        //             'Card No' => $item->cardno,
+        //             'Visit No' => $item->visitno,
+        //             'Lab Dept' => $item->lab_dept,
+        //             'Test Name' => $item->test_name,
+        //             'Ordered Tests' => $item->ordered_test,
+        //             'Others' => $item->others,
+        //             'Test Status' => $item->test_status,
+        //             'Payment Status' => $item->payment_status,
+        //             'Billing Amount' => $item->billing_amount,
+        //             'Billing Status' => $item->billing_status,
+        //             'Created At' => $item->created_at->toDateTimeString(),
+        //         ];
+        //     });
 
-            if ($export === 'csv') {
-                return ExportHelper::streamCsv($exportData->toArray(), null, 'lab-records.csv');
-            }
+        //     if ($export === 'csv') {
+        //         return ExportHelper::streamCsv($exportData->toArray(), null, 'lab-records.csv');
+        //     }
 
-            if ($export === 'pdf') {
-                return ExportHelper::downloadPdf($exportData->toArray(), 'lab-records.pdf');
-            }
+        //     if ($export === 'pdf') {
+        //         return ExportHelper::downloadPdf($exportData->toArray(), 'lab-records.pdf');
+        //     }
 
-            return $paginate ? $query->paginate($perPage ?? 10) : $query->get();
-        }
+        //     return $paginate ? $query->paginate($perPage ?? 10) : $query->get();
+        // }
 
         return $paginate ? $query->paginate($perPage ?? 10) : $query->get();
     }
