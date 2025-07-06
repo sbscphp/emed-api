@@ -24,6 +24,8 @@ use App\Models\Tenant;
 use Stancl\Tenancy\Tenancy;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Migrations\Migrator;
+use Illuminate\Support\Facades\Config;
 
 class UserController extends Controller
 {
@@ -279,48 +281,43 @@ class UserController extends Controller
             "path" => 'required|string'
         ]);
 
-        // Tenant::all()->each(function ($tenant) use ($validated) {
-        //     tenancy()->initialize($tenant);
 
-        //     Artisan::call('migrate', [
-        //         '--path' => $validated['path'],
-        //         '--force' => true
-        //     ]);
 
-        //     tenancy()->end();
-        // });
+        Artisan::call('migrate', [
+            '--database' => 'mysql',
+            '--path' => $validated['path'],
+            '--force' => true,
+        ]);
 
-        // Tenant::all()->each(function ($tenant) use ($validated, $tenancy) {
-        //     $tenancy->initialize($tenant);
-        //     Artisan::call('migrate', [
-        //         '--path' => $validated['path'],
-        //         '--force' => true
-        //     ]);
+        $tenants = Tenant::all();
 
-        //     $tenancy->end();
-        // });
-        $tenant = Tenant::where('database', 'jkpmjemy_tenant_john_hospital')->first();
+        foreach ($tenants as  $tenant) {
+            $tenantDb = $tenant->database;
+            $dbExists = DB::select("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?", [$tenantDb]);
 
-        // or if the column is named tenancy_db_name instead of database, adjust it:
-        # $tenant = Tenant::where('tenancy_db_name', 'jkpmjemy_tenant_john_hospital')->first();
+            if (!$dbExists) {
+                logger("Skipping tenant '{$tenantDb}' — database does not exist.");
+                continue;
+            }
 
-        if ($tenant) {
-            echo "Running manually for: {$tenant->database}\n";
+            DB::purge('tenant');
 
-            tenancy()->initialize($tenant);
+            Config::set('database.connections.tenant.database',  $tenant?->database);
 
-            echo "Connected to DB: " . DB::connection()->getDatabaseName() . "\n";
+            DB::reconnect('tenant');
+
+            logger("Running migrations for tenant: " . $tenantDb);
+
+
 
             Artisan::call('migrate', [
-                '--path' => 'database/migrations/tenant/2025_07_04_152517_add_column_to_users_table.php',
-                '--force' => true
+                '--database' => 'tenant',
+                '--path' => $validated['path'],
+                '--force' => true,
             ]);
-
-            echo Artisan::output();
-
-            tenancy()->end();
-        } else {
-            echo "❌ Tenant not found.\n";
         }
+
+
+        return response()->json(['success' => 'successful migrations']);
     }
 }
