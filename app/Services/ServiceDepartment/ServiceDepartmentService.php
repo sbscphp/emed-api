@@ -100,21 +100,21 @@ class ServiceDepartmentService
     public function getUnits(array $columns = ['*'], $service_units_name, $from, $to)
     {
         return ServiceUnit::select($columns)->when($service_units_name, function ($query, $service_units_name) {
-        return $query->where('name', $service_units_name);
-            })
-            ->when($from && $to, function ($query) use ($from, $to) {
-           return $query->whereBetween('created_at', [Carbon::parse($from), Carbon::parse($to)]);
+            return $query->where('name', $service_units_name);
+        })
+            ->when(!empty($from) && !empty($to), function ($query) use ($from, $to) {
+                return $query->whereBetween('created_at', [Carbon::parse($from), Carbon::parse($to)]);
             })
             ->get();
     }
 
-    public function getTypes(array $columns = ['*'], $service_types_name)
+    public function getTypes(array $columns = ['*'], $service_types_name, $from, $to)
     {
         return ServiceDepartment::select($columns)->when($service_types_name, function ($query, $service_types_name) {
-               return $query->where('name', $service_types_name);
-            })
-          ->when($from && $to, function ($query) use ($from, $to) {
-           return $query->whereBetween('created_at', [Carbon::parse($from), Carbon::parse($to)]);
+            return $query->where('name', $service_types_name);
+        })
+            ->when(!empty($from) && !empty($to), function ($query) use ($from, $to) {
+                return $query->whereBetween('created_at', [Carbon::parse($from), Carbon::parse($to)]);
             })
             ->get();
     }
