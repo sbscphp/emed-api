@@ -64,12 +64,12 @@ class LabController extends Controller
             return JsonResponser::send(true, 'Record(s) not found.', null, 204);
         }
 
-        $response = [
-            'records' => $labRecords,
-            'total' => $labRecords->count()
-        ];
+        // $response = [
+        //     'records' => $labRecords,
+        //     'total' => collect($labRecords)->count()
+        // ];
 
-        return JsonResponser::send(false, 'Record(s) found successfully.', $response, 200);
+        // return JsonResponser::send(false, 'Record(s) found successfully.', $response, 200);
         // } catch (Throwable $th) {
         //     return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
         // }
