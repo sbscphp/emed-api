@@ -66,7 +66,7 @@ class LabController extends Controller
             "error" => false,
             "message" => "Record(s) not found.",
             "data" => $labRecords
-        ], 204);
+        ]);
         // }
 
 
