@@ -323,19 +323,19 @@ class RecordManagementController extends Controller
         $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
         if (is_null($user)) {
-            return JsonResponser::send(true, 'User not found.', null, 204);
+            return JsonResponser::send(true, 'User not found.', null, 200);
         }
 
 
         $patient = $this->patientService->find($patienId);
         if (is_null($patient)) {
-            return JsonResponser::send(true, 'Patient not found.', null, 204);
+            return JsonResponser::send(true, 'Patient not found.', null, 200);
         }
 
         // Check if the patient already has a next of kin
         $existingContact = $this->emergencyContactService->findByAttribute('patient_id', $patient->id);
         if ($existingContact) {
-            return JsonResponser::send(true, 'Patient already has an emergency contact', null, 422);
+            return JsonResponser::send(true, 'Patient already has an emergency contact', null, 200);
         }
 
         //Prepare data to store
@@ -353,7 +353,7 @@ class RecordManagementController extends Controller
 
         $emergencyContact = $this->emergencyContactService->create($data);
 
-        if ($emergencyContact && $validate['status'] === 'complete') {
+        if ($emergencyContact) {
 
             $data = [
                 'patient_id' => $patient->id,
@@ -364,7 +364,7 @@ class RecordManagementController extends Controller
             ];
             $patientVisit = $this->patientVisitService->create($data);
 
-            $patient->update(['status' => $validate['status']]); //Update the status of the patient to complete
+            // $patient->update(['status' => $validate['status']??""]); //Update the status of the patient to complete
 
         }
 
@@ -379,7 +379,7 @@ class RecordManagementController extends Controller
 
         GeneralHelper::storeAuditLog($dataToLog);
         DB::connection('tenant')->commit();
-        return JsonResponser::send(false, 'Emergency contact created successfully', ['emergencyContact' => $emergencyContact, 'patientVisit' => $patientVisit], 201);
+        return JsonResponser::send(false, 'Emergency contact created successfully', ['emergencyContact' => $emergencyContact, 'patientVisit' => $patientVisit ?? []], 201);
         // } catch (\Throwable $th) {
         //     DB::connection('tenant')->rollBack();
         //     return JsonResponser::send(true, 'Internal server error', [], 500, $th);
