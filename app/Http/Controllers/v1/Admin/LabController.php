@@ -58,14 +58,38 @@ class LabController extends Controller
             return JsonResponser::send(true, 'User not found.', null, 204);
         }
 
-        $labRecords = $this->laboratoryService->getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage, $export, $from, $to);
+        $query =   \App\Models\Laboratory::query()
+            ->join('patients', 'patient_visit_lab.patient_id', '=', 'patients.id')
+            ->leftJoin('billing_logs', 'patient_visit_lab.patient_id', '=', 'billing_logs.patient_id')
+            ->select(
+                'patient_visit_lab.*',
+                'patients.firstname',
+                'patients.lastname',
+                'patients.patientno',
+                'patients.cardno',
+                'billing_logs.id as billing_id',
+                'billing_logs.sub_total as billing_amount',
+                'billing_logs.payment_status as billing_status'
+            );
 
-        if ($labRecords->isEmpty()) {
-            return JsonResponser::send(true, 'Record(s) not found.', null, 204);
+
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('patients.firstname', 'LIKE', "%{$search}%")
+                    ->orWhere('patients.lastname', 'LIKE', "%{$search}%")
+                    ->orWhere('patients.patientno', 'LIKE', "%{$search}%")
+                    ->orWhere('patients.cardno', 'LIKE', "%{$search}%");
+            });
         }
 
+        // $labRecords = $this->laboratoryService->getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage, $export, $from, $to);
 
-        return response()->json($labRecords);
+        // if ($labRecords->isEmpty()) {
+        //     return JsonResponser::send(true, 'Record(s) not found.', null, 204);
+        // }
+
+
+        return response()->json($query->get());
 
         // $response = [
         //     'records' => $labRecords,
