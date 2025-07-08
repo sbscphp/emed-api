@@ -30,7 +30,8 @@ class EmergencyContactRequest extends FormRequest
             'stateoforigin' => 'nullable|string',
             'lga' => 'nullable|string',
             'homeaddress' => 'required|string',
-            'relationship' => 'required|string'
+            'relationship' => 'required|string',
+            'status' => 'required|string'
         ];
     }
 
