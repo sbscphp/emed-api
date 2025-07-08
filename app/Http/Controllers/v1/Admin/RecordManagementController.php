@@ -314,76 +314,76 @@ class RecordManagementController extends Controller
     public function addEmergencyContact(EmergencyContactRequest $request, $patienId)
     {
 
-        //try {
-        config(['database.default' => 'tenant']);
-        DB::connection('tenant')->beginTransaction();
-        $validate = $request->validated();
-        $currentUser = Auth::user();
-        //$user = $this->userService->find($currentUser->id);
-        $user = User::on('tenant')->where('email', $currentUser['email'])->first();
+        try {
+            config(['database.default' => 'tenant']);
+            DB::connection('tenant')->beginTransaction();
+            $validate = $request->validated();
+            $currentUser = Auth::user();
+            //$user = $this->userService->find($currentUser->id);
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
-        if (is_null($user)) {
-            return JsonResponser::send(true, 'User not found.', null, 200);
-        }
+            if (is_null($user)) {
+                return JsonResponser::send(true, 'User not found.', null, 200);
+            }
 
 
-        $patient = $this->patientService->find($patienId);
-        if (is_null($patient)) {
-            return JsonResponser::send(true, 'Patient not found.', null, 200);
-        }
+            $patient = $this->patientService->find($patienId);
+            if (is_null($patient)) {
+                return JsonResponser::send(true, 'Patient not found.', null, 200);
+            }
 
-        // Check if the patient already has a next of kin
-        $existingContact = $this->emergencyContactService->findByAttribute('patient_id', $patient->id);
-        if ($existingContact) {
-            return JsonResponser::send(true, 'Patient already has an emergency contact', null, 200);
-        }
+            // Check if the patient already has a next of kin
+            $existingContact = $this->emergencyContactService->findByAttribute('patient_id', $patient->id);
+            if ($existingContact) {
+                return JsonResponser::send(true, 'Patient already has an emergency contact', null, 200);
+            }
 
-        //Prepare data to store
-        $data = [
-            'patient_id' => $patient->id,
-            'firstname' => $validate['firstname'],
-            'lastname' => $validate['lastname'],
-            'gender' => $validate['gender'],
-            'phoneno' => $validate['phoneno'],
-            'stateoforigin' => $validate['stateoforigin'],
-            'lga' => $validate['lga'],
-            'homeaddress' => $validate['homeaddress'],
-            'relationship' => $validate['relationship'],
-        ];
-
-        $emergencyContact = $this->emergencyContactService->create($data);
-
-        if ($emergencyContact) {
-
+            //Prepare data to store
             $data = [
                 'patient_id' => $patient->id,
-                'visitno' => 'VIS' . GeneralHelper::generateUniqueRandomId($validate['firstname']),
-                'stage' => PatientVisitStageEnums::TRIAGE,
-                'status' => PatientVisitStatusEnums::ONGOING,
-                'arrival_date' => now(),
+                'firstname' => $validate['firstname'],
+                'lastname' => $validate['lastname'],
+                'gender' => $validate['gender'],
+                'phoneno' => $validate['phoneno'],
+                'stateoforigin' => $validate['stateoforigin'],
+                'lga' => $validate['lga'],
+                'homeaddress' => $validate['homeaddress'],
+                'relationship' => $validate['relationship'],
             ];
-            $patientVisit = $this->patientVisitService->create($data);
 
-            // $patient->update(['status' => $validate['status']??""]); //Update the status of the patient to complete
+            $emergencyContact = $this->emergencyContactService->create($data);
 
+            if ($emergencyContact) {
+
+                $data = [
+                    'patient_id' => $patient->id,
+                    'visitno' => 'VIS' . GeneralHelper::generateUniqueRandomId($validate['firstname']),
+                    'stage' => PatientVisitStageEnums::TRIAGE,
+                    'status' => PatientVisitStatusEnums::ONGOING,
+                    'arrival_date' => now(),
+                ];
+                $patientVisit = $this->patientVisitService->create($data);
+
+                // $patient->update(['status' => $validate['status']??""]); //Update the status of the patient to complete
+
+            }
+
+            $dataToLog = [
+                'causer_id' => $user->id,
+                'action_id' => $emergencyContact->id,
+                'action' => 'Create',
+                'action_type' => "Models\EmergencyContact",
+                'log_name' => "Emergency contact created successfully",
+                'description' => "{$user['fullname']} created emergency successfully",
+            ];
+
+            GeneralHelper::storeAuditLog($dataToLog);
+            DB::connection('tenant')->commit();
+            return JsonResponser::send(false, 'Emergency contact created successfully', ['emergencyContact' => $emergencyContact, 'patientVisit' => $patientVisit ?? []], 201);
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
         }
-
-        $dataToLog = [
-            'causer_id' => $user->id,
-            'action_id' => $emergencyContact->id,
-            'action' => 'Create',
-            'action_type' => "Models\EmergencyContact",
-            'log_name' => "Emergency contact created successfully",
-            'description' => "{$user['fullname']} created emergency successfully",
-        ];
-
-        GeneralHelper::storeAuditLog($dataToLog);
-        DB::connection('tenant')->commit();
-        return JsonResponser::send(false, 'Emergency contact created successfully', ['emergencyContact' => $emergencyContact, 'patientVisit' => $patientVisit ?? []], 201);
-        // } catch (\Throwable $th) {
-        //     DB::connection('tenant')->rollBack();
-        //     return JsonResponser::send(true, 'Internal server error', [], 500, $th);
-        // }
     }
 
     public function updateEmergencyContact(Request $request, $id)
