@@ -357,14 +357,14 @@ class RecordManagementController extends Controller
 
             $data = [
                 'patient_id' => $patient->id,
-                'visitno' => 'VIS' . GeneralHelper::generateUniqueRandomId($request->firstname),
+                'visitno' => 'VIS' . GeneralHelper::generateUniqueRandomId($validate['firstname']),
                 'stage' => PatientVisitStageEnums::TRIAGE,
                 'status' => PatientVisitStatusEnums::ONGOING,
                 'arrival_date' => now(),
             ];
             $patientVisit = $this->patientVisitService->create($data);
 
-            $patient->update(['status' => $request->status]); //Update the status of the patient to complete
+            $patient->update(['status' => $validate['status']]); //Update the status of the patient to complete
 
         }
 
