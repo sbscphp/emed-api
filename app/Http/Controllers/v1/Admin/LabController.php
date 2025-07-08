@@ -64,6 +64,9 @@ class LabController extends Controller
             return JsonResponser::send(true, 'Record(s) not found.', null, 204);
         }
 
+
+        return response()->json($labRecords);
+
         // $response = [
         //     'records' => $labRecords,
         //     'total' => collect($labRecords)->count()
