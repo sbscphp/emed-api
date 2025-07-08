@@ -13,6 +13,7 @@ use App\Services\User\UserService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
+
 class RoleController extends Controller
 {
     protected $userService;
@@ -32,7 +33,7 @@ class RoleController extends Controller
         $roles = $this->roleService->all()->load('permissions', 'users');
 
         if ($roles->isEmpty()) {
-            return JsonResponser::send(true, 'No roles found.', null, 204);
+            return JsonResponser::send(true, 'No roles found.', null, 200);
         }
 
         $totalRoles = $roles->count();
@@ -63,7 +64,7 @@ class RoleController extends Controller
     public function store(StoreRoleRequest $request)
     {
         $currentUser = Auth::user();
-       // $user = $this->userService->find($currentUser->id);
+        // $user = $this->userService->find($currentUser->id);
         $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
         $validated = array_merge($request->validated(), [
@@ -119,7 +120,7 @@ class RoleController extends Controller
         $role = $this->roleService->find($id)->load(['permissions', 'users']);
 
         if (!$role) {
-            return JsonResponser::send(true, 'Role not found.', null, 204);
+            return JsonResponser::send(true, 'Role not found.', null, 200);
         }
 
         $usersData = $role->users->map(function ($user) {
@@ -152,7 +153,7 @@ class RoleController extends Controller
     public function update(UpdateRoleRequest $request, $id)
     {
         $currentUser = Auth::user();
-       // $user = $this->userService->find($currentUser->id);
+        // $user = $this->userService->find($currentUser->id);
         $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
         $validated = array_merge($request->validated(), [
@@ -164,7 +165,7 @@ class RoleController extends Controller
                 $role = $this->roleService->update($validated, $id);
 
                 if (!$role) {
-                    return JsonResponser::send(true, 'Role not found or update failed.', null, 204);
+                    return JsonResponser::send(true, 'Role not found or update failed.', null, 200);
                 }
 
                 if ($request->has('permissions')) {
@@ -201,7 +202,7 @@ class RoleController extends Controller
         $role = $this->roleService->find($id);
 
         if (!$role) {
-            return JsonResponser::send(true, 'Role not found.', null, 204);
+            return JsonResponser::send(true, 'Role not found.', null, 200);
         }
 
         DB::connection('tenant')->beginTransaction();

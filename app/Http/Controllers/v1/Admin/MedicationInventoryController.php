@@ -69,7 +69,7 @@ class MedicationInventoryController extends Controller
             }
 
             if ($data->isEmpty()) {
-                return JsonResponser::send(true, 'Shipment not found.', null, 204);
+                return JsonResponser::send(true, 'Shipment not found.', null, 200);
             }
             // DB::connection('landlord')->commit();
             return JsonResponser::send(false, 'Shipment list fetched successfully', $data);
@@ -86,7 +86,7 @@ class MedicationInventoryController extends Controller
         try {
             $data = $this->inventoryService->find($id);
             if (!$data) {
-                return JsonResponser::send(true, 'Shipment not found.', null, 204);
+                return JsonResponser::send(true, 'Shipment not found.', null, 200);
             }
             return JsonResponser::send(false, 'Shipment detail found', $data);
         } catch (\Exception $e) {
@@ -100,7 +100,7 @@ class MedicationInventoryController extends Controller
             $inventory = $this->inventoryService->find($id);
 
             if (!$inventory) {
-                return JsonResponser::send(true, 'Shipment record not found.', [], 204);
+                return JsonResponser::send(true, 'Shipment record not found.', [], 200);
             }
 
             $allowedStatuses = ['pending', 'incomplete', 'complete', 'received'];

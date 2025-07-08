@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Response as FacadesResponse;
 use App\Models\AuditLog;
+
 class AuditLogController extends Controller
 {
     protected $auditLogService;
@@ -50,7 +51,7 @@ class AuditLogController extends Controller
             }
 
             if ($logs->isEmpty()) {
-                return JsonResponser::send(true, 'Record(s) not found.', null, 204);
+                return JsonResponser::send(true, 'Record(s) not found.', null, 200);
             }
 
             $response = [
@@ -79,7 +80,7 @@ class AuditLogController extends Controller
             $logs = $this->auditLogService->getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate, $downloadType);
 
             if ($logs->isEmpty()) {
-                return JsonResponser::send(true, 'Record(s) not found for download.', null, 204);
+                return JsonResponser::send(true, 'Record(s) not found for download.', null, 200);
             }
 
             switch (strtolower($downloadType)) {
@@ -138,29 +139,28 @@ class AuditLogController extends Controller
     }
 
 
-    public function fetch_medical_log(){
+    public function fetch_medical_log()
+    {
 
-     try {
+        try {
             config(['database.default' => 'tenant']);
-                DB::connection('tenant');
-                   $medical_log = AuditLog::whereIn('action_type', [
-                    'App\Models\MedicalHistory',
-                    'App\Models\Medication',
-                    'App\Models\MedicineType'
-                 ])->when($request->get('search'), function ($query, $search) {
-                    $query->where('action_type', 'LIKE', "%{$search}%");
-                  })->get();
-                 
-                if ($medical_log->isNotEmpty()) {
-                    DB::connection('tenant')->commit();
-                    return JsonResponser::send(true, 'Record(s) found successfully.', $medical_log);
-                } else {
-                 return JsonResponser::send(false, 'No record found.', []);
-                }
+            DB::connection('tenant');
+            $medical_log = AuditLog::whereIn('action_type', [
+                'App\Models\MedicalHistory',
+                'App\Models\Medication',
+                'App\Models\MedicineType'
+            ])->when($request->get('search'), function ($query, $search) {
+                $query->where('action_type', 'LIKE', "%{$search}%");
+            })->get();
+
+            if ($medical_log->isNotEmpty()) {
+                DB::connection('tenant')->commit();
+                return JsonResponser::send(true, 'Record(s) found successfully.', $medical_log);
+            } else {
+                return JsonResponser::send(false, 'No record found.', []);
+            }
         } catch (\Throwable $th) {
             return JsonResponser::send(false, 'Internal Server Error.', [], 500, $th);
         }
-   
-
     }
 }

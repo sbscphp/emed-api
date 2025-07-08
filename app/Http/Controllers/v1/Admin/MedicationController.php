@@ -57,7 +57,7 @@ class MedicationController extends Controller
         }
 
         if ($data->isEmpty()) {
-            return JsonResponser::send(true, 'No Medications found.', [], 204);
+            return JsonResponser::send(true, 'No Medications found.', [], 200);
         }
 
         $formatted = $data->getCollection()->transform(function ($med) {
@@ -126,7 +126,7 @@ class MedicationController extends Controller
 
             $med = $this->medicationService->find($id);
             if (!$med) {
-                return JsonResponser::send(true, 'Medicine not found.', null, 204);
+                return JsonResponser::send(true, 'Medicine not found.', null, 200);
             }
 
             $validStatuses = ['available', 'out of stock', 'about to expire', 'expired'];
@@ -150,7 +150,7 @@ class MedicationController extends Controller
         try {
             $medicine = $this->medicationService->find($id);
             if (!$medicine) {
-                return JsonResponser::send(true, 'medicine not found.', null, 204);
+                return JsonResponser::send(true, 'medicine not found.', null, 200);
             }
 
             $formatted = [
@@ -181,7 +181,7 @@ class MedicationController extends Controller
             $data = $request->all();
             $medicine = $this->medicationService->find($id);
             if (!$medicine) {
-                return JsonResponser::send(true, 'medicine not found.', null, 204);
+                return JsonResponser::send(true, 'medicine not found.', null, 200);
             }
 
             $updatedmedicine = $this->medicationService->update($id, $data);
@@ -196,7 +196,7 @@ class MedicationController extends Controller
     {
         $medicine = $this->medicationService->find($id);
         if (!$medicine) {
-            return JsonResponser::send(true, 'medicine not found.', null, 204);
+            return JsonResponser::send(true, 'medicine not found.', null, 200);
         }
         $this->medicationService->delete($id);
         return JsonResponser::send(false, 'medicine deleted successfully', null, 200);

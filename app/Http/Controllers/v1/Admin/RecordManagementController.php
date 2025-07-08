@@ -69,7 +69,7 @@ class RecordManagementController extends Controller
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
             if (is_null($user)) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
 
 
@@ -154,13 +154,13 @@ class RecordManagementController extends Controller
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
             if (is_null($user)) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
 
 
             $patientInfo = $this->patientService->find($id);
             if (is_null($patientInfo)) {
-                return JsonResponser::send(true, 'Record not found.', null, 204);
+                return JsonResponser::send(true, 'Record not found.', null, 200);
             }
 
             $image = $request->image ? FileUploadHelper::singleStringFileUpload($request->image, 'Patient') : null;
@@ -213,12 +213,12 @@ class RecordManagementController extends Controller
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
             if (is_null($user)) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
 
             $patient = $this->patientService->find($patienId);
             if (is_null($patient)) {
-                return JsonResponser::send(true, 'Patient not found.', null, 204);
+                return JsonResponser::send(true, 'Patient not found.', null, 200);
             }
 
             // Check if the patient already has a next of kin
@@ -271,12 +271,12 @@ class RecordManagementController extends Controller
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
             if (is_null($user)) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
 
             $nextOfKinInfo = $this->nextOfKinService->find($id);
             if (is_null($nextOfKinInfo)) {
-                return JsonResponser::send(true, 'Record not found', null, 204);
+                return JsonResponser::send(true, 'Record not found', null, 200);
             }
 
             //Prepare data to store
@@ -395,12 +395,12 @@ class RecordManagementController extends Controller
             $currentUser = Auth::user();
             $user = $this->userService->find($currentUser->id);
             if (is_null($user)) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
 
             $emergencyContactInfo = $this->nextOfKinService->find($id);
             if (is_null($emergencyContactInfo)) {
-                return JsonResponser::send(true, 'Record not found', null, 204);
+                return JsonResponser::send(true, 'Record not found', null, 200);
             }
 
             //Prepare data to store
@@ -443,13 +443,13 @@ class RecordManagementController extends Controller
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
             if (is_null($user)) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
 
             $patientDetails = $this->patientService->find($id);
 
             if (is_null($patientDetails)) {
-                return JsonResponser::send(true, 'Record not found.', null, 204);
+                return JsonResponser::send(true, 'Record not found.', null, 200);
             }
 
             $data =  $patientDetails->load(['nextOfKin', 'emergencyContact', 'visits', 'service']);
@@ -489,12 +489,12 @@ class RecordManagementController extends Controller
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
             if (is_null($user)) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
 
             $patient = $this->patientService->find($id);
             if (is_null($patient)) {
-                return JsonResponser::send(true, 'Record not found.', null, 204);
+                return JsonResponser::send(true, 'Record not found.', null, 200);
             }
 
             if ($patient->status === 'draft') {
@@ -557,13 +557,13 @@ class RecordManagementController extends Controller
             $user = User::where('email', $currentUser['email'])->first();
 
             if (is_null($user)) {
-                return JsonResponser::send(false, 'User not found.', null, 204);
+                return JsonResponser::send(false, 'User not found.', null, 200);
             }
 
             $records = $this->patientService->getAllRecordFiltered($search, $paginate, $perPage, $from, $to);
 
             if ($records->isEmpty()) {
-                return JsonResponser::send(false, 'Record(s) not found.', null, 204);
+                return JsonResponser::send(false, 'Record(s) not found.', null, 200);
             }
 
             $records->load([
@@ -638,7 +638,7 @@ class RecordManagementController extends Controller
         $patients = $this->patientService->getExportData($search, $startDate, $endDate);
 
         if (empty($patients)) {
-            return JsonResponser::send(true, 'No records found for export.', null, 204);
+            return JsonResponser::send(true, 'No records found for export.', null, 200);
         }
 
         switch (strtolower($format)) {
@@ -682,7 +682,7 @@ class RecordManagementController extends Controller
             }
 
             if ($visits->isEmpty()) {
-                return JsonResponser::send(false, 'No patient visit records found.', [], 204);
+                return JsonResponser::send(false, 'No patient visit records found.', [], 200);
             }
 
             return JsonResponser::send(false, 'Patient Visit Records Fetched Successfully.', [
@@ -710,7 +710,7 @@ class RecordManagementController extends Controller
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
             if (is_null($user)) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
 
             $visitRecords = $this->patientVisitService->getVisitRecordsForPatient(
@@ -752,13 +752,13 @@ class RecordManagementController extends Controller
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
             if (is_null($user)) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
 
             $visitDetail = $this->patientVisitService->getVisitDetailWithBilling($patientId, $visitId);
 
             if (is_null($visitDetail)) {
-                return JsonResponser::send(true, 'Visit record not found for this patient.', null, 204);
+                return JsonResponser::send(true, 'Visit record not found for this patient.', null, 200);
             }
 
             return JsonResponser::send(false, 'Patient visit detail with billing fetched successfully.', $visitDetail, 200);

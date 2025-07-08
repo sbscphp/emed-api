@@ -58,7 +58,7 @@ class PharmacyController extends Controller
 
 
             if ($pharmacies->isEmpty()) {
-                return JsonResponser::send(true, 'No pharmacies found.', [], 204);
+                return JsonResponser::send(true, 'No pharmacies found.', [], 200);
             }
 
             if ($request->has('export')) {
@@ -104,7 +104,7 @@ class PharmacyController extends Controller
             $treatments = $this->pharmacyService->treatmentLogall($search, $from,  $to);
 
             if ($treatments->exists()) {
-                return JsonResponser::send(true, 'No treatment logs found.', [], 204);
+                return JsonResponser::send(true, 'No treatment logs found.', [], 200);
             }
 
             if ($request->has('export')) {
@@ -145,7 +145,7 @@ class PharmacyController extends Controller
             $patient = $this->pharmacyService->getPatientTreatmentWithDetails($patientId);
 
             if (!$patient) {
-                return JsonResponser::send(true, 'Patient not found.', [], 204);
+                return JsonResponser::send(true, 'Patient not found.', [], 200);
             }
 
             return JsonResponser::send(false, 'Patient Treatment Record Fetched.', [
@@ -202,7 +202,7 @@ class PharmacyController extends Controller
             config(['database.default' => 'tenant']);
             $pharmacy = $this->pharmacyService->find($id);
             if (!$pharmacy) {
-                return JsonResponser::send(true, 'Pharmacy not found.', null, 204);
+                return JsonResponser::send(true, 'Pharmacy not found.', null, 200);
             }
 
             $newStatus = $pharmacy->active ? 0 : 1;
@@ -220,7 +220,7 @@ class PharmacyController extends Controller
             config(['database.default' => 'tenant']);
             $pharmacy = $this->pharmacyService->find($id);
             if (!$pharmacy) {
-                return JsonResponser::send(true, 'Pharmacy not found.', null, 204);
+                return JsonResponser::send(true, 'Pharmacy not found.', null, 200);
             }
 
             return JsonResponser::send(false, 'Pharmacy details retrieved successfully', $pharmacy, 200);
@@ -236,7 +236,7 @@ class PharmacyController extends Controller
             $data = $request->all();
             $pharmacy = $this->pharmacyService->find($id);
             if (!$pharmacy) {
-                return JsonResponser::send(true, 'Pharmacy not found.', null, 204);
+                return JsonResponser::send(true, 'Pharmacy not found.', null, 200);
             }
 
             $updatedPharmacy = $this->pharmacyService->update($data, $id);
@@ -252,7 +252,7 @@ class PharmacyController extends Controller
         config(['database.default' => 'tenant']);
         $pharmacy = $this->pharmacyService->find($id);
         if (!$pharmacy) {
-            return JsonResponser::send(true, 'Pharmacy not found.', null, 204);
+            return JsonResponser::send(true, 'Pharmacy not found.', null, 200);
         }
         $this->pharmacyService->delete($id);
         return JsonResponser::send(false, 'Pharmacy deleted successfully', null, 200);

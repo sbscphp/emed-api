@@ -48,7 +48,7 @@ class UserController extends Controller
 
 
             if (!$user) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
 
             $filters = [
@@ -73,7 +73,7 @@ class UserController extends Controller
             if ($result->isEmpty()) {
                 DB::connection('tenant')->rollBack();
                 DB::connection('landlord')->rollBack();
-                return JsonResponser::send(true, 'No users found.', null, 204);
+                return JsonResponser::send(true, 'No users found.', null, 200);
             }
 
             return JsonResponser::send(false, 'Users retrieved successfully.', [
@@ -181,7 +181,7 @@ class UserController extends Controller
 
             $user = $this->userService->find($id);
             if (!$user) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
 
             $data = $request->validated();
@@ -227,7 +227,7 @@ class UserController extends Controller
 
             $user = $this->userService->find($id);
             if (!$user) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
 
             $this->userService->delete($id);

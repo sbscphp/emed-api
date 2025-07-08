@@ -55,7 +55,7 @@ class LabController extends Controller
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
             if (!$user) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
 
 
@@ -86,7 +86,7 @@ class LabController extends Controller
             //$user = $this->userService->find($currentUser->id);
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
             if (!$user) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
 
             $stats = $this->laboratoryService->getStats();
@@ -106,12 +106,12 @@ class LabController extends Controller
             // $user = $this->userService->find($currentUser->id);
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
             if (!$user) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
 
             $record = $this->laboratoryService->findByAttribute('visitno', $visitNo);
             if (!$record) {
-                return JsonResponser::send(true, 'Record not found.', null, 204);
+                return JsonResponser::send(true, 'Record not found.', null, 200);
             }
 
             return JsonResponser::send(false, 'Record(s) found successfully.', $record, 200);

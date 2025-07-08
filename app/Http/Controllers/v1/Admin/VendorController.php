@@ -37,7 +37,7 @@ class VendorController extends Controller
             }
 
             if ($data->isEmpty()) {
-                return JsonResponser::send(true, 'No vendors found.', null, 204);
+                return JsonResponser::send(true, 'No vendors found.', null, 200);
             }
 
             return JsonResponser::send(false, 'Vendors fetched successfully.', $data);
@@ -57,7 +57,7 @@ class VendorController extends Controller
             $vendor = $this->service->find($id);
 
             if (!$vendor) {
-                return JsonResponser::send(true, 'Vendor not found.', null, 204);
+                return JsonResponser::send(true, 'Vendor not found.', null, 200);
             }
 
             return JsonResponser::send(false, 'Vendor details fetched successfully', $vendor);
@@ -132,7 +132,7 @@ class VendorController extends Controller
             $deleted = $this->service->delete($id);
 
             if (!$deleted) {
-                return JsonResponser::send(true, 'Vendor not found.', null, 204);
+                return JsonResponser::send(true, 'Vendor not found.', null, 200);
             }
 
             return JsonResponser::send(false, 'Vendor deleted successfully', $deleted);

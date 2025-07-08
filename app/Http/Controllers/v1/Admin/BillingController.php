@@ -52,7 +52,7 @@ class BillingController extends Controller
 
         if ($billings->isEmpty()) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'No billing records found.', [], 204);
+            return JsonResponser::send(true, 'No billing records found.', [], 200);
         }
 
         return JsonResponser::send(false, 'Billing logs retrieved successfully', $billings, 200);
@@ -100,7 +100,7 @@ class BillingController extends Controller
             config(['database.default' => 'tenant']);
             $billing = $this->billingService->find($id);
             if (!$billing) {
-                return JsonResponser::send(true, 'Billing record not found.', null, 204);
+                return JsonResponser::send(true, 'Billing record not found.', null, 200);
             }
 
             return JsonResponser::send(false, 'Billing details retrieved successfully', $billing, 200);
@@ -115,7 +115,7 @@ class BillingController extends Controller
             config(['database.default' => 'tenant']);
             $billing = $this->billingService->find($id);
             if (!$billing) {
-                return JsonResponser::send(true, 'Billing record not found.', null, 204);
+                return JsonResponser::send(true, 'Billing record not found.', null, 200);
             }
 
             $updated = $this->billingService->update($id, $request->all());
@@ -132,7 +132,7 @@ class BillingController extends Controller
             config(['database.default' => 'tenant']);
             $billing = $this->billingService->find($id);
             if (!$billing) {
-                return JsonResponser::send(true, 'Billing record not found.', null, 204);
+                return JsonResponser::send(true, 'Billing record not found.', null, 200);
             }
 
             $this->billingService->delete($id);
@@ -171,7 +171,7 @@ class BillingController extends Controller
             $billingLogs = $this->billingService->getByServiceUnit($serviceUnitId);
 
             if ($billingLogs->isEmpty()) {
-                return JsonResponser::send(true, 'No billing records found for this service unit.', [], 204);
+                return JsonResponser::send(true, 'No billing records found for this service unit.', [], 200);
             }
 
 
@@ -249,7 +249,7 @@ class BillingController extends Controller
             ];
 
             if ($logs->isEmpty()) {
-                return JsonResponser::send(true, 'No billing records found for this service type.', [], 204);
+                return JsonResponser::send(true, 'No billing records found for this service type.', [], 200);
             }
 
             return JsonResponser::send(false, 'Billing records retrieved successfully.', $data, 200);

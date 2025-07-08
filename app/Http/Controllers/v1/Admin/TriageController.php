@@ -38,12 +38,12 @@ class TriageController extends Controller
         try {
             $visit = $this->patientVisitService->getByPatientId($patientId);
             if (!$visit) {
-                return JsonResponser::send(true, 'Patient not found or visit not yet initiated.', null, 204);
+                return JsonResponser::send(true, 'Patient not found or visit not yet initiated.', null, 200);
             }
 
             $currentUser = Auth::user();
             //$user = $this->userService->find($currentUser->id);
-              $user = User::on('tenant')->where('email', $currentUser['email'])->first();
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
             $validated = array_merge($request->validated(), [
                 'patient_id' => $patientId,

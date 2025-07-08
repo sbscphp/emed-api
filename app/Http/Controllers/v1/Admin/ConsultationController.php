@@ -73,7 +73,7 @@ class ConsultationController extends Controller
             //$user = $this->userService->find($currentUser->id);
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
             if (!$user) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
 
             $search = $request->search;
@@ -84,7 +84,7 @@ class ConsultationController extends Controller
 
             $patients = $this->patientVisitService->getPatientForConsultation($search, $sortBy, $date, $paginate, $perPage);
             if ($patients->isEmpty()) {
-                return JsonResponser::send(true, 'Records not found.', null, 204);
+                return JsonResponser::send(true, 'Records not found.', null, 200);
             }
             $patients->load(['patient', 'patient.triage']);
 
@@ -109,12 +109,12 @@ class ConsultationController extends Controller
             //$user = $this->userService->find($currentUser->id);
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
             if (!$user) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
 
             $patientVisit = $this->patientVisitService->findByAttribute('visitno', $visitNo);
             if (!$patientVisit) {
-                return JsonResponser::send(true, 'Record not found.', null, 204);
+                return JsonResponser::send(true, 'Record not found.', null, 200);
             }
             $patientVisit->load(
                 [
@@ -153,19 +153,19 @@ class ConsultationController extends Controller
     public function storeConsultationInfo(ConsultationRequest $request, $visitno)
     {
         try {
-             config(['database.default' => 'tenant']);
+            config(['database.default' => 'tenant']);
             DB::connection('tenant')->beginTransaction();
             $currentUser = Auth::user();
-          //  $user = $this->userService->find($currentUser->id);
+            //  $user = $this->userService->find($currentUser->id);
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
             if (!$user) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
 
             $patient = $this->patientVisitService->findByAttribute('visitno', $visitno);
             if (!$patient) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
 
             //validate if the visit number have a record
@@ -245,18 +245,18 @@ class ConsultationController extends Controller
     public function storeLabInfo(LabRequest $request, $visitno)
     {
         try {
-             config(['database.default' => 'tenant']);
+            config(['database.default' => 'tenant']);
             DB::connection('tenant')->beginTransaction();
             $currentUser = Auth::user();
             //$user = $this->userService->find($currentUser->id);
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
             if (!$user) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
             $consultation = $this->consultationService->findByAttribute('visitno', $visitno);
             if (!$consultation) {
-                return JsonResponser::send(true, 'Record not found.', null, 204);
+                return JsonResponser::send(true, 'Record not found.', null, 200);
             }
 
             //Check if investigation is lab or both
@@ -299,19 +299,19 @@ class ConsultationController extends Controller
     public function storeRadiologyInfo(LabRequest $request, $visitno)
     {
         try {
-             config(['database.default' => 'tenant']);
+            config(['database.default' => 'tenant']);
             DB::connection('tenant')->beginTransaction();
             $currentUser = Auth::user();
             // $user = $this->userService->find($currentUser->id);
-             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
             if (!$user) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
 
             $consultation = $this->consultationService->findByAttribute('visitno', $visitno);
             if (!$consultation) {
-                return JsonResponser::send(true, 'Record not found.', null, 204);
+                return JsonResponser::send(true, 'Record not found.', null, 200);
             }
 
             //Check if investigation is radiology or both
@@ -355,18 +355,18 @@ class ConsultationController extends Controller
     public function storeTreatmentInfo(TreatmentRequest $request, $visitno)
     {
         try {
-           config(['database.default' => 'tenant']);
+            config(['database.default' => 'tenant']);
             DB::connection('tenant')->beginTransaction();
             $currentUser = Auth::user();
             //$user = $this->userService->find($currentUser->id);
-             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
             if (!$user) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
 
             $consultation = $this->consultationService->findByAttribute('visitno', $visitno);
             if (!$consultation) {
-                return JsonResponser::send(true, 'Record not found.', null, 204);
+                return JsonResponser::send(true, 'Record not found.', null, 200);
             }
 
             $treatmentIds = [];
@@ -418,7 +418,7 @@ class ConsultationController extends Controller
     public function storeMedicalHistory(Request $request, $patientId)
     {
         try {
-             config(['database.default' => 'tenant']);
+            config(['database.default' => 'tenant']);
             $request->validate([
                 'name' => 'required|string',
                 'status' => 'nullable|string',
@@ -427,16 +427,16 @@ class ConsultationController extends Controller
 
             DB::connection('tenant')->beginTransaction();
             $currentUser = Auth::user();
-          //  $user = $this->userService->find($currentUser->id);
+            //  $user = $this->userService->find($currentUser->id);
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
             if (!$user) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
 
             //Validate the patient
             $patient = $this->patientService->find($patientId);
             if (!$patient) {
-                return JsonResponser::send(true, 'Record not found.', null, 204);
+                return JsonResponser::send(true, 'Record not found.', null, 200);
             }
 
             $uniqueFields = [
@@ -483,16 +483,16 @@ class ConsultationController extends Controller
 
             DB::connection('tenant')->beginTransaction();
             $currentUser = Auth::user();
-           // $user = $this->userService->find($currentUser->id);
+            // $user = $this->userService->find($currentUser->id);
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
             if (!$user) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
 
             //Validate the patient
             $patient = $this->patientService->find($patientId);
             if (!$patient) {
-                return JsonResponser::send(true, 'Record not found.', null, 204);
+                return JsonResponser::send(true, 'Record not found.', null, 200);
             }
 
             $uniqueFields = [
@@ -530,7 +530,7 @@ class ConsultationController extends Controller
     public function storeSocialHistory(Request $request, $patientId)
     {
         try {
-             config(['database.default' => 'tenant']);
+            config(['database.default' => 'tenant']);
             $request->validate([
                 'name' => 'required|string',
                 'status' => 'nullable|string',
@@ -542,13 +542,13 @@ class ConsultationController extends Controller
             //$user = $this->userService->find($currentUser->id);
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
             if (!$user) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
 
             //Validate the patient
             $patient = $this->patientService->find($patientId);
             if (!$patient) {
-                return JsonResponser::send(true, 'Record not found.', null, 204);
+                return JsonResponser::send(true, 'Record not found.', null, 200);
             }
 
             $uniqueFields = [
@@ -586,7 +586,7 @@ class ConsultationController extends Controller
     public function storeDrugHistory(Request $request, $patientId)
     {
         try {
-             config(['database.default' => 'tenant']);
+            config(['database.default' => 'tenant']);
             $request->validate([
                 'name' => 'required|string',
                 'status' => 'nullable|string',
@@ -597,13 +597,13 @@ class ConsultationController extends Controller
             $currentUser = Auth::user();
             $user = $this->userService->find($currentUser->id);
             if (!$user) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
+                return JsonResponser::send(true, 'User not found.', null, 200);
             }
 
             //Validate the patient
             $patient = $this->patientService->find($patientId);
             if (!$patient) {
-                return JsonResponser::send(true, 'Record not found.', null, 204);
+                return JsonResponser::send(true, 'Record not found.', null, 200);
             }
 
             $uniqueFields = [
