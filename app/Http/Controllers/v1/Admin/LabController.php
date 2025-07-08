@@ -49,7 +49,7 @@ class LabController extends Controller
         $from = $request->from;
         $to  = $request->to;
         $export = $request->export;
-        DB::connection('tenant');
+        DB::connection('tenant')->beginTransaction();
         $currentUser = Auth::user();
         // $user = $this->userService->find($currentUser->id);
         $user = User::on('tenant')->where('email', $currentUser['email'])->first();
@@ -59,7 +59,7 @@ class LabController extends Controller
         }
 
         $labRecords = $this->laboratoryService->getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage, $export, $from, $to);
-
+        dd(json_encode($labRecords));
         if ($labRecords->isEmpty()) {
             return JsonResponser::send(true, 'Record(s) not found.', null, 204);
         }
