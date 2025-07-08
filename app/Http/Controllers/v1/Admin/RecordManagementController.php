@@ -29,6 +29,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\PatientVisitExport;
 use App\Http\Resources\PatientDetailResoures;
 use App\Models\User;
+
 class RecordManagementController extends Controller
 {
     protected $userService;
@@ -313,82 +314,82 @@ class RecordManagementController extends Controller
     public function addEmergencyContact(EmergencyContactRequest $request, $patienId)
     {
 
-        try {
-              config(['database.default' => 'tenant']);
-            DB::connection('tenant')->beginTransaction();
+        //try {
+        config(['database.default' => 'tenant']);
+        DB::connection('tenant')->beginTransaction();
+        $validate = $request->validated();
+        $currentUser = Auth::user();
+        //$user = $this->userService->find($currentUser->id);
+        $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
-            $currentUser = Auth::user();
-            //$user = $this->userService->find($currentUser->id);
-            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
-
-            if (is_null($user)) {
-                return JsonResponser::send(true, 'User not found.', null, 204);
-            }
+        if (is_null($user)) {
+            return JsonResponser::send(true, 'User not found.', null, 204);
+        }
 
 
-            $patient = $this->patientService->find($patienId);
-            if (is_null($patient)) {
-                return JsonResponser::send(true, 'Patient not found.', null, 204);
-            }
+        $patient = $this->patientService->find($patienId);
+        if (is_null($patient)) {
+            return JsonResponser::send(true, 'Patient not found.', null, 204);
+        }
 
-            // Check if the patient already has a next of kin
-            $existingContact = $this->emergencyContactService->findByAttribute('patient_id', $patient->id);
-            if ($existingContact) {
-                return JsonResponser::send(true, 'Patient already has an emergency contact', null, 422);
-            }
+        // Check if the patient already has a next of kin
+        $existingContact = $this->emergencyContactService->findByAttribute('patient_id', $patient->id);
+        if ($existingContact) {
+            return JsonResponser::send(true, 'Patient already has an emergency contact', null, 422);
+        }
 
-            //Prepare data to store
+        //Prepare data to store
+        $data = [
+            'patient_id' => $patient->id,
+            'firstname' => $validate['firstname'],
+            'lastname' => $validate['lastname'],
+            'gender' => $validate['gender'],
+            'phoneno' => $validate['phoneno'],
+            'stateoforigin' => $validate['stateoforigin'],
+            'lga' => $validate['lga'],
+            'homeaddress' => $validate['homeaddress'],
+            'relationship' => $validate['relationship'],
+        ];
+
+        $emergencyContact = $this->emergencyContactService->create($data);
+
+        if ($emergencyContact && $validate['status'] === 'complete') {
+
             $data = [
                 'patient_id' => $patient->id,
-                'firstname' => $request->firstname,
-                'lastname' => $request->lastname,
-                'gender' => $request->gender,
-                'phoneno' => $request->phoneno,
-                'stateoforigin' => $request->stateoforigin,
-                'lga' => $request->lga,
-                'homeaddress' => $request->homeaddress,
-                'relationship' => $request->relationship,
+                'visitno' => 'VIS' . GeneralHelper::generateUniqueRandomId($request->firstname),
+                'stage' => PatientVisitStageEnums::TRIAGE,
+                'status' => PatientVisitStatusEnums::ONGOING,
+                'arrival_date' => now(),
             ];
+            $patientVisit = $this->patientVisitService->create($data);
 
-            $emergencyContact = $this->emergencyContactService->create($data);
+            $patient->update(['status' => $request->status]); //Update the status of the patient to complete
 
-            if ($emergencyContact && $request->status === 'complete') {
-
-                $data = [
-                    'patient_id' => $patient->id,
-                    'visitno' => 'VIS' . GeneralHelper::generateUniqueRandomId($request->firstname),
-                    'stage' => PatientVisitStageEnums::TRIAGE,
-                    'status' => PatientVisitStatusEnums::ONGOING,
-                    'arrival_date' => now(),
-                ];
-                $patientVisit = $this->patientVisitService->create($data);
-
-                $patient->update(['status' => $request->status]); //Update the status of the patient to complete
-
-            }
-
-            $dataToLog = [
-                'causer_id' => $user->id,
-                'action_id' => $emergencyContact->id,
-                'action' => 'Create',
-                'action_type' => "Models\EmergencyContact",
-                'log_name' => "Emergency contact created successfully",
-                'description' => "{$user['fullname']} created emergency successfully",
-            ];
-
-            GeneralHelper::storeAuditLog($dataToLog);
-            DB::connection('tenant')->commit();
-            return JsonResponser::send(false, 'Emergency contact created successfully', ['emergencyContact' => $emergencyContact, 'patientVisit' => $patientVisit], 201);
-        } catch (\Throwable $th) {
-            DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
         }
+
+        $dataToLog = [
+            'causer_id' => $user->id,
+            'action_id' => $emergencyContact->id,
+            'action' => 'Create',
+            'action_type' => "Models\EmergencyContact",
+            'log_name' => "Emergency contact created successfully",
+            'description' => "{$user['fullname']} created emergency successfully",
+        ];
+
+        GeneralHelper::storeAuditLog($dataToLog);
+        DB::connection('tenant')->commit();
+        return JsonResponser::send(false, 'Emergency contact created successfully', ['emergencyContact' => $emergencyContact, 'patientVisit' => $patientVisit], 201);
+        // } catch (\Throwable $th) {
+        //     DB::connection('tenant')->rollBack();
+        //     return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+        // }
     }
 
     public function updateEmergencyContact(Request $request, $id)
     {
         try {
-               config(['database.default' => 'tenant']);
+            config(['database.default' => 'tenant']);
             DB::connection('tenant')->beginTransaction();
 
             $currentUser = Auth::user();
@@ -438,7 +439,7 @@ class RecordManagementController extends Controller
     {
         try {
             $currentUser = Auth::user();
-           // $user = $this->userService->find($currentUser->id);
+            // $user = $this->userService->find($currentUser->id);
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
             if (is_null($user)) {
@@ -451,21 +452,21 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'Record not found.', null, 204);
             }
 
-             $data =  $patientDetails->load(['nextOfKin', 'emergencyContact', 'visits', 'service']);
+            $data =  $patientDetails->load(['nextOfKin', 'emergencyContact', 'visits', 'service']);
             //  $fetch = PatientDetailResoures::make($data); 
 
             $data = $patientDetails->load(['nextOfKin', 'emergencyContact', 'visits', 'service', 'billingLogs']);
 
 
-                $serviceDate = $patientDetails->service->name ?? null;
-                  $servceid =  $patientDetails->service->id?? null;
+            $serviceDate = $patientDetails->service->name ?? null;
+            $servceid =  $patientDetails->service->id ?? null;
 
-                $data->visits->transform(function ($visit) use ($serviceDate,  $servceid) {
-                    $visit->service_name = $serviceDate;
-                     $visit->service_id = $servceid;
-                    return $visit;
-                });
-              unset($data->service);
+            $data->visits->transform(function ($visit) use ($serviceDate,  $servceid) {
+                $visit->service_name = $serviceDate;
+                $visit->service_id = $servceid;
+                return $visit;
+            });
+            unset($data->service);
 
             return JsonResponser::send(false, 'Record retrieved successfully.', collect($data), 200);
         } catch (\Throwable $th) {
@@ -485,7 +486,7 @@ class RecordManagementController extends Controller
 
             $currentUser = Auth::user();
             //$user = $this->userService->find($currentUser->id);
-           $user = User::on('tenant')->where('email', $currentUser['email'])->first();
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
             if (is_null($user)) {
                 return JsonResponser::send(true, 'User not found.', null, 204);
@@ -540,9 +541,9 @@ class RecordManagementController extends Controller
 
     public function allRecords(Request $request)
     {
-        
+
         try {
-              config(['database.default' => 'tenant']);
+            config(['database.default' => 'tenant']);
             DB::connection('tenant')->beginTransaction();
 
             $search = $request->search;
@@ -552,8 +553,8 @@ class RecordManagementController extends Controller
             $to = $request->to;
 
             $currentUser = Auth::user();
-             //$user = $this->userService->find($currentUser->id);
-             $user = User::where('email', $currentUser['email'])->first();
+            //$user = $this->userService->find($currentUser->id);
+            $user = User::where('email', $currentUser['email'])->first();
 
             if (is_null($user)) {
                 return JsonResponser::send(false, 'User not found.', null, 204);
@@ -584,16 +585,16 @@ class RecordManagementController extends Controller
             ]);
 
 
-          
 
-               
 
-            
+
+
+
 
             $summary = $this->patientService->getRecordStats();
             return JsonResponser::send(false, 'Record(s) found successfully.', [
                 // 'records' => $records,
-                'records'=>collect($records),
+                'records' => collect($records),
                 'summary' => $summary,
             ], 200);
         } catch (\Throwable $th) {
@@ -747,7 +748,7 @@ class RecordManagementController extends Controller
             DB::connection('tenant');
 
             $currentUser = Auth::user();
-           // $user = $this->userService->find($currentUser->id);
+            // $user = $this->userService->find($currentUser->id);
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
 
             if (is_null($user)) {
