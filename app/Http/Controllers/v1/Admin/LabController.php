@@ -61,17 +61,13 @@ class LabController extends Controller
 
         $labRecords = $this->laboratoryService->getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage, $export, $from, $to);
 
-        // if ($labRecords->count() == 0 && $paginate == false) {
-        //   //  return JsonResponser::send(true, 'Record(s) not found.', null, 204);
-        //     $response = [
-        //     "error" => $error,
-        //     "message" => $error ? $message : ucwords($message),
-        //     "data" => $data,
-        // ];
-        // }
+        if ($labRecords->count() == 0 && $paginate == false) {
+            //  return JsonResponser::send(true, 'Record(s) not found.', null, 204);
+            return JsonResponser::send(true, 'Record(s) not found.', null, 204);
+        }
 
 
-        return response()->json([$labRecords->count(), $paginate]);
+        // return response()->json([$labRecords->count(), $paginate]);
 
         // $response = [
         //     'records' => $labRecords,
