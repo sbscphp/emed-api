@@ -84,7 +84,7 @@ class LaboratoryRepository implements LaboratoryInterface
         return Laboratory::where($attr, $value)->first();
     }
 
-    public function getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage, $export = null, $from, $to)
+    public function getAllLabRecords($search, $status, $paginate = false, $paymentStatus, $perPage, $export = null, $from, $to)
     {
         // Default payment status to "pending" if not explicitly provided
         // $paymentStatus = $paymentStatus ?? 'pending';
@@ -244,9 +244,9 @@ class LaboratoryRepository implements LaboratoryInterface
         }
 
         // Optional pagination (uncomment if needed)
-        // return $paginate ? $query->paginate($perPage ?? 10) : $query->get();
+        return $paginate ? $query->paginate($perPage ?? 10) : $query->get();
 
-        return $query->get();
+        return collect($query->get());
     }
 
 
