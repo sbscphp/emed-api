@@ -131,7 +131,7 @@ class LaboratoryRepository implements LaboratoryInterface
 
         $query->orderBy('patient_visit_lab.created_at', 'desc');
 
-        if ($export) {
+        if (!empty($export)) {
             $records = $query->get();
 
             $exportData = $records->map(function ($item) {
@@ -159,11 +159,11 @@ class LaboratoryRepository implements LaboratoryInterface
             if ($export === 'pdf') {
                 return ExportHelper::downloadPdf($exportData->toArray(), 'lab-records.pdf');
             }
-            dd(json_encode($paginate));
+            //  dd(json_encode($paginate));
             return $paginate ? $query->paginate($perPage ?? 10) : $query->get();
         }
-
-        return $paginate ? $query->paginate($perPage ?? 10) : $query->get();
+        return response()->json($query->get());
+        //return $paginate ? $query->paginate($perPage ?? 10) : $query->get();
     }
 
 
