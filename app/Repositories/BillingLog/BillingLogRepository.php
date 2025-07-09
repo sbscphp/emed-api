@@ -10,6 +10,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\FinancialReportExport;
 use App\Helpers\ExportHelper;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class BillingLogRepository implements BillingLogRepositoryInterface
 {
@@ -147,7 +148,7 @@ class BillingLogRepository implements BillingLogRepositoryInterface
         $download = $request->boolean('download', false);
         $perPage = $request->integer('per_page', 10);
         $currentPage = $request->integer('page', 1);
-
+        $export = $request->export;
         $billingLogs = BillingLog::with('serviceType')
             ->whereBetween('created_at', [$start, $end])
             ->get();
@@ -176,7 +177,17 @@ class BillingLogRepository implements BillingLogRepositoryInterface
         $totalPending = $report->sum('pending_payment');
 
         if ($download) {
-            return Excel::download(new FinancialReportExport($report), 'financial_report_' . now()->format('Ymd_His') . '.xlsx');
+            if ($export == 'xlsx') {
+                return Excel::download(new FinancialReportExport($report), 'financial_report_' . now()->format('Ymd_His') . '.xlsx');
+            } else if ($export == 'pdf') {
+                $pdf = Pdf::loadView('reports.financial_report', [
+                    'report' => $report,
+                    'totalrevenue' => $totalRevenue,
+                    'totalpending' => $totalPending
+                ]);
+
+                return $pdf->download('financial_report_' . now()->format('Ymd_His') . '.pdf');
+            }
         }
 
         $paginated = new LengthAwarePaginator(
