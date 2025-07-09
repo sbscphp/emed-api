@@ -199,16 +199,16 @@ class PatientRepository implements PatientInterface
             return Excel::download(new PatientReportExport($report, $grandTotal), 'patient_report_' . now()->format('Ymd_His') . '.xlsx');
         }
 
-        $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
-            $report->forPage($currentPage, $perPage),
-            $report->count(),
-            $perPage,
-            $currentPage,
-            ['path' => url()->current(), 'query' => $request->query()]
-        );
+        // $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
+        //     $report->forPage($currentPage, $perPage),
+        //     $report->count(),
+        //     $perPage,
+        //     $currentPage,
+        //     ['path' => url()->current(), 'query' => $request->query()]
+        // );
 
         return JsonResponser::send(false, 'Patient report generated successfully.', [
-            'data' => $paginated,
+            'data' => $report,
             'grand_total' => $grandTotal,
         ]);
     }
