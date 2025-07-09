@@ -198,9 +198,9 @@ class BillingLogRepository implements BillingLogRepositoryInterface
             $currentPage,
             ['path' => url()->current(), 'query' => $request->query()]
         );
-        $is_paginated ? $paginated : $report;
+        $data = $is_paginated ? $paginated : $report;
         return JsonResponser::send(false, 'Financial Report Generated Successfully.', [
-            'data' => $paginated,
+            'data' => $data,
             'sub_totals' => [
                 'total_revenue' => $totalRevenue,
                 'pending_payment' => $totalPending,
