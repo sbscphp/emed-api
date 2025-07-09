@@ -171,7 +171,7 @@ class PatientRepository implements PatientInterface
 
         $start = $request->start_date;
         $end = $request->end_date;
-        $download = $request->boolean('download', false);
+        $download = $request->boolean('download', 0);
         $perPage = $request->integer('per_page', 10);
         $currentPage = $request->integer('page', 1);
 
@@ -195,7 +195,7 @@ class PatientRepository implements PatientInterface
 
         $grandTotal = $patients->count();
 
-        if ($download) {
+        if (intval($download)) {
             return Excel::download(new PatientReportExport($report, $grandTotal), 'patient_report_' . now()->format('Ymd_His') . '.xlsx');
         }
 
