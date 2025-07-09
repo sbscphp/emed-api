@@ -35,7 +35,7 @@
         </thead>
         <tbody>
             @foreach($report as $item)
-              @foreach ($item->actions as $actions)
+              @foreach ($item['actions'] as $actions)
                     <tr>
                     <td>{{ $actions['full_name'] }}</td>
                     <td>{{ $actions['roles'] }}</td>
