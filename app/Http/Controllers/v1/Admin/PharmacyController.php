@@ -107,7 +107,7 @@ class PharmacyController extends Controller
             //     return JsonResponser::send(true, 'No treatment logs found.', [], 200);
             // }
 
-            if (!$treatments || $treatments->exists()) {
+            if (!$treatments || $treatments->isEmpty()) {
                 return JsonResponser::send(true, 'No treatment logs found.', [], 200);
             }
 
