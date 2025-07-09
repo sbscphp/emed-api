@@ -37,9 +37,9 @@
             @foreach($report as $item)
               @foreach ($item['actions'] as $actions)
                     <tr>
-                    <td>{{ $actions['full_name'] }}</td>
-                    <td>{{ $actions['roles'] }}</td>
-                    <td>{{ $actions['status'] }}</td>
+                    <td>{{ $item['full_name'] }}</td>
+                    <td>{{ $item['roles'] }}</td>
+                    <td>{{ $item['status'] }}</td>
                     <td>{{ $actions['description'] }}</td>
                     <td>{{ $actions['performed_at'] }}</td>
                 </tr>
