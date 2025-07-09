@@ -131,7 +131,7 @@ class PharmacyController extends Controller
 
                 return JsonResponser::send(true, 'Invalid export format specified.', [], 400);
             }
-
+            dd(json_encode($treatments));
             return JsonResponser::send(false, 'Treatment logs retrieved successfully', $treatments ?? [], 200);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Internal server error', [], 500, $e);
