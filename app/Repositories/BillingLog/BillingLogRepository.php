@@ -149,6 +149,7 @@ class BillingLogRepository implements BillingLogRepositoryInterface
         $perPage = $request->integer('per_page', 10);
         $currentPage = $request->integer('page', 1);
         $export = $request->export;
+        $is_paginated = $request->is_paginated;
         $billingLogs = BillingLog::with('serviceType')
             ->whereBetween('created_at', [$start, $end])
             ->get();
@@ -197,7 +198,7 @@ class BillingLogRepository implements BillingLogRepositoryInterface
             $currentPage,
             ['path' => url()->current(), 'query' => $request->query()]
         );
-
+        $is_paginated ? $paginated : $report;
         return JsonResponser::send(false, 'Financial Report Generated Successfully.', [
             'data' => $paginated,
             'sub_totals' => [
