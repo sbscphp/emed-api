@@ -10,6 +10,7 @@ use App\Repositories\Triage\TriageInterface;
 use App\Responser\JsonResponser;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+
 /**
  * Class TriageService
  * 
@@ -111,7 +112,7 @@ class TriageService
 
     public function getPatientsAndStatsByService($serviceId, $search = null, $from, $to)
     {
-        DB::connection('tenant');
+
 
         $today = now()->toDateString();
 
@@ -147,7 +148,7 @@ class TriageService
             });
         }
 
-  
+
         $query->when($from && $to, function ($q) use ($from, $to) {
             $q->whereBetween('patient_visits.arrival_date', [
                 Carbon::parse($from)->startOfDay(),

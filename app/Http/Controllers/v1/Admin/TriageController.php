@@ -84,6 +84,7 @@ class TriageController extends Controller
     public function getPatientsByService(Request $request)
     {
         try {
+            DB::connection('tenant')->beginTransaction();
             $serviceId = $request->input('service_id');
             $search = $request->input('search');
             $from = $request->from;
@@ -100,6 +101,7 @@ class TriageController extends Controller
                 'patients' => $result['patients']
             ], 200);
         } catch (\Exception $e) {
+            DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Internal server error', [], 500, $e);
         }
     }
