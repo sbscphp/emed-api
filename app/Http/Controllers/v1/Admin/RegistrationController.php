@@ -794,10 +794,11 @@ class RegistrationController extends Controller
         DB::connection('landlord')->beginTransaction();
         try {
             $user = Auth::user();
+            $user_information =  $user->userInformation;
             return JsonResponser::send(
                 true,
                 'Your email has been verified. You can now log in.',
-                $user,
+                $user_information,
                 200
             );
         } catch (\Throwable $th) {

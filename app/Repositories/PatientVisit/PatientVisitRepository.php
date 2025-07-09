@@ -29,7 +29,7 @@ class PatientVisitRepository implements PatientVisitInterface
     {
         $patientcreate = PatientVisit::create($data);
         $data = $patientcreate->load('patient');
-       return  PatientResources::make($data);
+        return  PatientResources::make($data);
     }
 
 
@@ -131,7 +131,6 @@ class PatientVisitRepository implements PatientVisitInterface
                         ->orWhere('email', 'like', '%' . $search . '%')
                         ->orWhere('patientno', 'like', '%' . $search . '%');
                 });
-
         }
 
         if ($stage) {
@@ -159,10 +158,10 @@ class PatientVisitRepository implements PatientVisitInterface
      * @param [type] $date
      * @return void
      */
-    public function getPatientForConsultation($search, $sortBy, $date=Null, $paginate, $perPage)
+    public function getPatientForConsultation($search, $sortBy, $date = Null, $paginate, $perPage)
     {
-        $query = PatientVisit::with(['patient','patient.triage']);
-       // $query->join('billings', 'patient_visits.visitno', '=', 'billings.visitno');
+        $query = PatientVisit::with(['patient', 'patient.triage']);
+        // $query->join('billings', 'patient_visits.visitno', '=', 'billings.visitno');
         $query->select(
             'patient_id',
             'visitno',
@@ -182,16 +181,15 @@ class PatientVisitRepository implements PatientVisitInterface
                         ->orWhere('patientno', 'like', '%' . $search . '%')
                         ->orWhere('cardno', 'like', '%' . $search . '%');
                 });
-
         }
 
-        if(isset($date)){
+        if (isset($date)) {
             $query->whereDate('arrival_date', Carbon::parse($date)->toDateString());
         }
 
         $query->where('stage', 'consultation');
         $query->where('status', 'ongoing');
-       // $query->where('billings.payment_status', 'paid');
+        // $query->where('billings.payment_status', 'paid');
         $query->orderBy('created_at', $sortBy);
 
         return $paginate ? $query->paginate($perPage) : $query->get();
