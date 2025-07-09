@@ -174,7 +174,7 @@ class PatientRepository implements PatientInterface
         $download = $request->boolean('download', 0);
         $perPage = $request->integer('per_page', 10);
         $currentPage = $request->integer('page', 1);
-
+        $export  = $request->export;
         $patients = Patient::with('service')->when(!empty($start) && !empty($end),  function ($query) use ($start, $end) {
             $query->whereBetween('created_at', [$start, $end]);
         })->get();
@@ -194,9 +194,58 @@ class PatientRepository implements PatientInterface
         })->values();
 
         $grandTotal = $patients->count();
-
+        dd(json_encode($report));
         if (intval($download)) {
-            return Excel::download(new PatientReportExport($report, $grandTotal), 'patient_report_' . now()->format('Ymd_His') . '.xlsx');
+            if ($export == 'xlsx') {
+                return Excel::download(new PatientReportExport($report, $grandTotal), 'patient_report_' . now()->format('Ymd_His') . '.xlsx');
+            } else if ($export == 'pdf') {
+                $html = '<head>
+            <meta charset="UTF-8">
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                table, th, td { border: 1px solid black; }
+                th, td { padding: 8px; text-align: left; }
+                th { background-color: #f2f2f2; }
+                h1 {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+            </style>
+        </head>';
+
+                // HTML template for PDF
+                $html .= '<table border="1" cellpadding="10">';
+                $html .= '<thead>
+                    <tr>
+             
+        <th>Beneficiary</th>
+        <th>Account number</th>
+        <th>Swift code</th>
+         <th>Routing number</th>
+        <th>Bank</th>
+        <th>Bank <br>currency</th>
+        <th>status</th>
+        <th>Description</th>
+                  </thead><tbody>';
+
+
+
+                //     $html .= '<tr>
+                //     <td>' . htmlspecialchars($BankDetails['data']['detail_data']['data']->beneficiary) . '</td>
+                //     <td>' . htmlspecialchars($BankDetails['data']['detail_data']['data']->account_number) . '</td>
+                //     <td>' . htmlspecialchars($BankDetails['data']['detail_data']['data']->swift_code) . '</td>
+                //     <td>' . htmlspecialchars($BankDetails['data']['detail_data']['data']->routing_number) . '</td>
+                //     <td>' . htmlspecialchars($BankDetails['data']['detail_data']['data']->bank) . '</td>
+                //     <td>' . htmlspecialchars($BankDetails['data']['detail_data']['data']->bank_currency) . '</td>
+                //     <td>' . htmlspecialchars($BankDetails['data']['detail_data']['data']->status ? 'Active' : "Inactive") . '</td>
+                //      <td>' . htmlspecialchars($BankDetails['data']['detail_data']['data']->description) . '</td>
+                // </tr>';
+
+                $html .= '</tbody></table>';
+                // return $this->exportJsonToPdf($html);
+            }
         }
 
         // $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
