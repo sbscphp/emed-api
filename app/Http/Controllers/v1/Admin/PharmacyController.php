@@ -103,7 +103,7 @@ class PharmacyController extends Controller
             $to = $request->to;
             $treatments = $this->pharmacyService->treatmentLogall($search, $from,  $to);
 
-            if ($treatments->exists() || $treatments->isEmpty()) {
+            if ($treatments->exists() || collect($treatments)->isEmpty()) {
                 return JsonResponser::send(true, 'No treatment logs found.', [], 200);
             }
 
