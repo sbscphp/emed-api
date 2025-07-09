@@ -10,6 +10,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\SystemReportExport;
 use App\Helpers\ExportHelper;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 /**
  * Class UserRepository
@@ -50,7 +51,7 @@ class UserRepository implements UserRepositoryInterface
                     'ID' => $user->id,
                     'Fullname' => $user->fullname,
                     'Email' => $user->email,
-                    'Date_of_birth'=>$user->date_of_birth,
+                    'Date_of_birth' => $user->date_of_birth,
                     'PhoneNumber' => $user->phone_number,
                     'Role' => $user->role,
                     'Status' => $user->status,
@@ -117,13 +118,13 @@ class UserRepository implements UserRepositoryInterface
      */
     public function find(int $id, array $selectAttrs = [])
     {
-      
-     $columns = !empty($selectAttrs) ? $selectAttrs : ['*'];
-      $user = User::on('tenant')->select($columns)->find(intval($id));
-      if($user){
-        return $user;
-      }
-       // return User::select($selectAttrs ? $selectAttrs : '*')->find($id);
+
+        $columns = !empty($selectAttrs) ? $selectAttrs : ['*'];
+        $user = User::on('tenant')->select($columns)->find(intval($id));
+        if ($user) {
+            return $user;
+        }
+        // return User::select($selectAttrs ? $selectAttrs : '*')->find($id);
     }
 
     /**
@@ -158,10 +159,10 @@ class UserRepository implements UserRepositoryInterface
 
         $start = $request->start_date;
         $end = $request->end_date;
-        $download = $request->boolean('download', false);
+        $download = $request->boolean('download', 0);
         $perPage = $request->integer('per_page', 10);
         $currentPage = $request->integer('page', 1);
-
+        $export = $request->export;
         $logs = AuditLog::with('causer.roles')
             ->whereBetween('created_at', [$start, $end])
             ->get()
@@ -188,7 +189,15 @@ class UserRepository implements UserRepositoryInterface
         })->values();
 
         if ($download) {
-            return Excel::download(new SystemReportExport($reportCollection), 'system_report_' . now()->format('Ymd_His') . '.xlsx');
+            if ($export == 'xlsx') {
+                return Excel::download(new SystemReportExport($reportCollection), 'system_report_' . now()->format('Ymd_His') . '.xlsx');
+            } else if ($export == 'pdf') {
+                $pdf = Pdf::loadView('reports.system_report', [
+                    'report' => $reportCollection,
+                ]);
+
+                return $pdf->download('system_report' . now()->format('Ymd_His') . '.pdf');
+            }
         }
 
         $paginated = new LengthAwarePaginator(
