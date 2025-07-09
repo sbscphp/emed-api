@@ -180,7 +180,7 @@ class PatientRepository implements PatientInterface
         })->get();
 
         if ($patients->isEmpty()) {
-            return JsonResponser::send(false, 'No patient records found for the selected date range.', [], 200);
+            return JsonResponser::send(false, 'No patient records found for the selected date range.', [], 422);
         }
 
         $grouped = $patients->groupBy(fn($p) => optional($p->service)->name ?? 'Unknown');
