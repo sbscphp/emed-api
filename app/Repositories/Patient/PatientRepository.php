@@ -175,6 +175,7 @@ class PatientRepository implements PatientInterface
         $perPage = $request->integer('per_page', 10);
         $currentPage = $request->integer('page', 1);
         $export  = $request->export;
+        $is_paginated =  $request->is_paginated;
         $patients = Patient::with('service')->when(!empty($start) && !empty($end),  function ($query) use ($start, $end) {
             $query->whereBetween('created_at', [$start, $end]);
         })->get();
@@ -208,16 +209,18 @@ class PatientRepository implements PatientInterface
             }
         }
 
-        // $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
-        //     $report->forPage($currentPage, $perPage),
-        //     $report->count(),
-        //     $perPage,
-        //     $currentPage,
-        //     ['path' => url()->current(), 'query' => $request->query()]
-        // );
+        $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
+            $report->forPage($currentPage, $perPage),
+            $report->count(),
+            $perPage,
+            $currentPage,
+            ['path' => url()->current(), 'query' => $request->query()]
+        );
+
+        $data =  intval($is_paginated) ? $paginated : $report;
 
         return JsonResponser::send(false, 'Patient report generated successfully.', [
-            'data' => $report,
+            'data' => $data,
             'grand_total' => $grandTotal,
         ]);
     }
