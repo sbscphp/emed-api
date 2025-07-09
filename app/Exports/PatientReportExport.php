@@ -12,12 +12,11 @@ class PatientReportExport implements FromCollection, WithHeadings, WithMapping
     protected $data;
     protected $grandTotal;
 
-    public function __construct(array $data, int $grandTotal)
+    public function __construct(Collection $data, int $grandTotal)
     {
         $this->data = $data;
         $this->grandTotal = $grandTotal;
     }
-
     public function collection(): Collection
     {
         $collection = collect($this->data);
