@@ -188,6 +188,7 @@ Route::group(["prefix" => "v1"], function () {
                 Route::group(['prefix' => 'report', 'middleware' => 'admin.superadmin'], function () {
                     Route::get('/dashboard/stats', [ReportController::class, 'getReportStatistics']);
                     Route::post('/', [ReportController::class, 'index']);
+                    // patient
                     Route::get('/patient', [ReportController::class, 'getPatientReport']);
                     Route::get('/financial', [ReportController::class, 'getFinancialReport']);
                     Route::get('/system', [ReportController::class, 'getAllSystemReport']);

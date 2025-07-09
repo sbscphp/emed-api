@@ -169,15 +169,15 @@ class PatientRepository implements PatientInterface
             'end_date' => 'required|date|after_or_equal:start_date',
         ]);
 
-        $start = $request->start_date;
-        $end = $request->end_date;
+        $start = Carbon::parse($request->start_date);
+        $end = Carbon::parse($request->end_date);
         $download = $request->boolean('download', 0);
         $perPage = $request->integer('per_page', 10);
         $currentPage = $request->integer('page', 1);
 
-        $patients = Patient::with('service')
-            ->whereBetween('created_at', [$start, $end])
-            ->get();
+        $patients = Patient::with('service')->when(!empty($start) && !empty($end),  function ($query) use ($start, $end) {
+            $query->whereBetween('created_at', [$start, $end]);
+        })->get();
 
         if ($patients->isEmpty()) {
             return JsonResponser::send(false, 'No patient records found for the selected date range.', [], 200);
