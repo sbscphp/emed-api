@@ -66,7 +66,7 @@ class PharmacyRepository implements PharmacyInterface
             $treatment->status = $treatment->receiptno ? 'Fulfilled' : 'Not Fulfilled';
         }
 
-        return $query;
+        return $query->get();
     }
 
     public function getPatientTreatmentDetails($patientId)
