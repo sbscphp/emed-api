@@ -103,7 +103,7 @@ class PharmacyController extends Controller
             $to = $request->to;
             $treatments = $this->pharmacyService->treatmentLogall($search, $from,  $to);
 
-            if ($treatments->exists()) {
+            if ($treatments->exists() || $treatments->isEmpty()) {
                 return JsonResponser::send(true, 'No treatment logs found.', [], 200);
             }
 
@@ -131,7 +131,7 @@ class PharmacyController extends Controller
 
                 return JsonResponser::send(true, 'Invalid export format specified.', [], 400);
             }
-            dd(json_encode($treatments));
+            // dd(json_encode($treatments));
             return JsonResponser::send(false, 'Treatment logs retrieved successfully', $treatments ?? [], 200);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Internal server error', [], 500, $e);
