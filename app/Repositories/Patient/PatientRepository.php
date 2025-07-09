@@ -12,7 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Pagination\LengthAwarePaginator;
-
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PatientRepository implements PatientInterface
 {
@@ -199,6 +199,12 @@ class PatientRepository implements PatientInterface
             if ($export == 'xlsx') {
                 return Excel::download(new PatientReportExport($report, $grandTotal), 'patient_report_' . now()->format('Ymd_His') . '.xlsx');
             } else if ($export == 'pdf') {
+                $pdf = Pdf::loadView('reports.patient_report', [
+                    'report' => $report,
+                    'grandTotal' => $grandTotal,
+                ]);
+
+                return $pdf->download('patient_report_' . now()->format('Ymd_His') . '.pdf');
             }
         }
 
