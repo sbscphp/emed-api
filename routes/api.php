@@ -81,6 +81,7 @@ Route::group(["prefix" => "v1"], function () {
                 });
 
                 Route::group(['prefix' => 'nurse', 'middleware' => 'role.nurse'], function () {
+                    // all-records
                     Route::post('/triage/{patientId}', [TriageController::class, 'store']);
                     Route::get('/single-triage/{patientId}', [TriageController::class, 'show']);
                     Route::post('/all-records', [TriageController::class, 'getPatientsByService']);

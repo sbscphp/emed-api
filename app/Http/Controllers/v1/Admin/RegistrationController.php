@@ -794,7 +794,7 @@ class RegistrationController extends Controller
         DB::connection('landlord')->beginTransaction();
         try {
             $user = Auth::user();
-            $user_information =  $user->userInformation;
+            $user_information =  $user->load('userInformation');
             return JsonResponser::send(
                 true,
                 'Your email has been verified. You can now log in.',
