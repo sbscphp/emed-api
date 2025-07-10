@@ -5,7 +5,10 @@ namespace App\Services\Patient;
 use App\Models\Patient;
 use App\Repositories\Patient\PatientInterface;
 use Illuminate\Support\Collection;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use App\Helpers\ExportHelper;
+
 /**
  * Class PatientService
  *
@@ -136,7 +139,7 @@ class PatientService
         return $this->PatientInterface->getPatientReport($request);
     }
 
-    public function getAllRecordFiltered($search = null, $paginate = false, $perPage = 10, $from, $to)
+    public function getAllRecordFiltered($search = null, $paginate = false, $perPage = 10, $from, $to, $export)
     {
         $query = Patient::query();
 
@@ -153,9 +156,16 @@ class PatientService
                     ->orWhere('homeaddress', 'like', "%$search%");
             });
         }
-   
 
-       $query->when($from && $to, function ($q) use ($from, $to) {
+        if (!empty($export)) {
+            if ($export == 'pdf') {
+                return ExportHelper::downloadPdf(Patient::get()->toArray(),  'patient.pdf');
+            } else if ($export == 'csv') {
+                return ExportHelper::streamCsv(Patient::get()->toArray(), null, 'patient.csv');
+            }
+        }
+
+        $query->when($from && $to, function ($q) use ($from, $to) {
             $q->whereBetween('created_at', [Carbon::parse($from), Carbon::parse($to)]);
         });
 
