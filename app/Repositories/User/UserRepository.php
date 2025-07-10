@@ -177,6 +177,7 @@ class UserRepository implements UserRepositoryInterface
 
             return [
                 'full_name' => $admin?->fullname ?? 'Unknown',
+                'user_id' => $admin?->id,
                 'roles' => $admin?->roles->pluck('name') ?? [],
                 'status' => $admin?->status ?? 'inactive',
                 'actions' => $group->map(function ($log) {
@@ -201,20 +202,24 @@ class UserRepository implements UserRepositoryInterface
         }
 
 
+        $currentPage = LengthAwarePaginator::resolveCurrentPage(); // Automatically resolves the page number from the request
+        $perPage = 15; // Set your desired per-page value
+
+        // Ensure the collection is a Laravel Collection
         $reportCollection = collect($reportCollection);
-        $currentPage = LengthAwarePaginator::resolveCurrentPage();
-        $perPage = 10;
 
+        // Slice the collection for the current page
+        $currentPageItems = $reportCollection->forPage($currentPage, $perPage);
 
-        $paginatedItems = $reportCollection->forPage($currentPage, $perPage);
+        // Create the paginator
         $paginated = new LengthAwarePaginator(
-            $paginatedItems,
+            $currentPageItems,
             $reportCollection->count(),
             $perPage,
             $currentPage,
             [
-                'path' => url()->current(),
-                'query' => request()->query(),
+                'path' => request()->url(), // Or use url()->current()
+                'query' => request()->query(), // Keep query parameters like filters/search terms
             ]
         );
 
