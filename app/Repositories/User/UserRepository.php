@@ -205,10 +205,8 @@ class UserRepository implements UserRepositoryInterface
         $currentPage = LengthAwarePaginator::resolveCurrentPage(); // Get the current page from the request
         $perPage = 10; // Or whatever value you need
 
-        // Slice the collection to get items for the current page
-        $paginatedItems = $reportCollection->forPage($currentPage, $perPage);
 
-        // Create the paginator
+        $paginatedItems = $reportCollection->forPage($currentPage, $perPage);
         $paginated = new LengthAwarePaginator(
             $paginatedItems,
             $reportCollection->count(),
@@ -216,7 +214,7 @@ class UserRepository implements UserRepositoryInterface
             $currentPage,
             [
                 'path' => url()->current(),
-                'query' => request()->query(), // or $request->query() if you're using a controller method
+                'query' => request()->query(),
             ]
         );
 
