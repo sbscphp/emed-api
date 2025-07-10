@@ -139,7 +139,7 @@ class PatientService
         return $this->PatientInterface->getPatientReport($request);
     }
 
-    public function getAllRecordFiltered($search = null, $paginate = false, $perPage = 10, $from, $to, $export)
+    public function getAllRecordFiltered($search = null, $paginate = false, $perPage = 10, $from, $to, $export, $gender, $status)
     {
         $query = Patient::query();
 
@@ -158,6 +158,13 @@ class PatientService
                     ->orWhere('gender', 'like', "%$search%")
                     ->orWhere('status', 'like', "%$search%");
             });
+        }
+        if (!empty($gender)) {
+            $query->where('gender', 'like', "%$gender%");
+        }
+
+        if (!empty($status)) {
+            $query->where('status', 'like', "%$status%");
         }
 
         if (!empty($export)) {

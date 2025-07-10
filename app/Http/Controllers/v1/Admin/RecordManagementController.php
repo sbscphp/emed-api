@@ -552,6 +552,8 @@ class RecordManagementController extends Controller
             $from = $request->from;
             $to = $request->to;
             $export = $request->export;
+            $gender = $request->gender;
+            $status = $request->status;
 
             $currentUser = Auth::user();
             //$user = $this->userService->find($currentUser->id);
@@ -561,7 +563,7 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(false, 'User not found.', null, 200);
             }
 
-            $records = $this->patientService->getAllRecordFiltered($search, $paginate, $perPage, $from, $to, $export);
+            $records = $this->patientService->getAllRecordFiltered($search, $paginate, $perPage, $from, $to, $export, $gender, $status);
 
             if ($records->isEmpty()) {
                 return JsonResponser::send(false, 'Record(s) not found.', null, 200);
