@@ -200,10 +200,10 @@ class UserRepository implements UserRepositoryInterface
             }
         }
 
-        // Assuming you have these variables already defined:
-        $reportCollection = collect($reportCollection); // Ensure it's a Collection
-        $currentPage = LengthAwarePaginator::resolveCurrentPage(); // Get the current page from the request
-        $perPage = 10; // Or whatever value you need
+
+        $reportCollection = collect($reportCollection);
+        $currentPage = LengthAwarePaginator::resolveCurrentPage();
+        $perPage = 10;
 
 
         $paginatedItems = $reportCollection->forPage($currentPage, $perPage);
