@@ -160,11 +160,11 @@ class PatientService
             });
         }
         if (!empty($gender)) {
-            $query->where('gender', 'like', "%$gender%");
+            $query->where('gender', $gender);
         }
 
         if (!empty($status)) {
-            $query->where('status', 'like', "%$status%");
+            $query->where('status',  $status);
         }
 
         if (!empty($export)) {
