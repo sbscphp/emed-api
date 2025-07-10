@@ -209,7 +209,10 @@ class UserRepository implements UserRepositoryInterface
         $reportCollection = collect($reportCollection);
 
         // Slice the collection for the current page
-        $currentPageItems = $reportCollection->forPage($currentPage, $perPage);
+        // $currentPageItems = $reportCollection->forPage($currentPage, $perPage);
+
+        $currentPageItems = $reportCollection->forPage($currentPage, $perPage)->values();
+
 
         // Create the paginator
         $paginated = new LengthAwarePaginator(
