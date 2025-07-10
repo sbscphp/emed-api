@@ -144,6 +144,7 @@ class PatientService
         $query = Patient::query();
 
         if ($search) {
+            // status
             $query->where(function ($q) use ($search) {
                 $q->where('firstname', 'like', "%$search%")
                     ->orWhere('lastname', 'like', "%$search%")
@@ -153,7 +154,9 @@ class PatientService
                     ->orWhere('patientno', 'like', "%$search%")
                     ->orWhere('cardno', 'like', "%$search%")
                     ->orWhere('occupation', 'like', "%$search%")
-                    ->orWhere('homeaddress', 'like', "%$search%");
+                    ->orWhere('homeaddress', 'like', "%$search%")
+                    ->orWhere('gender', 'like', "%$search%")
+                    ->orWhere('status', 'like', "%$search%");
             });
         }
 
