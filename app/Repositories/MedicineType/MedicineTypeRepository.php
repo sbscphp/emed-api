@@ -24,7 +24,7 @@ class MedicineTypeRepository implements MedicineTypeInterface
             return $query->orderByDesc('date_added')->get();
         }
 
-        $query->when($filters['from'] && $filters['to'], function ($q) use ($filters) {
+        $query->when(!empty($filters['from']) && !empty($filters['to']), function ($q) use ($filters) {
             $q->whereBetween('date_added', [
                 Carbon::parse($filters['from'])->startOfDay(),
                 Carbon::parse($filters['to'])->endOfDay()
