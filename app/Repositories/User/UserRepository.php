@@ -200,13 +200,26 @@ class UserRepository implements UserRepositoryInterface
             }
         }
 
+        // Assuming you have these variables already defined:
+        $reportCollection = collect($reportCollection); // Ensure it's a Collection
+        $currentPage = LengthAwarePaginator::resolveCurrentPage(); // Get the current page from the request
+        $perPage = 10; // Or whatever value you need
+
+        // Slice the collection to get items for the current page
+        $paginatedItems = $reportCollection->forPage($currentPage, $perPage);
+
+        // Create the paginator
         $paginated = new LengthAwarePaginator(
-            $reportCollection->forPage($currentPage, $perPage),
+            $paginatedItems,
             $reportCollection->count(),
             $perPage,
             $currentPage,
-            ['path' => url()->current(), 'query' => $request->query()]
+            [
+                'path' => url()->current(),
+                'query' => request()->query(), // or $request->query() if you're using a controller method
+            ]
         );
+
 
         return JsonResponser::send(false, 'System Report Generated Successfully.', $paginated);
     }
