@@ -203,7 +203,6 @@ class UserRepository implements UserRepositoryInterface
 
 
         $currentPage = LengthAwarePaginator::resolveCurrentPage(); // Automatically resolves the page number from the request
-        $perPage = 15; // Set your desired per-page value
 
         // Ensure the collection is a Laravel Collection
         $reportCollection = collect($reportCollection);
@@ -211,7 +210,7 @@ class UserRepository implements UserRepositoryInterface
         // Slice the collection for the current page
         // $currentPageItems = $reportCollection->forPage($currentPage, $perPage);
 
-        $currentPageItems = $reportCollection->forPage($currentPage, $perPage)->values();
+        $currentPageItems = $reportCollection->forPage($currentPage, intval($perPage))->values();
 
 
         // Create the paginator
