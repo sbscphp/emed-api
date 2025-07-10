@@ -170,7 +170,7 @@ class PatientService
         // patient_type
 
         if (!empty($patient_type)) {
-            $query->where('status',  $patient_type);
+            $query->where('patient_type',  $patient_type);
         }
 
         if (!empty($export)) {
