@@ -35,7 +35,7 @@ class MedicationRepository implements MedicationRepositoryInterface
 
 
 
-        if ($request['export']) {
+        if (!empty($request['export'])) {
             $medications = $query->get();
 
             $exportData = $medications->map(function ($med) {
