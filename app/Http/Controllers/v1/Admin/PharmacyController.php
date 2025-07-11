@@ -61,7 +61,7 @@ class PharmacyController extends Controller
                 return JsonResponser::send(true, 'No pharmacies found.', [], 200);
             }
 
-            if ($request->has('export')) {
+            if (!empty($request->export)) {
                 $exportData = $pharmacies->map(function ($pharmacy) {
                     return [
                         'Pharmacy Name'       => $pharmacy->name ?? '',
@@ -76,11 +76,11 @@ class PharmacyController extends Controller
                     ];
                 });
 
-                if ($request->export === 'csv') {
+                if ($request->export == 'csv') {
                     return ExportHelper::streamCsv($exportData->toArray(), null, 'pharmacies_' . now()->format('Ymd_His') . '.csv');
                 }
 
-                if ($request->export === 'pdf') {
+                if ($request->export == 'pdf') {
                     return ExportHelper::downloadPdf($exportData->toArray(), 'pharmacies_' . now()->format('Ymd_His') . '.pdf');
                 }
 
