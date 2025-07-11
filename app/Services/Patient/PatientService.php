@@ -217,7 +217,8 @@ class PatientService
                             'lastname' => $patient->lastname,
                             'dob' => $patient->dob,
                             'age' => $patient->age,
-                            'gender' => $patient->bloodgroup
+                            'gender' => $patient->gender,
+                            'bloodgroup' => $patient->bloodgroup
                         ];
                     });
 
