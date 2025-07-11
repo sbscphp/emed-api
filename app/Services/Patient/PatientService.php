@@ -186,7 +186,7 @@ class PatientService
                 //return Excel::download(new PatientExport($patient), 'patients.xlsx');
                 // return Excel::download(Patient::get()->toArray(), 'users.xlsx');
 
-                return ExportHelper::streamCsv($data, null, 'patient.csv');
+                return ExportHelper::streamCsv($data);
             }
         }
 
