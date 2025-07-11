@@ -587,16 +587,18 @@ class RecordManagementController extends Controller
                 //     );
                 // }
             ]);
+
+            $summary = $this->patientService->getRecordStats();
+            return JsonResponser::send(false, 'Record(s) found successfully.', [
+                // 'records' => $records,
+                'records' => collect($records),
+                'summary' => $summary,
+            ], 200);
         }
 
 
 
-        $summary = $this->patientService->getRecordStats();
-        return JsonResponser::send(false, 'Record(s) found successfully.', [
-            // 'records' => $records,
-            'records' => collect($records),
-            'summary' => $summary,
-        ], 200);
+
 
 
 
