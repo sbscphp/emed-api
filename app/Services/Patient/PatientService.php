@@ -181,7 +181,7 @@ class PatientService
         if (!empty($export)) {
             // Get the data with necessary relationships if needed
             $query = Patient::query();
-            
+
             // Apply any existing filters
             if (!empty($from) && !empty($to)) {
                 $query->whereBetween('created_at', [
@@ -189,17 +189,17 @@ class PatientService
                     Carbon::parse($to)->endOfDay()
                 ]);
             }
-            
+
             // Get the data as a collection
             $data = $query->latest()->get();
-            
+
             // Convert to array - the ExportHelper will handle the UTF-8 cleaning
             $exportData = $data->toArray();
 
             if ($export == 'pdf') {
-                return ExportHelper::downloadPdf($exportData, 'patient_' . now()->format('Ymd_His') . '.pdf');
+                //  return ExportHelper::downloadPdf($exportData, 'patient_' . now()->format('Ymd_His') . '.pdf');
             } else if ($export == 'csv') {
-                return ExportHelper::streamCsv($exportData, null, 'patients_' . now()->format('Ymd_His') . '.csv');
+                //  return ExportHelper::streamCsv($exportData, null, 'patients_' . now()->format('Ymd_His') . '.csv');
                 // return ExportHelper::streamCsv($data);
                 // $csv = new Csv($data);
 

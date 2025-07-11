@@ -214,14 +214,50 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
+     * Clean and ensure proper UTF-8 encoding of data
+     *
+     * @param mixed $data
+     * @return mixed
+     */
+    protected function cleanUtf8($data)
+    {
+        if (is_string($data)) {
+            if (!mb_check_encoding($data, 'UTF-8')) {
+                $data = mb_convert_encoding($data, 'UTF-8', 'UTF-8');
+            }
+            // Remove any remaining invalid characters
+            $data = iconv('UTF-8', 'UTF-8//IGNORE//TRANSLIT', $data);
+            // Remove any non-printable characters except newlines and tabs
+            return preg_replace('/[^\x20-\x7E\x0A\x0D\x09]/', '', $data);
+        }
+
+        if (is_array($data) || is_object($data)) {
+            foreach ($data as $key => $value) {
+                if (is_array($data)) {
+                    $data[$key] = $this->cleanUtf8($value);
+                } elseif (is_object($data)) {
+                    $data->$key = $this->cleanUtf8($value);
+                }
+            }
+        }
+
+        return $data;
+    }
+
+    /**
      * Bootstrap any application services.
      */
     public function boot(): void
     {
-     Event::listen(
-       CreateUserEvent::class,
-       CreateUserListener::class
-      );
+        // Add response macro for JSON with UTF-8 cleaning
+        response()->macro('jsonClean', function ($data, $status = 200, array $headers = [], $options = 0) {
+            $data = $this->cleanUtf8($data);
+            return response()->json($data, $status, $headers, $options);
+        });
+        Event::listen(
+            CreateUserEvent::class,
+            CreateUserListener::class
+        );
 
         Sanctum::usePersonalAccessTokenModel(SanctumPersonalAccessToken::class);
     }
