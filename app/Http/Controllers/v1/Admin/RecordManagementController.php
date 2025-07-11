@@ -570,23 +570,23 @@ class RecordManagementController extends Controller
         }
 
 
-        // $records->load([
-        //     'service',
-        //     'visits_recent',
-        //     // 'visits' => function ($query) {
-        //     //     $query->select(
-        //     //         'id',
-        //     //         'patient_id',
-        //     //         'visitno',
-        //     //         'stage',
-        //     //         'status',
-        //     //         'arrival_date',
-        //     //         'departure_date',
-        //     //         'visit_date',
-        //     //         'created_at'
-        //     //     );
-        //     // }
-        // ]);
+        $records->load([
+            'service',
+            'visits_recent',
+            // 'visits' => function ($query) {
+            //     $query->select(
+            //         'id',
+            //         'patient_id',
+            //         'visitno',
+            //         'stage',
+            //         'status',
+            //         'arrival_date',
+            //         'departure_date',
+            //         'visit_date',
+            //         'created_at'
+            //     );
+            // }
+        ]);
 
 
 
