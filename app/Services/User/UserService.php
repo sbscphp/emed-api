@@ -176,7 +176,7 @@ class UserService
         $auditlog = AuditLog::with('audit_log_transactions')->when(!empty($validate['user_id']) && !empty($validate['action_type']), function ($query) use ($validate) {
             $query->where("user_id", $validate['user_id'])
                 ->orWhere('action_type', $validate['action_type']);
-        })->paginate($validate['limit']);
+        })->paginate($validate['limit'] ?? 10);
 
         return $auditlog;
     }
