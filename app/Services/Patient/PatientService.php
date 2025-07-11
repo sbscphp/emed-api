@@ -185,13 +185,14 @@ class PatientService
                 //  return ExportHelper::streamCsv(Patient::get()->toArray(), null, 'patient.csv');
                 $patient = Patient::all();
                 $data = PatientResourceExport::collection($patient)->resolve();
+                return ExportHelper::streamCsv($data, null, 'patients_export.csv');
                 //return Excel::download(new PatientExport($patient), 'patients.xlsx');
                 // return Excel::download(Patient::get()->toArray(), 'users.xlsx');
 
                 //return ExportHelper::streamCsv($data);
                 // $csv = new Csv($data);
 
-                return ExportHelper::streamCsv($data, null, 'patient_' . now()->format('Ymd_His') . '.csv');
+                // return ExportHelper::streamCsv($data, null, 'patient_' . now()->format('Ymd_His') . '.csv');
             }
         }
 
