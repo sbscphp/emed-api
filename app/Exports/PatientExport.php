@@ -2,14 +2,10 @@
 
 namespace App\Exports;
 
-use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\FromArray;
 
 class PatientExport implements FromArray
 {
-    /**
-     * @return \Illuminate\Support\Collection
-     */
     protected $data;
 
     public function __construct(array $data)
