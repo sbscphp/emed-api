@@ -175,10 +175,18 @@ class UserService
     {
         //AuditLog  AuditLogTransaction
         // user_id action_type
-        $auditlog = AuditLog::with(['audit_log_transactions', 'causer'])->when(!empty($validate['user_id']) && !empty($validate['action_type']), function ($query) use ($validate) {
+        $auditlog = AuditLog::with(['audit_log_transactions', 'causer' => function ($query) use ($validate) {
+            if (!empty($validate['name'])) {
+                $query->where('fullname', $validate['name']);
+            }
+        }, 'causer.userInformation'])->when(!empty($validate['action_type']), function ($query) use ($validate) {
             //$query->where("user_id", $validate['user_id'])
             $query->where('action_type', $validate['action_type']);
         })->paginate($validate['limit'] ?? 10);
+
+
+
+
 
         if (!empty($validate['is_download'])) {
 

@@ -82,7 +82,7 @@ class ReportController extends Controller
     {
         try {
             $validate =  $request->validate([
-                //'user_id' => "nullable|numeric",
+                'name' => "nullable|string",
                 "action_type" => "nullable|string",
                 "limit" => "nullable|numeric",
                 "export" => "nullable|in:csv,pdf",
