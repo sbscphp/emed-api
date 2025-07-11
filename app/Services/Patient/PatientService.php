@@ -188,14 +188,19 @@ class PatientService
 
                 $data = PatientResourceExport::collection($patients)->resolve();
 
-                // Sanitize data to avoid malformed UTF-8 characters
+                // Recursively sanitize all strings in the export data to valid UTF-8
                 $data = array_map(function ($item) {
                     return array_map(function ($value) {
-                        return is_string($value) ? mb_convert_encoding($value, 'UTF-8', 'UTF-8') : $value;
-                    }, $item);
-                }, $data);
+                        return is_string($value)
+                            ? mb_convert_encoding($value, 'UTF-8', 'UTF-8')
+                            : $value;
+                    }, is_array($item) ? $item : []);
+                }, is_array($data) ? $data : []);
 
-                return ExportHelper::streamCsv($data, null, 'patient_' . now()->format('Ymd_His') . '.csv');
+                $filename = 'patient_' . now()->format('Ymd_His') . '.csv';
+
+                return ExportHelper::streamCsv($data, null, $filename);
+
 
                 //return Excel::download(new PatientExport($patient), 'patients.xlsx');
                 // return Excel::download(Patient::get()->toArray(), 'users.xlsx');
