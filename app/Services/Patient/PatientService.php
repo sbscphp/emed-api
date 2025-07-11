@@ -183,26 +183,11 @@ class PatientService
                 return ExportHelper::downloadPdf(Patient::get()->toArray(),  'patient.pdf');
             } else if ($export == 'csv') {
                 //  return ExportHelper::streamCsv(Patient::get()->toArray(), null, 'patient.csv');
-
-                // Fetch patients with necessary relationships
-                $patients = Patient::with(['service', 'visits_recent'])->get();
-
-                // Transform using resource
-                $data = PatientResourceExport::collection($patients)->resolve();
-
-                // Sanitize all strings to ensure valid UTF-8 encoding
-
-
-                // // Generate filename with timestamp
-                // $filename = 'patient_' . now()->format('Ymd_His') . '.csv';
-
-                // // Stream the CSV response
-                // return ExportHelper::streamCsv($data, null, $filename);
-
-
-
-                return Excel::download(new PatientExport($data), 'patients.xlsx');
-                // return Excel::download(Patient::get()->toArray(), 'users.xlsx');
+                $patient = Patient::all();
+                $data = PatientResourceExport::collection($patient)->resolve();
+                //  return ExportHelper::streamCsv($data, null, 'patient_' . now()->format('Ymd_His') . '.csv');
+                //return Excel::download(new PatientExport($patient), 'patients.xlsx');
+                return Excel::download(Patient::get()->toArray(), 'users.xlsx');
 
                 //return ExportHelper::streamCsv($data);
                 // $csv = new Csv($data);
@@ -221,9 +206,6 @@ class PatientService
 
         return $query->latest()->get();
     }
-
-
-
 
     /**
      * Get patient export data.
