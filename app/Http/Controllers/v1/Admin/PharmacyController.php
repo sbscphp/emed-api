@@ -60,7 +60,7 @@ class PharmacyController extends Controller
                 })
                 ->when(!empty($pharmacy_name), function ($query) use ($pharmacy_name) {
 
-                    $query->where('name', $pharmacy_name);
+                    $query->where('name', 'like', "%{$pharmacy_name}%");
                 })
                 ->when(!empty($state_id), function ($query) use ($state_id) {
 
@@ -78,7 +78,7 @@ class PharmacyController extends Controller
                 })
                 ->when(!empty($pharmacy_name), function ($query) use ($pharmacy_name) {
 
-                    $query->where('name', $pharmacy_name);
+                    $query->where('name', 'like', "%{$pharmacy_name}%");
                 })
                 ->when(!empty($state_id), function ($query) use ($state_id) {
 
