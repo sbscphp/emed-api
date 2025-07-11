@@ -8,7 +8,7 @@ use App\Services\BillingLog\BillingLogService;
 use App\Services\Patient\PatientService;
 use App\Services\User\UserService;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
 {
@@ -81,6 +81,7 @@ class ReportController extends Controller
     public function user_activity(Request $request)
     {
         try {
+            DB::connection('tenant')->beginTransaction();
             $validate =  $request->validate([
                 'name' => "nullable|string",
                 "action_type" => "nullable|string",
@@ -89,9 +90,10 @@ class ReportController extends Controller
                 "is_download" => "nullable|boolean"
             ]);
             $data = $this->userService->user_activity($validate);
-
+            DB::connection('tenant')->commit();
             return JsonResponser::send(false, 'fetched successfully.', $data);
         } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Error fetching report statistics.', [], 500, $th);
         }
     }
