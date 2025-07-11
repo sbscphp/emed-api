@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Services\User;
+
+use App\Models\AuditLog;
 use App\Models\City;
 use App\Models\Country;
 use App\Models\New_State;
@@ -40,7 +42,7 @@ class UserService
 
 
     public  function generateSecurePassword(): string
-      {
+    {
         // Define the required character sets
         $lowercase = 'abcdefghijklmnopqrstuvwxyz';
         $uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -65,7 +67,7 @@ class UserService
 
         // Shuffle the characters in the password to ensure random distribution
         return str_shuffle($password);
-     }
+    }
 
 
     /**
@@ -141,12 +143,13 @@ class UserService
         return $this->userRepositoryInterface->getSystemReport($request);
     }
 
-    public function fetch_country_state_city($request){
-      $city_name = $request->get('city_name');
+    public function fetch_country_state_city($request)
+    {
+        $city_name = $request->get('city_name');
         $state_name = $request->get('state_name');
         $country_name = $request->get('country_name');
 
-            $data = City::with(['state', 'country'])
+        $data = City::with(['state', 'country'])
             ->when($city_name, function ($query, $city_name) {
                 $query->where('cities.name', $city_name);
             })
@@ -163,6 +166,18 @@ class UserService
             ->limit(100)
             ->get();
 
-      return $data;
+        return $data;
+    }
+
+    public function user_activity($validate)
+    {
+        //AuditLog  AuditLogTransaction
+        // user_id action_type
+        $auditlog = AuditLog::with('audit_log_transactions')->when(!empty($validate['user_id']) && !empty($validate['action_type']), function ($query) use ($validate) {
+            $query->where("user_id", $validate['user_id'])
+                ->orWhere('action_type', $validate['action_type']);
+        })->paginate($validate['limit']);
+
+        return $auditlog;
     }
 }

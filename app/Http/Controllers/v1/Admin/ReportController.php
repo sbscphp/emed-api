@@ -77,4 +77,20 @@ class ReportController extends Controller
     {
         return $this->userService->getSystemReport($request);
     }
+
+    public function user_activity(Request $request)
+    {
+        try {
+            $validate =  $request->validate([
+                'user_id' => "nullable|numeric",
+                "action_type" => "nullable|string",
+                "limit" => "nullable|numeric"
+            ]);
+            $data = $this->userService->user_activity($validate);
+
+            return JsonResponser::send(false, 'fetched successfully.', $data);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'Error fetching report statistics.', [], 500, $th);
+        }
+    }
 }

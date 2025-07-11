@@ -60,6 +60,7 @@ Route::group(["prefix" => "v1"], function () {
             Route::put('/change_password', [RegistrationController::class, 'change_password']);
             Route::get('/refreshToken', [RegistrationController::class, 'refreshToken']);
             Route::post('/logout', [RegistrationController::class, 'logout']);
+
             Route::group(['prefix' => 'admin', "namespace" => "v1\Admin"], function () {
                 //Record routes
                 Route::group(['prefix' => 'record',  'middleware' => 'role.record'], function () {
@@ -192,6 +193,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/patient', [ReportController::class, 'getPatientReport']);
                     Route::get('/financial', [ReportController::class, 'getFinancialReport']);
                     Route::get('/system', [ReportController::class, 'getAllSystemReport']);
+                    Route::get('user-activity', [ReportController::class, 'user_activity']);
                 });
 
                 //Laboratory Routes
