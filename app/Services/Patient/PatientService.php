@@ -368,34 +368,7 @@ class PatientService
                 // $csv = new Csv($data);
                 //   PatientExport
                 // $data = Patient::all();
-                // return Excel::download(new PatientExport, 'patients.xlsx');
-
-
-                $data = \App\Models\Patient::all();
-
-                $filename = 'patients_' . now()->format('Ymd_His') . '.csv';
-
-                return response()->streamDownload(function () use ($data) {
-                    $handle = fopen('php://output', 'w');
-
-                    // Write CSV headers
-                    fputcsv($handle, ['Firstname', 'Lastname', 'Email', 'Gender', 'Status']);
-
-                    foreach ($data as $row) {
-                        fputcsv($handle, [
-                            mb_convert_encoding($row->firstname, 'UTF-8', 'UTF-8'),
-                            mb_convert_encoding($row->lastname, 'UTF-8', 'UTF-8'),
-                            mb_convert_encoding($row->email, 'UTF-8', 'UTF-8'),
-                            mb_convert_encoding($row->gender, 'UTF-8', 'UTF-8'),
-                            mb_convert_encoding($row->status, 'UTF-8', 'UTF-8'),
-                        ]);
-                    }
-
-                    fclose($handle);
-                }, $filename, [
-                    'Content-Type' => 'text/csv',
-                    'Content-Disposition' => "attachment; filename={$filename}",
-                ]);
+                return Excel::download(new PatientExport, 'patients.xlsx');
 
                 // return ExportHelper::streamCsv($data, null, 'patient_' . now()->format('Ymd_His') . '.csv');
             }
