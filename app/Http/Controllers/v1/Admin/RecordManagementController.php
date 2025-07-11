@@ -542,67 +542,67 @@ class RecordManagementController extends Controller
     public function allRecords(Request $request)
     {
 
-        try {
-            config(['database.default' => 'tenant']);
-            DB::connection('tenant')->beginTransaction();
+        //try {
+        config(['database.default' => 'tenant']);
+        DB::connection('tenant')->beginTransaction();
 
-            $search = $request->search;
-            $paginate = $request->paginate ?? false;
-            $perPage = $request->perPage ?? 10;
-            $from = $request->from;
-            $to = $request->to;
-            $export = $request->export;
-            $gender = $request->gender;
-            $status = $request->status;
-            $patient_type = $request->patient_type;
-            $currentUser = Auth::user();
-            //$user = $this->userService->find($currentUser->id);
-            $user = User::where('email', $currentUser['email'])->first();
+        $search = $request->search;
+        $paginate = $request->paginate ?? false;
+        $perPage = $request->perPage ?? 10;
+        $from = $request->from;
+        $to = $request->to;
+        $export = $request->export;
+        $gender = $request->gender;
+        $status = $request->status;
+        $patient_type = $request->patient_type;
+        $currentUser = Auth::user();
+        //$user = $this->userService->find($currentUser->id);
+        $user = User::where('email', $currentUser['email'])->first();
 
-            if (is_null($user)) {
-                return JsonResponser::send(false, 'User not found.', null, 200);
-            }
-
-            $records = $this->patientService->getAllRecordFiltered($search, $paginate, $perPage, $from, $to, $export, $gender, $status, $patient_type);
-
-            if ($records->isEmpty()) {
-                return JsonResponser::send(false, 'Record(s) not found.', null, 200);
-            }
-
-            $records->load([
-                'service',
-                'visits_recent',
-                // 'visits' => function ($query) {
-                //     $query->select(
-                //         'id',
-                //         'patient_id',
-                //         'visitno',
-                //         'stage',
-                //         'status',
-                //         'arrival_date',
-                //         'departure_date',
-                //         'visit_date',
-                //         'created_at'
-                //     );
-                // }
-            ]);
-
-
-
-
-
-
-
-
-            $summary = $this->patientService->getRecordStats();
-            return JsonResponser::send(false, 'Record(s) found successfully.', [
-                // 'records' => $records,
-                'records' => collect($records),
-                'summary' => $summary,
-            ], 200);
-        } catch (\Throwable $th) {
-            return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
+        if (is_null($user)) {
+            return JsonResponser::send(false, 'User not found.', null, 200);
         }
+
+        $records = $this->patientService->getAllRecordFiltered($search, $paginate, $perPage, $from, $to, $export, $gender, $status, $patient_type);
+
+        if ($records->isEmpty()) {
+            return JsonResponser::send(false, 'Record(s) not found.', null, 200);
+        }
+
+        $records->load([
+            'service',
+            'visits_recent',
+            // 'visits' => function ($query) {
+            //     $query->select(
+            //         'id',
+            //         'patient_id',
+            //         'visitno',
+            //         'stage',
+            //         'status',
+            //         'arrival_date',
+            //         'departure_date',
+            //         'visit_date',
+            //         'created_at'
+            //     );
+            // }
+        ]);
+
+
+
+
+
+
+
+
+        $summary = $this->patientService->getRecordStats();
+        return JsonResponser::send(false, 'Record(s) found successfully.', [
+            // 'records' => $records,
+            'records' => collect($records),
+            'summary' => $summary,
+        ], 200);
+        // } catch (\Throwable $th) {
+        //     return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
+        // }
     }
 
 
