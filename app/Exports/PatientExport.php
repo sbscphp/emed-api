@@ -8,11 +8,10 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 
 class PatientExport implements FromCollection, WithMapping
 {
-    protected $data;
 
-    public function __construct(array $data)
+    public function collection()
     {
-        $this->data = $data;
+        return \App\Models\Patient::all();
     }
 
     public function map($row): array
