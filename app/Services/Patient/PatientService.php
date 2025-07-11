@@ -146,7 +146,7 @@ class PatientService
 
     public function getAllRecordFiltered($search = null, $paginate = false, $perPage = 10, $from, $to, $export, $gender, $status, $patient_type)
     {
-        $query = Patient::query();
+        $query = Patient::with(['service', 'visits_recent',])->query();
 
         if ($search) {
             // status
