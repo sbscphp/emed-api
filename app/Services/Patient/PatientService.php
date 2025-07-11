@@ -209,6 +209,26 @@ class PatientService
                     'age',
                     'gender',
                     'bloodgroup',
+                    'genotype',
+                    'email',
+                    'patient_type',
+                    'marital_status',
+                    'phoneno',
+                    'visitno',
+                    'occupation',
+                    'homeaddress',
+                    'companyaddress',
+                    'religion',
+                    'stateoforigin',
+                    'lga',
+                    'tribe',
+                    'cardno',
+                    'receiptno',
+                    'status',
+                    'service_id',
+                    'arrival_time',
+                    'depature_time',
+                    'patientno'
                 ])
                     ->get()
                     ->map(function ($patient) {
@@ -218,7 +238,27 @@ class PatientService
                             'dob' => $patient->dob,
                             'age' => $patient->age,
                             'gender' => $patient->gender,
-                            'bloodgroup' => $patient->bloodgroup
+                            'bloodgroup' => $patient->bloodgroup,
+                            'genotype' => $patient->genotype,
+                            'email' => $patient->email,
+                            'patient_type' => $patient->patient_type,
+                            'marital_status' => $patient->marital_status,
+                            'phoneno' => $patient->phoneno,
+                            'visitno' => $patient->visitno,
+                            'occupation' => $patient->occupation,
+                            'homeaddress' => $patient->homeaddress,
+                            'companyaddress' => $patient->companyaddress,
+                            'religion' => $patient->religion,
+                            'stateoforigin' => $patient->stateoforigin,
+                            'lga' => $patient->lga,
+                            'tribe' => $patient->tribe,
+                            'cardno' => $patient->cardno,
+                            'receiptno' => $patient->receiptno,
+                            'status' => $patient->status,
+                            'service_id' => $patient->service_id,
+                            'arrival_time' => $patient->arrival_time,
+                            'depature_time' => $patient->depature_time,
+                            'patientno' => $patient->patientno
                         ];
                     });
 
@@ -246,6 +286,29 @@ class PatientService
                                 <th>age</th>
                                 <th>gender</th>
                                 <th>bloodgroup</th>
+
+                                <th>genotype</th>
+                                <th>email</th>
+                                <th>patient_type</th>
+                                <th>marital_status</th>
+                                <th>phoneno</th>
+                                <th>visitno</th>
+                                <th>occupation</th>
+                                <th>homeaddress</th>
+
+                                 <th>companyaddress</th>
+                                  <th>religion</th>
+                                   <th>stateoforigin</th>
+                                    <th>lga</th>
+                                     <th>tribe</th>
+
+                                      <th>cardno</th>
+                                     <th>receiptno</th>
+                                      <th>status</th>
+                                     <th>service_id</th>
+                                      <th>arrival_time</th>
+                                     <th>depature_time</th>
+                                      <th>patientno</th>
                             </tr>
                         </thead>
                         <tbody>';
@@ -259,6 +322,27 @@ class PatientService
                     $html .= '<td>' . htmlspecialchars($patient['age'], ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['gender'], ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['bloodgroup'], ENT_QUOTES, 'UTF-8') . '</td>';
+
+                    $html .= '<td>' . htmlspecialchars($patient['genotype'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['email'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['patient_type'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['marital_status'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['phoneno'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['visitno'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['occupation'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['homeaddress'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['companyaddress'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['religion'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['stateoforigin'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['lga'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['tribe'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['cardno'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['receiptno'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['status'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['service_id'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['arrival_time'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['depature_time'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['patientno'], ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '</tr>';
                 }
 
@@ -282,6 +366,9 @@ class PatientService
                 //  return ExportHelper::streamCsv($exportData, null, 'patients_' . now()->format('Ymd_His') . '.csv');
                 // return ExportHelper::streamCsv($data);
                 // $csv = new Csv($data);
+                //   PatientExport
+                $data = Patient::all();
+                return Excel::download(new PatientExport($data), 'patients.xlsx');
 
                 // return ExportHelper::streamCsv($data, null, 'patient_' . now()->format('Ymd_His') . '.csv');
             }

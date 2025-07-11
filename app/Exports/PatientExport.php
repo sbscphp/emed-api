@@ -3,10 +3,10 @@
 namespace App\Exports;
 
 use Maatwebsite\Excel\Facades\Excel;
-use Maatwebsite\Excel\Concerns\FromArray;
-use Illuminate\Support\Collection;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithMapping;
 
-class PatientExport implements FromArray
+class PatientExport implements FromCollection, WithMapping
 {
     protected $data;
 
@@ -15,8 +15,22 @@ class PatientExport implements FromArray
         $this->data = $data;
     }
 
-    public function array(): array
+    public function map($row): array
     {
-        return $this->data;
+        return [
+            $this->clean($row->firstname),
+            $this->clean($row->lastname),
+            $this->clean($row->email),
+            $this->clean($row->gender),
+            $this->clean($row->status),
+            // add more fields as needed...
+        ];
+    }
+
+    private function clean($value)
+    {
+        return is_string($value)
+            ? mb_convert_encoding($value, 'UTF-8', 'UTF-8')
+            : $value;
     }
 }
