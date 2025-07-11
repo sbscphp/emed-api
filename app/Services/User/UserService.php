@@ -2,6 +2,7 @@
 
 namespace App\Services\User;
 
+use App\Http\Resources\AuditResources;
 use App\Models\AuditLog;
 use App\Models\City;
 use App\Models\Country;
@@ -173,10 +174,30 @@ class UserService
     {
         //AuditLog  AuditLogTransaction
         // user_id action_type
-        $auditlog = AuditLog::with('audit_log_transactions')->when(!empty($validate['user_id']) && !empty($validate['action_type']), function ($query) use ($validate) {
+        $auditlog = AuditLog::with(['audit_log_transactions', 'causer'])->when(!empty($validate['user_id']) && !empty($validate['action_type']), function ($query) use ($validate) {
             $query->where("user_id", $validate['user_id'])
                 ->orWhere('action_type', $validate['action_type']);
         })->paginate($validate['limit'] ?? 10);
+
+        if ($validate['is_download']) {
+
+            if ($validate['export'] == 'csv') {
+                $data =  AuditLog::with('audit_log_transactions')->when(!empty($validate['user_id']) && !empty($validate['action_type']), function ($query) use ($validate) {
+                    $query->where("user_id", $validate['user_id'])
+                        ->orWhere('action_type', $validate['action_type']);
+                })->get();
+
+                $convertdata = AuditResources::collection($data)->resolve();
+            } else if ($validate['export'] == 'pdf') {
+
+                $data =  AuditLog::with('audit_log_transactions')->when(!empty($validate['user_id']) && !empty($validate['action_type']), function ($query) use ($validate) {
+                    $query->where("user_id", $validate['user_id'])
+                        ->orWhere('action_type', $validate['action_type']);
+                })->get();
+
+                $convertdata = AuditResources::collection($data)->resolve();
+            }
+        }
 
         return $auditlog;
     }
