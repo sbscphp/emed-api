@@ -198,9 +198,18 @@ class PatientService
 
             if ($export == 'pdf') {
                 //  return ExportHelper::downloadPdf($exportData, 'patient_' . now()->format('Ymd_His') . '.pdf');
-                $patient = Patient::all();
-                $data = PatientResourceExport::collection($patient)->resolve();
-                $pdf = Pdf::loadView('reports.patient_report_log', compact('data'))->setPaper('a3', 'landscape');
+                $patients = Patient::all();
+                $data = collect(PatientResourceExport::collection($patients)->resolve())->map(function ($item) {
+                    return array_map(function ($value) {
+                        // Convert all values to UTF-8 strings
+                        return is_string($value) ? mb_convert_encoding($value, 'UTF-8', 'UTF-8') : $value;
+                    }, $item);
+                })->toArray();
+
+                $pdf = Pdf::loadView('reports.patient_report_log', compact('data'))
+                    ->setPaper('a3', 'landscape')
+                    ->setOption('encoding', 'utf-8');
+
                 return $pdf->download('patient_report_log.pdf');
             } else if ($export == 'csv') {
                 //  return ExportHelper::streamCsv($exportData, null, 'patients_' . now()->format('Ymd_His') . '.csv');
