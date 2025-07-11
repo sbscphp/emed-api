@@ -183,15 +183,20 @@ class PatientService
                 return ExportHelper::downloadPdf(Patient::get()->toArray(),  'patient.pdf');
             } else if ($export == 'csv') {
                 //  return ExportHelper::streamCsv(Patient::get()->toArray(), null, 'patient.csv');
-                $patient = Patient::all();
-                $data = PatientResourceExport::collection($patient)->resolve();
+
+                $patients = Patient::with(['service', 'visits_recent'])->get();
+
+                $data = PatientResourceExport::collection($patients)->resolve();
+
+                // Sanitize data to avoid malformed UTF-8 characters
                 $data = array_map(function ($item) {
                     return array_map(function ($value) {
                         return is_string($value) ? mb_convert_encoding($value, 'UTF-8', 'UTF-8') : $value;
                     }, $item);
                 }, $data);
-                // return ExportHelper::streamCsv($data, null, 'patients_export.csv');
+
                 return ExportHelper::streamCsv($data, null, 'patient_' . now()->format('Ymd_His') . '.csv');
+
                 //return Excel::download(new PatientExport($patient), 'patients.xlsx');
                 // return Excel::download(Patient::get()->toArray(), 'users.xlsx');
 
