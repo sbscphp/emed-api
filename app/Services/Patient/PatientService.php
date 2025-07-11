@@ -184,11 +184,13 @@ class PatientService
             } else if ($export == 'csv') {
                 //  return ExportHelper::streamCsv(Patient::get()->toArray(), null, 'patient.csv');
 
+                // Fetch patients with necessary relationships
                 $patients = Patient::with(['service', 'visits_recent'])->get();
 
+                // Transform using resource
                 $data = PatientResourceExport::collection($patients)->resolve();
 
-                // Recursively sanitize all strings in the export data to valid UTF-8
+                // Sanitize all strings to ensure valid UTF-8 encoding
                 $data = array_map(function ($item) {
                     return array_map(function ($value) {
                         return is_string($value)
@@ -197,9 +199,12 @@ class PatientService
                     }, is_array($item) ? $item : []);
                 }, is_array($data) ? $data : []);
 
+                // Generate filename with timestamp
                 $filename = 'patient_' . now()->format('Ymd_His') . '.csv';
 
+                // Stream the CSV response
                 return ExportHelper::streamCsv($data, null, $filename);
+
 
 
                 //return Excel::download(new PatientExport($patient), 'patients.xlsx');
