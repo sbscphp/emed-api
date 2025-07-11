@@ -191,17 +191,7 @@ class PatientService
                 //return ExportHelper::streamCsv($data);
                 // $csv = new Csv($data);
 
-                // return response($csv->get())
-                //     ->header('Content-Type', 'text/csv')
-                //     ->header('Content-Disposition', 'attachment; filename="export.csv"');
-                return response()->streamDownload(function () use ($data) {
-                    $handle = fopen('php://output', 'w');
-                    fputcsv($handle, array_keys($data[0] ?? [])); // headers
-                    foreach ($data as $row) {
-                        fputcsv($handle, $row);
-                    }
-                    fclose($handle);
-                }, 'export.csv');
+                return ExportHelper::streamCsv($data, null, 'patient_' . now()->format('Ymd_His') . '.csv');
             }
         }
 
