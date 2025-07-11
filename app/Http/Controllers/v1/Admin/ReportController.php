@@ -84,7 +84,9 @@ class ReportController extends Controller
             $validate =  $request->validate([
                 'user_id' => "nullable|numeric",
                 "action_type" => "nullable|string",
-                "limit" => "nullable|numeric"
+                "limit" => "nullable|numeric",
+                "export" => "nullable|in:csv,pdf",
+                "is_download" => "nullable|boolean"
             ]);
             $data = $this->userService->user_activity($validate);
 

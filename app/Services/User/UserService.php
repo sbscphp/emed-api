@@ -9,6 +9,7 @@ use App\Models\Country;
 use App\Models\New_State;
 use App\Models\Region;
 use App\Models\Subregions;
+use App\Helpers\ExportHelper;
 use App\Repositories\User\UserRepositoryInterface;
 
 /**
@@ -179,7 +180,7 @@ class UserService
                 ->orWhere('action_type', $validate['action_type']);
         })->paginate($validate['limit'] ?? 10);
 
-        if ($validate['is_download']) {
+        if (!empty($validate['is_download'])) {
 
             if ($validate['export'] == 'csv') {
                 $data =  AuditLog::with('audit_log_transactions')->when(!empty($validate['user_id']) && !empty($validate['action_type']), function ($query) use ($validate) {
@@ -188,6 +189,7 @@ class UserService
                 })->get();
 
                 $convertdata = AuditResources::collection($data)->resolve();
+                return ExportHelper::streamCsv($convertdata, null, 'user_activity.csv');
             } else if ($validate['export'] == 'pdf') {
 
                 $data =  AuditLog::with('audit_log_transactions')->when(!empty($validate['user_id']) && !empty($validate['action_type']), function ($query) use ($validate) {
@@ -196,6 +198,7 @@ class UserService
                 })->get();
 
                 $convertdata = AuditResources::collection($data)->resolve();
+                return ExportHelper::downloadPdf($convertdata, 'user_activity.pdf');
             }
         }
 
