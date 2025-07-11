@@ -200,20 +200,27 @@ class PatientService
                 //  return ExportHelper::downloadPdf($exportData, 'patient_' . now()->format('Ymd_His') . '.pdf');
                 // Use a simpler approach with DomPDF directly
                 $data = [];
-                
+
                 // Get only the necessary fields to minimize data processing
-                $patients = Patient::select(['id', 'first_name', 'last_name', 'email', 'phone', 'created_at'])
+                $patients = Patient::select([
+                    'firstname',
+                    'lastname',
+                    'dob',
+                    'age',
+                    'gender',
+                    'bloodgroup',
+                ])
                     ->get()
-                    ->map(function($patient) {
+                    ->map(function ($patient) {
                         return [
-                            'id' => $patient->id,
-                            'name' => $patient->first_name . ' ' . $patient->last_name,
-                            'email' => $patient->email,
-                            'phone' => $patient->phone,
-                            'created_at' => $patient->created_at->format('Y-m-d H:i:s')
+                            'firstname' => $patient->firstname,
+                            'lastname' => $patient->lastname,
+                            'dob' => $patient->dob,
+                            'age' => $patient->age,
+                            'gender' => $patient->bloodgroup
                         ];
                     });
-                
+
                 // Generate HTML with proper encoding
                 $html = '<!DOCTYPE html>
                 <html>
@@ -232,38 +239,41 @@ class PatientService
                     <table>
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Phone</th>
-                                <th>Created At</th>
+                                <th>firstname</th>
+                                <th>lastname</th>
+                                <th>dob</th>
+                                <th>age</th>
+                                <th>gender</th>
+                                <th>bloodgroup</th>
                             </tr>
                         </thead>
                         <tbody>';
-                
+
                 foreach ($patients as $patient) {
+
                     $html .= '<tr>';
-                    $html .= '<td>' . htmlspecialchars($patient['id'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['name'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['email'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['phone'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['created_at'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['firstname'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['lastname'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['dob'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['age'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['gender'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['bloodgroup'], ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '</tr>';
                 }
-                
+
                 $html .= '</tbody></table></body></html>';
-                
+
                 // Generate PDF with DomPDF directly
                 $dompdf = new \Dompdf\Dompdf([
                     'isHtml5ParserEnabled' => true,
                     'isRemoteEnabled' => true,
                     'defaultFont' => 'DejaVu Sans'
                 ]);
-                
+
                 $dompdf->loadHtml($html, 'UTF-8');
                 $dompdf->setPaper('A3', 'landscape');
                 $dompdf->render();
-                
+
                 return $dompdf->stream('patient_report_log.pdf', [
                     'Attachment' => 1
                 ]);
