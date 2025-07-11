@@ -11,8 +11,7 @@ use App\Helpers\ExportHelper;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Http\Resources\PatientResourceExport;
 use App\Exports\PatientExport;
-use OzdemirBurak\JsonCsv\File\Json;
-use OzdemirBurak\JsonCsv\File\Csv;
+
 
 /**
  * Class PatientService
@@ -189,7 +188,7 @@ class PatientService
                 // //return Excel::download(new PatientExport($patient), 'patients.xlsx');
                 // return Excel::download(Patient::get()->toArray(), 'users.xlsx');
 
-                //return ExportHelper::streamCsv($data);
+                // return ExportHelper::streamCsv($data);
                 // $csv = new Csv($data);
 
                 // return ExportHelper::streamCsv($data, null, 'patient_' . now()->format('Ymd_His') . '.csv');
