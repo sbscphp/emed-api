@@ -17,6 +17,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "maatwebsite/excel": "^3.1",
+        "ozdemirburak/json-csv": "^0.4.0",
         "santigarcor/laratrust": "^8.3",
         "spatie/laravel-multitenancy": "^4.0",
         "stancl/tenancy": "^3.9",

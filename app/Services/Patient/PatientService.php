@@ -11,6 +11,8 @@ use App\Helpers\ExportHelper;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Http\Resources\PatientResourceExport;
 use App\Exports\PatientExport;
+use OzdemirBurak\JsonCsv\File\Json;
+use OzdemirBurak\JsonCsv\File\Csv;
 
 /**
  * Class PatientService
@@ -186,7 +188,23 @@ class PatientService
                 //return Excel::download(new PatientExport($patient), 'patients.xlsx');
                 // return Excel::download(Patient::get()->toArray(), 'users.xlsx');
 
-                return ExportHelper::streamCsv($data);
+                //return ExportHelper::streamCsv($data);
+                // $csv = new Csv($data);
+
+                // return response($csv->get())
+                //     ->header('Content-Type', 'text/csv')
+                //     ->header('Content-Disposition', 'attachment; filename="export.csv"');
+
+                return response()->streamDownload(function () use ($data) {
+                    $handle = fopen('php://output', 'w');
+                    fputcsv($handle, array_keys($data[0] ?? [])); // headers
+
+                    foreach ($data as $row) {
+                        fputcsv($handle, $row);
+                    }
+
+                    fclose($handle);
+                }, 'export.csv');
             }
         }
 
