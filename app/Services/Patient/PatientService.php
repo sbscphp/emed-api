@@ -11,7 +11,7 @@ use App\Helpers\ExportHelper;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Http\Resources\PatientResourceExport;
 use App\Exports\PatientExport;
-
+use App\Exports\PatientReportExport;
 
 /**
  * Class PatientService
@@ -198,6 +198,10 @@ class PatientService
 
             if ($export == 'pdf') {
                 //  return ExportHelper::downloadPdf($exportData, 'patient_' . now()->format('Ymd_His') . '.pdf');
+                $patient = Patient::all();
+                $data = PatientResourceExport::collection($patient)->resolve();
+                $pdf = Pdf::loadView('reports.patient_report', compact('data'))->setPaper('a3', 'landscape');
+                return $pdf->download('patient_report_log.pdf');
             } else if ($export == 'csv') {
                 //  return ExportHelper::streamCsv($exportData, null, 'patients_' . now()->format('Ymd_His') . '.csv');
                 // return ExportHelper::streamCsv($data);
