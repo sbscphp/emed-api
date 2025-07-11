@@ -200,7 +200,7 @@ class PatientService
                 //  return ExportHelper::downloadPdf($exportData, 'patient_' . now()->format('Ymd_His') . '.pdf');
                 $patient = Patient::all();
                 $data = PatientResourceExport::collection($patient)->resolve();
-                $pdf = Pdf::loadView('reports.patient_report', compact('data'))->setPaper('a3', 'landscape');
+                $pdf = Pdf::loadView('reports.patient_report_log', compact('data'))->setPaper('a3', 'landscape');
                 return $pdf->download('patient_report_log.pdf');
             } else if ($export == 'csv') {
                 //  return ExportHelper::streamCsv($exportData, null, 'patients_' . now()->format('Ymd_His') . '.csv');
