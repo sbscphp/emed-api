@@ -8,6 +8,8 @@ use Illuminate\Support\Collection;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use App\Helpers\ExportHelper;
+use Maatwebsite\Excel\Facades\Excel;
+
 
 /**
  * Class PatientService
@@ -177,7 +179,8 @@ class PatientService
             if ($export == 'pdf') {
                 return ExportHelper::downloadPdf(Patient::get()->toArray(),  'patient.pdf');
             } else if ($export == 'csv') {
-                return ExportHelper::streamCsv(Patient::get()->toArray(), null, 'patient.csv');
+                //  return ExportHelper::streamCsv(Patient::get()->toArray(), null, 'patient.csv');
+                return Excel::download(Patient::get()->toArray(), 'users.xlsx');
             }
         }
 
