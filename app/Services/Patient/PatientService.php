@@ -182,7 +182,7 @@ class PatientService
             } else if ($export == 'csv') {
                 //  return ExportHelper::streamCsv(Patient::get()->toArray(), null, 'patient.csv');
                 $patient = Patient::get();
-                $data = PatientResourceExport::collection($patient)->resolve();
+                $data = PatientResourceExport::collection($patient)->toArray();
                 return Excel::download(new PatientExport($data), 'patients.xlsx');
                 // return Excel::download(Patient::get()->toArray(), 'users.xlsx');
             }
