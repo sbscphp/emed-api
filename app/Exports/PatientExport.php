@@ -2,7 +2,9 @@
 
 namespace App\Exports;
 
+use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Concerns\FromArray;
+use Illuminate\Support\Collection;
 
 class PatientExport implements FromArray
 {
