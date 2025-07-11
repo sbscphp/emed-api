@@ -87,7 +87,8 @@ class ReportController extends Controller
                 "action_type" => "nullable|string",
                 "limit" => "nullable|numeric",
                 "export" => "nullable|in:csv,pdf",
-                "is_download" => "nullable|boolean"
+                "is_download" => "nullable|boolean",
+                'status' => "nullable|string"
             ]);
             $data = $this->userService->user_activity($validate);
             DB::connection('tenant')->commit();

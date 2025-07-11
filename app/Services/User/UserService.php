@@ -179,6 +179,10 @@ class UserService
             if (!empty($validate['name'])) {
                 $query->where('fullname', $validate['name']);
             }
+
+            if ($validate['status']) {
+                $query->where('status', $validate['status']);
+            }
         }, 'causer.userInformation'])->when(!empty($validate['action_type']), function ($query) use ($validate) {
             //$query->where("user_id", $validate['user_id'])
             $query->where('action_type', $validate['action_type']);

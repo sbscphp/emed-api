@@ -35,6 +35,9 @@ class PharmacyController extends Controller
             $from = $request->from;
             $to = $request->to;
             $limit = $request->limit;
+            $pharmacy_name = $request->pharmacy_name;
+            $state_id = $request->state_id;
+            $is_paginated = $request->is_paginated;
             //  $pharmacies = $this->pharmacyService->new_all($from, $to);
 
 
@@ -49,13 +52,40 @@ class PharmacyController extends Controller
             //     ->paginate(10);
 
             $pharmacies = Pharmacy::with(['state:id,state_name', 'pharmacist:id,fullname,email'])
-                ->when($from && $to, function ($q) use ($from, $to) {
+                ->when(!empty($from) && !empty($to), function ($q) use ($from, $to) {
                     $q->whereBetween('created_at', [
                         Carbon::parse($from)->startOfDay(),
                         Carbon::parse($to)->endOfDay()
                     ]);
-                })->paginate($limit);
+                })
+                ->when(!empty($pharmacy_name), function ($query) use ($pharmacy_name) {
 
+                    $query->where('name', $pharmacy_name);
+                })
+                ->when(!empty($state_id), function ($query) use ($state_id) {
+
+                    $query->where('state_id', $state_id);
+                })
+                ->paginate($limit);
+
+
+            $all = Pharmacy::with(['state:id,state_name', 'pharmacist:id,fullname,email'])
+                ->when(!empty($from) && !empty($to), function ($q) use ($from, $to) {
+                    $q->whereBetween('created_at', [
+                        Carbon::parse($from)->startOfDay(),
+                        Carbon::parse($to)->endOfDay()
+                    ]);
+                })
+                ->when(!empty($pharmacy_name), function ($query) use ($pharmacy_name) {
+
+                    $query->where('name', $pharmacy_name);
+                })
+                ->when(!empty($state_id), function ($query) use ($state_id) {
+
+                    $query->where('state_id', $state_id);
+                })->get();
+
+            $data =  $is_paginated ? $pharmacies : $all;
 
             if ($pharmacies->isEmpty()) {
                 return JsonResponser::send(true, 'No pharmacies found.', [], 200);
@@ -87,7 +117,7 @@ class PharmacyController extends Controller
                 return JsonResponser::send(true, 'Invalid export format specified.', [], 400);
             }
 
-            return JsonResponser::send(false, 'Pharmacies retrieved successfully', $pharmacies, 200);
+            return JsonResponser::send(false, 'Pharmacies retrieved successfully', $data, 200);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Internal server error', [], 500, $e);
         }
