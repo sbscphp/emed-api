@@ -191,23 +191,17 @@ class PatientService
                 $data = PatientResourceExport::collection($patients)->resolve();
 
                 // Sanitize all strings to ensure valid UTF-8 encoding
-                $data = array_map(function ($item) {
-                    return array_map(function ($value) {
-                        return is_string($value)
-                            ? mb_convert_encoding($value, 'UTF-8', 'UTF-8')
-                            : $value;
-                    }, is_array($item) ? $item : []);
-                }, is_array($data) ? $data : []);
 
-                // Generate filename with timestamp
-                $filename = 'patient_' . now()->format('Ymd_His') . '.csv';
 
-                // Stream the CSV response
-                return ExportHelper::streamCsv($data, null, $filename);
+                // // Generate filename with timestamp
+                // $filename = 'patient_' . now()->format('Ymd_His') . '.csv';
+
+                // // Stream the CSV response
+                // return ExportHelper::streamCsv($data, null, $filename);
 
 
 
-                //return Excel::download(new PatientExport($patient), 'patients.xlsx');
+                return Excel::download(new PatientExport($data), 'patients.xlsx');
                 // return Excel::download(Patient::get()->toArray(), 'users.xlsx');
 
                 //return ExportHelper::streamCsv($data);
@@ -227,6 +221,9 @@ class PatientService
 
         return $query->latest()->get();
     }
+
+
+
 
     /**
      * Get patient export data.
