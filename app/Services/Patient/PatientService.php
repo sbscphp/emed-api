@@ -179,10 +179,17 @@ class PatientService
         }
 
         if (!empty($export)) {
+            $data = Patient::get()->toArray();
+            $cleaned = array_map(function ($row) {
+                return array_map(function ($value) {
+                    return is_string($value) ? mb_convert_encoding($value, 'UTF-8', 'UTF-8') : $value;
+                }, $row);
+            }, $data);
+
             if ($export == 'pdf') {
-                return ExportHelper::downloadPdf(Patient::get()->toArray(),  'patient.pdf');
+                return ExportHelper::downloadPdf($cleaned,  'patient.pdf');
             } else if ($export == 'csv') {
-                //  return ExportHelper::streamCsv(Patient::get()->toArray(), null, 'patient.csv');
+                return ExportHelper::streamCsv($cleaned, null, 'patients_' . now()->format('Ymd_His') . '.csv');
                 // $patient = Patient::all();
                 // $data = PatientResourceExport::collection($patient)->resolve();
                 // //  return ExportHelper::streamCsv($data, null, 'patient_' . now()->format('Ymd_His') . '.csv');
