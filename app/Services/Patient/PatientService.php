@@ -179,31 +179,27 @@ class PatientService
         }
 
         if (!empty($export)) {
-            $data = Patient::all();
+            // Get the data with necessary relationships if needed
+            $query = Patient::query();
             
-            // Convert the collection to a properly encoded array
-            $cleaned = $data->map(function ($patient) {
-                return collect($patient->toArray())->map(function ($value, $key) {
-                    if (is_string($value)) {
-                        // Remove any invalid UTF-8 characters
-                        $value = mb_convert_encoding($value, 'UTF-8', 'UTF-8');
-                        // Remove any remaining invalid characters
-                        $value = iconv('UTF-8', 'UTF-8//IGNORE', $value);
-                    }
-                    return $value;
-                })->toArray();
-            })->toArray();
+            // Apply any existing filters
+            if (!empty($from) && !empty($to)) {
+                $query->whereBetween('created_at', [
+                    Carbon::parse($from)->startOfDay(),
+                    Carbon::parse($to)->endOfDay()
+                ]);
+            }
+            
+            // Get the data as a collection
+            $data = $query->latest()->get();
+            
+            // Convert to array - the ExportHelper will handle the UTF-8 cleaning
+            $exportData = $data->toArray();
 
             if ($export == 'pdf') {
-                return ExportHelper::downloadPdf($cleaned, 'patient_' . now()->format('Ymd_His') . '.pdf');
+                return ExportHelper::downloadPdf($exportData, 'patient_' . now()->format('Ymd_His') . '.pdf');
             } else if ($export == 'csv') {
-                return ExportHelper::streamCsv($cleaned, null, 'patients_' . now()->format('Ymd_His') . '.csv');
-                // $patient = Patient::all();
-                // $data = PatientResourceExport::collection($patient)->resolve();
-                // //  return ExportHelper::streamCsv($data, null, 'patient_' . now()->format('Ymd_His') . '.csv');
-                // //return Excel::download(new PatientExport($patient), 'patients.xlsx');
-                // return Excel::download(Patient::get()->toArray(), 'users.xlsx');
-
+                return ExportHelper::streamCsv($exportData, null, 'patients_' . now()->format('Ymd_His') . '.csv');
                 // return ExportHelper::streamCsv($data);
                 // $csv = new Csv($data);
 
