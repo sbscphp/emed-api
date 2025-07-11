@@ -198,44 +198,63 @@ class PatientService
 
             if ($export == 'pdf') {
                 //  return ExportHelper::downloadPdf($exportData, 'patient_' . now()->format('Ymd_His') . '.pdf');
-                $patients = Patient::all();
-                
-                // Convert the collection to array and clean each value
+                // Get patients with chunking to handle memory issues
                 $data = [];
-                foreach ($patients as $patient) {
-                    $patientData = (new PatientResourceExport($patient))->toArray(request());
-                    $cleanedData = [];
-                    
-                    foreach ($patientData as $key => $value) {
-                        if (is_array($value)) {
-                            $cleanedData[$key] = array_map(function($item) {
-                                return is_string($item) ? mb_convert_encoding($item, 'UTF-8', 'auto') : $item;
-                            }, $value);
-                        } else {
-                            $cleanedData[$key] = is_string($value) 
-                                ? mb_convert_encoding($value, 'UTF-8', 'auto')
-                                : $value;
-                        }
+                
+                // Process patients in chunks
+                Patient::chunk(100, function($patients) use (&$data) {
+                    foreach ($patients as $patient) {
+                        // Convert to array and clean each value
+                        $patientData = (new PatientResourceExport($patient))->toArray(request());
+                        $cleanedData = [];
+                        
+                        array_walk_recursive($patientData, function(&$value, $key) {
+                            if (is_string($value)) {
+                                // Remove any invalid UTF-8 characters
+                                $value = mb_convert_encoding($value, 'UTF-8', 'UTF-8');
+                                $value = iconv('UTF-8', 'UTF-8//IGNORE', $value);
+                            }
+                        });
+                        
+                        $data[] = $patientData;
                     }
-                    $data[] = $cleanedData;
-                }
+                });
 
-                // Generate PDF with proper headers
-                $pdf = Pdf::loadView('reports.patient_report_log', ['data' => $data])
-                    ->setPaper('a3', 'landscape')
-                    ->setOption('encoding', 'utf-8')
-                    ->setOption('default_encoding', 'utf-8');
-                
-                // Set proper headers for download
-                $headers = [
-                    'Content-Type' => 'application/pdf',
-                    'Content-Disposition' => 'attachment; filename="patient_report_log.pdf"',
-                    'Cache-Control' => 'no-cache, no-store, must-revalidate',
-                    'Pragma' => 'no-cache',
-                    'Expires' => '0'
-                ];
-                
-                return response($pdf->output(), 200, $headers);
+                try {
+                    // Generate temporary HTML file with proper encoding
+                    $html = view('reports.patient_report_log', compact('data'))->render();
+                    
+                    // Ensure the HTML has proper UTF-8 encoding
+                    $html = mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
+                    
+                    // Generate PDF with explicit encoding options
+                    $pdf = Pdf::loadHTML($html, 'utf-8')
+                        ->setPaper('a3', 'landscape')
+                        ->setOption('encoding', 'utf-8')
+                        ->setOption('default_encoding', 'utf-8')
+                        ->setOption('isHtml5ParserEnabled', true)
+                        ->setOption('isRemoteEnabled', true);
+                    
+                    // Stream the PDF with proper headers
+                    return response($pdf->output(), 200, [
+                        'Content-Type' => 'application/pdf',
+                        'Content-Disposition' => 'attachment; filename="patient_report_log.pdf"',
+                        'Cache-Control' => 'no-cache, no-store, must-revalidate',
+                        'Pragma' => 'no-cache',
+                        'Expires' => '0'
+                    ]);
+                    
+                } catch (\Exception $e) {
+                    // Log the error for debugging
+                    \Log::error('PDF Generation Error: ' . $e->getMessage());
+                    
+                    // Return a more helpful error message
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Failed to generate PDF. Please try again later.',
+                        'error' => config('app.debug') ? $e->getMessage() : null
+                    ], 500);
+                }
             } else if ($export == 'csv') {
                 //  return ExportHelper::streamCsv($exportData, null, 'patients_' . now()->format('Ymd_His') . '.csv');
                 // return ExportHelper::streamCsv($data);
