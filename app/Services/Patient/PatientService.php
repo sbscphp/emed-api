@@ -13,10 +13,6 @@ use App\Http\Resources\PatientResourceExport;
 use App\Exports\PatientExport;
 use App\Exports\PatientReportExport;
 
-use OpenSpout\Writer\Common\Creator\WriterEntityFactory;
-use OpenSpout\Common\Entity\Row;
-use OpenSpout\Writer\XLSX\Writer;
-
 /**
  * Class PatientService
  *
@@ -372,31 +368,9 @@ class PatientService
                 // $csv = new Csv($data);
                 //   PatientExport
                 // $data = Patient::all();
-                // return Excel::download(new PatientExport, 'patients.xlsx');
+                return Excel::download(new PatientExport, 'patients.xlsx');
 
                 // return ExportHelper::streamCsv($data, null, 'patient_' . now()->format('Ymd_His') . '.csv');
-
-
-                $writer = WriterEntityFactory::createXLSXWriter();
-                $writer->openToBrowser('patients.xlsx');
-
-                $writer->addRow(WriterEntityFactory::createRowFromArray(['firstname', 'lastname', 'dob', 'age', 'gender']));
-                //          'firstname',
-                // 'lastname',
-                // 'dob',
-                // 'age',
-                // 'gender',
-                foreach (\App\Models\Patient::all() as $patient) {
-                    $writer->addRow(WriterEntityFactory::createRowFromArray([
-                        $patient->firstname,
-                        $patient->lastname,
-                        $patient->dob,
-                        $patient->age,
-                        $patient->gender
-                    ]));
-                }
-
-                $writer->close();
             }
         }
 
