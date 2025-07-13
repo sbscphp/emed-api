@@ -414,11 +414,6 @@ class PatientService
                     try {
                         $query = Patient::query();
                         
-                        // Apply any filters from the request
-                        if ($request->has('filters')) {
-                            $filters = $request->get('filters');
-                            // Add your filter logic here
-                        }
                         
                         $patients = $query->get();
                         
