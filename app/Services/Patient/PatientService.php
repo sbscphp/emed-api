@@ -368,14 +368,48 @@ class PatientService
                 // $csv = new Csv($data);
                 //   PatientExport
                 $data = Patient::get()->toArray();
-                dd(json_encode([$export, $data]));
+                //dd(json_encode([$export, $data]));
                 // return Excel::download(new PatientExport, 'patients.csv');
 
                 //return Excel::download(new PatientExport, 'patients.csv', ExcelFormat::CSV);
 
 
                 // return ExportHelper::streamCsv($data, null, 'patient_' . now()->format('Ymd_His') . '.csv');
-                return Excel::download(new PatientExport, 'patients.csv', ExcelFormat::CSV);
+                // return Excel::download(new PatientExport, 'patients.csv', ExcelFormat::CSV);
+
+
+                $fileName = 'patients.csv';
+
+                $headers = [
+                    "Content-type"        => "text/csv",
+                    "Content-Disposition" => "attachment; filename=$fileName",
+                    "Pragma"              => "no-cache",
+                    "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+                    "Expires"             => "0"
+                ];
+
+                $columns = ['firstname', 'lastname', 'email', 'gender']; // Your desired columns
+
+                $callback = function () use ($columns) {
+                    $file = fopen('php://output', 'w');
+                    fputcsv($file, $columns);
+
+                    $patients = Patient::all(); // Adjust to your fields
+
+                    foreach ($patients as $patient) {
+                        fputcsv($file, [
+                            $patient->firstname,
+                            $patient->lastname,
+                            $patient->dob,
+                            $patient->age,
+                            $patient->gender,
+                        ]);
+                    }
+
+                    fclose($file);
+                };
+
+                return response()->stream($callback, 200, $headers);
             }
         }
 
