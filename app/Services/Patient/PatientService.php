@@ -13,6 +13,7 @@ use Maatwebsite\Excel\Excel as ExcelFormat;
 use App\Http\Resources\PatientResourceExport;
 use App\Exports\PatientExport;
 use App\Exports\PatientReportExport;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Class PatientService
@@ -414,50 +415,50 @@ class PatientService
                     'arrival_time',
                     'depature_time',
                     'patientno'
-
                 ];
 
-                $callback = function () use ($columns) {
+                $callback = function () use ($columns /*, $request if using POST body data */) {
                     $file = fopen('php://output', 'w');
                     fputcsv($file, $columns);
 
-                    // $patients = Patient::all(); // Adjust to your fields
-
-                    $patients  = Patient::get()->toArray();
-                    foreach ($patients as $patient) {
-                        fputcsv($file, [
-                            $patient['firstname'],
-                            $patient['lastname'],
-                            $patient['dob'],
-                            $patient['age'],
-                            $patient['gender'],
-                            $patient['bloodgroup'],
-                            $patient['genotype'],
-                            $patient['email'],
-                            $patient['patient_type'],
-                            $patient['marital_status'],
-                            $patient['phoneno'],
-                            $patient['visitno'],
-                            $patient['occupation'],
-                            $patient['homeaddress'],
-                            $patient['companyaddress'],
-                            $patient['religion'],
-                            $patient['stateoforigin'],
-                            $patient['lga'],
-                            $patient['tribe'],
-                            $patient['cardno'],
-                            $patient['receiptno'],
-                            $patient['status'],
-                            $patient['service_id'],
-                            $patient['arrival_time'],
-                            $patient['depature_time'],
-                            $patient['patientno']
-                        ]);
-                    }
+                    $query = Patient::query();
+                    $query->chunk(2000, function ($patients) use ($file) {
+                        foreach ($patients as $patient) {
+                            // Ensure you access properties using object syntax ($patient->firstname)
+                            // if Patient is an Eloquent model object, not array syntax ($patient['firstname'])
+                            fputcsv($file, [
+                                $patient->firstname,
+                                $patient->lastname,
+                                $patient->dob,
+                                $patient->age,
+                                $patient->gender,
+                                $patient->bloodgroup,
+                                $patient->genotype,
+                                $patient->email,
+                                $patient->patient_type,
+                                $patient->marital_status,
+                                $patient->phoneno,
+                                $patient->visitno,
+                                $patient->occupation,
+                                $patient->homeaddress,
+                                $patient->companyaddress,
+                                $patient->religion,
+                                $patient->stateoforigin,
+                                $patient->lga,
+                                $patient->tribe,
+                                $patient->cardno,
+                                $patient->receiptno,
+                                $patient->status,
+                                $patient->service_id,
+                                $patient->arrival_time,
+                                $patient->depature_time,
+                                $patient->patientno
+                            ]);
+                        }
+                    });
 
                     fclose($file);
                 };
-
                 return response()->stream($callback, 200, $headers);
             }
         }
