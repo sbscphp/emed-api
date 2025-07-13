@@ -28,6 +28,7 @@ use Spatie\Multitenancy\Models\Tenant;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\PatientVisitExport;
 use App\Http\Resources\PatientDetailResoures;
+use App\Models\Patient;
 use App\Models\User;
 
 class RecordManagementController extends Controller
@@ -562,55 +563,89 @@ class RecordManagementController extends Controller
 
 
 
-        $fileName = 'patients.csv';
+        if ($export == 'csv') {
+            $fileName = 'patients.csv';
 
-        $headers = [
-            "Content-type"        => "application/json",
-            "Content-Disposition" => "attachment; filename=$fileName",
-            "Pragma"              => "no-cache",
-            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-            "Expires"             => "0"
-        ];
+            $headers = [
+                "Content-type"        => "text/csv",
+                "Content-Disposition" => "attachment; filename=$fileName",
+                "Pragma"              => "no-cache",
+                "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+                "Expires"             => "0"
+            ];
 
-        $columns = ['firstname', 'lastname', 'dob', 'age', 'gender']; // Your desired columns
+            $columns = [
+                'firstname',
+                'lastname',
+                'dob',
+                'age',
+                'gender',
+                'bloodgroup',
+                'genotype',
+                'email',
+                'patient_type',
+                'marital_status',
+                'phoneno',
+                'visitno',
+                'occupation',
+                'homeaddress',
+                'companyaddress',
+                'religion',
+                'stateoforigin',
+                'lga',
+                'tribe',
+                'cardno',
+                'receiptno',
+                'status',
+                'service_id',
+                'arrival_time',
+                'depature_time',
+                'patientno'
+            ];
 
-        $callback = function () use ($columns) {
-            $file = fopen('php://output', 'w');
-            fputcsv($file, $columns);
+            $callback = function () use ($columns) {
+                $file = fopen('php://output', 'w');
+                fputcsv($file, $columns);
 
-            // $patients = Patient::all(); // Adjust to your fields
+                // $patients = Patient::all(); // Adjust to your fields
 
-            $patients  = array(
-                [
-                    "firstname" => "stephen",
-                    "lastname" => "okpeku",
-                    "dob" => "2025-10-07",
-                    "age" => "17",
-                    "gender" => "Male"
-                ],
-                [
-                    "firstname" => "stephen",
-                    "lastname" => "okpeku",
-                    "dob" => "2025-10-07",
-                    "age" => "17",
-                    "gender" => "Male"
-                ]
-            );
-            foreach ($patients as $patient) {
-                fputcsv($file, [
-                    $patient['firstname'],
-                    $patient['lastname'],
-                    $patient['dob'],
-                    $patient['age'],
-                    $patient['gender'],
-                ]);
-            }
+                $patients  = Patient::get()->toArray();
+                foreach ($patients as $patient) {
+                    fputcsv($file, [
+                        $patient['firstname'],
+                        $patient['lastname'],
+                        $patient['dob'],
+                        $patient['age'],
+                        $patient['gender'],
+                        $patient['bloodgroup'],
+                        $patient['genotype'],
+                        $patient['email'],
+                        $patient['patient_type'],
+                        $patient['marital_status'],
+                        $patient['phoneno'],
+                        $patient['visitno'],
+                        $patient['occupation'],
+                        $patient['homeaddress'],
+                        $patient['companyaddress'],
+                        $patient['religion'],
+                        $patient['stateoforigin'],
+                        $patient['lga'],
+                        $patient['tribe'],
+                        $patient['cardno'],
+                        $patient['receiptno'],
+                        $patient['status'],
+                        $patient['service_id'],
+                        $patient['arrival_time'],
+                        $patient['depature_time'],
+                        $patient['patientno']
+                    ]);
+                }
 
-            fclose($file);
-        };
+                fclose($file);
+            };
 
-        return response()->stream($callback, 200, $headers);
-
+            return response()->stream($callback, 200, $headers);
+        }
         if (is_null($user)) {
             return JsonResponser::send(false, 'User not found.', null, 200);
         }
