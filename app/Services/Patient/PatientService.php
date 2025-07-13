@@ -425,7 +425,7 @@ class PatientService
                     fclose($file);
                 };
 
-                return response()->stream($callback, 200, $headers);
+                return response()->download($callback, 200, $headers);
             }
         }
 
