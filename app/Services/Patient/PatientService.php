@@ -295,7 +295,6 @@ class PatientService
                             <th>tribe</th>
                             <th>cardno</th>
                             <th>status</th>
-                            <th>service_id</th>
                             <th>patientno</th>
                             <th>Arrival Date</th>
                             <th>Departure Date</th>
@@ -330,7 +329,6 @@ class PatientService
                     $html .= '<td>' . htmlspecialchars($patient['tribe'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['cardno'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['status'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['service_id'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['patientno'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
 
                     $html .= '<td>' . htmlspecialchars($patientvisit?->arrival_date ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
@@ -354,9 +352,13 @@ class PatientService
                 $dompdf->setPaper('A3', 'landscape');
                 $dompdf->render();
 
-                return $dompdf->stream('patient_report_log.pdf', [
-                    'Attachment' => 1
-                ]);
+                // return $dompdf->stream('patient_report_log.pdf', [
+                //     'Attachment' => 1
+                // ]);
+
+                return response($dompdf->output(), 200)
+                    ->header('Content-Type', 'application/pdf')
+                    ->header('Content-Disposition', 'attachment; filename="patient_report_log.pdf"');
             }
 
             // else if ($export == 'csv') {

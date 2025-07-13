@@ -756,12 +756,11 @@ class RecordManagementController extends Controller
                     'cardno',
                     'receiptno',
                     'status',
-                    'service_id',
                     'arrival_time',
                     'depature_time',
                     'patientno',
-                    'arrival_date',
-                    'departure_date',
+                    'patientvisit_arrival_date',
+                    'patientvisit_departure_date',
                     'patientvisit_status',
                     'visitno'
                 ];
@@ -803,7 +802,6 @@ class RecordManagementController extends Controller
                             $patient->cardno,
                             $patient->receiptno,
                             $patient->status,
-                            $patient->service_id,
                             $patient->arrival_time,
                             $patient->depature_time,
                             $patient->patientno,
