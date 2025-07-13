@@ -565,7 +565,7 @@ class RecordManagementController extends Controller
         $fileName = 'patients.csv';
 
         $headers = [
-            "Content-type"        => "text/csv",
+            "Content-type"        => "application/json",
             "Content-Disposition" => "attachment; filename=$fileName",
             "Pragma"              => "no-cache",
             "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
