@@ -552,50 +552,15 @@ class RecordManagementController extends Controller
         $perPage = $request->perPage ?? 10;
         $from = $request->from;
         $to = $request->to;
-        $export = $request->export ?? "csv";
+        $export = $request->export;
         $gender = $request->gender;
         $status = $request->status;
         $patient_type = $request->patient_type;
         $currentUser = Auth::user();
         //$user = $this->userService->find($currentUser->id);
-        $user = User::where('email', $currentUser['email'] ?? "superadmin@emed.com")->first();
+        $user = User::where('email', $currentUser['email'])->first();
 
 
-
-
-        $fileName = 'patients.csv';
-
-        $headers = [
-            "Content-type"        => "text/csv",
-            "Content-Disposition" => "attachment; filename=$fileName",
-            "Pragma"              => "no-cache",
-            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-            "Expires"             => "0"
-        ];
-
-        $columns = ['firstname', 'lastname', 'dob', 'age', 'gender']; // Your desired columns
-
-        $callback = function () use ($columns) {
-            $file = fopen('php://output', 'w');
-            fputcsv($file, $columns);
-
-            // $patients = Patient::all(); // Adjust to your fields
-
-            $patients  = Patient::on("landlord")->get()->toArray();
-            foreach ($patients as $patient) {
-                fputcsv($file, [
-                    $patient['firstname'],
-                    $patient['lastname'],
-                    $patient['dob'],
-                    $patient['age'],
-                    $patient['gender'],
-                ]);
-            }
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
 
         if (is_null($user)) {
             return JsonResponser::send(false, 'User not found.', null, 200);
