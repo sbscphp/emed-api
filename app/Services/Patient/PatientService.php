@@ -368,7 +368,7 @@ class PatientService
                 // $csv = new Csv($data);
                 //   PatientExport
                 $data = Patient::get()->toArray();
-                //dd(json_encode([$export, $data]));
+                dd(json_encode([$export, $data]));
                 // return Excel::download(new PatientExport, 'patients.csv');
 
                 //return Excel::download(new PatientExport, 'patients.csv', ExcelFormat::CSV);
