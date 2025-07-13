@@ -230,37 +230,37 @@ class PatientService
                     'depature_time',
                     'patientno'
                 ])
-                    ->get()
-                    ->map(function ($patient) {
-                        return [
-                            'firstname' => $patient->firstname,
-                            'lastname' => $patient->lastname,
-                            'dob' => $patient->dob,
-                            'age' => $patient->age,
-                            'gender' => $patient->gender,
-                            'bloodgroup' => $patient->bloodgroup,
-                            'genotype' => $patient->genotype,
-                            'email' => $patient->email,
-                            'patient_type' => $patient->patient_type,
-                            'marital_status' => $patient->marital_status,
-                            'phoneno' => $patient->phoneno,
-                            'visitno' => $patient?->visitno ?? "",
-                            'occupation' => $patient->occupation,
-                            'homeaddress' => $patient->homeaddress,
-                            'companyaddress' => $patient->companyaddress,
-                            'religion' => $patient->religion,
-                            'stateoforigin' => $patient->stateoforigin,
-                            'lga' => $patient?->lga,
-                            'tribe' => $patient?->tribe ?? "",
-                            'cardno' => $patient?->cardno ?? "",
-                            'receiptno' => $patient?->receiptno ?? "",
-                            'status' => $patient->status,
-                            'service_id' => $patient->service_id,
-                            'arrival_time' => $patient->arrival_time,
-                            'depature_time' => $patient->depature_time,
-                            'patientno' => $patient->patientno
-                        ];
-                    });
+                    ->get();
+                // ->map(function ($patient) {
+                //     return [
+                //         'firstname' => $patient->firstname,
+                //         'lastname' => $patient->lastname,
+                //         'dob' => $patient->dob,
+                //         'age' => $patient->age,
+                //         'gender' => $patient->gender,
+                //         'bloodgroup' => $patient->bloodgroup,
+                //         'genotype' => $patient->genotype,
+                //         'email' => $patient->email,
+                //         'patient_type' => $patient->patient_type,
+                //         'marital_status' => $patient->marital_status,
+                //         'phoneno' => $patient->phoneno,
+                //         'visitno' => $patient?->visitno ?? "",
+                //         'occupation' => $patient->occupation,
+                //         'homeaddress' => $patient->homeaddress,
+                //         'companyaddress' => $patient->companyaddress,
+                //         'religion' => $patient->religion,
+                //         'stateoforigin' => $patient->stateoforigin,
+                //         'lga' => $patient?->lga,
+                //         'tribe' => $patient?->tribe ?? "",
+                //         'cardno' => $patient?->cardno ?? "",
+                //         'receiptno' => $patient?->receiptno ?? "",
+                //         'status' => $patient->status,
+                //         'service_id' => $patient->service_id,
+                //         'arrival_time' => $patient->arrival_time,
+                //         'depature_time' => $patient->depature_time,
+                //         'patientno' => $patient->patientno
+                //     ];
+                // });
 
                 dd(json_encode($patients));
 
