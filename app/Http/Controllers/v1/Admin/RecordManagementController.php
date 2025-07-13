@@ -551,7 +551,7 @@ class RecordManagementController extends Controller
         $perPage = $request->perPage ?? 10;
         $from = $request->from;
         $to = $request->to;
-        $export = $request->export;
+        $export = $request->export ?? "csv";
         $gender = $request->gender;
         $status = $request->status;
         $patient_type = $request->patient_type;
