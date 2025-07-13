@@ -196,7 +196,7 @@ class PatientService
 
             // Convert to array - the ExportHelper will handle the UTF-8 cleaning
             $exportData = $data->toArray();
-            if ($export == 'pdf') {
+            if ($export === 'pdf') {
                 //  return ExportHelper::downloadPdf($exportData, 'patient_' . now()->format('Ymd_His') . '.pdf');
                 // Use a simpler approach with DomPDF directly
                 $data = [];
@@ -214,7 +214,6 @@ class PatientService
                     'patient_type',
                     'marital_status',
                     'phoneno',
-                    'visitno',
                     'occupation',
                     'homeaddress',
                     'companyaddress',
@@ -223,46 +222,38 @@ class PatientService
                     'lga',
                     'tribe',
                     'cardno',
-                    'receiptno',
                     'status',
                     'service_id',
-                    'arrival_time',
-                    'depature_time',
                     'patientno'
-                ])
-                    ->get();
-                // ->map(function ($patient) {
-                //     return [
-                //         'firstname' => $patient->firstname,
-                //         'lastname' => $patient->lastname,
-                //         'dob' => $patient->dob,
-                //         'age' => $patient->age,
-                //         'gender' => $patient->gender,
-                //         'bloodgroup' => $patient->bloodgroup,
-                //         'genotype' => $patient->genotype,
-                //         'email' => $patient->email,
-                //         'patient_type' => $patient->patient_type,
-                //         'marital_status' => $patient->marital_status,
-                //         'phoneno' => $patient->phoneno,
-                //         'visitno' => $patient?->visitno ?? "",
-                //         'occupation' => $patient->occupation,
-                //         'homeaddress' => $patient->homeaddress,
-                //         'companyaddress' => $patient->companyaddress,
-                //         'religion' => $patient->religion,
-                //         'stateoforigin' => $patient->stateoforigin,
-                //         'lga' => $patient?->lga,
-                //         'tribe' => $patient?->tribe ?? "",
-                //         'cardno' => $patient?->cardno ?? "",
-                //         'receiptno' => $patient?->receiptno ?? "",
-                //         'status' => $patient->status,
-                //         'service_id' => $patient->service_id,
-                //         'arrival_time' => $patient->arrival_time,
-                //         'depature_time' => $patient->depature_time,
-                //         'patientno' => $patient->patientno
-                //     ];
-                // });
+                ])->get()->map(function ($patient) {
+                    return [
+                        "firstname" => $patient->firstname,
+                        "lastname" => $patient->lastname,
+                        "dob" => $patient->dob,
+                        "age" => $patient->age,
+                        "gender" => $patient->gender,
+                        "bloodgroup" => $patient->bloodgroup,
+                        "genotype" => $patient->genotype,
+                        "email" => $patient->email,
+                        "patient_type" => $patient->patient_type,
+                        "marital_status" => $patient->marital_status,
+                        "phoneno" => $patient->phoneno,
+                        "occupation" => $patient->occupation,
+                        "homeaddress" => $patient->homeaddress,
+                        "companyaddress" => $patient->companyaddress,
+                        "religion" => $patient->religion,
+                        "stateoforigin" => $patient->stateoforigin,
+                        "lga" => $patient->lga,
+                        "tribe" => $patient->tribe,
+                        "cardno" => $patient->cardno,
+                        "status" => $patient->status,
+                        "service_id" => $patient->service_id,
+                        "patientno" => $patient->patientno,
+                    ];
+                });
 
-                dd(json_encode($patients));
+
+
 
                 // Generate HTML with proper encoding
                 $html = '<!DOCTYPE html>
@@ -280,72 +271,61 @@ class PatientService
                 <body>
                     <h2>Patient Report</h2>
                     <table>
-                        <thead>
-                            <tr>
-                                <th>firstname</th>
-                                <th>lastname</th>
-                                <th>dob</th>
-                                <th>age</th>
-                                <th>gender</th>
-                                <th>bloodgroup</th>
-
-                                <th>genotype</th>
-                                <th>email</th>
-                                <th>patient_type</th>
-                                <th>marital_status</th>
-                                <th>phoneno</th>
-                             
-                                <th>occupation</th>
-                                <th>homeaddress</th>
-
-                                 <th>companyaddress</th>
-                                  <th>religion</th>
-                                   <th>stateoforigin</th>
-                                    <th>lga</th>
-                                     <th>tribe</th>
-
-                                      <th>cardno</th>
-                                     
-                                      <th>status</th>
-                                     <th>service_id</th>
-                                      <th>arrival_time</th>
-                                     <th>depature_time</th>
-                                      <th>patientno</th>
-                            </tr>
-                        </thead>
+                    <thead>
+                        <tr>
+                            <th>firstname</th>
+                            <th>lastname</th>
+                            <th>dob</th>
+                            <th>age</th>
+                            <th>gender</th>
+                            <th>bloodgroup</th>
+                            <th>genotype</th>
+                            <th>email</th>
+                            <th>patient_type</th>
+                            <th>marital_status</th>
+                            <th>phoneno</th>
+                            <th>occupation</th>
+                            <th>homeaddress</th>
+                            <th>companyaddress</th>
+                            <th>religion</th>
+                            <th>stateoforigin</th>
+                            <th>lga</th>
+                            <th>tribe</th>
+                            <th>cardno</th>
+                            <th>status</th>
+                            <th>service_id</th>
+                            <th>patientno</th>
+                        </tr>
+                    </thead>
                         <tbody>';
 
                 foreach ($patients as $patient) {
-
                     $html .= '<tr>';
-                    $html .= '<td>' . htmlspecialchars($patient['firstname'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['lastname'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['dob'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['age'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['gender'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['bloodgroup'], ENT_QUOTES, 'UTF-8') . '</td>';
-
-                    $html .= '<td>' . htmlspecialchars($patient['genotype'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['email'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['patient_type'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['marital_status'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['phoneno'], ENT_QUOTES, 'UTF-8') . '</td>';
-
-                    $html .= '<td>' . htmlspecialchars($patient['occupation'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['homeaddress'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['companyaddress'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['religion'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['stateoforigin'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['lga'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['tribe'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['cardno'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['status'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['service_id'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['arrival_time'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['depature_time'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['patientno'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['firstname'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['lastname'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['dob'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['age'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['gender'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['bloodgroup'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['genotype'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['email'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['patient_type'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['marital_status'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['phoneno'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['occupation'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['homeaddress'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['companyaddress'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['religion'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['stateoforigin'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['lga'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['tribe'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['cardno'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['status'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['service_id'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['patientno'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '</tr>';
                 }
+
 
                 $html .= '</tbody></table></body></html>';
 
