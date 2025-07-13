@@ -196,7 +196,6 @@ class PatientService
 
             // Convert to array - the ExportHelper will handle the UTF-8 cleaning
             $exportData = $data->toArray();
-            // dd(json_encode([$export, Patient::all()]));
             if ($export == 'pdf') {
                 //  return ExportHelper::downloadPdf($exportData, 'patient_' . now()->format('Ymd_His') . '.pdf');
                 // Use a simpler approach with DomPDF directly
@@ -210,8 +209,7 @@ class PatientService
                     'age',
                     'gender',
                     'bloodgroup',
-                    // genotype
-                    //'genotype',
+                    'genotype',
                     'email',
                     'patient_type',
                     'marital_status',
@@ -241,7 +239,7 @@ class PatientService
                             'age' => $patient->age,
                             'gender' => $patient->gender,
                             'bloodgroup' => $patient->bloodgroup,
-                            //'genotype' => $patient->genotype,
+                            'genotype' => $patient->genotype,
                             'email' => $patient->email,
                             'patient_type' => $patient->patient_type,
                             'marital_status' => $patient->marital_status,
@@ -325,7 +323,7 @@ class PatientService
                     $html .= '<td>' . htmlspecialchars($patient['gender'], ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['bloodgroup'], ENT_QUOTES, 'UTF-8') . '</td>';
 
-                    $html .= '<td>' . htmlspecialchars($patient['genotype'] ?? "", ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['genotype'], ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['email'], ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['patient_type'], ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['marital_status'], ENT_QUOTES, 'UTF-8') . '</td>';
@@ -370,6 +368,7 @@ class PatientService
                 // $csv = new Csv($data);
                 //   PatientExport
                 $data = Patient::all()->toArray();
+                dd(json_encode([$export, $data]));
                 // return Excel::download(new PatientExport, 'patients.csv');
 
                 //return Excel::download(new PatientExport, 'patients.csv', ExcelFormat::CSV);
