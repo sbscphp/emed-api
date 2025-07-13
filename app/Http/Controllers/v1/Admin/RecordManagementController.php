@@ -560,21 +560,21 @@ class RecordManagementController extends Controller
         //$user = $this->userService->find($currentUser->id);
         $user = User::where('email', $currentUser['email'] ?? "superadmin@emed.com")->first();
 
-
-
+        $fileName = 'patients.csv';
+        $headers = $export == 'csv' ?   [
+            "Content-type"        =>  "text/csv",
+            "Content-Disposition" => "attachment; filename=$fileName",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ] :   [
+            "Content-type"        =>  "application/json"
+        ];
 
         if ($export == 'csv') {
-            $fileName = 'patients.csv';
 
-            $headers = $export == 'csv' ?   [
-                "Content-type"        =>  "text/csv",
-                "Content-Disposition" => "attachment; filename=$fileName",
-                "Pragma"              => "no-cache",
-                "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-                "Expires"             => "0"
-            ] :   [
-                "Content-type"        =>  "application/json"
-            ];
+
+
 
             $columns = [
                 'firstname',
