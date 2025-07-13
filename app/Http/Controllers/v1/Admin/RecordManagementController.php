@@ -552,13 +552,13 @@ class RecordManagementController extends Controller
         $perPage = $request->perPage ?? 10;
         $from = $request->from;
         $to = $request->to;
-        $export = $request->export;
+        $export = $request->export ?? "csv";
         $gender = $request->gender;
         $status = $request->status;
         $patient_type = $request->patient_type;
         $currentUser = Auth::user();
         //$user = $this->userService->find($currentUser->id);
-        $user = User::where('email', $currentUser['email'])->first();
+        $user = User::where('email', $currentUser['email'] ?? "superadmin@emed.com")->first();
 
 
 
@@ -567,8 +567,11 @@ class RecordManagementController extends Controller
             $fileName = 'patients.csv';
 
             $headers = [
-                'Content-Type' => 'text/csv',
-                'Content-Disposition' => 'attachment; filename="patients.csv"',
+                "Content-type"        => "text/csv",
+                "Content-Disposition" => "attachment; filename=$fileName",
+                "Pragma"              => "no-cache",
+                "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+                "Expires"             => "0"
             ];
 
             $columns = [
@@ -598,7 +601,6 @@ class RecordManagementController extends Controller
                 'arrival_time',
                 'depature_time',
                 'patientno'
-
             ];
 
             $callback = function () use ($columns) {
@@ -644,9 +646,6 @@ class RecordManagementController extends Controller
 
             return response()->stream($callback, 200, $headers);
         }
-
-
-
         if (is_null($user)) {
             return JsonResponser::send(false, 'User not found.', null, 200);
         }
