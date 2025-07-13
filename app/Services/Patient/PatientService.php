@@ -379,7 +379,6 @@ class PatientService
                 // return Excel::download(new PatientExport, 'patients.csv', ExcelFormat::CSV);
 
                 $fileName = 'patients.csv';
-
                 $headers = [
                     "Content-type"        => "text/csv",
                     "Content-Disposition" => "attachment; filename=$fileName",
@@ -417,45 +416,51 @@ class PatientService
                     'patientno'
                 ];
 
-                $callback = function () use ($columns /*, $request if using POST body data */) {
+                $callback = function () use ($columns) {
                     $file = fopen('php://output', 'w');
                     fputcsv($file, $columns);
 
-                    $query = Patient::query();
-                    $query->chunk(2000, function ($patients) use ($file) {
-                        foreach ($patients as $patient) {
-                            // Ensure you access properties using object syntax ($patient->firstname)
-                            // if Patient is an Eloquent model object, not array syntax ($patient['firstname'])
-                            fputcsv($file, [
-                                $patient->firstname,
-                                $patient->lastname,
-                                $patient->dob,
-                                $patient->age,
-                                $patient->gender,
-                                $patient->bloodgroup,
-                                $patient->genotype,
-                                $patient->email,
-                                $patient->patient_type,
-                                $patient->marital_status,
-                                $patient->phoneno,
-                                $patient->visitno,
-                                $patient->occupation,
-                                $patient->homeaddress,
-                                $patient->companyaddress,
-                                $patient->religion,
-                                $patient->stateoforigin,
-                                $patient->lga,
-                                $patient->tribe,
-                                $patient->cardno,
-                                $patient->receiptno,
-                                $patient->status,
-                                $patient->service_id,
-                                $patient->arrival_time,
-                                $patient->depature_time,
-                                $patient->patientno
-                            ]);
-                        }
-                    });
+                    try {
+                        $query = Patient::query();
+
+
+
+                        $query->chunk(2000, function ($patients) use ($file) {
+                            foreach ($patients as $patient) {
+                                fputcsv($file, [
+                                    $patient->firstname ?? '',
+                                    $patient->lastname ?? '',
+                                    $patient->dob ?? '',
+                                    $patient->age ?? '',
+                                    $patient->gender ?? '',
+                                    $patient->bloodgroup ?? '',
+                                    $patient->genotype ?? '',
+                                    $patient->email ?? '',
+                                    $patient->patient_type ?? '',
+                                    $patient->marital_status ?? '',
+                                    $patient->phoneno ?? '',
+                                    $patient->visitno ?? '',
+                                    $patient->occupation ?? '',
+                                    $patient->homeaddress ?? '',
+                                    $patient->companyaddress ?? '',
+                                    $patient->religion ?? '',
+                                    $patient->stateoforigin ?? '',
+                                    $patient->lga ?? '',
+                                    $patient->tribe ?? '',
+                                    $patient->cardno ?? '',
+                                    $patient->receiptno ?? '',
+                                    $patient->status ?? '',
+                                    $patient->service_id ?? '',
+                                    $patient->arrival_time ?? '',
+                                    $patient->departure_time ?? '',
+                                    $patient->patientno ?? ''
+                                ]);
+                            }
+                        });
+                    } catch (\Throwable $e) {
+                        error_log('CSV Export Error: ' . $e->getMessage());
+                        fputcsv($file, ['Error occurred during export: ' . $e->getMessage()]);
+                    }
 
                     fclose($file);
                 };
