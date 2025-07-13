@@ -540,163 +540,307 @@ class RecordManagementController extends Controller
         }
     }
 
+    // public function allRecords(Request $request)
+    // {
+
+    //     //try {
+    //     config(['database.default' => 'tenant']);
+    //     DB::connection('tenant')->beginTransaction();
+    //     $search = $request->search;
+    //     $paginate = $request->paginate ?? false;
+    //     $perPage = $request->perPage ?? 10;
+    //     $from = $request->from;
+    //     $to = $request->to;
+    //     $export = $request->export ?? "csv";
+    //     $gender = $request->gender;
+    //     $status = $request->status;
+    //     $patient_type = $request->patient_type;
+    //     $currentUser = Auth::user();
+    //     //$user = $this->userService->find($currentUser->id);
+    //     $user = User::where('email', $currentUser['email'] ?? "superadmin@emed.com")->first();
+
+    //     $fileName = 'patients.csv';
+    //     $headers = $export == 'csv' ?   [
+    //         "Content-type"        =>  "text/csv",
+    //         "Content-Disposition" => "attachment; filename=$fileName",
+    //         "Pragma"              => "no-cache",
+    //         "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+    //         "Expires"             => "0"
+    //     ] :   [
+    //         "Content-type"        =>  "application/json"
+    //     ];
+
+    //     if ($export === 'csv') {
+
+
+
+
+    //         $columns = [
+    //             'firstname',
+    //             'lastname',
+    //             'dob',
+    //             'age',
+    //             'gender',
+    //             'bloodgroup',
+    //             'genotype',
+    //             'email',
+    //             'patient_type',
+    //             'marital_status',
+    //             'phoneno',
+    //             'visitno',
+    //             'occupation',
+    //             'homeaddress',
+    //             'companyaddress',
+    //             'religion',
+    //             'stateoforigin',
+    //             'lga',
+    //             'tribe',
+    //             'cardno',
+    //             'receiptno',
+    //             'status',
+    //             'service_id',
+    //             'arrival_time',
+    //             'depature_time',
+    //             'patientno'
+    //         ];
+
+    //         $callback = function () use ($columns) {
+    //             $file = fopen('php://output', 'w');
+    //             fputcsv($file, $columns);
+
+    //             // $patients = Patient::all(); // Adjust to your fields
+
+    //             $patients  = Patient::all();
+    //             foreach ($patients as $patient) {
+    //                 fputcsv($file, [
+    //                     $patient->firstname,
+    //                     $patient->lastname,
+    //                     $patient->dob,
+    //                     $patient->age,
+    //                     $patient->gender,
+    //                     $patient->bloodgroup,
+    //                     $patient->genotype,
+    //                     $patient->email,
+    //                     $patient->patient_type,
+    //                     $patient->marital_status,
+    //                     $patient->phoneno,
+    //                     $patient->visitno,
+    //                     $patient->occupation,
+    //                     $patient->homeaddress,
+    //                     $patient->companyaddress,
+    //                     $patient->religion,
+    //                     $patient->stateoforigin,
+    //                     $patient->lga,
+    //                     $patient->tribe,
+    //                     $patient->cardno,
+    //                     $patient->receiptno,
+    //                     $patient->status,
+    //                     $patient->service_id,
+    //                     $patient->arrival_time,
+    //                     $patient->depature_time,
+    //                     $patient->patientno
+    //                 ]);
+    //             }
+
+    //             fclose($file);
+    //         };
+
+    //         return response()->stream($callback, 200, $headers);
+    //     }
+
+
+    //     if (is_null($user)) {
+    //         return JsonResponser::send(false, 'User not found.', null, 200);
+    //     }
+
+    //     $records = $this->patientService->getAllRecordFiltered($search, $paginate, $perPage, $from, $to, $export, $gender, $status, $patient_type);
+
+    //     if ($records->isEmpty()) {
+    //         return JsonResponser::send(false, 'Record(s) not found.', null, 200);
+    //     }
+
+
+    //     $records->load([
+    //         'service',
+    //         'visits_recent',
+    //         // 'visits' => function ($query) {
+    //         //     $query->select(
+    //         //         'id',
+    //         //         'patient_id',
+    //         //         'visitno',
+    //         //         'stage',
+    //         //         'status',
+    //         //         'arrival_date',
+    //         //         'departure_date',
+    //         //         'visit_date',
+    //         //         'created_at'
+    //         //     );
+    //         // }
+    //     ]);
+
+
+
+
+
+
+    //     $summary = $this->patientService->getRecordStats();
+    //     return JsonResponser::send(false, 'Record(s) found successfully.', [
+    //         // 'records' => $records,
+    //         'records' => collect($records),
+    //         'summary' => $summary,
+    //     ], 200);
+
+
+
+    //     // } catch (\Throwable $th) {
+    //     //     return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
+    //     // }
+    //
+
+
+
     public function allRecords(Request $request)
     {
-
-        //try {
         config(['database.default' => 'tenant']);
         DB::connection('tenant')->beginTransaction();
 
-        $search = $request->search;
-        $paginate = $request->paginate ?? false;
-        $perPage = $request->perPage ?? 10;
-        $from = $request->from;
-        $to = $request->to;
-        $export = $request->export ?? "csv";
-        $gender = $request->gender;
-        $status = $request->status;
-        $patient_type = $request->patient_type;
-        $currentUser = Auth::user();
-        //$user = $this->userService->find($currentUser->id);
-        $user = User::where('email', $currentUser['email'] ?? "superadmin@emed.com")->first();
+        try {
+            $search = $request->search;
+            $paginate = $request->paginate ?? false;
+            $perPage = $request->perPage ?? 10;
+            $from = $request->from;
+            $to = $request->to;
+            $export = $request->export;
+            $gender = $request->gender;
+            $status = $request->status;
+            $patient_type = $request->patient_type;
+            $currentUser = Auth::user();
+            $user = User::where('email', $currentUser['email'])->first();
 
-        $fileName = 'patients.csv';
-        $headers = $export == 'csv' ?   [
-            "Content-type"        =>  "text/csv",
-            "Content-Disposition" => "attachment; filename=$fileName",
-            "Pragma"              => "no-cache",
-            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-            "Expires"             => "0"
-        ] :   [
-            "Content-type"        =>  "application/json"
-        ];
+            if (is_null($user)) {
+                DB::connection('tenant')->rollBack();
+                return JsonResponser::send(false, 'User not found.', null, 200);
+            }
 
-        if ($export === 'csv') {
+            if ($export === 'csv') {
+                $fileName = 'patients.csv';
+                $headers = [
+                    "Content-type"        =>  "text/csv",
+                    "Content-Disposition" => "attachment; filename=$fileName",
+                    "Pragma"              => "no-cache",
+                    "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+                    "Expires"             => "0"
+                ];
 
+                $columns = [
+                    'firstname',
+                    'lastname',
+                    'dob',
+                    'age',
+                    'gender',
+                    'bloodgroup',
+                    'genotype',
+                    'email',
+                    'patient_type',
+                    'marital_status',
+                    'phoneno',
+                    'visitno',
+                    'occupation',
+                    'homeaddress',
+                    'companyaddress',
+                    'religion',
+                    'stateoforigin',
+                    'lga',
+                    'tribe',
+                    'cardno',
+                    'receiptno',
+                    'status',
+                    'service_id',
+                    'arrival_time',
+                    'depature_time',
+                    'patientno'
+                ];
 
+                $callback = function () use ($columns) {
+                    $file = fopen('php://output', 'w');
+                    fputcsv($file, $columns);
 
+                    $patients = Patient::all();
+                    foreach ($patients as $patient) {
+                        fputcsv($file, [
+                            $patient->firstname,
+                            $patient->lastname,
+                            $patient->dob,
+                            $patient->age,
+                            $patient->gender,
+                            $patient->bloodgroup,
+                            $patient->genotype,
+                            $patient->email,
+                            $patient->patient_type,
+                            $patient->marital_status,
+                            $patient->phoneno,
+                            $patient->visitno,
+                            $patient->occupation,
+                            $patient->homeaddress,
+                            $patient->companyaddress,
+                            $patient->religion,
+                            $patient->stateoforigin,
+                            $patient->lga,
+                            $patient->tribe,
+                            $patient->cardno,
+                            $patient->receiptno,
+                            $patient->status,
+                            $patient->service_id,
+                            $patient->arrival_time,
+                            $patient->depature_time,
+                            $patient->patientno
+                        ]);
+                    }
 
-            $columns = [
-                'firstname',
-                'lastname',
-                'dob',
-                'age',
-                'gender',
-                'bloodgroup',
-                'genotype',
-                'email',
-                'patient_type',
-                'marital_status',
-                'phoneno',
-                'visitno',
-                'occupation',
-                'homeaddress',
-                'companyaddress',
-                'religion',
-                'stateoforigin',
-                'lga',
-                'tribe',
-                'cardno',
-                'receiptno',
-                'status',
-                'service_id',
-                'arrival_time',
-                'depature_time',
-                'patientno'
-            ];
+                    fclose($file);
+                };
 
-            $callback = function () use ($columns) {
-                $file = fopen('php://output', 'w');
-                fputcsv($file, $columns);
+                DB::connection('tenant')->commit();
+                return response()->stream($callback, 200, $headers);
+            }
 
-                // $patients = Patient::all(); // Adjust to your fields
+            $records = $this->patientService->getAllRecordFiltered(
+                $search,
+                $paginate,
+                $perPage,
+                $from,
+                $to,
+                $export,
+                $gender,
+                $status,
+                $patient_type
+            );
 
-                $patients  = Patient::all();
-                foreach ($patients as $patient) {
-                    fputcsv($file, [
-                        $patient->firstname,
-                        $patient->lastname,
-                        $patient->dob,
-                        $patient->age,
-                        $patient->gender,
-                        $patient->bloodgroup,
-                        $patient->genotype,
-                        $patient->email,
-                        $patient->patient_type,
-                        $patient->marital_status,
-                        $patient->phoneno,
-                        $patient->visitno,
-                        $patient->occupation,
-                        $patient->homeaddress,
-                        $patient->companyaddress,
-                        $patient->religion,
-                        $patient->stateoforigin,
-                        $patient->lga,
-                        $patient->tribe,
-                        $patient->cardno,
-                        $patient->receiptno,
-                        $patient->status,
-                        $patient->service_id,
-                        $patient->arrival_time,
-                        $patient->depature_time,
-                        $patient->patientno
-                    ]);
-                }
+            if ($records->isEmpty()) {
+                DB::connection('tenant')->commit();
+                return JsonResponser::send(false, 'Record(s) not found.', null, 200);
+            }
 
-                fclose($file);
-            };
+            $records->load([
+                'service',
+                'visits_recent',
+            ]);
 
-            return response()->stream($callback, 200, $headers);
+            $summary = $this->patientService->getRecordStats();
+
+            DB::connection('tenant')->commit();
+
+            return JsonResponser::send(false, 'Record(s) found successfully.', [
+                'records' => collect($records),
+                'summary' => $summary,
+            ], 200);
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
         }
-
-
-        if (is_null($user)) {
-            return JsonResponser::send(false, 'User not found.', null, 200);
-        }
-
-        $records = $this->patientService->getAllRecordFiltered($search, $paginate, $perPage, $from, $to, $export, $gender, $status, $patient_type);
-
-        if ($records->isEmpty()) {
-            return JsonResponser::send(false, 'Record(s) not found.', null, 200);
-        }
-
-
-        $records->load([
-            'service',
-            'visits_recent',
-            // 'visits' => function ($query) {
-            //     $query->select(
-            //         'id',
-            //         'patient_id',
-            //         'visitno',
-            //         'stage',
-            //         'status',
-            //         'arrival_date',
-            //         'departure_date',
-            //         'visit_date',
-            //         'created_at'
-            //     );
-            // }
-        ]);
-
-
-
-
-
-
-        $summary = $this->patientService->getRecordStats();
-        return JsonResponser::send(false, 'Record(s) found successfully.', [
-            // 'records' => $records,
-            'records' => collect($records),
-            'summary' => $summary,
-        ], 200);
-
-
-
-        // } catch (\Throwable $th) {
-        //     return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
-        // }
     }
+
+
 
 
     public function recordStats()
