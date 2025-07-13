@@ -388,21 +388,37 @@ class PatientService
                     "Expires"             => "0"
                 ];
 
-                $columns = ['firstname', 'lastname', 'email', 'gender']; // Your desired columns
+                $columns = ['firstname', 'lastname', 'dob', 'age', 'gender']; // Your desired columns
 
                 $callback = function () use ($columns) {
                     $file = fopen('php://output', 'w');
                     fputcsv($file, $columns);
 
-                    $patients = Patient::all(); // Adjust to your fields
+                    // $patients = Patient::all(); // Adjust to your fields
 
+                    $patients  = array(
+                        [
+                            "firstname" => "stephen",
+                            "lastname" => "okpeku",
+                            "dob" => "2025-10-07",
+                            "age" => "17",
+                            "gender" => "Male"
+                        ],
+                        [
+                            "firstname" => "stephen",
+                            "lastname" => "okpeku",
+                            "dob" => "2025-10-07",
+                            "age" => "17",
+                            "gender" => "Male"
+                        ]
+                    );
                     foreach ($patients as $patient) {
                         fputcsv($file, [
-                            $patient->firstname,
-                            $patient->lastname,
-                            $patient->dob,
-                            $patient->age,
-                            $patient->gender,
+                            $patient['firstname'],
+                            $patient['lastname'],
+                            $patient['dob'],
+                            $patient['age'],
+                            $patient['gender'],
                         ]);
                     }
 
