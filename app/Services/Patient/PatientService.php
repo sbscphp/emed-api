@@ -199,8 +199,8 @@ class PatientService
             $exportData = $data->toArray();
             if ($export === 'pdf') {
                 // return ExportHelper::downloadPdf($exportData, 'patient_' . now()->format('Ymd_His') . '.pdf');
-                $data = Patient::all();
-                $pdf = Pdf::loadView('reports.patient_report', compact('data'))->setPaper('a3', 'landscape');
+                $data = Patient::all()->toArray();
+                $pdf = Pdf::loadView('reports.patient_report_log', compact('data'))->setPaper('a3', 'landscape');
                 return $pdf->download('patient_report_log.pdf');
                 // Use a simpler approach with DomPDF directly
                 //$data = [];
