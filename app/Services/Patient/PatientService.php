@@ -9,6 +9,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use App\Helpers\ExportHelper;
 use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Excel as ExcelFormat;
 use App\Http\Resources\PatientResourceExport;
 use App\Exports\PatientExport;
 use App\Exports\PatientReportExport;
@@ -369,7 +370,10 @@ class PatientService
                 //   PatientExport
                 // $data = Patient::all();
                 // return Excel::download(new PatientExport, 'patients.csv');
-                return Excel::download(new PatientExport, 'patients.csv', \Maatwebsite\Excel\Excel::CSV);
+
+                //return Excel::download(new PatientExport, 'patients.csv', ExcelFormat::CSV);
+
+                return ExportHelper::streamCsv(Patient::all()->toArray(), null, 'patients_' . now()->format('Ymd_His') . '.csv');
 
                 // return ExportHelper::streamCsv($data, null, 'patient_' . now()->format('Ymd_His') . '.csv');
             }
