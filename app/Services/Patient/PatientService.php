@@ -352,13 +352,9 @@ class PatientService
                 $dompdf->setPaper('A3', 'landscape');
                 $dompdf->render();
 
-                // return $dompdf->stream('patient_report_log.pdf', [
-                //     'Attachment' => 1
-                // ]);
-
-                return response($dompdf->output(), 200)
-                    ->header('Content-Type', 'application/pdf')
-                    ->header('Content-Disposition', 'attachment; filename="patient_report_log.pdf"');
+                return $dompdf->stream('patient_report_log.pdf', [
+                    'Attachment' => 1
+                ]);
             }
 
             // else if ($export == 'csv') {
