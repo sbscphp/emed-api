@@ -581,7 +581,7 @@ class RecordManagementController extends Controller
 
             // $patients = Patient::all(); // Adjust to your fields
 
-            $patients  = Patient::get()->toArray();
+            $patients  = Patient::on("tenant")->get()->toArray();
             foreach ($patients as $patient) {
                 fputcsv($file, [
                     $patient['firstname'],
