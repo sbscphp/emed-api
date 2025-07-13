@@ -36,8 +36,7 @@
 
 
     <div class="section">
-        <h2>Consultations</h2>
-        @if (!empty($consultations))
+        @if (count($data) != 0)
 
         @php
             //   'firstname' => $this->firstname,
@@ -135,65 +134,9 @@
                 </tbody>
             </table>
         @else
-            <p>No consultations found.</p>
+            <p>No data</p>
         @endif
     </div>
-
-    <div class="section">
-        <h2>IHC REPORT </h2>
-        @if (!empty($ihc_reports))
-            <table>
-                <thead>
-                    <tr>
-                        <th>patient name</th>
-                        <th>Admin</th>
-                        <th>IHC Stage</th>
-                        <th>IHC Description</th>
-                        <th>Created</th>
-
-
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($ihc_reports as $ihc_report)
-                        @php
-                            $admin = optional(\App\Models\User::where('id', $ihc_report->admin_id)->first());
-                            $ihc_stage = optional(
-                                \App\Models\IhcStage::where('id', $ihc_report->ihc_stage_id)->first(),
-                            );
-
-                        @endphp
-                        <tr>
-                            <td>{{ $user->first_name ?? ('' . ' ' . $user->last_name ?? '') }} </td>
-                            <td>{{ $admin->name ?? '' }} </td>
-                            <td>{{ $ihc_stage->name ?? '' }} </td>
-                            <td>{{ $ihc_stage->description ?? '' }} </td>
-                            <td>{{ \Carbon\Carbon::parse($ihc_stage->created_at)->format('F j, Y') ?? '' }} </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        @else
-            <p>No IHC files.</p>
-        @endif
-    </div>
-
-    <div class="section">
-        <h2>Consultation and User Report link</h2>
-        @if (!empty($userReports))
-            <ul>
-                @foreach ($userReports as $report)
-                    <li>{{ $report['title'] }} — {{ $report['report_url'] }}</li>
-                @endforeach
-            </ul>
-        @else
-            <p>No user reports found.</p>
-        @endif
-    </div>
-
-
-
-
 
 </body>
 
