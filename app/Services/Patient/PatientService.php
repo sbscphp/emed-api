@@ -223,7 +223,7 @@ class PatientService
                     'lga',
                     'tribe',
                     'cardno',
-                    'receiptno',
+                    //'receiptno',
                     'status',
                     'service_id',
                     'arrival_time',
@@ -253,7 +253,7 @@ class PatientService
                             'lga' => $patient->lga,
                             'tribe' => $patient->tribe,
                             'cardno' => $patient->cardno,
-                            'receiptno' => $patient->receiptno,
+                            // 'receiptno' => $patient->receiptno,
                             'status' => $patient->status,
                             'service_id' => $patient->service_id,
                             'arrival_time' => $patient->arrival_time,
@@ -303,7 +303,7 @@ class PatientService
                                      <th>tribe</th>
 
                                       <th>cardno</th>
-                                     <th>receiptno</th>
+                                     
                                       <th>status</th>
                                      <th>service_id</th>
                                       <th>arrival_time</th>
@@ -337,7 +337,6 @@ class PatientService
                     $html .= '<td>' . htmlspecialchars($patient['lga'], ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['tribe'], ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['cardno'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['receiptno'], ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['status'], ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['service_id'], ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['arrival_time'], ENT_QUOTES, 'UTF-8') . '</td>';
