@@ -262,6 +262,8 @@ class PatientService
                         ];
                     });
 
+                dd(json_encode($patients));
+
                 // Generate HTML with proper encoding
                 $html = '<!DOCTYPE html>
                 <html>
