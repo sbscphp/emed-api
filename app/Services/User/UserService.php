@@ -180,7 +180,7 @@ class UserService
                 $query->where('fullname', $validate['name']);
             }
 
-            if ($validate['status']) {
+            if (!empty($validate['status'])) {
                 $query->where('status', $validate['status']);
             }
         }, 'causer.userInformation'])->when(!empty($validate['action_type']), function ($query) use ($validate) {
