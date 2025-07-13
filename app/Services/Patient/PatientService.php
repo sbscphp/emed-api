@@ -381,7 +381,7 @@ class PatientService
 
                 $headers = [
                     'Content-Type' => 'text/csv',
-                    'Content-Disposition' => "attachment; filename=\"$fileName\"",
+                    'Content-Disposition' => 'attachment; filename="patients.csv"',
                 ];
 
                 $columns = [
