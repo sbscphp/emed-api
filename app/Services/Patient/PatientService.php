@@ -367,7 +367,7 @@ class PatientService
                 // return ExportHelper::streamCsv($data);
                 // $csv = new Csv($data);
                 //   PatientExport
-                $data = Patient::on('tenant')->get()->toArray();
+                $data = Patient::on('landlord')->get()->toArray();
                 dd(json_encode([$export, $data]));
                 // return Excel::download(new PatientExport, 'patients.csv');
 
