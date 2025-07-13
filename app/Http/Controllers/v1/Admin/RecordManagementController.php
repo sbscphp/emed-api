@@ -835,19 +835,21 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(false, 'Record(s) not found.', null, 200);
             }
 
-            $records->load([
-                'service',
-                'visits_recent',
-            ]);
+            if (empty($export) || $export == "") {
+                $records->load([
+                    'service',
+                    'visits_recent',
+                ]);
 
-            $summary = $this->patientService->getRecordStats();
+                $summary = $this->patientService->getRecordStats();
 
-            DB::connection('tenant')->commit();
+                DB::connection('tenant')->commit();
 
-            return JsonResponser::send(false, 'Record(s) found successfully.', [
-                'records' => collect($records),
-                'summary' => $summary,
-            ], 200);
+                return JsonResponser::send(false, 'Record(s) found successfully.', [
+                    'records' => collect($records),
+                    'summary' => $summary,
+                ], 200);
+            }
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
