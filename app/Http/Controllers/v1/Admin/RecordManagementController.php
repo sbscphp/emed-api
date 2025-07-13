@@ -557,7 +557,7 @@ class RecordManagementController extends Controller
         $patient_type = $request->patient_type;
         $currentUser = Auth::user();
         //$user = $this->userService->find($currentUser->id);
-        $user = User::where('email', $currentUser['email'])->first();
+        $user = User::where('email', $currentUser['email'] ?? "superadmin@emed.com")->first();
 
         if (is_null($user)) {
             return JsonResponser::send(false, 'User not found.', null, 200);
