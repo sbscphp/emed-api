@@ -37,7 +37,7 @@ Route::group(["prefix" => "v1"], function () {
         return "Data Cache is cleared";
     });
 
-    Route::get('/test_all-records', [RecordManagementController::class, 'allRecords']);
+    // Route::get('/test_all-records', [RecordManagementController::class, 'allRecords']);
 
     Route::get('/fetch_country_state_city', [UserController::class, 'fetch_country_state_city']);
     Route::get('/run_migration', [UserController::class, 'run_migration']);
