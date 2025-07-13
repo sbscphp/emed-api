@@ -968,7 +968,7 @@ class RecordManagementController extends Controller
                 ]);
 
                 $dompdf->loadHtml($html, 'UTF-8');
-                $dompdf->setPaper('A3', 'landscape');
+                $dompdf->setPaper('A1', 'landscape');
                 $dompdf->render();
 
                 $pdfOutput = $dompdf->output();
