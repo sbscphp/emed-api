@@ -29,6 +29,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\PatientVisitExport;
 use App\Http\Resources\PatientDetailResoures;
 use App\Models\Patient;
+use App\Models\PatientVisit;
 use App\Models\User;
 
 class RecordManagementController extends Controller
@@ -758,7 +759,11 @@ class RecordManagementController extends Controller
                     'service_id',
                     'arrival_time',
                     'depature_time',
-                    'patientno'
+                    'patientno',
+                    'arrival_date',
+                    'departure_date',
+                    'patientvisit_status',
+                    'visitno'
                 ];
 
                 $callback = function () use ($columns) {
@@ -766,9 +771,15 @@ class RecordManagementController extends Controller
                     fputcsv($file, $columns);
 
                     // $patients = Patient::all(); // Adjust to your fields
+                    //    $html .= '<td>' . htmlspecialchars($patientvisit?->arrival_date ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    //     $html .= '<td>' . htmlspecialchars($patientvisit?->departure_date ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    //     $html .= '<td>' . htmlspecialchars($patientvisit?->status ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    //     $html .= '<td>' . htmlspecialchars($patientvisit?->visitno ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
 
                     $patients  = Patient::all();
                     foreach ($patients as $patient) {
+                        $patientvisit =  PatientVisit::where('patient_id', $patient->id)->first();
+
                         fputcsv($file, [
                             $patient->firstname,
                             $patient->lastname,
@@ -795,7 +806,11 @@ class RecordManagementController extends Controller
                             $patient->service_id,
                             $patient->arrival_time,
                             $patient->depature_time,
-                            $patient->patientno
+                            $patient->patientno,
+                            $patientvisit?->arrival_date ?? "",
+                            $patientvisit?->departure_date ?? "",
+                            $patientvisit?->status ?? "",
+                            $patientvisit?->visitno ?? ""
                         ]);
                     }
 

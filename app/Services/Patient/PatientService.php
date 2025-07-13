@@ -13,6 +13,7 @@ use Maatwebsite\Excel\Excel as ExcelFormat;
 use App\Http\Resources\PatientResourceExport;
 use App\Exports\PatientExport;
 use App\Exports\PatientReportExport;
+use App\Models\PatientVisit;
 
 /**
  * Class PatientService
@@ -227,6 +228,7 @@ class PatientService
                     'patientno'
                 ])->get()->map(function ($patient) {
                     return [
+                        "id" => $patient->id,
                         "firstname" => $patient->firstname,
                         "lastname" => $patient->lastname,
                         "dob" => $patient->dob,
@@ -295,11 +297,18 @@ class PatientService
                             <th>status</th>
                             <th>service_id</th>
                             <th>patientno</th>
+                            <th>Arrival Date</th>
+                            <th>Departure Date</th>
+                            <th>Status</th>
+                            <th>Visitno</th>
                         </tr>
                     </thead>
                         <tbody>';
 
+
                 foreach ($patients as $patient) {
+
+                    $patientvisit =  PatientVisit::where('patient_id', $patient['id'])->first();
                     $html .= '<tr>';
                     $html .= '<td>' . htmlspecialchars($patient['firstname'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['lastname'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
@@ -323,6 +332,11 @@ class PatientService
                     $html .= '<td>' . htmlspecialchars($patient['status'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['service_id'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['patientno'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+
+                    $html .= '<td>' . htmlspecialchars($patientvisit?->arrival_date ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patientvisit?->departure_date ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patientvisit?->status ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patientvisit?->visitno ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '</tr>';
                 }
 
