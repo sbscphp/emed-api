@@ -375,8 +375,8 @@ class PatientService
                 //return Excel::download(new PatientExport, 'patients.csv', ExcelFormat::CSV);
 
 
-                // return ExportHelper::streamCsv($data, null, 'patient_' . now()->format('Ymd_His') . '.csv');
-                return Excel::download(new PatientExport, 'patients.csv', ExcelFormat::CSV);
+                return ExportHelper::streamCsv($data, null, 'patient_' . now()->format('Ymd_His') . '.csv');
+                // return Excel::download(new PatientExport, 'patients.csv', ExcelFormat::CSV);
             }
         }
 
