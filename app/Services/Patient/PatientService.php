@@ -296,14 +296,15 @@ class PatientService
                             <th>cardno</th>
                             <th>status</th>
                             <th>patientno</th>
-                            <th>Arrival Date</th>
-                            <th>Departure Date</th>
-                            <th>Status</th>
-                            <th>Visitno</th>
+                        
                         </tr>
                     </thead>
                         <tbody>';
 
+                // <th>Arrival Date</th>
+                // <th>Departure Date</th>
+                // <th>Status</th>
+                // <th>Visitno</th>
 
                 foreach ($patients as $patient) {
 
@@ -331,10 +332,10 @@ class PatientService
                     $html .= '<td>' . htmlspecialchars($patient['status'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['patientno'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
 
-                    $html .= '<td>' . htmlspecialchars($patientvisit?->arrival_date ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patientvisit?->departure_date ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patientvisit?->status ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patientvisit?->visitno ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    // $html .= '<td>' . htmlspecialchars($patientvisit?->arrival_date ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    // $html .= '<td>' . htmlspecialchars($patientvisit?->departure_date ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    // $html .= '<td>' . htmlspecialchars($patientvisit?->status ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    // $html .= '<td>' . htmlspecialchars($patientvisit?->visitno ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '</tr>';
                 }
 
