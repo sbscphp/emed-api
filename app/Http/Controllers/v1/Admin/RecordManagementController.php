@@ -819,20 +819,7 @@ class RecordManagementController extends Controller
                 };
 
                 return response()->stream($callback, 200, $headers);
-            } else if ($export === 'pdf') {
-                //return ExportHelper::downloadPdf($exportData, 'patient_' . now()->format('Ymd_His') . '.pdf');
-                // $data = Patient::all()->toArray();
-                // $pdf = Pdf::loadView('reports.patient_report_log', [
-                //     'data' => $data
-                // ])->setPaper('a3', 'landscape');
-
-                // return Response::make($pdf->output(), 200, [
-                //     'Content-Type' => 'application/pdf',
-                //     'Content-Disposition' => 'attachment; filename="patient_report_log.pdf"',
-                // ]);
-                // Use a simpler approach with DomPDF directly
-                $data = [];
-
+            } else if ($export == 'pdf') {
                 $patients = Patient::select([
                     'firstname',
                     'lastname',
@@ -925,15 +912,15 @@ class RecordManagementController extends Controller
                             <th>tribe</th>
                             <th>cardno</th>
                             <th>status</th>
+                            <th>service_id</th>
                             <th>patientno</th>
-                            <th>Arrival Date</th>
-                            <th>Departure Date</th>
-                            <th>Status</th>
-                            <th>Visitno</th>
+                            <th>PatientVisit_Arrival_date</th>
+                            <th>PatientVisit_Departure_date</th>
+                            <th>PatientVisit_Status</th>
+                            <th>PatientVisit_visitno</th>
                         </tr>
                     </thead>
                         <tbody>';
-
 
                 foreach ($patients as $patient) {
 
@@ -959,8 +946,10 @@ class RecordManagementController extends Controller
                     $html .= '<td>' . htmlspecialchars($patient['tribe'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['cardno'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['status'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['service_id'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['patientno'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
 
+                    // arrival_date, departure_date, status visitno
                     $html .= '<td>' . htmlspecialchars($patientvisit?->arrival_date ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patientvisit?->departure_date ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patientvisit?->status ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
@@ -981,10 +970,6 @@ class RecordManagementController extends Controller
                 $dompdf->loadHtml($html, 'UTF-8');
                 $dompdf->setPaper('A3', 'landscape');
                 $dompdf->render();
-
-                // return $dompdf->stream('patient_report_log.pdf', [
-                //     'Attachment' => 1
-                // ]);
 
                 $pdfOutput = $dompdf->output();
 
