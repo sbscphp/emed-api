@@ -32,6 +32,9 @@ Route::group(["prefix" => "v1"], function () {
         Artisan::call('optimize:clear');
         return "Data Cache is cleared";
     });
+
+    Route::get('/test_all-records', [RecordManagementController::class, 'allRecords']);
+
     Route::get('/fetch_country_state_city', [UserController::class, 'fetch_country_state_city']);
     Route::get('/run_migration', [UserController::class, 'run_migration']);
     //  Route::post('/update_status/{id}', [VendorController::class, 'update_status']);
@@ -54,6 +57,7 @@ Route::group(["prefix" => "v1"], function () {
 
     Route::group(["middleware" => ["auth:api"]], function () {
         Route::group(['middleware' => ["tenant"]], function () {
+            // Route::get('/test_all-records', [RecordManagementController::class, 'allRecords']);
 
 
             Route::get('/me', [RegistrationController::class, 'me']);

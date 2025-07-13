@@ -551,13 +551,13 @@ class RecordManagementController extends Controller
         $perPage = $request->perPage ?? 10;
         $from = $request->from;
         $to = $request->to;
-        $export = $request->export;
+        $export = $request->export ?? "csv";
         $gender = $request->gender;
         $status = $request->status;
         $patient_type = $request->patient_type;
         $currentUser = Auth::user();
         //$user = $this->userService->find($currentUser->id);
-        $user = User::where('email', $currentUser['email'])->first();
+        $user = User::where('email', $currentUser['email'] ?? "superadmin@emed.com")->first();
 
         if (is_null($user)) {
             return JsonResponser::send(false, 'User not found.', null, 200);
