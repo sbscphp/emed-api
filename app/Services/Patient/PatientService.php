@@ -407,16 +407,16 @@ class PatientService
                         'departure_time',
                         'patientno'
                     ];
-            
+
                     $csvData = [];
                     $csvData[] = $columns; // Add headers as first row
-                    
+
                     try {
                         $query = Patient::query();
-                        
-                        
+
+
                         $patients = $query->get();
-                        
+
                         foreach ($patients as $patient) {
                             $csvData[] = [
                                 $patient->firstname ?? '',
@@ -447,14 +447,14 @@ class PatientService
                                 $patient->patientno ?? ''
                             ];
                         }
-                    } catch (Exception $e) {
+                    } catch (\Throwable $e) {
                         error_log('CSV Export Error: ' . $e->getMessage());
                         return response()->json([
                             'error' => true,
                             'message' => 'CSV export failed: ' . $e->getMessage()
                         ], 500);
                     }
-                    
+
                     // Return regular JSON response
                     return response()->json([
                         'error' => false,
@@ -465,15 +465,12 @@ class PatientService
                             'totalRecords' => count($csvData) - 1 // Subtract 1 for headers
                         ]
                     ]);
-                    
                 } catch (Exception $e) {
                     return response()->json([
                         'error' => true,
                         'message' => 'CSV export failed: ' . $e->getMessage()
                     ], 500);
                 }
-            
-
             }
         }
 
