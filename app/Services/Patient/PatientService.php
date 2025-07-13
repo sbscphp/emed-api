@@ -196,7 +196,7 @@ class PatientService
 
             // Convert to array - the ExportHelper will handle the UTF-8 cleaning
             $exportData = $data->toArray();
-
+            dd(json_encode([$export, Patient::all()]));
             if ($export == 'pdf') {
                 //  return ExportHelper::downloadPdf($exportData, 'patient_' . now()->format('Ymd_His') . '.pdf');
                 // Use a simpler approach with DomPDF directly
