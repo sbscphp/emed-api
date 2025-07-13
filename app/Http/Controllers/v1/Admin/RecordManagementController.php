@@ -609,35 +609,35 @@ class RecordManagementController extends Controller
 
                 // $patients = Patient::all(); // Adjust to your fields
 
-                $patients  = Patient::get()->toArray();
+                $patients  = Patient::all();
                 foreach ($patients as $patient) {
                     fputcsv($file, [
-                        $patient['firstname'],
-                        $patient['lastname'],
-                        $patient['dob'],
-                        $patient['age'],
-                        $patient['gender'],
-                        $patient['bloodgroup'],
-                        $patient['genotype'],
-                        $patient['email'],
-                        $patient['patient_type'],
-                        $patient['marital_status'],
-                        $patient['phoneno'],
-                        $patient['visitno'],
-                        $patient['occupation'],
-                        $patient['homeaddress'],
-                        $patient['companyaddress'],
-                        $patient['religion'],
-                        $patient['stateoforigin'],
-                        $patient['lga'],
-                        $patient['tribe'],
-                        $patient['cardno'],
-                        $patient['receiptno'],
-                        $patient['status'],
-                        $patient['service_id'],
-                        $patient['arrival_time'],
-                        $patient['depature_time'],
-                        $patient['patientno']
+                        $patient->firstname,
+                        $patient->lastname,
+                        $patient->dob,
+                        $patient->age,
+                        $patient->gender,
+                        $patient->bloodgroup,
+                        $patient->genotype,
+                        $patient->email,
+                        $patient->patient_type,
+                        $patient->marital_status,
+                        $patient->phoneno,
+                        $patient->visitno,
+                        $patient->occupation,
+                        $patient->homeaddress,
+                        $patient->companyaddress,
+                        $patient->religion,
+                        $patient->stateoforigin,
+                        $patient->lga,
+                        $patient->tribe,
+                        $patient->cardno,
+                        $patient->receiptno,
+                        $patient->status,
+                        $patient->service_id,
+                        $patient->arrival_time,
+                        $patient->depature_time,
+                        $patient->patientno
                     ]);
                 }
 
