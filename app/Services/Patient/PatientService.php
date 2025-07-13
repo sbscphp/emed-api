@@ -214,7 +214,7 @@ class PatientService
                     'patient_type',
                     'marital_status',
                     'phoneno',
-                    'visitno',
+                    //'visitno',
                     'occupation',
                     'homeaddress',
                     'companyaddress',
@@ -244,7 +244,7 @@ class PatientService
                             'patient_type' => $patient->patient_type,
                             'marital_status' => $patient->marital_status,
                             'phoneno' => $patient->phoneno,
-                            'visitno' => $patient->visitno,
+                            //'visitno' => $patient->visitno,
                             'occupation' => $patient->occupation,
                             'homeaddress' => $patient->homeaddress,
                             'companyaddress' => $patient->companyaddress,
@@ -292,7 +292,7 @@ class PatientService
                                 <th>patient_type</th>
                                 <th>marital_status</th>
                                 <th>phoneno</th>
-                                <th>visitno</th>
+                             
                                 <th>occupation</th>
                                 <th>homeaddress</th>
 
@@ -328,7 +328,7 @@ class PatientService
                     $html .= '<td>' . htmlspecialchars($patient['patient_type'], ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['marital_status'], ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['phoneno'], ENT_QUOTES, 'UTF-8') . '</td>';
-                    $html .= '<td>' . htmlspecialchars($patient['visitno'], ENT_QUOTES, 'UTF-8') . '</td>';
+
                     $html .= '<td>' . htmlspecialchars($patient['occupation'], ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['homeaddress'], ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['companyaddress'], ENT_QUOTES, 'UTF-8') . '</td>';
