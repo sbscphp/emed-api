@@ -5,9 +5,9 @@ namespace App\Exports;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Patient;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithHeadings;
 
-class PatientExport implements FromCollection
+class PatientExport implements FromCollection, WithHeadings
 {
 
     public function collection()
@@ -33,4 +33,35 @@ class PatientExport implements FromCollection
     //         ? mb_convert_encoding($value, 'UTF-8', 'UTF-8')
     //         : $value;
     // }
+    public function headings(): array
+    {
+        return [
+            'firstname',
+            'lastname',
+            'dob',
+            'age',
+            'gender',
+            'bloodgroup',
+            'genotype',
+            'email',
+            'patient_type',
+            'marital_status',
+            'phoneno',
+            'visitno',
+            'occupation',
+            'homeaddress',
+            'companyaddress',
+            'religion',
+            'stateoforigin',
+            'lga',
+            'tribe',
+            'cardno',
+            'receiptno',
+            'status',
+            'service_id',
+            'arrival_time',
+            'depature_time',
+            'patientno'
+        ];
+    }
 }
