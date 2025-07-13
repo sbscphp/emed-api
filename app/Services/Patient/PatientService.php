@@ -203,13 +203,14 @@ class PatientService
                 $data = [];
 
                 // Get only the necessary fields to minimize data processing
-                $patients = Patient::select([
+                $patients = Patient::on('tenant')->select([
                     'firstname',
                     'lastname',
                     'dob',
                     'age',
                     'gender',
                     'bloodgroup',
+                    // genotype
                     'genotype',
                     'email',
                     'patient_type',
