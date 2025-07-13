@@ -19,7 +19,6 @@ use App\Services\NextOfKin\NextOfKinService;
 use App\Services\Patient\PatientService;
 use App\Services\PatientVisit\PatientVisitService;
 use App\Services\User\UserService;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
@@ -31,6 +30,8 @@ use App\Http\Resources\PatientDetailResoures;
 use App\Models\Patient;
 use App\Models\PatientVisit;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Response;
 
 class RecordManagementController extends Controller
 {
@@ -818,8 +819,13 @@ class RecordManagementController extends Controller
 
                 return response()->stream($callback, 200, $headers);
             } else if ($export == 'pdf') {
-                $exportData =  Patient::all()->toArray();
-                return ExportHelper::downloadPdf($exportData, 'patient_' . now()->format('Ymd_His') . '.pdf');
+                $data =  Patient::all()->toArray();
+                $html = view('reports.financial_report', compact('data'))->render();
+                $pdf = Pdf::loadHTML($html)->setPaper('A1', 'landscape');
+                return Response::make($pdf->output(), 200, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'attachment; filename="patient_report_log.pdf"',
+                ]);
                 // $patients = Patient::select([
                 //     'firstname',
                 //     'lastname',
