@@ -377,55 +377,6 @@ class PatientService
                 // return ExportHelper::streamCsv($data, null, 'patient_' . now()->format('Ymd_His') . '.csv');
                 // return Excel::download(new PatientExport, 'patients.csv', ExcelFormat::CSV);
 
-
-                $fileName = 'patients.csv';
-
-                $headers = [
-                    "Content-type"        => "text/csv",
-                    "Content-Disposition" => "attachment; filename=$fileName",
-                    "Pragma"              => "no-cache",
-                    "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-                    "Expires"             => "0"
-                ];
-
-                $columns = ['firstname', 'lastname', 'dob', 'age', 'gender']; // Your desired columns
-
-                $callback = function () use ($columns) {
-                    $file = fopen('php://output', 'w');
-                    fputcsv($file, $columns);
-
-                    // $patients = Patient::all(); // Adjust to your fields
-
-                    $patients  = array(
-                        [
-                            "firstname" => "stephen",
-                            "lastname" => "okpeku",
-                            "dob" => "2025-10-07",
-                            "age" => "17",
-                            "gender" => "Male"
-                        ],
-                        [
-                            "firstname" => "stephen",
-                            "lastname" => "okpeku",
-                            "dob" => "2025-10-07",
-                            "age" => "17",
-                            "gender" => "Male"
-                        ]
-                    );
-                    foreach ($patients as $patient) {
-                        fputcsv($file, [
-                            $patient['firstname'],
-                            $patient['lastname'],
-                            $patient['dob'],
-                            $patient['age'],
-                            $patient['gender'],
-                        ]);
-                    }
-
-                    fclose($file);
-                };
-
-                return response()->download($callback, 200, $headers);
             }
         }
 
