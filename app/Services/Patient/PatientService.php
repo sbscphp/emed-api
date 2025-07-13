@@ -199,16 +199,16 @@ class PatientService
             // Convert to array - the ExportHelper will handle the UTF-8 cleaning
             $exportData = $data->toArray();
             if ($export === 'pdf') {
-                return ExportHelper::downloadPdf($exportData, 'patient_' . now()->format('Ymd_His') . '.pdf');
-                // $data = Patient::all()->toArray();
-                // $pdf = Pdf::loadView('reports.patient_report_log', [
-                //     'data' => $data
-                // ])->setPaper('a3', 'landscape');
+                //return ExportHelper::downloadPdf($exportData, 'patient_' . now()->format('Ymd_His') . '.pdf');
+                $data = Patient::all()->toArray();
+                $pdf = Pdf::loadView('reports.patient_report_log', [
+                    'data' => $data
+                ])->setPaper('a3', 'landscape');
 
-                // return Response::make($pdf->output(), 200, [
-                //     'Content-Type' => 'application/pdf',
-                //     'Content-Disposition' => 'attachment; filename="patient_report_log.pdf"',
-                // ]);
+                return Response::make($pdf->output(), 200, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'attachment; filename="patient_report_log.pdf"',
+                ]);
                 // Use a simpler approach with DomPDF directly
                 $data = [];
 
