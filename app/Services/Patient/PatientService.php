@@ -13,7 +13,6 @@ use Maatwebsite\Excel\Excel as ExcelFormat;
 use App\Http\Resources\PatientResourceExport;
 use App\Exports\PatientExport;
 use App\Exports\PatientReportExport;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Class PatientService
@@ -375,8 +374,91 @@ class PatientService
                 //return Excel::download(new PatientExport, 'patients.csv', ExcelFormat::CSV);
 
 
-                return ExportHelper::streamCsv($data, null, 'patient_' . now()->format('Ymd_His') . '.csv');
+                // return ExportHelper::streamCsv($data, null, 'patient_' . now()->format('Ymd_His') . '.csv');
                 // return Excel::download(new PatientExport, 'patients.csv', ExcelFormat::CSV);
+
+                $fileName = 'patients.csv';
+
+                $headers = [
+                    "Content-type"        => "text/csv",
+                    "Content-Disposition" => "attachment; filename=$fileName",
+                    "Pragma"              => "no-cache",
+                    "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+                    "Expires"             => "0"
+                ];
+
+                $columns = [
+                    'firstname',
+                    'lastname',
+                    'dob',
+                    'age',
+                    'gender',
+                    'bloodgroup',
+                    'genotype',
+                    'email',
+                    'patient_type',
+                    'marital_status',
+                    'phoneno',
+                    'visitno',
+                    'occupation',
+                    'homeaddress',
+                    'companyaddress',
+                    'religion',
+                    'stateoforigin',
+                    'lga',
+                    'tribe',
+                    'cardno',
+                    'receiptno',
+                    'status',
+                    'service_id',
+                    'arrival_time',
+                    'depature_time',
+                    'patientno'
+
+                ];
+
+                $callback = function () use ($columns) {
+                    $file = fopen('php://output', 'w');
+                    fputcsv($file, $columns);
+
+                    // $patients = Patient::all(); // Adjust to your fields
+
+                    $patients  = Patient::get()->toArray();
+                    foreach ($patients as $patient) {
+                        fputcsv($file, [
+                            $patient['firstname'],
+                            $patient['lastname'],
+                            $patient['dob'],
+                            $patient['age'],
+                            $patient['gender'],
+                            $patient['bloodgroup'],
+                            $patient['genotype'],
+                            $patient['email'],
+                            $patient['patient_type'],
+                            $patient['marital_status'],
+                            $patient['phoneno'],
+                            $patient['visitno'],
+                            $patient['occupation'],
+                            $patient['homeaddress'],
+                            $patient['companyaddress'],
+                            $patient['religion'],
+                            $patient['stateoforigin'],
+                            $patient['lga'],
+                            $patient['tribe'],
+                            $patient['cardno'],
+                            $patient['receiptno'],
+                            $patient['status'],
+                            $patient['service_id'],
+                            $patient['arrival_time'],
+                            $patient['depature_time'],
+                            $patient['patientno']
+                        ]);
+                    }
+
+                    fclose($file);
+                };
+
+                return response()->stream($callback, 200, $headers);
             }
         }
 
