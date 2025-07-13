@@ -724,7 +724,7 @@ class RecordManagementController extends Controller
 
             if ($export === 'csv') {
                 $fileName = 'patients.csv';
-                $headers = [
+                $headers =   [
                     "Content-type"        =>  "text/csv",
                     "Content-Disposition" => "attachment; filename=$fileName",
                     "Pragma"              => "no-cache",
@@ -765,7 +765,9 @@ class RecordManagementController extends Controller
                     $file = fopen('php://output', 'w');
                     fputcsv($file, $columns);
 
-                    $patients = Patient::all();
+                    // $patients = Patient::all(); // Adjust to your fields
+
+                    $patients  = Patient::all();
                     foreach ($patients as $patient) {
                         fputcsv($file, [
                             $patient->firstname,
@@ -800,7 +802,6 @@ class RecordManagementController extends Controller
                     fclose($file);
                 };
 
-                DB::connection('tenant')->commit();
                 return response()->stream($callback, 200, $headers);
             }
 
