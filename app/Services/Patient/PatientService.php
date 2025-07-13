@@ -212,7 +212,6 @@ class PatientService
                 // Use a simpler approach with DomPDF directly
                 $data = [];
 
-                Get only the necessary fields to minimize data processing
                 $patients = Patient::select([
                     'firstname',
                     'lastname',
