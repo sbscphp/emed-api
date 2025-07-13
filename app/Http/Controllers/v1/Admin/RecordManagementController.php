@@ -28,6 +28,7 @@ use Spatie\Multitenancy\Models\Tenant;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\PatientVisitExport;
 use App\Http\Resources\PatientDetailResoures;
+use App\Models\Patient;
 use App\Models\User;
 
 class RecordManagementController extends Controller
@@ -580,22 +581,7 @@ class RecordManagementController extends Controller
 
             // $patients = Patient::all(); // Adjust to your fields
 
-            $patients  = array(
-                [
-                    "firstname" => "stephen",
-                    "lastname" => "okpeku",
-                    "dob" => "2025-10-07",
-                    "age" => "17",
-                    "gender" => "Male"
-                ],
-                [
-                    "firstname" => "stephen",
-                    "lastname" => "okpeku",
-                    "dob" => "2025-10-07",
-                    "age" => "17",
-                    "gender" => "Male"
-                ]
-            );
+            $patients  = Patient::get()->toArray();
             foreach ($patients as $patient) {
                 fputcsv($file, [
                     $patient['firstname'],
