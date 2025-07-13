@@ -723,6 +723,9 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(false, 'User not found.', null, 200);
             }
 
+
+
+
             if ($export === 'csv') {
                 $fileName = 'patients.csv';
                 $headers =   [
@@ -816,6 +819,178 @@ class RecordManagementController extends Controller
                 };
 
                 return response()->stream($callback, 200, $headers);
+            } else if ($export === 'pdf') {
+                //return ExportHelper::downloadPdf($exportData, 'patient_' . now()->format('Ymd_His') . '.pdf');
+                // $data = Patient::all()->toArray();
+                // $pdf = Pdf::loadView('reports.patient_report_log', [
+                //     'data' => $data
+                // ])->setPaper('a3', 'landscape');
+
+                // return Response::make($pdf->output(), 200, [
+                //     'Content-Type' => 'application/pdf',
+                //     'Content-Disposition' => 'attachment; filename="patient_report_log.pdf"',
+                // ]);
+                // Use a simpler approach with DomPDF directly
+                $data = [];
+
+                $patients = Patient::select([
+                    'firstname',
+                    'lastname',
+                    'dob',
+                    'age',
+                    'gender',
+                    'bloodgroup',
+                    'genotype',
+                    'email',
+                    'patient_type',
+                    'marital_status',
+                    'phoneno',
+                    'occupation',
+                    'homeaddress',
+                    'companyaddress',
+                    'religion',
+                    'stateoforigin',
+                    'lga',
+                    'tribe',
+                    'cardno',
+                    'status',
+                    'service_id',
+                    'patientno'
+                ])->get()->map(function ($patient) {
+                    return [
+                        "id" => $patient->id,
+                        "firstname" => $patient->firstname,
+                        "lastname" => $patient->lastname,
+                        "dob" => $patient->dob,
+                        "age" => $patient->age,
+                        "gender" => $patient->gender,
+                        "bloodgroup" => $patient->bloodgroup,
+                        "genotype" => $patient->genotype,
+                        "email" => $patient->email,
+                        "patient_type" => $patient->patient_type,
+                        "marital_status" => $patient->marital_status,
+                        "phoneno" => $patient->phoneno,
+                        "occupation" => $patient->occupation,
+                        "homeaddress" => $patient->homeaddress,
+                        "companyaddress" => $patient->companyaddress,
+                        "religion" => $patient->religion,
+                        "stateoforigin" => $patient->stateoforigin,
+                        "lga" => $patient->lga,
+                        "tribe" => $patient->tribe,
+                        "cardno" => $patient->cardno,
+                        "status" => $patient->status,
+                        "service_id" => $patient->service_id,
+                        "patientno" => $patient->patientno,
+                    ];
+                });
+
+
+
+
+                // Generate HTML with proper encoding
+                $html = '<!DOCTYPE html>
+                <html>
+                <head>
+                    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+                    <title>Patient Report</title>
+                    <style>
+                        body { font-family: DejaVu Sans, sans-serif; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        th { background-color: #f2f2f2; }
+                    </style>
+                </head>
+                <body>
+                    <h2>Patient Report</h2>
+                    <table>
+                    <thead>
+                        <tr>
+                            <th>firstname</th>
+                            <th>lastname</th>
+                            <th>dob</th>
+                            <th>age</th>
+                            <th>gender</th>
+                            <th>bloodgroup</th>
+                            <th>genotype</th>
+                            <th>email</th>
+                            <th>patient_type</th>
+                            <th>marital_status</th>
+                            <th>phoneno</th>
+                            <th>occupation</th>
+                            <th>homeaddress</th>
+                            <th>companyaddress</th>
+                            <th>religion</th>
+                            <th>stateoforigin</th>
+                            <th>lga</th>
+                            <th>tribe</th>
+                            <th>cardno</th>
+                            <th>status</th>
+                            <th>patientno</th>
+                            <th>Arrival Date</th>
+                            <th>Departure Date</th>
+                            <th>Status</th>
+                            <th>Visitno</th>
+                        </tr>
+                    </thead>
+                        <tbody>';
+
+
+                foreach ($patients as $patient) {
+
+                    $patientvisit =  PatientVisit::where('patient_id', $patient['id'])->first();
+                    $html .= '<tr>';
+                    $html .= '<td>' . htmlspecialchars($patient['firstname'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['lastname'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['dob'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['age'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['gender'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['bloodgroup'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['genotype'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['email'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['patient_type'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['marital_status'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['phoneno'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['occupation'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['homeaddress'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['companyaddress'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['religion'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['stateoforigin'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['lga'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['tribe'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['cardno'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['status'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['patientno'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+
+                    $html .= '<td>' . htmlspecialchars($patientvisit?->arrival_date ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patientvisit?->departure_date ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patientvisit?->status ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patientvisit?->visitno ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '</tr>';
+                }
+
+
+                $html .= '</tbody></table></body></html>';
+
+                // Generate PDF with DomPDF directly
+                $dompdf = new \Dompdf\Dompdf([
+                    'isHtml5ParserEnabled' => true,
+                    'isRemoteEnabled' => true,
+                    'defaultFont' => 'DejaVu Sans'
+                ]);
+
+                $dompdf->loadHtml($html, 'UTF-8');
+                $dompdf->setPaper('A3', 'landscape');
+                $dompdf->render();
+
+                // return $dompdf->stream('patient_report_log.pdf', [
+                //     'Attachment' => 1
+                // ]);
+
+                $pdfOutput = $dompdf->output();
+
+                return response($pdfOutput)
+                    ->header('Content-Type', 'application/pdf')
+                    ->header('Content-Disposition', 'attachment; filename="patient_report_log.pdf"');
             }
 
             $records = $this->patientService->getAllRecordFiltered(
