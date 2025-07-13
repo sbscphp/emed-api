@@ -726,107 +726,18 @@ class RecordManagementController extends Controller
 
 
             if ($export === 'csv') {
-                $fileName = 'patients.csv';
-                $headers =   [
-                    "Content-type"        =>  "text/csv",
-                    "Content-Disposition" => "attachment; filename=$fileName",
-                    "Pragma"              => "no-cache",
-                    "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-                    "Expires"             => "0"
-                ];
+                $data = Patient::get()->toArray();
+                return ExportHelper::streamCsv($data, null, 'patient_' . now()->format('Ymd_His') . '.csv');
+                // $fileName = 'patients.csv';
+                // $headers =   [
+                //     "Content-type"        =>  "text/csv",
+                //     "Content-Disposition" => "attachment; filename=$fileName",
+                //     "Pragma"              => "no-cache",
+                //     "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+                //     "Expires"             => "0"
+                // ];
 
-                $columns = [
-                    'firstname',
-                    'lastname',
-                    'dob',
-                    'age',
-                    'gender',
-                    'bloodgroup',
-                    'genotype',
-                    'email',
-                    'patient_type',
-                    'marital_status',
-                    'phoneno',
-                    'visitno',
-                    'occupation',
-                    'homeaddress',
-                    'companyaddress',
-                    'religion',
-                    'stateoforigin',
-                    'lga',
-                    'tribe',
-                    'cardno',
-                    'receiptno',
-                    'status',
-                    'arrival_time',
-                    'depature_time',
-                    'patientno',
-                    'patientvisit_arrival_date',
-                    'patientvisit_departure_date',
-                    'patientvisit_status',
-                    'visitno'
-                ];
-
-                $callback = function () use ($columns) {
-                    $file = fopen('php://output', 'w');
-                    fputcsv($file, $columns);
-
-                    // $patients = Patient::all(); // Adjust to your fields
-                    //    $html .= '<td>' . htmlspecialchars($patientvisit?->arrival_date ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                    //     $html .= '<td>' . htmlspecialchars($patientvisit?->departure_date ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                    //     $html .= '<td>' . htmlspecialchars($patientvisit?->status ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                    //     $html .= '<td>' . htmlspecialchars($patientvisit?->visitno ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-
-                    $patients  = Patient::all();
-                    foreach ($patients as $patient) {
-                        $patientvisit =  PatientVisit::where('patient_id', $patient->id)->first();
-
-                        fputcsv($file, [
-                            $patient->firstname,
-                            $patient->lastname,
-                            $patient->dob,
-                            $patient->age,
-                            $patient->gender,
-                            $patient->bloodgroup,
-                            $patient->genotype,
-                            $patient->email,
-                            $patient->patient_type,
-                            $patient->marital_status,
-                            $patient->phoneno,
-                            $patient->visitno,
-                            $patient->occupation,
-                            $patient->homeaddress,
-                            $patient->companyaddress,
-                            $patient->religion,
-                            $patient->stateoforigin,
-                            $patient->lga,
-                            $patient->tribe,
-                            $patient->cardno,
-                            $patient->receiptno,
-                            $patient->status,
-                            $patient->arrival_time,
-                            $patient->depature_time,
-                            $patient->patientno,
-                            $patientvisit?->arrival_date ?? "",
-                            $patientvisit?->departure_date ?? "",
-                            $patientvisit?->status ?? "",
-                            $patientvisit?->visitno ?? ""
-                        ]);
-                    }
-
-                    fclose($file);
-                };
-
-                return response()->stream($callback, 200, $headers);
-            } else if ($export == 'pdf') {
-                $data =  Patient::all()->toArray();
-                $html = view('reports.patient_report_log', compact('data'))->render();
-                $pdf = Pdf::loadHTML($html)->setPaper('A1', 'landscape');
-                return Response::make($pdf->output(), 200, [
-                    'Content-Type' => 'application/pdf',
-                    'Content-Disposition' => 'attachment; filename="patient_report_log.pdf"',
-                ]);
-                // $patients = Patient::select([
+                // $columns = [
                 //     'firstname',
                 //     'lastname',
                 //     'dob',
@@ -838,6 +749,7 @@ class RecordManagementController extends Controller
                 //     'patient_type',
                 //     'marital_status',
                 //     'phoneno',
+                //     'visitno',
                 //     'occupation',
                 //     'homeaddress',
                 //     'companyaddress',
@@ -846,142 +758,76 @@ class RecordManagementController extends Controller
                 //     'lga',
                 //     'tribe',
                 //     'cardno',
+                //     'receiptno',
                 //     'status',
-                //     'service_id',
-                //     'patientno'
-                // ])->get()->map(function ($patient) {
-                //     return [
-                //         "id" => $patient->id,
-                //         "firstname" => $patient->firstname,
-                //         "lastname" => $patient->lastname,
-                //         "dob" => $patient->dob,
-                //         "age" => $patient->age,
-                //         "gender" => $patient->gender,
-                //         "bloodgroup" => $patient->bloodgroup,
-                //         "genotype" => $patient->genotype,
-                //         "email" => $patient->email,
-                //         "patient_type" => $patient->patient_type,
-                //         "marital_status" => $patient->marital_status,
-                //         "phoneno" => $patient->phoneno,
-                //         "occupation" => $patient->occupation,
-                //         "homeaddress" => $patient->homeaddress,
-                //         "companyaddress" => $patient->companyaddress,
-                //         "religion" => $patient->religion,
-                //         "stateoforigin" => $patient->stateoforigin,
-                //         "lga" => $patient->lga,
-                //         "tribe" => $patient->tribe,
-                //         "cardno" => $patient->cardno,
-                //         "status" => $patient->status,
-                //         "service_id" => $patient->service_id,
-                //         "patientno" => $patient->patientno,
-                //     ];
-                // });
+                //     'arrival_time',
+                //     'depature_time',
+                //     'patientno',
+                //     'patientvisit_arrival_date',
+                //     'patientvisit_departure_date',
+                //     'patientvisit_status',
+                //     'visitno'
+                // ];
 
+                // $callback = function () use ($columns) {
+                //     $file = fopen('php://output', 'w');
+                //     fputcsv($file, $columns);
 
+                //     // $patients = Patient::all(); // Adjust to your fields
+                //     //    $html .= '<td>' . htmlspecialchars($patientvisit?->arrival_date ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                //     //     $html .= '<td>' . htmlspecialchars($patientvisit?->departure_date ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                //     //     $html .= '<td>' . htmlspecialchars($patientvisit?->status ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
+                //     //     $html .= '<td>' . htmlspecialchars($patientvisit?->visitno ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
 
+                //     $patients  = Patient::all();
+                //     foreach ($patients as $patient) {
+                //         $patientvisit =  PatientVisit::where('patient_id', $patient->id)->first();
 
-                // // Generate HTML with proper encoding
-                // $html = '<!DOCTYPE html>
-                // <html>
-                // <head>
-                //     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-                //     <title>Patient Report</title>
-                //     <style>
-                //         body { font-family: DejaVu Sans, sans-serif; }
-                //         table { width: 100%; border-collapse: collapse; }
-                //         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                //         th { background-color: #f2f2f2; }
-                //     </style>
-                // </head>
-                // <body>
-                //     <h2>Patient Report</h2>
-                //     <table>
-                //     <thead>
-                //         <tr>
-                //             <th>firstname</th>
-                //             <th>lastname</th>
-                //             <th>dob</th>
-                //             <th>age</th>
-                //             <th>gender</th>
-                //             <th>bloodgroup</th>
-                //             <th>genotype</th>
-                //             <th>email</th>
-                //             <th>patient_type</th>
-                //             <th>marital_status</th>
-                //             <th>phoneno</th>
-                //             <th>occupation</th>
-                //             <th>homeaddress</th>
-                //             <th>companyaddress</th>
-                //             <th>religion</th>
-                //             <th>stateoforigin</th>
-                //             <th>lga</th>
-                //             <th>tribe</th>
-                //             <th>cardno</th>
-                //             <th>status</th>
-                //             <th>service_id</th>
-                //             <th>patientno</th>
-                //             <th>PatientVisit_Arrival_date</th>
-                //             <th>PatientVisit_Departure_date</th>
-                //             <th>PatientVisit_Status</th>
-                //             <th>PatientVisit_visitno</th>
-                //         </tr>
-                //     </thead>
-                //         <tbody>';
+                //         fputcsv($file, [
+                //             $patient->firstname,
+                //             $patient->lastname,
+                //             $patient->dob,
+                //             $patient->age,
+                //             $patient->gender,
+                //             $patient->bloodgroup,
+                //             $patient->genotype,
+                //             $patient->email,
+                //             $patient->patient_type,
+                //             $patient->marital_status,
+                //             $patient->phoneno,
+                //             $patient->visitno,
+                //             $patient->occupation,
+                //             $patient->homeaddress,
+                //             $patient->companyaddress,
+                //             $patient->religion,
+                //             $patient->stateoforigin,
+                //             $patient->lga,
+                //             $patient->tribe,
+                //             $patient->cardno,
+                //             $patient->receiptno,
+                //             $patient->status,
+                //             $patient->arrival_time,
+                //             $patient->depature_time,
+                //             $patient->patientno,
+                //             $patientvisit?->arrival_date ?? "",
+                //             $patientvisit?->departure_date ?? "",
+                //             $patientvisit?->status ?? "",
+                //             $patientvisit?->visitno ?? ""
+                //         ]);
+                //     }
 
-                // foreach ($patients as $patient) {
+                //     fclose($file);
+                // };
 
-                //     $patientvisit =  PatientVisit::where('patient_id', $patient['id'])->first();
-                //     $html .= '<tr>';
-                //     $html .= '<td>' . htmlspecialchars($patient['firstname'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                //     $html .= '<td>' . htmlspecialchars($patient['lastname'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                //     $html .= '<td>' . htmlspecialchars($patient['dob'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                //     $html .= '<td>' . htmlspecialchars($patient['age'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                //     $html .= '<td>' . htmlspecialchars($patient['gender'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                //     $html .= '<td>' . htmlspecialchars($patient['bloodgroup'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                //     $html .= '<td>' . htmlspecialchars($patient['genotype'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                //     $html .= '<td>' . htmlspecialchars($patient['email'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                //     $html .= '<td>' . htmlspecialchars($patient['patient_type'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                //     $html .= '<td>' . htmlspecialchars($patient['marital_status'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                //     $html .= '<td>' . htmlspecialchars($patient['phoneno'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                //     $html .= '<td>' . htmlspecialchars($patient['occupation'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                //     $html .= '<td>' . htmlspecialchars($patient['homeaddress'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                //     $html .= '<td>' . htmlspecialchars($patient['companyaddress'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                //     $html .= '<td>' . htmlspecialchars($patient['religion'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                //     $html .= '<td>' . htmlspecialchars($patient['stateoforigin'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                //     $html .= '<td>' . htmlspecialchars($patient['lga'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                //     $html .= '<td>' . htmlspecialchars($patient['tribe'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                //     $html .= '<td>' . htmlspecialchars($patient['cardno'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                //     $html .= '<td>' . htmlspecialchars($patient['status'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                //     $html .= '<td>' . htmlspecialchars($patient['service_id'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                //     $html .= '<td>' . htmlspecialchars($patient['patientno'] ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-
-                //     // arrival_date, departure_date, status visitno
-                //     $html .= '<td>' . htmlspecialchars($patientvisit?->arrival_date ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                //     $html .= '<td>' . htmlspecialchars($patientvisit?->departure_date ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                //     $html .= '<td>' . htmlspecialchars($patientvisit?->status ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                //     $html .= '<td>' . htmlspecialchars($patientvisit?->visitno ?? '', ENT_QUOTES, 'UTF-8') . '</td>';
-                //     $html .= '</tr>';
-                // }
-
-
-                // $html .= '</tbody></table></body></html>';
-
-                // // Generate PDF with DomPDF directly
-                // $dompdf = new \Dompdf\Dompdf([
-                //     'isHtml5ParserEnabled' => true,
-                //     'isRemoteEnabled' => true,
-                //     'defaultFont' => 'DejaVu Sans'
-                // ]);
-
-                // $dompdf->loadHtml($html, 'UTF-8');
-                // $dompdf->setPaper('A1', 'landscape');
-                // $dompdf->render();
-
-                // $pdfOutput = $dompdf->output();
-
-                // return response($pdfOutput)
-                //     ->header('Content-Type', 'application/pdf')
-                //     ->header('Content-Disposition', 'attachment; filename="patient_report_log.pdf"');
+                // return response()->stream($callback, 200, $headers);
+            } else if ($export == 'pdf') {
+                $data =  Patient::all()->toArray();
+                $html = view('reports.patient_report_log', compact('data'))->render();
+                $pdf = Pdf::loadHTML($html)->setPaper('A1', 'landscape');
+                return Response::make($pdf->output(), 200, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'attachment; filename="patient_report_log.pdf"',
+                ]);
             }
 
             $records = $this->patientService->getAllRecordFiltered(

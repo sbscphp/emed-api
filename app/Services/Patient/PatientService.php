@@ -197,6 +197,24 @@ class PatientService
 
             // Convert to array - the ExportHelper will handle the UTF-8 cleaning
             $exportData = $data->toArray();
+
+
+            // else if ($export == 'csv') {
+            //     //  return ExportHelper::streamCsv($exportData, null, 'patients_' . now()->format('Ymd_His') . '.csv');
+            //     // return ExportHelper::streamCsv($data);
+            //     // $csv = new Csv($data);
+            //     //   PatientExport
+            //     // $data = Patient::get()->toArray();
+            //     //dd(json_encode([$export, $data]));
+            //     // return Excel::download(new PatientExport, 'patients.csv');
+
+            //     //return Excel::download(new PatientExport, 'patients.csv', ExcelFormat::CSV);
+
+
+            //     // return ExportHelper::streamCsv($data, null, 'patient_' . now()->format('Ymd_His') . '.csv');
+            //     // return Excel::download(new PatientExport, 'patients.csv', ExcelFormat::CSV);
+
+            // }
         }
 
         $query->when($from && $to, function ($q) use ($from, $to) {
