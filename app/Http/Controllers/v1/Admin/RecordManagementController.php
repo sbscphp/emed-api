@@ -820,7 +820,7 @@ class RecordManagementController extends Controller
                 return response()->stream($callback, 200, $headers);
             } else if ($export == 'pdf') {
                 $data =  Patient::all()->toArray();
-                $html = view('reports.financial_report', compact('data'))->render();
+                $html = view('reports.patient_report_log', compact('data'))->render();
                 $pdf = Pdf::loadHTML($html)->setPaper('A1', 'landscape');
                 return Response::make($pdf->output(), 200, [
                     'Content-Type' => 'application/pdf',
