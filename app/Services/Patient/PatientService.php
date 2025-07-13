@@ -211,7 +211,7 @@ class PatientService
                     'gender',
                     'bloodgroup',
                     // genotype
-                    'genotype',
+                    //'genotype',
                     'email',
                     'patient_type',
                     'marital_status',
@@ -241,7 +241,7 @@ class PatientService
                             'age' => $patient->age,
                             'gender' => $patient->gender,
                             'bloodgroup' => $patient->bloodgroup,
-                            'genotype' => $patient->genotype,
+                            //'genotype' => $patient->genotype,
                             'email' => $patient->email,
                             'patient_type' => $patient->patient_type,
                             'marital_status' => $patient->marital_status,
@@ -325,7 +325,7 @@ class PatientService
                     $html .= '<td>' . htmlspecialchars($patient['gender'], ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['bloodgroup'], ENT_QUOTES, 'UTF-8') . '</td>';
 
-                    $html .= '<td>' . htmlspecialchars($patient['genotype'], ENT_QUOTES, 'UTF-8') . '</td>';
+                    $html .= '<td>' . htmlspecialchars($patient['genotype'] ?? "", ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['email'], ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['patient_type'], ENT_QUOTES, 'UTF-8') . '</td>';
                     $html .= '<td>' . htmlspecialchars($patient['marital_status'], ENT_QUOTES, 'UTF-8') . '</td>';
