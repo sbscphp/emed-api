@@ -27,7 +27,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 
 Route::group(["prefix" => "v1"], function () {
-
+    Route::get('/test_all-records', [RecordManagementController::class, 'allRecords']);
     /** Cache **/
     Route::get('/clear-cache', function () {
         Artisan::call('optimize:clear');
