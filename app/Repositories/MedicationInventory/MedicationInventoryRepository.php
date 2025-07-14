@@ -35,12 +35,27 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
             });
         }
 
-        if (!empty($filters['product'])) {
-            $product =   $filters['product'];
+        if (!empty($filters['medicine_name'])) {
+            $product =   $filters['medicine_name'];
             $query->whereHas('medication', function ($mq) use ($product) {
-                $mq->where('medicine_name', 'like', "%{$product}%")
-                    ->orWhere('brand_name', 'like', "%{$product}%")
-                    ->orWhere('generic_name', 'like', "%{$product}%");
+                $mq->where('medicine_name', 'like', "%{$product}%");
+            });
+        }
+
+
+
+        if (!empty($filters['brand_name'])) {
+            $product =   $filters['brand_name'];
+            $query->whereHas('medication', function ($mq) use ($product) {
+                $mq->where('brand_name', 'like', "%{$product}%");
+            });
+        }
+
+
+        if (!empty($filters['generic_name'])) {
+            $product =   $filters['generic_name'];
+            $query->whereHas('medication', function ($mq) use ($product) {
+                $mq->where('generic_name', 'like', "%{$product}%");
             });
         }
 
