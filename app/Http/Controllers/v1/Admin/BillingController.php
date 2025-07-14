@@ -237,7 +237,7 @@ class BillingController extends Controller
     {
         try {
             config(['database.default' => 'tenant']);
-            $billingLogs = $this->billingService->getByServiceType($request->input('service_type_id'));
+            $billingLogs = $this->billingService->getByServiceType(intval($request->input('service_type_id')));
 
             $logs = collect($billingLogs->items())->map(function ($log) {
                 return [
