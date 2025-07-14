@@ -1,7 +1,39 @@
+<!DOCTYPE html>
+<html>
+
+<head>
 @php
 $first = $patients[0] ?? [];
 @endphp
+ <style>
+        body {
+            font-family: DejaVu Sans, sans-serif;
+        }
 
+        .section {
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+    </style>
+</head>
+<body>
+ <div class="section">
 @if (!empty($first))
 <table>
     <thead>
@@ -22,5 +54,10 @@ $first = $patients[0] ?? [];
     </tbody>
 </table>
 @else
-<p>No patient records to display.</p>
+<p>No  records to display.</p>
 @endif
+    </div>
+
+</body>
+
+</html>
