@@ -48,6 +48,10 @@ class BillingLogRepository implements BillingLogRepositoryInterface
             });
         }
 
+        if (!empty($request['item'])) {
+            $query->where('patient_name', 'like', "%{$request['item']}%");
+        }
+
         // if (!empty($request['search'])) {
         //     $search = $request['search'];
         //     $query->where(function ($q) use ($search) {
@@ -71,8 +75,8 @@ class BillingLogRepository implements BillingLogRepositoryInterface
                     ->orWhere('item_name', 'like', "%$search%")
                     ->orWhere('payment_status', 'like', "%$search%")
                     ->orWhereHas('patient', function ($pq) use ($search) {
-                        $pq->where('firstname', 'like', "%$search%")
-                            ->orWhere('lastname', 'like', "%$search%")
+                        $pq->where('firstname', 'like', "%{$search}%")
+                            ->orWhere('lastname', 'like', "%{$search}%")
                             ->orWhere('patientno', 'like', "%$search%")
                             ->orWhere('cardno', 'like', "%$search%");
                     });
