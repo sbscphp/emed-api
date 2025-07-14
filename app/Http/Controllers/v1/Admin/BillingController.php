@@ -45,7 +45,8 @@ class BillingController extends Controller
             "patient_service_unit" => "nullable|string",
             "export" => "nullable|string",
             'from' => "nullable|string",
-            'to' => "nullable|string"
+            'to' => "nullable|string",
+            'patient_type' => "nullable|string"
         ]);
 
         if ($request['export'] === 'csv') {

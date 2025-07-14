@@ -32,6 +32,12 @@ class BillingLogRepository implements BillingLogRepositoryInterface
                     $q->where('name', $request['patient_service_unit']);
                 }
             },
+            // patient_type
+            'patient' => function ($q) use ($request) {
+                if (!empty($request['patient_type'])) {
+                    $q->where('patient_type', $request['patient_type']);
+                }
+            },
             'patient.service'
         ]);
 
