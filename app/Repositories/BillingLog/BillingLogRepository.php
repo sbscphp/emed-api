@@ -22,24 +22,31 @@ class BillingLogRepository implements BillingLogRepositoryInterface
     public function all($request)
     {
         $query = BillingLog::with([
-            'serviceType' => function ($q) use ($request) {
-                if (!empty($request['patient_service_type'])) {
-                    $q->where('name', $request['patient_service_type']);
-                }
-            },
-            'serviceUnit' => function ($q) use ($request) {
-                if (!empty($request['patient_service_unit'])) {
-                    $q->where('name', $request['patient_service_unit']);
-                }
-            },
+            'serviceType',
+            'serviceUnit',
             // patient_type
-            'patient' => function ($q) use ($request) {
-                if (!empty($request['patient_type'])) {
-                    $q->where('patient_type', $request['patient_type']);
-                }
-            },
             'patient.service'
         ]);
+
+
+        if (!empty($request['patient_type'])) {
+            $query->whereHas('patient', function ($q) use ($request) {
+                $q->where('patient_type', $request['patient_type']);
+            });
+        }
+
+
+        if (!empty($request['patient_service_unit'])) {
+            $query->whereHas('serviceUnit', function ($q) use ($request) {
+                $q->where('name', $request['patient_service_unit']);
+            });
+        }
+
+        if (!empty($request['patient_service_type'])) {
+            $query->whereHas('serviceType', function ($q) use ($request) {
+                $q->where('name', $request['patient_service_type']);
+            });
+        }
 
         // if (!empty($request['search'])) {
         //     $search = $request['search'];
