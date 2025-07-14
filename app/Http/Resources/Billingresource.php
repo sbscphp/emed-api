@@ -33,8 +33,8 @@ class Billingresource extends JsonResource
             "sub_total" => $this->sub_total,
             "tax_amount" => $this->tax_amount,
             "grand_total" => $this->grand_total,
-            "service_name" => $service_type->name ?? "",
-            "service_unit" => $service_unit->name ?? ""
+            "service_name" => $this->service_type?->name ?? "",
+            "service_unit" => $this->service_unit?->name ?? ""
         ];
     }
 }
