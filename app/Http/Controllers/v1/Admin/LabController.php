@@ -70,9 +70,10 @@ class LabController extends Controller
                 'records' => $labRecords,
                 'total' => collect($labRecords)->count()
             ];
-
+            DB::connection('tenant')->commit();
             return JsonResponser::send(false, 'Record(s) found successfully.', $response, 200);
         } catch (Throwable $th) {
+            DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
         }
     }

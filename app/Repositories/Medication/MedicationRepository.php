@@ -17,16 +17,42 @@ class MedicationRepository implements MedicationRepositoryInterface
         $filters  =  $request;
 
 
-        foreach ($request as $key => $value) {
-            if (in_array($key, ['from', 'to']) || empty($value)) {
-                continue;
-            }
+        // foreach ($request as $key => $value) {
+        //     if (in_array($key, ['from', 'to']) || empty($value)) {
+        //         continue;
+        //     }
 
-            $query->where($key, 'like', "%$value%");
+        //     $query->where($key, 'like', "%$value%");
+        // }
+
+
+        if (!empty($request['generic_name'])) {
+            $query->where('generic_name', 'like', "%{$request['generic_name']}%");
+        }
+
+        if (!empty($request['medicine_name'])) {
+            $query->where('medicine_name', 'like', "%{$request['medicine_name']}%");
+        }
+
+        if (!empty($request['medicine_type'])) {
+            $query->where('medicine_type', 'like', "%{$request['medicine_type']}%");
+        }
+
+        if (!empty($request['medicine_status'])) {
+            $query->where('medicine_status',  $request['medicine_status']);
         }
 
 
-        if (isset($request['from'], $request['to'])) {
+        //    'generic_name' => "nullable|string",
+        //         'brand_name' => "nullable|string",
+        //         'medicine_name' => "nullable|string",
+        //         'medicine_type' => "nullable|string",
+        //         'medicine_status' => "nullable|string",
+        //         'from' => "nullable|date",
+        //         'to' => "nullable|date",
+
+
+        if (!empty($request['from']) && !empty($request['to'])) {
             $from = Carbon::parse($request['from'])->startOfDay();
             $to = Carbon::parse($request['to'])->endOfDay();
             $query->whereBetween('created_at', [$from, $to]);

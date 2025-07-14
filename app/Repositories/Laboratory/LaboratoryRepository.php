@@ -246,7 +246,7 @@ class LaboratoryRepository implements LaboratoryInterface
         // Optional pagination (uncomment if needed)
         return $paginate ? $query->paginate($perPage ?? 10) : $query->get();
 
-        return collect($query->get());
+        //return collect($query->get());
     }
 
 
