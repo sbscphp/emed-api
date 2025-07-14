@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Helpers\ExportHelper;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\AuditResources;
+use App\Models\AuditLog;
 use App\Responser\JsonResponser;
 use App\Services\BillingLog\BillingLogService;
 use App\Services\Patient\PatientService;
@@ -90,6 +93,29 @@ class ReportController extends Controller
                 "is_download" => "nullable|boolean",
                 'status' => "nullable|string"
             ]);
+            if (!empty($validate['is_download'])) {
+
+                if ($validate['export'] == 'csv') {
+
+                    $data =  AuditLog::with('audit_log_transactions')->when(!empty($validate['action_type']), function ($query) use ($validate) {
+                        //$query->where("user_id", $validate['user_id'])
+                        $query->where('action_type', $validate['action_type']);
+                    })->get();
+
+                    $convertdata = AuditResources::collection($data)->resolve();
+                    return ExportHelper::streamCsv($convertdata, null, 'user_activity.csv');
+                } else if ($validate['export'] == 'pdf') {
+
+                    $data =  AuditLog::with('audit_log_transactions')->when(!empty($validate['action_type']), function ($query) use ($validate) {
+                        // $query->where("user_id", $validate['user_id'])
+                        //     ->orWhere('action_type', $validate['action_type']);
+                        $query->where('action_type', $validate['action_type']);
+                    })->get();
+
+                    $convertdata = AuditResources::collection($data)->resolve();
+                    return ExportHelper::downloadPdf($convertdata, 'user_activity.pdf');
+                }
+            }
             $data = $this->userService->user_activity($validate);
             DB::connection('tenant')->commit();
             return JsonResponser::send(false, 'fetched successfully.', $data);
