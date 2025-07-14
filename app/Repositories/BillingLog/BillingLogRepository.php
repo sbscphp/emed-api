@@ -21,15 +21,19 @@ class BillingLogRepository implements BillingLogRepositoryInterface
 
     public function all($request)
     {
-        $query = BillingLog::with(['serviceType' => function ($q) use ($request) {
-            if (!empty($request['service_type'])) {
-                $q->where('name', $request['service_type']);
-            }
-        }, 'serviceUnit' => function ($q) use ($request) {
-            if (!empty($request['service_unit'])) {
-                $q->where('name', $request['service_unit']);
-            }
-        }, 'patient.service']);
+        $query = BillingLog::with([[
+            'serviceType' => function ($q) use ($request) {
+                if (!empty($request['service_type'])) {
+                    $q->where('name', $request['service_type']);
+                }
+            },
+            'serviceUnit' => function ($q) use ($request) {
+                if (!empty($request['service_unit'])) {
+                    $q->where('name', $request['service_unit']);
+                }
+            },
+            'patient.service'
+        ]]);
         if (!empty($request['search'])) {
             $search = $request['search'];
             $query->where(function ($q) use ($search) {
