@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Http\Resources\Billingresource;
 use App\Models\BillingLog;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Response;
 
 class BillingController extends Controller
 {
@@ -56,7 +58,12 @@ class BillingController extends Controller
         if ($request['export'] === 'pdf') {
             $billinglog = BillingLog::with(['serviceType', 'serviceUnit', 'patient.service'])->get();
             $exportData = Billingresource::collection($billinglog)->resolve();
-            return ExportHelper::downloadPdf($exportData, 'billing-records.pdf');
+            $html = view('exports.patients', ['patients' => $exportData])->render();
+            $pdf = Pdf::loadHTML($html)->setPaper('A1', 'landscape');
+            return Response::make($pdf->output(), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="patient_report_log.pdf"',
+            ]);
         }
         $billings = $this->billingService->all($validated);
         if (
