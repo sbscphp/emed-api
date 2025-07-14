@@ -28,16 +28,22 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
             $query->where(function ($q) use ($search) {
                 $q->where('batch_no', 'like', "%{$search}%")
                     ->orWhere('shipment_status', 'like', "%{$search}%")
-                    ->orWhereHas('medication', function ($mq) use ($search) {
-                        $mq->where('medicine_name', 'like', "%{$search}%")
-                            ->orWhere('brand_name', 'like', "%{$search}%")
-                            ->orWhere('generic_name', 'like', "%{$search}%");
-                    })
+
                     ->orWhereHas('pharmacy', function ($pq) use ($search) {
                         $pq->where('name', 'like', "%{$search}%");
                     });
             });
         }
+
+        if (!empty($filters['product'])) {
+            $product =   $filters['product'];
+            $query->whereHas('medication', function ($mq) use ($product) {
+                $mq->where('medicine_name', 'like', "%{$product}%")
+                    ->orWhere('brand_name', 'like', "%{$product}%")
+                    ->orWhere('generic_name', 'like', "%{$product}%");
+            });
+        }
+
 
         if (isset($filters['from'], $filters['to'])) {
             $from = Carbon::parse($filters['from'])->startOfDay();
