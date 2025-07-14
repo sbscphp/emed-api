@@ -79,12 +79,12 @@ class BillingLogRepository implements BillingLogRepositoryInterface
             });
         }
 
-        if (!empty($request['payment_status'])) {
-            $payment_status =   $request['payment_status'];
-            $query->where(function ($q) use ($payment_status) {
-                $q->where('payment_status', $payment_status);
-            });
-        }
+        // if (!empty($request['payment_status'])) {
+        //     $payment_status =   $request['payment_status'];
+        //     $query->where(function ($q) use ($payment_status) {
+        //         $q->where('payment_status', $payment_status);
+        //     });
+        // }
 
         if (!empty($request['payment_status'])) {
             $query->where('payment_status', $request['payment_status']);
