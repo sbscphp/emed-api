@@ -41,8 +41,8 @@ class BillingController extends Controller
         $validated =  $request->validate([
             "search" => "nullable|string",
             "payment_status" => "nullable|numeric",
-            "service_type" => "nullable|numeric",
-            "service_unit" => "nullable|numeric",
+            "service_type" => "nullable|string",
+            "service_unit" => "nullable|string",
             "export" => "nullable|string",
             'from' => "nullable|string",
             'to' => "nullable|string"
