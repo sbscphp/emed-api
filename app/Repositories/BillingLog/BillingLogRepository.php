@@ -21,7 +21,7 @@ class BillingLogRepository implements BillingLogRepositoryInterface
 
     public function all($request)
     {
-        $query = BillingLog::with([[
+        $query = BillingLog::with([
             'serviceType' => function ($q) use ($request) {
                 if (!empty($request['service_type'])) {
                     $q->where('name', $request['service_type']);
@@ -33,7 +33,8 @@ class BillingLogRepository implements BillingLogRepositoryInterface
                 }
             },
             'patient.service'
-        ]]);
+        ]);
+
         // if (!empty($request['search'])) {
         //     $search = $request['search'];
         //     $query->where(function ($q) use ($search) {
@@ -85,34 +86,34 @@ class BillingLogRepository implements BillingLogRepositoryInterface
             ]);
         }
 
-        if (!empty($request['export'])) {
-            $billings = $query->get();
+        // if (!empty($request['export'])) {
+        //     $billings = $query->get();
 
-            $exportData = $billings->map(function ($item) {
-                return [
-                    'Invoice Number' => $item->invoice_number,
-                    'Patient Name' => $item->patient->firstname . ' ' . $item->patient->lastname,
-                    'Patient No' => $item->patient->patientno,
-                    'Card No' => $item->patient->cardno,
-                    'Billing Date' => $item->billing_date,
-                    'Item Name' => $item->item_name,
-                    'Quantity' => $item->quantity,
-                    'Unit Price' => $item->unit_price,
-                    'Sub Total' => $item->sub_total,
-                    'Tax Amount' => $item->tax_amount,
-                    'Grand Total' => $item->grand_total,
-                    'Payment Method' => $item->payment_method,
-                    'Payment Status' => $item->payment_status,
-                    'Service Type' => $item->serviceType->name ?? '',
-                    'Service Unit' => $item->serviceUnit->name ?? '',
-                    'Created At' => $item->created_at->toDateTimeString(),
-                ];
-            });
+        //     $exportData = $billings->map(function ($item) {
+        //         return [
+        //             'Invoice Number' => $item->invoice_number,
+        //             'Patient Name' => $item->patient->firstname . ' ' . $item->patient->lastname,
+        //             'Patient No' => $item->patient->patientno,
+        //             'Card No' => $item->patient->cardno,
+        //             'Billing Date' => $item->billing_date,
+        //             'Item Name' => $item->item_name,
+        //             'Quantity' => $item->quantity,
+        //             'Unit Price' => $item->unit_price,
+        //             'Sub Total' => $item->sub_total,
+        //             'Tax Amount' => $item->tax_amount,
+        //             'Grand Total' => $item->grand_total,
+        //             'Payment Method' => $item->payment_method,
+        //             'Payment Status' => $item->payment_status,
+        //             'Service Type' => $item->serviceType->name ?? '',
+        //             'Service Unit' => $item->serviceUnit->name ?? '',
+        //             'Created At' => $item->created_at->toDateTimeString(),
+        //         ];
+        //     });
 
 
 
-            return $query->latest()->paginate(10);
-        }
+        //       return response()->json($exportData);
+        // }
 
         // Default paginate
         return $query->latest()->paginate(10);
