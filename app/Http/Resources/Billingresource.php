@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources;
 
+use App\Models\ServiceDepartment;
+use App\Models\ServiceUnit;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -14,8 +16,11 @@ class Billingresource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $service_type = optional($this->service_type);
-        $service_unit  = optional($this->service_unit);
+        // $service_type = optional($this->service_type);
+        // $service_unit  = optional($this->service_unit);
+        // ServiceUnit
+        $service_unit = optional(ServiceUnit::where('id', $this->service_unit_id)->first());
+        $service_type =  optional(ServiceDepartment::where('id', $this->service_type_id)->first());
         return [
             "invoice_number" => $this->invoice_number,
             "patient_id" => $this->patient_id,
@@ -33,8 +38,8 @@ class Billingresource extends JsonResource
             "sub_total" => $this->sub_total,
             "tax_amount" => $this->tax_amount,
             "grand_total" => $this->grand_total,
-            "service_name" => $this->service_type?->name ?? "",
-            "service_unit" => $this->service_unit?->name ?? ""
+            "service_name" => $service_unit?->name ?? "",
+            "service_unit" => $service_type?->name ?? ""
         ];
     }
 }
