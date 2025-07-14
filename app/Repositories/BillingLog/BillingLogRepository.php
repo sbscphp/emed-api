@@ -34,8 +34,24 @@ class BillingLogRepository implements BillingLogRepositoryInterface
             },
             'patient.service'
         ]]);
+        // if (!empty($request['search'])) {
+        //     $search = $request['search'];
+        //     $query->where(function ($q) use ($search) {
+        //         $q->where('invoice_number', 'like', "%$search%")
+        //             ->orWhere('item_name', 'like', "%$search%")
+        //             ->orWhere('payment_status', 'like', "%$search%")
+        //             ->orWhereHas('patient', function ($pq) use ($search) {
+        //                 $pq->where('firstname', 'like', "%$search%")
+        //                     ->orWhere('lastname', 'like', "%$search%")
+        //                     ->orWhere('patientno', 'like', "%$search%")
+        //                     ->orWhere('cardno', 'like', "%$search%");
+        //             });
+        //     });
+        // }
+
         if (!empty($request['search'])) {
             $search = $request['search'];
+
             $query->where(function ($q) use ($search) {
                 $q->where('invoice_number', 'like', "%$search%")
                     ->orWhere('item_name', 'like', "%$search%")
