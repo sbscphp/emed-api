@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Helpers\ExportHelper;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\BillingLogRequest;
@@ -13,6 +14,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
+use App\Http\Resources\Billingresource;
+use App\Models\BillingLog;
 
 class BillingController extends Controller
 {
@@ -42,6 +45,19 @@ class BillingController extends Controller
             'from' => "nullable|string",
             'to' => "nullable|string"
         ]);
+
+        if ($request['export'] === 'csv') {
+
+            $billinglog = BillingLog::with(['serviceType', 'serviceUnit', 'patient.service'])->get();
+            $exportData = Billingresource::collection($billinglog)->resolve();
+            return ExportHelper::streamCsv($exportData, null, 'billing-records.csv');
+        }
+
+        if ($request['export'] === 'pdf') {
+            $billinglog = BillingLog::with(['serviceType', 'serviceUnit', 'patient.service'])->get();
+            $exportData = Billingresource::collection($billinglog)->resolve();
+            return ExportHelper::downloadPdf($exportData, 'billing-records.pdf');
+        }
         $billings = $this->billingService->all($validated);
         if (
             $billings instanceof \Symfony\Component\HttpFoundation\BinaryFileResponse ||

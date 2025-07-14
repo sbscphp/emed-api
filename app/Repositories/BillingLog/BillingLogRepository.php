@@ -81,13 +81,7 @@ class BillingLogRepository implements BillingLogRepositoryInterface
                 ];
             });
 
-            if ($request['export'] === 'csv') {
-                return ExportHelper::streamCsv($exportData->toArray(), null, 'billing-records.csv');
-            }
 
-            if ($request['export'] === 'pdf') {
-                return ExportHelper::downloadPdf($exportData->toArray(), 'billing-records.pdf');
-            }
 
             return $query->latest()->paginate(10);
         }
