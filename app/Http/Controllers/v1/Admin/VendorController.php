@@ -146,14 +146,15 @@ class VendorController extends Controller
     public function getVendorStats()
     {
 
-        // try {
-        DB::connection('tenant')->beginTransaction();
-        $stats = $this->service->getVendorStats();
-        DB::connection('tenant')->commit();
-        return JsonResponser::send(false, 'Vendor stats fetched successfully', $stats);
-        // } catch (\Exception $e) {
-        //     return JsonResponser::send(true, 'Internal server error', [], 500, $e);
-        // }
+        try {
+            DB::connection('tenant')->beginTransaction();
+            $stats = $this->service->getVendorStats();
+            DB::connection('tenant')->commit();
+            return JsonResponser::send(false, 'Vendor stats fetched successfully', $stats);
+        } catch (\Exception $e) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+        }
     }
 
     public function update_status(UpdateStatusVendorRequest $request, $id)

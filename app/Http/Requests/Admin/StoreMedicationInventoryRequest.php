@@ -14,9 +14,9 @@ class StoreMedicationInventoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'vendor_id' => 'nullable|exists:tenant.vendors,id',
-            'medication_id' => 'nullable|exists:tenant.medications,id',
-            'pharmacy_id' => 'nullable|exists:tenant.pharmacies,id',
+            'vendor_id' => 'required|numeric|exists:tenant.vendors,id',
+            'medication_id' => 'required|numeric|exists:tenant.medications,id',
+            'pharmacy_id' => 'required|numeric|exists:tenant.pharmacies,id',
             'shipment_no' => 'nullable|string|max:255',
             'batch_no' => 'required|string|max:255',
             'mfg_date' => 'required|date',
