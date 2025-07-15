@@ -100,7 +100,7 @@ class VendorService
     public function getVendorStats()
     {
 
-        dd(json_encode([MedicationInventory::all(), "\r\n", Vendor::all()]));
+        // dd(json_encode([MedicationInventory::all(), "\r\n", Vendor::all()]));
         $totalVendors = Vendor::count();
 
         $totalSpend = MedicationInventory::sum(DB::raw('received_qty * price'));
@@ -109,7 +109,7 @@ class VendorService
             $q->where('status', 'active');
         })->where('shipment_status', 'pending')->count();
 
-        $mostSuppliedItem = MedicationInventory::select('brand_name', DB::raw('SUM(received_qty) as total'))
+        $mostSuppliedItem = MedicationInventory::select('brand_name', DB::raw('SUM(CAST(received_qty AS UNSIGNED)) as total'))
             ->groupBy('brand_name')
             ->orderByDesc('total')
             ->first();
