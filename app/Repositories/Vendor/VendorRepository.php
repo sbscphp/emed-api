@@ -22,26 +22,26 @@ class VendorRepository implements VendorInterface
 
         if (!empty($filters['vendor_name'])) {
             $query->where(function ($q) use ($filters) {
-                $q->where('vendor_name', 'like', '%' . $filters['vendor_name'] . '%');
+                $q->where('vendor_name', 'like', "%{$filters['vendor_name']}%");
             });
         }
 
 
         if (!empty($filters['contact_person'])) {
             $query->where(function ($q) use ($filters) {
-                $q->where('contact_person', 'like', '%' . $filters['contact_person'] . '%');
+                $q->where('contact_person', 'like', "%{$filters['contact_person']}");
             });
         }
 
         if (!empty($filters['email'])) {
             $query->where(function ($q) use ($filters) {
-                $q->where('email', 'like', '%' . $filters['email'] . '%');
+                $q->where('email', 'like', "%{$filters['email']}%");
             });
         }
 
         if (!empty($filters['phone_number'])) {
             $query->where(function ($q) use ($filters) {
-                $q->where('phone_number', 'like', '%' . $filters['phone_number'] . '%');
+                $q->where('phone_number', 'like', "%{$filters['phone_number']}%");
             });
         }
 
