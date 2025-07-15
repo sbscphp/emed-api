@@ -38,13 +38,13 @@ class BillingLogRepository implements BillingLogRepositoryInterface
 
         if (!empty($request['patient_service_unit'])) {
             $query->whereHas('serviceUnit', function ($q) use ($request) {
-                $q->where('name', $request['patient_service_unit']);
+                $q->where('name', 'like', "%{$request['patient_service_unit']}%");
             });
         }
 
         if (!empty($request['patient_service_type'])) {
             $query->whereHas('serviceType', function ($q) use ($request) {
-                $q->where('name', $request['patient_service_type']);
+                $q->where('name',  'like',  "%{$request['patient_service_type']}%");
             });
         }
 
