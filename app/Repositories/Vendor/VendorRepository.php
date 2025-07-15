@@ -20,12 +20,28 @@ class VendorRepository implements VendorInterface
     {
         $query = Vendor::query();
 
-        if (!empty($filters['search'])) {
+        if (!empty($filters['vendor_name'])) {
             $query->where(function ($q) use ($filters) {
-                $q->where('vendor_name', 'like', '%' . $filters['search'] . '%')
-                    ->orWhere('contact_person', 'like', '%' . $filters['search'] . '%')
-                    ->orWhere('email', 'like', '%' . $filters['search'] . '%')
-                    ->orWhere('phone_number', 'like', '%' . $filters['search'] . '%');
+                $q->where('vendor_name', 'like', '%' . $filters['vendor_name'] . '%');
+            });
+        }
+
+
+        if (!empty($filters['contact_person'])) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('contact_person', 'like', '%' . $filters['contact_person'] . '%');
+            });
+        }
+
+        if (!empty($filters['email'])) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('email', 'like', '%' . $filters['email'] . '%');
+            });
+        }
+
+        if (!empty($filters['phone_number'])) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('phone_number', 'like', '%' . $filters['phone_number'] . '%');
             });
         }
 

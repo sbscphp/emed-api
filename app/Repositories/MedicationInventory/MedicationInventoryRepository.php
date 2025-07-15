@@ -28,7 +28,6 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
             $query->where(function ($q) use ($search) {
                 $q->where('batch_no', 'like', "%{$search}%")
                     ->orWhere('shipment_status', 'like', "%{$search}%")
-
                     ->orWhereHas('pharmacy', function ($pq) use ($search) {
                         $pq->where('name', 'like', "%{$search}%");
                     });
@@ -43,7 +42,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         }
 
 
-
+       
         if (!empty($filters['brand_name'])) {
             $product =   $filters['brand_name'];
             $query->whereHas('medication', function ($mq) use ($product) {
