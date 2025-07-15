@@ -276,46 +276,82 @@ class UserController extends Controller
     public function run_migration(Request $request,  Tenancy $tenancy)
     {
         $validated  =   $request->validate([
-            "path" => 'required|string'
+            "path" => 'required|string',
+            'type' => "required|string|in:tenant,landlord,both"
         ]);
 
 
 
-        Artisan::call('migrate', [
-            '--database' => 'mysql',
-            '--path' => $validated['path'],
-            '--force' => true,
-        ]);
+
 
         $tenants = Tenant::all();
 
-        foreach ($tenants as  $tenant) {
-            $tenantDb = $tenant->database;
-            $dbExists = DB::select("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?", [$tenantDb]);
-
-            if (!$dbExists) {
-                logger("Skipping tenant '{$tenantDb}' — database does not exist.");
-                continue;
-            }
-
-            DB::purge('tenant');
-
-            Config::set('database.connections.tenant.database',  $tenant?->database);
-
-            DB::reconnect('tenant');
-
-            logger("Running migrations for tenant: " . $tenantDb);
-
-
-
+        if ($validated['type'] == 'both') {
             Artisan::call('migrate', [
-                '--database' => 'tenant',
+                '--database' => 'mysql',
                 '--path' => $validated['path'],
                 '--force' => true,
             ]);
+
+            foreach ($tenants as  $tenant) {
+                $tenantDb = $tenant->database;
+                $dbExists = DB::select("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?", [$tenantDb]);
+
+                if (!$dbExists) {
+                    logger("Skipping tenant '{$tenantDb}' — database does not exist.");
+                    continue;
+                }
+
+                DB::purge('tenant');
+
+                Config::set('database.connections.tenant.database',  $tenant?->database);
+
+                DB::reconnect('tenant');
+
+                logger("Running migrations for tenant: " . $tenantDb);
+
+
+
+                Artisan::call('migrate', [
+                    '--database' => 'tenant',
+                    '--path' => $validated['path'],
+                    '--force' => true,
+                ]);
+            }
+            return response()->json(['success' => 'successful migrations']);
+        } else if ($validated['type'] == 'landlord') {
+            Artisan::call('migrate', [
+                '--database' => 'mysql',
+                '--path' => $validated['path'],
+                '--force' => true,
+            ]);
+        } else if ($validated['type'] == 'tenant') {
+            foreach ($tenants as  $tenant) {
+                $tenantDb = $tenant->database;
+                $dbExists = DB::select("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?", [$tenantDb]);
+
+                if (!$dbExists) {
+                    logger("Skipping tenant '{$tenantDb}' — database does not exist.");
+                    continue;
+                }
+
+                DB::purge('tenant');
+
+                Config::set('database.connections.tenant.database',  $tenant?->database);
+
+                DB::reconnect('tenant');
+
+                logger("Running migrations for tenant: " . $tenantDb);
+
+
+
+                Artisan::call('migrate', [
+                    '--database' => 'tenant',
+                    '--path' => $validated['path'],
+                    '--force' => true,
+                ]);
+            }
+            return response()->json(['success' => 'successful migrations']);
         }
-
-
-        return response()->json(['success' => 'successful migrations']);
     }
 }
