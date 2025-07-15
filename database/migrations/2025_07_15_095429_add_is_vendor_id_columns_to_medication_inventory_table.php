@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('medication_inventory', function (Blueprint $table) {
-            $table->foreignId('vendor_id')->references('id')->on('vendors')->onDelete('cascade');
+            $table->foreignId('vendor_id')->nullable()->constrained('vendors')->onDelete('cascade');
         });
     }
 
