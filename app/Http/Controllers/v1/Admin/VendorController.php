@@ -147,9 +147,9 @@ class VendorController extends Controller
     {
 
         // try {
-        DB::connection('landlord')->beginTransaction();
+        DB::connection('tenant')->beginTransaction();
         $stats = $this->service->getVendorStats();
-        DB::connection('landlord')->commit();
+        DB::connection('tenant')->commit();
         return JsonResponser::send(false, 'Vendor stats fetched successfully', $stats);
         // } catch (\Exception $e) {
         //     return JsonResponser::send(true, 'Internal server error', [], 500, $e);
@@ -159,6 +159,7 @@ class VendorController extends Controller
     public function update_status(UpdateStatusVendorRequest $request, $id)
     {
         try {
+            config(['database.default' => 'tenant']);
             DB::connection('landlord')->beginTransaction();
             $validated = $request->validated();
             $result = $this->service->update_status($validated, $id);
