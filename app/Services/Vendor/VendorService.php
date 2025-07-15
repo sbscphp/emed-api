@@ -113,20 +113,14 @@ class VendorService
             ->groupBy('brand_name')
             ->orderByDesc('total')
             ->first();
-        dd(json_encode([
+
+        return [
             'total_vendors' => $totalVendors,
             'total_spend' => $totalSpend,
             'pending_supply_orders' => $pendingSupplyOrders,
             'most_supplied_item' => $mostSuppliedItem ? $mostSuppliedItem->brand_name : null,
             'most_supplied_qty' => $mostSuppliedItem ? (int) $mostSuppliedItem->total : 0,
-        ]));
-        // return [
-        //     'total_vendors' => $totalVendors,
-        //     'total_spend' => $totalSpend,
-        //     'pending_supply_orders' => $pendingSupplyOrders,
-        //     'most_supplied_item' => $mostSuppliedItem ? $mostSuppliedItem->brand_name : null,
-        //     'most_supplied_qty' => $mostSuppliedItem ? (int) $mostSuppliedItem->total : 0,
-        // ];
+        ];
 
 
         // $totalVendors = Vendor::count();
