@@ -280,16 +280,12 @@ class UserController extends Controller
             'type' => "required|string|in:tenant,landlord,both"
         ]);
 
-
-
-
-
         $tenants = Tenant::all();
 
         if ($validated['type'] == 'both') {
             Artisan::call('migrate', [
                 '--database' => 'mysql',
-                '--path' => $validated['path'],
+                '--path' => $validated['path'] . ".php",
                 '--force' => true,
             ]);
 
@@ -314,7 +310,7 @@ class UserController extends Controller
 
                 Artisan::call('migrate', [
                     '--database' => 'tenant',
-                    '--path' => $validated['path'],
+                    '--path' => $validated['path'] . ".php",
                     '--force' => true,
                 ]);
             }
@@ -322,7 +318,7 @@ class UserController extends Controller
         } else if ($validated['type'] == 'landlord') {
             Artisan::call('migrate', [
                 '--database' => 'mysql',
-                '--path' => $validated['path'],
+                '--path' => $validated['path'] . ".php",
                 '--force' => true,
             ]);
         } else if ($validated['type'] == 'tenant') {
@@ -347,7 +343,7 @@ class UserController extends Controller
 
                 Artisan::call('migrate', [
                     '--database' => 'tenant',
-                    '--path' => $validated['path'],
+                    '--path' => $validated['path'] . ".php",
                     '--force' => true,
                 ]);
             }
