@@ -99,6 +99,8 @@ class VendorService
 
     public function getVendorStats()
     {
+
+        dd(json_encode([MedicationInventory::all(), "\r\n", Vendor::all()]));
         $totalVendors = Vendor::count();
 
         $totalSpend = MedicationInventory::sum(DB::raw('received_qty * price'));
