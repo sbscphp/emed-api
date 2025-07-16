@@ -193,6 +193,9 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/all/services', [BillingController::class, 'getAllServiceUnitsAndTypes']);
                     Route::get('/service-unit/{id}', [BillingController::class, 'getBillingByServiceUnit']);
                     Route::get('/service-type/all', [BillingController::class, 'getBillingByServiceType']);
+                    Route::post('/createservice', [BillingController::class, 'createservice']);
+                    // editservice
+                    Route::put('/editservice', [BillingController::class, 'editservice']);
                 });
 
                 Route::group(['prefix' => 'report', 'middleware' => 'admin.superadmin'], function () {

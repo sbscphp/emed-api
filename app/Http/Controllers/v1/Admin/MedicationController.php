@@ -6,6 +6,7 @@ use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\MedicationCsvUploadRequest;
 use App\Http\Requests\Admin\MedicationRequest;
+use App\Http\Requests\MedicationUpdateRequest;
 use App\Responser\JsonResponser;
 use App\Services\Medication\MedicationService;
 use App\Services\User\UserService;
@@ -175,8 +176,9 @@ class MedicationController extends Controller
     }
 
 
-    public function update(MedicationRequest $request, $id)
+    public function update(MedicationUpdateRequest $request, $id)
     {
+        // MedicationUpdateRequest
         try {
             $data = $request->all();
             $medicine = $this->medicationService->find($id);

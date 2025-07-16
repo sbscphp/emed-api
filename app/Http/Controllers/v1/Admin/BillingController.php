@@ -18,6 +18,7 @@ use App\Http\Resources\Billingresource;
 use App\Models\BillingLog;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Response;
+use App\Http\Requests\CreateServiceRequest;
 
 class BillingController extends Controller
 {
@@ -85,6 +86,36 @@ class BillingController extends Controller
         // } catch (\Exception $e) {
         //     return JsonResponser::send(true, 'Internal server error', [], 500, $e);
         // }
+    }
+
+    // serviceFetch
+
+    public function createservice(CreateServiceRequest $request)
+    {
+        try {
+            DB::connection('tenant')->beginTransaction();
+            $validated =  $request->validated();
+            $data = $this->serviceFetch->create($validated);
+            return JsonResponser::send(false, 'Service created successfully', $data, 200);
+            DB::connection('tenant')->commit();
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+        }
+    }
+
+    public function editservice(CreateServiceRequest $request)
+    {
+        try {
+            DB::connection('tenant')->beginTransaction();
+            $validated =  $request->validated();
+            $data = $this->serviceFetch->update($validated['name'], $validated['id']);
+            return JsonResponser::send(false, 'Service edit successfully', $data, 200);
+            DB::connection('tenant')->commit();
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+        }
     }
 
     public function store(BillingLogRequest $request)
