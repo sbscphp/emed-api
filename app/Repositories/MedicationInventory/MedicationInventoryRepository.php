@@ -51,7 +51,8 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
                     ->orWhereHas('medication', function ($medicationQuery) use ($search) {
                         $medicationQuery->where(function ($medicationSubQuery) use ($search) {
                             $medicationSubQuery->where('medicine_name', 'like', "%{$search}%")
-                                ->orWhere('generic_name', 'like', "%{$search}%");
+                                ->orWhere('generic_name', 'like', "%{$search}%")
+                                ->orWhere('brand_name', 'like', "%{$search}%");
                         });
                     });
             });
