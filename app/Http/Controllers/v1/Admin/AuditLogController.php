@@ -139,17 +139,22 @@ class AuditLogController extends Controller
     }
 
 
-    public function fetch_medical_log()
+    public function fetch_medical_log(Request $request)
     {
 
+
         try {
+            $validate = $request->validate([
+                "search" => "nullable|string"
+            ]);
+            $search = $validate['search'];
             config(['database.default' => 'tenant']);
             DB::connection('tenant');
             $medical_log = AuditLog::whereIn('action_type', [
                 'App\Models\MedicalHistory',
                 'App\Models\Medication',
                 'App\Models\MedicineType'
-            ])->when($request->get('search'), function ($query, $search) {
+            ])->when(!empty($search), function ($query, $search) {
                 $query->where('action_type', 'LIKE', "%{$search}%");
             })->get();
 

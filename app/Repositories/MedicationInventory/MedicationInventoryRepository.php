@@ -42,7 +42,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         }
 
 
-       
+
         if (!empty($filters['brand_name'])) {
             $product =   $filters['brand_name'];
             $query->whereHas('medication', function ($mq) use ($product) {
@@ -59,7 +59,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         }
 
 
-        if (isset($filters['from'], $filters['to'])) {
+        if (!empty($filters['to']) && !empty($filters['from'])) {
             $from = Carbon::parse($filters['from'])->startOfDay();
             $to = Carbon::parse($filters['to'])->endOfDay();
             $query->whereBetween('created_at', [$from, $to]);
