@@ -46,11 +46,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
 
 
         if (!empty($filters['brand_name'])) {
-            $query->whereHas('medication', function ($mq) use ($filters) {
-                if (!empty($filters['brand_name'])) {
-                    $mq->where('brand_name', 'like', "%{$filters['brand_name']}%");
-                }
-            });
+            $query->where('brand_name', 'like', "%{$filters['brand_name']}%");
         }
 
 
