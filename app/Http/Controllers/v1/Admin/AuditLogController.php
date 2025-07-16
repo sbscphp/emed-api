@@ -155,13 +155,17 @@ class AuditLogController extends Controller
                 'App\Models\Medication',
                 'App\Models\MedicineType',
                 'Models\MedicineType',
-                // 'Models\Pharmacy',
+                'Models\Pharmacy',
                 'Models\MedicineInventory',
-                'Models\Medicine'
+                'Models\Medicine',
+                'Models\MedicalHistory',
             ])
                 ->when(!empty($validate['search']), function ($query, $validate) {
                     $query->where('action_type', 'LIKE', "%{$validate['search']}%");
                 })->paginate(10);
+
+            $database  = [1, 2, 3, 4, 5, 6];
+            $array = [1, 2, 3, 4,];
 
 
             if ($medical_log->isNotEmpty()) {
