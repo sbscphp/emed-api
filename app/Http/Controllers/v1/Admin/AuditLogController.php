@@ -150,13 +150,15 @@ class AuditLogController extends Controller
             // $search = $validate['search'];
             config(['database.default' => 'tenant']);
             DB::connection('tenant');
-            $medical_log = AuditLog::whereIn('action_type', [
-                'App\Models\MedicalHistory',
-                'App\Models\Medication',
-                'App\Models\MedicineType'
-            ])->when(!empty($validate['search']), function ($query, $validate) {
-                $query->where('action_type', 'LIKE', "%{$validate['search']}%");
-            })->get();
+            $medical_log = AuditLog::
+                // whereIn('action_type', [
+                //     'App\Models\MedicalHistory',
+                //     'App\Models\Medication',
+                //     'App\Models\MedicineType'
+                // ])
+                when(!empty($validate['search']), function ($query, $validate) {
+                    $query->where('action_type', 'LIKE', "%{$validate['search']}%");
+                })->get();
 
             if ($medical_log->isNotEmpty()) {
                 DB::connection('tenant')->commit();
