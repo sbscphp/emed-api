@@ -35,26 +35,30 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         }
 
         if (!empty($filters['medicine_name'])) {
-            $product =   $filters['medicine_name'];
-            $query->whereHas('medication', function ($mq) use ($product) {
-                $mq->where('medicine_name', 'like', "%{$product}%");
+
+            $query->whereHas('medication', function ($mq) use ($filters) {
+                if (!empty($filters['medicine_name'])) {
+                    $mq->where('medicine_name', 'like', "%{$filters['medicine_name']}%");
+                }
             });
         }
 
 
 
         if (!empty($filters['brand_name'])) {
-            $product =   $filters['brand_name'];
-            $query->whereHas('medication', function ($mq) use ($product) {
-                $mq->where('brand_name', 'like', "%{$product}%");
+            $query->whereHas('medication', function ($mq) use ($filters) {
+                if (!empty($filters['brand_name'])) {
+                    $mq->where('brand_name', 'like', "%{$filters['brand_name']}%");
+                }
             });
         }
 
 
         if (!empty($filters['generic_name'])) {
-            $product =   $filters['generic_name'];
-            $query->whereHas('medication', function ($mq) use ($product) {
-                $mq->where('generic_name', 'like', "%{$product}%");
+            $query->whereHas('medication', function ($mq) use ($filters) {
+                if (!empty($filters['generic_name'])) {
+                    $mq->where('generic_name', 'like', "%{$filters['generic_name']}%");
+                }
             });
         }
 
