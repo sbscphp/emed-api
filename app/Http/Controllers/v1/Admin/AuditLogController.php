@@ -155,12 +155,14 @@ class AuditLogController extends Controller
                 'App\Models\Medication',
                 'App\Models\MedicineType',
                 'Models\MedicineType',
-                'Models\Pharmacy',
+                // 'Models\Pharmacy',
                 'Models\MedicineInventory',
+                'Models\Medicine'
             ])
                 ->when(!empty($validate['search']), function ($query, $validate) {
                     $query->where('action_type', 'LIKE', "%{$validate['search']}%");
-                })->get();
+                })->paginate(10);
+
 
             if ($medical_log->isNotEmpty()) {
                 DB::connection('tenant')->commit();
