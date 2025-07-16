@@ -20,7 +20,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         $query = MedicationInventory::with(['medication', 'pharmacy'])->orderBy('created_at', 'desc');
 
         if (!empty($filters['shipment_status'])) {
-            $query->where('shipment_status', $filters['shipment_status']);
+            $query->where('shipment_status', 'like', "%{$filters['shipment_status']}%");
         }
 
         if (!empty($filters['search'])) {
