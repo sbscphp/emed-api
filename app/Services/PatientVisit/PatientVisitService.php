@@ -126,7 +126,7 @@ class PatientVisitService
         return PatientVisit::where('patient_id', $patientId)->first();
     }
 
-    public function updateStage(PatientVisit $visit, string $stage): void
+    public function updateStage(PatientVisit $visit,  $stage): void
     {
         $visit->update(['stage' => $stage]);
     }
@@ -212,27 +212,27 @@ class PatientVisitService
             //     ];
             // });
 
-           $data = PatientVisitResources::collection($paginated)->toArray(request());
+            $data = PatientVisitResources::collection($paginated)->toArray(request());
 
 
-           $fetch = [
-            "data"=>collect($data),
-             "link"=>[
-                   'first' => $paginated->url(1),
+            $fetch = [
+                "data" => collect($data),
+                "link" => [
+                    'first' => $paginated->url(1),
                     'last'  => $paginated->url($paginated->lastPage()),
                     'prev'  => $paginated->previousPageUrl(),
                     'next'  => $paginated->nextPageUrl(),
-             ],
-             "pages"=>[
-                        'current_page' => $paginated->currentPage(),
-                        'from'         => $paginated->firstItem(),
-                        'last_page'    => $paginated->lastPage(),
-                        'path'         => $paginated->path(),
-                        'per_page'     => $paginated->perPage(),
-                        'to'           => $paginated->lastItem(),
-                        'total'        => $paginated->total(),
-             ]
-             ];
+                ],
+                "pages" => [
+                    'current_page' => $paginated->currentPage(),
+                    'from'         => $paginated->firstItem(),
+                    'last_page'    => $paginated->lastPage(),
+                    'path'         => $paginated->path(),
+                    'per_page'     => $paginated->perPage(),
+                    'to'           => $paginated->lastItem(),
+                    'total'        => $paginated->total(),
+                ]
+            ];
 
             return collect($fetch);
         }

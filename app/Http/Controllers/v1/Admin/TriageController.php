@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
-
+use App\Enums\PatientVisitStageEnums;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\TriageRequest;
+use App\Models\Medicine_Log;
 use App\Responser\JsonResponser;
 use App\Services\Patient\PatientService;
 use App\Services\PatientVisit\PatientVisitService;
@@ -55,8 +56,22 @@ class TriageController extends Controller
                 $validated
             );
 
-            $this->patientVisitService->updateStage($visit, 'consultation');
+            $this->patientVisitService->updateStage($visit, PatientVisitStageEnums::CONSULTATION);
             $this->patientService->updateNewToExisting();
+
+
+            $medicine_Log = Medicine_Log::where(['visitno' => $visit->visitno, 'patient_id' => $patientId])->first();
+
+            if ($medicine_Log) {
+                $medicine_Log->update([
+                    'medication_id' => null,
+                    'pharmacy_id' => null,
+                    'presscribed_drug' => null,
+                    'patient_status' => PatientVisitStageEnums::CONSULTATION,
+                    'status' => 'Not Fulfilled',
+                    'action' => null
+                ]);
+            }
 
             GeneralHelper::storeAuditLog([
                 'causer_id'     => $user->id,

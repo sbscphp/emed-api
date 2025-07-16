@@ -12,6 +12,7 @@ use App\Http\Requests\Admin\TreatmentRequest;
 use App\Models\DrugHistory;
 use App\Models\FamilyHistory;
 use App\Models\MedicalHistory;
+use App\Models\Medicine_Log;
 use App\Models\PatientVisit;
 use App\Models\SocialHistory;
 use App\Models\User;
@@ -210,6 +211,21 @@ class ConsultationController extends Controller
                 $patient->update(['stage' => PatientVisitStageEnums::INVESTIGATION]);
             }
 
+            //  Medicine_Log
+            $medicine_Log = Medicine_Log::where(['visitno' => $patient->visitno, 'patient_id' => $patient->patient_id])->first();
+
+            if ($medicine_Log) {
+                $medicine_Log->update([
+                    'medication_id' => null,
+                    'pharmacy_id' => null,
+                    'presscribed_drug' => null,
+                    'patient_status' => PatientVisitStageEnums::INVESTIGATION,
+                    'status' => 'Not Fulfilled',
+                    'action' => null
+                ]);
+            }
+
+
             if (!empty($request->follow_up && !empty($request->followUp_date))) {
                 $data = [
                     'patient_id' => $patient->patient_id,
@@ -221,6 +237,14 @@ class ConsultationController extends Controller
             //Save record if patient is admitted
             if (!empty($request->admitted)) {
                 $data = ['patient_id' => $patient->patient_id, 'admission_date' => Carbon::now()];
+                $medicine_Log->update([
+                    'medication_id' => null,
+                    'pharmacy_id' => null,
+                    'presscribed_drug' => null,
+                    'patient_status' => PatientVisitStageEnums::ADMITTED,
+                    'status' => 'Not Fulfilled',
+                    'action' => null
+                ]);
                 $this->admissionService->create($data);
             }
 
@@ -392,7 +416,23 @@ class ConsultationController extends Controller
                 if ($treatment) {
                     $treatmentIds[] = $treatment->id;
                 }
+
+                $medicine_Log = Medicine_Log::where(['visitno' => $consultation->visitno, 'patient_id' => $consultation->patient_id])->first();
+
+                if ($medicine_Log) {
+                    $medicine_Log->update([
+                        'medication_id' => $med['drug_id'],
+                        'pharmacy_id' => $med['pharmacy_id'],
+                        'presscribed_drug' => $med['drug'],
+                        'patient_status' => PatientVisitStageEnums::TREATMENT,
+                        'status' => 'Fulfilled',
+                        'action' => null
+                    ]);
+                }
             }
+
+
+
 
             foreach ($treatmentIds as $treatmentId) {
                 $dataToLog = [

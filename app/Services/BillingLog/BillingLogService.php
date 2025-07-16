@@ -2,7 +2,10 @@
 
 namespace App\Services\BillingLog;
 
+use App\Enums\PatientVisitStageEnums;
 use App\Models\BillingLog;
+use App\Models\Medicine_Log;
+use App\Models\PatientVisit;
 use App\Repositories\BillingLog\BillingLogRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -40,7 +43,22 @@ class BillingLogService
         $data['sub_total'] = $subTotal;
         $data['tax_amount'] = $taxAmount;
         $data['grand_total'] = $grandTotal;
+        $patientVisit = optional(PatientVisit::where('id', intval($data['visit_id']))->first());
 
+
+
+        $medicine_Log = Medicine_Log::where(['visitno' => $patientVisit->visitno, 'patient_id' => $patientVisit->patient_id])->first();
+
+        if ($medicine_Log) {
+            $medicine_Log->update([
+                // 'medication_id' => $med['drug_id'],
+                // 'pharmacy_id' => $med['pharmacy_id'],
+                // 'presscribed_drug' => $med['drug'],
+                'patient_status' => PatientVisitStageEnums::DISCHARGED,
+                // 'status' => 'Fulfilled',
+                // 'action' => null
+            ]);
+        }
         return $this->repo->create($data);
     }
 

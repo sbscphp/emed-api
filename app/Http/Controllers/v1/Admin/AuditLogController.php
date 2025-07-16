@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Response as FacadesResponse;
 use App\Models\AuditLog;
+use App\Models\Medicine_Log;
 
 class AuditLogController extends Controller
 {
@@ -145,27 +146,22 @@ class AuditLogController extends Controller
 
         try {
             $validate = $request->validate([
-                "search" => "nullable|string"
+                "patient_status" => "nullable|string",
+                'status' => "nullable|string"
             ]);
             // $search = $validate['search'];
             config(['database.default' => 'tenant']);
             DB::connection('tenant');
-            $medical_log = AuditLog::whereIn('action_type', [
-                'App\Models\MedicalHistory',
-                'App\Models\Medication',
-                'App\Models\MedicineType',
-                'Models\MedicineType',
-                'Models\Pharmacy',
-                'Models\MedicineInventory',
-                'Models\Medicine',
-                'Models\MedicalHistory',
-            ])
-                ->when(!empty($validate['search']), function ($query, $validate) {
-                    $query->where('action_type', 'LIKE', "%{$validate['search']}%");
-                })->paginate(10);
+            $medical_log = Medicine_Log::when(!empty($validate['patient_status']), function ($query, $validate) {
+                $query->where('patient_status', 'LIKE', "%{$validate['patient_status']}%");
+            })
+                ->when(!empty($validate['status']), function ($query, $validate) {
+                    $query->where('status', 'LIKE', "%{$validate['status']}%");
+                })
+                ->paginate(10);
 
-            $database  = [1, 2, 3, 4, 5, 6];
-            $array = [1, 2, 3, 4,];
+            // $database  = [1, 2, 3, 4, 5, 6];
+            // $array = [1, 2, 3, 4,];
 
 
             if ($medical_log->isNotEmpty()) {

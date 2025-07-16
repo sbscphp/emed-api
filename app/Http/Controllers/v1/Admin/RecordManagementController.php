@@ -27,6 +27,7 @@ use Spatie\Multitenancy\Models\Tenant;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\PatientVisitExport;
 use App\Http\Resources\PatientDetailResoures;
+use App\Models\Medicine_Log;
 use App\Models\Patient;
 use App\Models\PatientVisit;
 use App\Models\User;
@@ -371,6 +372,21 @@ class RecordManagementController extends Controller
 
             }
 
+            // Medicine_Log
+
+            Medicine_Log::created([
+                'patient_id' => $patient->id,
+                'visitno' => 'VIS' . GeneralHelper::generateUniqueRandomId($validate['firstname']),
+                'medication_id' => null,
+                'pharmacy_id' => null,
+                'presscribed_drug' => null,
+                'patient_status' => PatientVisitStageEnums::TRIAGE,
+                'status' => 'Not Fulfilled',
+                'arrival_date' => now(),
+                'action' => null
+            ]);
+
+
             $dataToLog = [
                 'causer_id' => $user->id,
                 'action_id' => $emergencyContact->id,
@@ -523,6 +539,17 @@ class RecordManagementController extends Controller
                 'status' => PatientVisitStatusEnums::ONGOING,
             ];
             $recordVisit = $this->patientVisitService->create($visitData);
+            Medicine_Log::created([
+                'patient_id' => $patient->id,
+                'visitno' => 'VIS' . GeneralHelper::generateUniqueRandomId($patient->firstname),
+                'medication_id' => null,
+                'pharmacy_id' => null,
+                'presscribed_drug' => null,
+                'patient_status' => PatientVisitStageEnums::TRIAGE,
+                'status' => 'Not Fulfilled',
+                'arrival_date' => now(),
+                'action' => null
+            ]);
 
             $dataToLog = [
                 'causer_id' => $user->id,
