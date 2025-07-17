@@ -202,6 +202,12 @@ class BillingLogService
             }
         }
 
+        // $uniquePatientIds = array_unique($patientIds);
+        // $pharm_patient = count($uniquePatientIds);
+
+        $uniquePatientIds = $patientIds;
+        $pharm_patient = count($uniquePatientIds);
+
         $laboratory =  Laboratory::all();
         $lab_amount = 0;
         foreach ($laboratory as $lab) {
@@ -211,8 +217,7 @@ class BillingLogService
 
             $lab_amount = $lab_amount + $billinglog->grand_total;
         }
-        $uniquePatientIds = array_unique($patientIds);
-        $pharm_patient = count($uniquePatientIds);
+
 
         $radiology = Radiology::get();
 
