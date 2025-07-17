@@ -255,7 +255,7 @@ class BillingLogService
                 "amount" => $patient_total
             ],
             'pharmacy' => [
-                "total" => $pharm_patient,
+                "total" => Pharmacy::count(),
                 "amount" => $bill_total,
             ],
             "laboratory" => [
