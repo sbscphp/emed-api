@@ -16,8 +16,8 @@ return new class extends Migration
 
         Schema::table('users', function (Blueprint $table) {
             // $table->boolean('is_change_password')->default(0);
-            $table->sting('first_name')->nullable();
-            $table->sting('last_name')->nullable();
+            $table->string('first_name')->nullable();
+            $table->string('last_name')->nullable();
         });
     }
 
