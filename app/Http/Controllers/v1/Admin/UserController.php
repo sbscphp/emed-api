@@ -435,12 +435,13 @@ class UserController extends Controller
             $users = User::all();
             foreach ($users as $user) {
                 $parts = explode(' ', $user->fullname);
-                if (count($parts) > 1) {
+                if (count($parts) > 0) {
                     $user->first_name = $parts[0];
-                    $user->last_name = $parts[1];
+                    $user->last_name = $parts[1] ?? null;
                     $user->save();
                 }
             }
+            return JsonResponser::send(false, "Succe", 200);
         } catch (\Throwable $th) {
             DB::connection('landlord')->rollBack();
             DB::connection('tenant')->rollBack();
