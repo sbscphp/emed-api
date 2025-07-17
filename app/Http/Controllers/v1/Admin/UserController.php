@@ -434,26 +434,26 @@ class UserController extends Controller
 
         try {
             // Landlord
-            $usersLandlord = (new User())->setConnection('landlord')->newQuery()->get();
-            foreach ($usersLandlord as $user) {
-                $parts = explode(' ', $user->fullname);
-                if (count($parts) > 0) {
-                    $user->first_name = $parts[0];
-                    $user->last_name = $parts[1] ?? null;
-                    $user->setConnection('landlord')->save();
-                }
-            }
-
-            // Tenant
-            // $usersTenant = (new User())->setConnection('tenant')->newQuery()->get();
-            // foreach ($usersTenant as $user) {
+            // $usersLandlord = (new User())->setConnection('landlord')->newQuery()->get();
+            // foreach ($usersLandlord as $user) {
             //     $parts = explode(' ', $user->fullname);
             //     if (count($parts) > 0) {
             //         $user->first_name = $parts[0];
             //         $user->last_name = $parts[1] ?? null;
-            //         $user->setConnection('tenant')->save();
+            //         $user->setConnection('landlord')->save();
             //     }
             // }
+
+            // Tenant
+            $usersTenant = (new User())->setConnection('tenant')->newQuery()->get();
+            foreach ($usersTenant as $user) {
+                $parts = explode(' ', $user->fullname);
+                if (count($parts) > 0) {
+                    $user->first_name = $parts[0];
+                    $user->last_name = $parts[1] ?? null;
+                    $user->setConnection('tenant')->save();
+                }
+            }
 
             DB::connection('landlord')->commit();
             DB::connection('tenant')->commit();
