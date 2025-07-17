@@ -6,6 +6,7 @@ use App\Enums\PatientVisitStageEnums;
 use App\Models\BillingLog;
 use App\Models\Consultation;
 use App\Models\Laboratory;
+use App\Models\Medication;
 use App\Models\Medicine_Log;
 use App\Models\Patient;
 use App\Models\PatientVisit;
@@ -187,17 +188,20 @@ class BillingLogService
         $patientIds = [];
         $bill_total = 0;
         foreach ($pharmacies as $pharmacy) {
+
+            $medication = optional(Medication::where('pharmacy_id',  $pharmacy->id)->first());
+            $bill_total =  $bill_total + intval($medication->selling_price);
             foreach ($pharmacy->treatments as $treatment) {
                 $patientIds[] = $treatment->patient_id;
 
                 foreach ($treatment->consultations as $consultation) {
                     //    $consultation->patient_id;
                     //    $consultation->visitno;
-                    $patientvisit =   optional(PatientVisit::where('visitno', $consultation->visitno)->first());
+                    // $patientvisit =   optional(PatientVisit::where('visitno', $consultation->visitno)->first());
 
-                    $billinglog =   optional(BillingLog::where('visit_id', $patientvisit->id)->first());
+                    // $billinglog =   optional(BillingLog::where('visit_id', $patientvisit->id)->first());
 
-                    $bill_total = $bill_total + $billinglog->grand_total;
+                    // $bill_total = $bill_total + $billinglog->grand_total;
                 }
             }
         }
