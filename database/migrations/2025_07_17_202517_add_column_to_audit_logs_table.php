@@ -11,19 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-
-        //   'patient_id',
-        // 'medication_id',
-        // 'pharmacy_id',
-        // 'presscribed_drug',
-        // 'patient_status',
-        // 'action',
-
-        // presscribed_drug
         Schema::table('audit_logs', function (Blueprint $table) {
-            $table->id();
             $table->string('module_accessed')->nullable();
-            $table->timestamps();
         });
     }
 
@@ -32,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('audit_logs');
+        Schema::table('audit_logs', function (Blueprint $table) {
+            //
+        });
     }
 };
