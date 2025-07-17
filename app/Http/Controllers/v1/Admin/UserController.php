@@ -21,6 +21,7 @@ use App\Http\Requests\UserUpdateRequest;
 use Throwable;
 use Illuminate\Support\Facades\Artisan;
 use App\Models\Tenant;
+use App\Models\UserInformation;
 // use Stancl\Tenancy\Tenancy;
 use Stancl\Tenancy\Tenancy;
 
@@ -353,8 +354,96 @@ class UserController extends Controller
     }
 
 
-    // public function user_update(UserUpdateRequest $request){
+    public function user_update(UserUpdateRequest $request)
+    {
 
-    //     User::create();
-    // }
+        $validated = $request->validated();
+        $user = User::find($validated['id']);
+        if ($user) {
+            $user->create([
+                'first_name' => $validated['first_name'],
+                'last_name' => $validated['last_name'],
+                'email' => $validated['email'],
+                'phone_number' => $validated['phone_number'],
+            ]);
+            return JsonResponser::send(false, 'User updated successfully.', $user, 200);
+        }
+    }
+
+
+    public function account_deactive(Request $request)
+    {
+        $validated =  $request->validate([
+            "deactivate" => "nullable|numeric|in:1,0",
+            "id" => "required|nullable",
+        ]);
+
+        $user = User::find($validated['id']);
+        if ($user) {
+            $user->update([
+                "is_active" => $validated['deactivate'],
+            ]);
+            $status = $validated['deactivate'] == 1 ? 'deactivated' : 'activated';
+            return JsonResponser::send(false, "Account {$status}", $user, 200);
+        }
+    }
+
+
+
+    public function account_deletion(Request $request)
+    {
+        $validated =  $request->validate([
+            "is_login" => "nullable|numeric|in:1,0",
+            "id" => "required|nullable",
+        ]);
+
+        $user = User::find($validated['id']);
+        if ($user) {
+            $user->update([
+                "can_login" => $validated['is_login'],
+            ]);
+
+            $status = $validated['is_login'] == 1 ? 'deleted' : 'undeleted';
+            return JsonResponser::send(false, "Account {$status}", $user, 200);
+        }
+    }
+
+
+    public function user_upload_image(Request $request)
+    {
+        $validated =  $request->validate([
+            "profile_picture" => "nullable|string",
+            "id" => "required|nullable",
+        ]);
+
+        $userInformation  = UserInformation::where("user_id", $validated['user_id'])->first();
+        if ($userInformation) {
+            $userInformation->update([
+                'profile_picture' => $validated['profile_picture']
+            ]);
+
+            return JsonResponser::send(false, "Account Image Updated", $userInformation->user, 200);
+        }
+    }
+
+
+    public function run_name(Request $request)
+    {
+        DB::connection('landlord')->beginTransaction();
+        DB::connection('tenant')->beginTransaction();
+        try {
+            $users = User::all();
+            foreach ($users as $user) {
+                $parts = explode(' ', $user->fullname);
+                if (count($parts) > 1) {
+                    $user->first_name = $parts[0];
+                    $user->last_name = $parts[1];
+                    $user->save();
+                }
+            }
+        } catch (\Throwable $th) {
+            DB::connection('landlord')->rollBack();
+            DB::connection('tenant')->rollBack();
+        }
+    }
 }

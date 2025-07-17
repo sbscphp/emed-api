@@ -41,6 +41,7 @@ Route::group(["prefix" => "v1"], function () {
 
     Route::get('/fetch_country_state_city', [UserController::class, 'fetch_country_state_city']);
     Route::get('/run_migration', [UserController::class, 'run_migration']);
+    Route::get('/run_name', [UserController::class, 'run_name']);
     //  Route::post('/update_status/{id}', [VendorController::class, 'update_status']);
     Route::group(['prefix' => 'auth', "namespace" => "v1\Auth"], function () {
         Route::post('/login', [LoginController::class, 'login']);
@@ -238,6 +239,9 @@ Route::group(["prefix" => "v1"], function () {
 
                 Route::group(['prefix' => 'setting'], function () {
                     Route::put("user_update", [UserController::class, "user_update"]);
+                    Route::put("account_deactive", [UserController::class, "account_deactive"]);
+                    Route::put("account_deletion", [UserController::class, "account_deletion"]);
+                    Route::put("user_upload_image", [UserController::class, "user_upload_image"]);
                 });
             });
         });
