@@ -429,7 +429,7 @@ class UserController extends Controller
 
     public function run_name(Request $request)
     {
-        DB::connection('landlord')->beginTransaction();
+        // DB::connection('landlord')->beginTransaction();
         DB::connection('tenant')->beginTransaction();
 
         try {
@@ -455,12 +455,12 @@ class UserController extends Controller
                 }
             }
 
-            DB::connection('landlord')->commit();
+            // DB::connection('landlord')->commit();
             DB::connection('tenant')->commit();
 
             return JsonResponser::send(false, "Success", 200);
         } catch (\Throwable $th) {
-            DB::connection('landlord')->rollBack();
+            // DB::connection('landlord')->rollBack();
             DB::connection('tenant')->rollBack();
             throw $th; // or return an error response
         }
