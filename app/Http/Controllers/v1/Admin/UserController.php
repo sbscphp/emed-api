@@ -358,7 +358,8 @@ class UserController extends Controller
     {
 
         $validated = $request->validated();
-        $user = User::find($validated['id']);
+        // $user = User::find($validated['id']);
+        $user = Auth::user();
         if ($user) {
             $user->create([
                 'first_name' => $validated['first_name'],
@@ -378,7 +379,8 @@ class UserController extends Controller
             "id" => "required|nullable",
         ]);
 
-        $user = User::find($validated['id']);
+        // $user = User::find($validated['id']);
+        $user = Auth::user();
         if ($user) {
             $user->update([
                 "is_active" => $validated['deactivate'],
@@ -386,6 +388,8 @@ class UserController extends Controller
             $status = $validated['deactivate'] == 1 ? 'deactivated' : 'activated';
             return JsonResponser::send(false, "Account {$status}", $user, 200);
         }
+
+        return JsonResponser::send(true, "User not found", null, 404);
     }
 
 
@@ -397,7 +401,8 @@ class UserController extends Controller
             "id" => "required|nullable",
         ]);
 
-        $user = User::find($validated['id']);
+        // $user = User::find($validated['id']);
+        $user = Auth::user();
         if ($user) {
             $user->update([
                 "can_login" => $validated['is_login'],
@@ -406,6 +411,7 @@ class UserController extends Controller
             $status = $validated['is_login'] == 1 ? 'deleted' : 'undeleted';
             return JsonResponser::send(false, "Account {$status}", $user, 200);
         }
+        return JsonResponser::send(true, "User not found", null, 404);
     }
 
 
@@ -424,6 +430,7 @@ class UserController extends Controller
 
             return JsonResponser::send(false, "Account Image Updated", $userInformation->user, 200);
         }
+        return JsonResponser::send(true, "User not found", null, 404);
     }
 
 
@@ -445,36 +452,36 @@ class UserController extends Controller
             // }
 
             // Tenant
-            $tenants = Tenant::all();
+            // $tenants = Tenant::all();
 
-            foreach ($tenants as $tenant) {
-                $tenantDb = $tenant->database;
+            // foreach ($tenants as $tenant) {
+            //     $tenantDb = $tenant->database;
 
-                $dbExists = DB::select("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?", [$tenantDb]);
-                if (!$dbExists) {
-                    logger("Skipping tenant '{$tenantDb}' — database does not exist.");
-                    continue;
-                }
+            //     $dbExists = DB::select("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?", [$tenantDb]);
+            //     if (!$dbExists) {
+            //         logger("Skipping tenant '{$tenantDb}' — database does not exist.");
+            //         continue;
+            //     }
 
-                DB::purge('tenant');
-                Config::set('database.connections.tenant.database', $tenantDb);
-                DB::reconnect('tenant');
+            //     DB::purge('tenant');
+            //     Config::set('database.connections.tenant.database', $tenantDb);
+            //     DB::reconnect('tenant');
 
-                logger("Updating users for tenant: " . $tenantDb);
+            //     logger("Updating users for tenant: " . $tenantDb);
 
-                // Now fetch users from this tenant's DB
-                $usersTenant = (new User())->setConnection('tenant')->newQuery()->get();
+            //     // Now fetch users from this tenant's DB
+            //     $usersTenant = (new User())->setConnection('tenant')->newQuery()->get();
 
-                foreach ($usersTenant as $user) {
-                    $parts = explode(' ', $user->fullname);
-                    if (count($parts) > 0) {
-                        $user->first_name = $parts[0];
-                        $user->last_name = $parts[1] ?? null;
-                        $user->setConnection('tenant');
-                        $user->save();
-                    }
-                }
-            }
+            //     foreach ($usersTenant as $user) {
+            //         $parts = explode(' ', $user->fullname);
+            //         if (count($parts) > 0) {
+            //             $user->first_name = $parts[0];
+            //             $user->last_name = $parts[1] ?? null;
+            //             $user->setConnection('tenant');
+            //             $user->save();
+            //         }
+            //     }
+            // }
 
 
             // DB::connection('landlord')->commit();
