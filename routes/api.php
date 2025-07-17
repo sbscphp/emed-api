@@ -113,6 +113,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/patient/family/{patientId}', [ConsultationController::class, 'storeFamilyHistory']);
                     Route::post('/patient/social/{patientId}', [ConsultationController::class, 'storeSocialHistory']);
                     Route::post('/patient/drug/{patientId}', [ConsultationController::class, 'storeDrugHistory']);
+                    Route::get('/patient_laboratory/{patientId}', [ConsultationController::class, 'patient_laboratory']);
                 });
 
                 Route::group(['prefix' => 'pharmacy', 'middleware' => 'role.pharmacy'], function () {

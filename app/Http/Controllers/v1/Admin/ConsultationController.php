@@ -151,6 +151,61 @@ class ConsultationController extends Controller
         }
     }
 
+
+
+
+
+    public function patient_laboratory($patientId)
+    {
+        try {
+            config(['database.default' => 'tenant']);
+            DB::connection('tenant');
+            $currentUser = Auth::user();
+            //$user = $this->userService->find($currentUser->id);
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
+            if (!$user) {
+                return JsonResponser::send(true, 'User not found.', null, 200);
+            }
+            $patient = optional(PatientVisit::where('patient_id', $patientId)->latest()->first());
+            $patientVisit = $this->patientVisitService->findByAttribute('visitno', $patient->visitno);
+            if (!$patientVisit) {
+                return JsonResponser::send(true, 'Record not found.', null, 200);
+            }
+            $patientVisit->load(
+                [
+                    'patient.nextOfKin',
+                    'patient.service',
+                    'patient.triage',
+                    'patient.medicalHistory',
+                    'patient.familyHistory',
+                    'patient.socialHistory',
+                    'patient.drugHistory',
+                ]
+            );
+            $consultation = $this->consultationService->findByAttribute('visitno', $patient->visitno);
+            $previousVisits = $this->patientVisitService->getPatientPreviousVisits($patientVisit->patient_id, $patient->visitno);
+            $patientVisits = $this->patientVisitService->getPatientVisits($patientVisit->patient_id);
+            $laboratory = $this->consultationService->findByVisitNoLabOrBoth($patient->visitno);
+            $radiology = $this->consultationService->findByVisitNoRadiologyOrBoth($patient->visitno);
+            $treatment = $this->treatmentService->getConsultationTreatmentByVisitNo($patient->visitno);
+
+            $response = [
+                'patientVisit' => $patientVisit,
+                'previousVisits' => $previousVisits ?? [],
+                'visits' => $patientVisits ?? [],
+                'consultation' => $consultation ?? [],
+                'laboratory' => $laboratory->test_name ?? [],
+                'radiology' => $radiology->test_name ?? [],
+                'treatment' => $treatment ?? []
+            ];
+
+            return JsonResponser::send(false, 'Records found successfully.', $response, 200);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'Internal server error.', null, 500, $th);
+        }
+    }
+
+
     public function storeConsultationInfo(ConsultationRequest $request, $visitno)
     {
         try {
