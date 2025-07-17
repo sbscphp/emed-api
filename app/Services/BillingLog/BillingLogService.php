@@ -4,8 +4,13 @@ namespace App\Services\BillingLog;
 
 use App\Enums\PatientVisitStageEnums;
 use App\Models\BillingLog;
+use App\Models\Laboratory;
 use App\Models\Medicine_Log;
+use App\Models\Patient;
 use App\Models\PatientVisit;
+use App\Models\Pharmacy;
+use App\Models\Radiology;
+use App\Models\User;
 use App\Repositories\BillingLog\BillingLogRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -166,11 +171,81 @@ class BillingLogService
     {
         $query = BillingLog::query();
 
+        $patients = Patient::with('billingLogs')->get();
+        $patient_total = 0;
+
+        // Pharmacy
+
+        foreach ($patients as $patient) {
+            foreach ($patient->billingLogs as $billingLog) {
+                $patient_total += intval($billingLog->grand_total);
+            }
+        }
+
+        $pharmacies = Pharmacy::with('treatments.consultations')->get();
+        $patientIds = [];
+        $bill_total = 0;
+        foreach ($pharmacies as $pharmacy) {
+            foreach ($pharmacy->treatments as $treatment) {
+                $patientIds[] = $treatment->patient_id;
+
+                foreach ($treatment->consultations as $consultation) {
+                    //    $consultation->patient_id;
+                    //    $consultation->visitno;
+                    $patientvisit =   optional(PatientVisit::where('visitno', $consultation->visitno)->first());
+
+                    $billinglog =   optional(BillingLog::where('visit_id', $patientvisit->id)->first());
+
+                    $bill_total = $bill_total + $billinglog->grand_total;
+                }
+            }
+        }
+
+        $laboratory =  Laboratory::all();
+        $lab_amount = 0;
+        foreach ($laboratory as $lab) {
+            $patientvisit =   optional(PatientVisit::where('visitno', $lab->visitno)->first());
+
+            $billinglog =   optional(BillingLog::where('visit_id', $patientvisit->id)->first());
+
+            $lab_amount = $lab_amount + $billinglog->grand_total;
+        }
+        $uniquePatientIds = array_unique($patientIds);
+        $pharm_patient = count($uniquePatientIds);
+
+        $radiology = Radiology::get();
+
+        $radiology_amount = 0;
+        foreach ($radiology as $radio) {
+            $patientvisit =   optional(PatientVisit::where('visitno', $radio->visitno)->first());
+
+            $billinglog =   optional(BillingLog::where('visit_id', $patientvisit->id)->first());
+
+            $radiology_amount = $radiology_amount + $billinglog->grand_total;
+        }
+
         return [
             'total_revenue' => (clone $query)->sum('grand_total'),
             'pending_payment' => (clone $query)->where('payment_status', 'pending')->sum('grand_total'),
             'completed_payment' => (clone $query)->where('payment_status', 'paid')->sum('grand_total'),
             'insurance_claimed' => (clone $query)->where('payment_method', 'insurance')->count(),
+            "registration" => [
+                'total' => Patient::count(),
+                "amount" => $patient_total
+            ],
+            'pharmacy' => [
+                "total" => $pharm_patient,
+                "amount" => $bill_total,
+            ],
+            "laboratory" => [
+                "total" => Laboratory::distinct()->count(),
+                "amount" => $lab_amount
+            ],
+            "radiology" => [
+                "total" => Radiology::distinct()->count(),
+                "amount" => $radiology_amount
+            ]
+
         ];
     }
 }
