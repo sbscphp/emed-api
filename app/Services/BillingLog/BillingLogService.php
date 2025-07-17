@@ -250,15 +250,15 @@ class BillingLogService
                 "amount" => $bill_total,
             ],
             "laboratory" => [
-                "total" => Laboratory::distinct()->count(),
+                "total" => Laboratory::count(),
                 "amount" => $lab_amount
             ],
             "radiology" => [
-                "total" => Radiology::distinct()->count(),
+                "total" => Radiology::count(),
                 "amount" => $radiology_amount
             ],
             "consultation" => [
-                "total" => Consultation::distinct()->count(),
+                "total" => Consultation::count(),
                 "amount" => $consultation_amount,
             ],
 
