@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Helpers\ExportHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\AuditLogRequest;
 use App\Responser\JsonResponser;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Response as FacadesResponse;
 use App\Models\AuditLog;
 use App\Models\Medicine_Log;
+use App\Http\Resources\MedicineLogResouces;
 
 class AuditLogController extends Controller
 {
@@ -147,12 +149,13 @@ class AuditLogController extends Controller
         try {
             $validate = $request->validate([
                 "patient_status" => "nullable|string",
-                'status' => "nullable|string"
+                'status' => "nullable|string",
+                "export" => "nullable|string"
             ]);
             // $search = $validate['search'];
             config(['database.default' => 'tenant']);
             DB::connection('tenant');
-            $medical_log = Medicine_Log::when(!empty($validate['patient_status']), function ($query, $validate) {
+            $medical_log = Medicine_Log::with(["patient", "medication", "pharmacy"])->when(!empty($validate['patient_status']), function ($query, $validate) {
                 $query->where('patient_status', 'LIKE', "%{$validate['patient_status']}%");
             })
                 ->when(!empty($validate['status']), function ($query, $validate) {
@@ -160,9 +163,15 @@ class AuditLogController extends Controller
                 })
                 ->paginate(10);
 
-            // $database  = [1, 2, 3, 4, 5, 6];
-            // $array = [1, 2, 3, 4,];
-
+            if ($validate['export'] == 'pdf') {
+                $medical_log = Medicine_Log::with(["patient", "medication", "pharmacy"])->get();
+                $data = MedicineLogResouces::collection($medical_log)->resolve();
+                return ExportHelper::downloadPdf($data, 'medicine.pdf');
+            } else if ($validate['export'] == 'csv') {
+                $medical_log = Medicine_Log::with(["patient", "medication", "pharmacy"])->get();
+                $data = MedicineLogResouces::collection($medical_log)->resolve();
+                return ExportHelper::streamCsv($data, null, 'medicine_' . now()->format('Ymd_His') . '.csv');
+            }
 
             if ($medical_log->isNotEmpty()) {
                 DB::connection('tenant')->commit();
