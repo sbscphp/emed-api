@@ -4,6 +4,7 @@ namespace App\Services\BillingLog;
 
 use App\Enums\PatientVisitStageEnums;
 use App\Models\BillingLog;
+use App\Models\Consultation;
 use App\Models\Laboratory;
 use App\Models\Medicine_Log;
 use App\Models\Patient;
@@ -224,6 +225,17 @@ class BillingLogService
             $radiology_amount = $radiology_amount + $billinglog->grand_total;
         }
 
+        $consultation =  Consultation::get();
+        $consultation_amount = 0;
+        foreach ($consultation as $consult) {
+            $patientvisit =   optional(PatientVisit::where('visitno', $consult->visitno)->first());
+
+            $billinglog =   optional(BillingLog::where('visit_id', $patientvisit->id)->first());
+
+            $consultation_amount = $consultation_amount + $billinglog->grand_total;
+        }
+
+
         return [
             'total_revenue' => (clone $query)->sum('grand_total'),
             'pending_payment' => (clone $query)->where('payment_status', 'pending')->sum('grand_total'),
@@ -244,7 +256,12 @@ class BillingLogService
             "radiology" => [
                 "total" => Radiology::distinct()->count(),
                 "amount" => $radiology_amount
-            ]
+            ],
+            "consultation" => [
+                "total" => Consultation::distinct()->count(),
+                "amount" => $consultation_amount,
+            ],
+
 
         ];
     }
