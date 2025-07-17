@@ -219,6 +219,7 @@ Route::group(["prefix" => "v1"], function () {
 
                 Route::group(['prefix' => 'auditLog', 'middleware' => 'admin.superadmin'], function () {
                     Route::post('/logs', [AuditLogController::class, 'userActivity']);
+                    Route::get('data_changes', [AuditLogController::class, 'data_changes']);
                     Route::get('/logs-download/{type}', [AuditLogController::class, 'downloadAuditLog']);
                 });
 

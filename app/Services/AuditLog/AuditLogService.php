@@ -2,6 +2,7 @@
 
 namespace App\Services\AuditLog;
 
+use App\Models\AuditLog;
 use App\Repositories\AuditLog\AuditLogInterface;
 
 /**
@@ -102,5 +103,23 @@ class AuditLogService
     public function getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate, $export)
     {
         return $this->AuditLogInterface->getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate, $export);
+    }
+
+
+    public function data_changes($validated)
+    {
+        //   AuditLog
+        $query = AuditLog::with(['audit_log_transactions', 'causer']);
+
+        if (isset($validated['search'])) {
+            $search = $validated['search'];
+            $query->where(function ($q) use ($search) {
+                $q->where('action_type', 'LIKE', '%' . $search . '%')
+                    ->orWhere('log_name', 'LIKE', '%' . $search . '%')
+                    ->orWhereHas('causer', function ($q2) use ($search) {
+                        $q2->where('fullname', 'LIKE', '%' . $search . '%');
+                    });
+            });
+        }
     }
 }

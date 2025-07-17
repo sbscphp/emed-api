@@ -163,11 +163,11 @@ class AuditLogController extends Controller
                 })
                 ->paginate(10);
 
-            if ($validate['export'] == 'pdf') {
+            if (!empty($validate['export']) && $validate['export'] == 'pdf') {
                 $medical_log = Medicine_Log::with(["patient", "medication", "pharmacy"])->get();
                 $data = MedicineLogResouces::collection($medical_log)->resolve();
                 return ExportHelper::downloadPdf($data, 'medicine.pdf');
-            } else if ($validate['export'] == 'csv') {
+            } else if (!empty($validate['export']) && $validate['export'] == 'csv') {
                 $medical_log = Medicine_Log::with(["patient", "medication", "pharmacy"])->get();
                 $data = MedicineLogResouces::collection($medical_log)->resolve();
                 return ExportHelper::streamCsv($data, null, 'medicine_' . now()->format('Ymd_His') . '.csv');
@@ -182,5 +182,18 @@ class AuditLogController extends Controller
         } catch (\Throwable $th) {
             return JsonResponser::send(false, 'Internal Server Error.', [], 500, $th);
         }
+    }
+
+
+    public function data_changes(Request $request)
+    {
+        $validated = $request->validate([
+            "search" => "nullable|string",
+            "start_date" => "nullable|date",
+            "end_date" => "nullable|date",
+            "activity_type" => "nullable|string"
+        ]);
+
+        $logs = $this->auditLogService->data_changes($validated);
     }
 }
