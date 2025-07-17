@@ -431,20 +431,38 @@ class UserController extends Controller
     {
         DB::connection('landlord')->beginTransaction();
         DB::connection('tenant')->beginTransaction();
+
         try {
-            $users = User::all();
-            foreach ($users as $user) {
+            // Landlord
+            $usersLandlord = (new User())->setConnection('landlord')->newQuery()->get();
+            foreach ($usersLandlord as $user) {
                 $parts = explode(' ', $user->fullname);
                 if (count($parts) > 0) {
                     $user->first_name = $parts[0];
                     $user->last_name = $parts[1] ?? null;
-                    $user->save();
+                    $user->setConnection('landlord')->save();
                 }
             }
-            return JsonResponser::send(false, "Succe", 200);
+
+            // Tenant
+            $usersTenant = (new User())->setConnection('tenant')->newQuery()->get();
+            foreach ($usersTenant as $user) {
+                $parts = explode(' ', $user->fullname);
+                if (count($parts) > 0) {
+                    $user->first_name = $parts[0];
+                    $user->last_name = $parts[1] ?? null;
+                    $user->setConnection('tenant')->save();
+                }
+            }
+
+            DB::connection('landlord')->commit();
+            DB::connection('tenant')->commit();
+
+            return JsonResponser::send(false, "Success", 200);
         } catch (\Throwable $th) {
             DB::connection('landlord')->rollBack();
             DB::connection('tenant')->rollBack();
+            throw $th; // or return an error response
         }
     }
 }
