@@ -179,11 +179,8 @@ class BillingLogService
         // Pharmacy
 
         foreach ($patients as $patient) {
-            dd(json_encode($patient));
-            $patientvisit =   optional(PatientVisit::where('visitno', $patient->visitno)->first());
-
+            $patientvisit =   optional(PatientVisit::where('patient_id', $patient->id)->first());
             $billinglog =   optional(BillingLog::where('visit_id', $patientvisit->id)->first());
-
             $patient_total = $patient_total + $billinglog->grand_total;
             // foreach ($patient->billingLogs as $billingLog) {
             //     $patient_total += intval($billingLog->grand_total);
