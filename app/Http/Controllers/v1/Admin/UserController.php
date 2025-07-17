@@ -445,15 +445,34 @@ class UserController extends Controller
             // }
 
             // Tenant
-            $usersTenant = (new User())->setConnection('tenant')->newQuery()->get();
+            $tenants = Tenant::all();
 
-            foreach ($usersTenant as $user) {
-                $parts = explode(' ', $user->fullname);
-                if (count($parts) > 0) {
-                    $user->first_name = $parts[0];
-                    $user->last_name = $parts[1] ?? null;
-                    $user->setConnection('tenant');  // <-- This is necessary here
-                    $user->save();
+            foreach ($tenants as $tenant) {
+                $tenantDb = $tenant->database;
+
+                $dbExists = DB::select("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?", [$tenantDb]);
+                if (!$dbExists) {
+                    logger("Skipping tenant '{$tenantDb}' — database does not exist.");
+                    continue;
+                }
+
+                DB::purge('tenant');
+                Config::set('database.connections.tenant.database', $tenantDb);
+                DB::reconnect('tenant');
+
+                logger("Updating users for tenant: " . $tenantDb);
+
+                // Now fetch users from this tenant's DB
+                $usersTenant = (new User())->setConnection('tenant')->newQuery()->get();
+
+                foreach ($usersTenant as $user) {
+                    $parts = explode(' ', $user->fullname);
+                    if (count($parts) > 0) {
+                        $user->first_name = $parts[0];
+                        $user->last_name = $parts[1] ?? null;
+                        $user->setConnection('tenant');
+                        $user->save();
+                    }
                 }
             }
 
