@@ -26,6 +26,8 @@ class User extends Authenticatable
         'tenant_id',
         'uuid',
         'fullname',
+        'first_name',
+        'last_name',
         'email',
         'role',
         'phone_number',

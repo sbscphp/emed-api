@@ -235,6 +235,10 @@ Route::group(["prefix" => "v1"], function () {
                     Route::put('/update/{id}', [UserController::class, 'updateUser']);
                     Route::delete('/delete/{id}', [UserController::class, 'deleteUser']);
                 });
+
+                Route::group(['prefix' => 'setting'], function () {
+                    Route::put("user_update", [UserController::class, "user_update"]);
+                });
             });
         });
     });

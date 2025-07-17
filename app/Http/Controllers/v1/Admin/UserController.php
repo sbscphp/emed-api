@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use App\Events\CreateUserEvent;
+use App\Http\Requests\UserUpdateRequest;
 use Throwable;
 use Illuminate\Support\Facades\Artisan;
 use App\Models\Tenant;
@@ -350,4 +351,10 @@ class UserController extends Controller
             return response()->json(['success' => 'successful migrations']);
         }
     }
+
+
+    // public function user_update(UserUpdateRequest $request){
+
+    //     User::create();
+    // }
 }
