@@ -349,7 +349,7 @@ class BillingController extends Controller
     public function billingsummary()
     {
         // try {
-        DB::connection('tenant')->beginTransaction();
+        config(['database.default' => 'tenant']);
 
         $billingSummaries = BillingLog::select('service_unit_id', DB::raw('SUM(grand_total) as total_billing'))
             ->groupBy('service_unit_id')
