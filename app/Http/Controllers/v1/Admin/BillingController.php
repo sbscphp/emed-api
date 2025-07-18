@@ -342,17 +342,23 @@ class BillingController extends Controller
             // $billingSummaries = BillingLog::with('serviceUnit')
             //     ->get();
             $validated =   $request->validate([
-                'export' => 'nullable|string'
+                'export' => 'nullable|string',
+                'service_unit' => "nullable|string",
             ]);
             $billingSummaries = BillingLog::select(
                 'service_unit_id',
                 DB::raw('SUM(grand_total) as total_billing'),
-                DB::raw('COALESCE(SUM(deposit_amount), 0) as amout_paid'),
-                DB::raw('COALESCE(SUM(deposit_amount), 0) - SUM(grand_total)  as outstanding_amount'),
-                DB::raw('COUNT(patient_id) as total_invoice'),
+                DB::raw('COALESCE(SUM(deposit_amount), 0) as amount_paid'),
+                DB::raw('COALESCE(SUM(deposit_amount), 0) - SUM(grand_total) as outstanding_amount'),
+                DB::raw('COUNT(patient_id) as total_invoice')
             )
                 ->groupBy('service_unit_id')
                 ->with('serviceUnit')
+                ->when(!empty($validated['service_unit']), function ($query) use ($validated) {
+                    $query->whereHas('serviceUnit', function ($q) use ($validated) {
+                        $q->where('name', $validated['service_unit']);
+                    });
+                })
                 ->get();
             $exportData =  BillingLogSubmmaryResource::collection($billingSummaries)->resolve();
             if (!empty($validated['export'])) {
