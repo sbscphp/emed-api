@@ -72,6 +72,7 @@ class BillingLogRepository implements BillingLogRepositoryInterface
 
             $query->where(function ($q) use ($search) {
                 $q->where('invoice_number', 'like', "%$search%")
+                    ->orWhere('patient_name', 'like', "%$search%")
                     ->orWhere('item_name', 'like', "%$search%")
                     ->orWhere('payment_status', 'like', "%$search%")
                     ->orWhereHas('patient', function ($pq) use ($search) {
