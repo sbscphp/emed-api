@@ -20,6 +20,7 @@ use App\Models\BillingLog;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Response;
 use App\Http\Requests\CreateServiceRequest;
+use App\Models\ServiceDepartment;
 
 class BillingController extends Controller
 {
@@ -96,9 +97,22 @@ class BillingController extends Controller
         try {
             DB::connection('tenant')->beginTransaction();
             $validated =  $request->validated();
-            $data = $this->serviceFetch->create_service($validated);
+            // $data = $this->serviceFetch->create_service($validated);
             //   $record = ServiceDepartment::findOrFail($id);
-            return JsonResponser::send(false, 'Service created successfully', $data, 200);
+
+            $service =  ServiceDepartment::create($validated);
+            $user = Auth::user();
+            $dataToLog = [
+                'causer_id' => $user->id,
+                'action_id' => $service->id,
+                'action' => 'Create',
+                'action_type' => "Models\ServiceDepartment",
+                'log_name' => " record created successfully",
+                'description' => "{$user->firstname} {$user->lastname} created a Service: {$service->name}",
+                'module_accessed' => ListModuleEnums::Service
+            ];
+            GeneralHelper::storeAuditLog($dataToLog);
+            return JsonResponser::send(false, 'Service created successfully', $service, 200);
             DB::connection('tenant')->commit();
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
@@ -111,9 +125,27 @@ class BillingController extends Controller
         try {
             DB::connection('tenant')->beginTransaction();
             $validated =  $request->validated();
-            $data = $this->serviceFetch->editservice($validated);
+            //$data = $this->serviceFetch->editservice($validated);
 
-            return JsonResponser::send(false, 'Service edit successfully', $data, 200);
+            $service = ServiceDepartment::find($validated['id']);
+            if ($service) {
+                $user = Auth::user();
+                $dataToLog = [
+                    'causer_id' => $user->id,
+                    'action_id' => $service->id,
+                    'action' => 'Create',
+                    'action_type' => "Models\ServiceDepartment",
+                    'log_name' => " record Edited successfully",
+                    'description' => "{$user->firstname} {$user->lastname} Edited a Service: {$service->name}",
+                    'module_accessed' => ListModuleEnums::Service
+                ];
+                GeneralHelper::storeAuditLog($dataToLog);
+                $service->update([
+                    "name" => $validated['name']
+                ]);
+                return JsonResponser::send(false, 'Service edit successfully', $service, 200);
+            }
+
             DB::connection('tenant')->commit();
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();

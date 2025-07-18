@@ -122,42 +122,7 @@ class ServiceDepartmentService
             ->get();
     }
 
-    public function create_service($data)
-    {
+    public function create_service($data) {}
 
-        $service =  ServiceDepartment::create($data);
-        $user = Auth::user();
-        $dataToLog = [
-            'causer_id' => $user->id,
-            'action_id' => $service->id,
-            'action' => 'Create',
-            'action_type' => "Models\ServiceDepartment",
-            'log_name' => " record created successfully",
-            'description' => "{$user->firstname} {$user->lastname} created a Service: {$service->name}",
-            'module_accessed' => ListModuleEnums::Service
-        ];
-        GeneralHelper::storeAuditLog($dataToLog);
-        return $service;
-    }
-
-    public function editservice($validated)
-    {
-        $service = ServiceDepartment::find($validated['id']);
-        if ($service) {
-            $user = Auth::user();
-            $dataToLog = [
-                'causer_id' => $user->id,
-                'action_id' => $service->id,
-                'action' => 'Create',
-                'action_type' => "Models\ServiceDepartment",
-                'log_name' => " record Edited successfully",
-                'description' => "{$user->firstname} {$user->lastname} Edited a Service: {$service->name}",
-                'module_accessed' => ListModuleEnums::Service
-            ];
-            GeneralHelper::storeAuditLog($dataToLog);
-            return $service->update([
-                "name" => $validated['name']
-            ]);
-        }
-    }
+    public function editservice($validated) {}
 }
