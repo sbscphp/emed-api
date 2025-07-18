@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Enums\ListModuleEnums;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreUserRequest;
@@ -208,6 +209,7 @@ class UserController extends Controller
                 'action_type' => "Models\User",
                 'log_name' => "User updated successfully",
                 'description' => "{$currentUser->first_name} {$currentUser->last_name} updated user: {$user->first_name} {$user->last_name}",
+                'module_accessed' => ListModuleEnums::Records
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Enums\ListModuleEnums;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreMedicationInventoryRequest;
@@ -44,6 +45,7 @@ class MedicationInventoryController extends Controller
                 'action_type' => "Models\MedicineInventory",
                 'log_name' => "Medicine Inventory created successfully",
                 'description' => "{$user->firstname} {$user->lastname} created a new Medicine: {$med->name}",
+                'module_accessed' => ListModuleEnums::PHARMACY
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);

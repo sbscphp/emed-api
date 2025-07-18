@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Enums\ListModuleEnums;
 use App\Http\Controllers\Controller;
 use App\Responser\JsonResponser;
 use App\Helpers\GeneralHelper;
@@ -87,6 +88,7 @@ class VendorController extends Controller
                 'action_type' => "Models\\Vendor",
                 'log_name' => "Vendor created",
                 'description' => "{$currentUser->firstname} {$currentUser->lastname} created vendor: {$vendor->name}",
+                'module_accessed' => ListModuleEnums::Records
             ]);
 
             DB::connection('tenant')->commit();
@@ -116,6 +118,8 @@ class VendorController extends Controller
                 'action_type' => "Models\\Vendor",
                 'log_name' => "Vendor updated",
                 'description' => "{$currentUser->firstname} {$currentUser->lastname} updated vendor: {$vendor->name}",
+                'module_accessed' => ListModuleEnums::Records
+
             ]);
 
             DB::connection('tenant')->commit();

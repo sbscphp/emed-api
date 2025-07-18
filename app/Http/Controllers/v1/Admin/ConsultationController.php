@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Enums\ListModuleEnums;
 use App\Enums\PatientVisitStageEnums;
 use App\Helpers\ExportHelper;
 use App\Helpers\GeneralHelper;
@@ -310,6 +311,7 @@ class ConsultationController extends Controller
                 'action_type' => "Models\Patient",
                 'log_name' => "Consultation created successfully",
                 'description' => "{{$user['fullname']} created consultation successfully",
+                'module_accessed' => ListModuleEnums::Records
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -364,6 +366,7 @@ class ConsultationController extends Controller
                 'action_type' => "Models\Laboratory",
                 'log_name' => "Lab details created successfully",
                 'description' => "{$user['fullname']} created lab details successfully",
+                'module_accessed' => ListModuleEnums::Laboratory
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -420,6 +423,7 @@ class ConsultationController extends Controller
                 'action_type' => "Models\Radiology",
                 'log_name' => "Patient radiology diagnosis created successfully",
                 'description' => "{$user['fullname']} created radiology diagnosis successfully",
+                'module_accessed' => ListModuleEnums::Radiology
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -497,6 +501,7 @@ class ConsultationController extends Controller
                     'action_type' => "Models\Treatment",
                     'log_name' => "Treatment for diagnosis created successfully",
                     'description' => "{$user['fullname']} created treatment for diagnosis successfully",
+                    'module_accessed' => ListModuleEnums::Service
                 ];
 
                 GeneralHelper::storeAuditLog($dataToLog);
@@ -554,6 +559,7 @@ class ConsultationController extends Controller
                 'action_type' => "Models\Treatment",
                 'log_name' => "Medical history diagnosis created successfully",
                 'description' => "{$user['fullname']} created medical history diagnosis successfully",
+                'module_accessed' => ListModuleEnums::Service
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -610,6 +616,7 @@ class ConsultationController extends Controller
                 'action_type' => "Models\Treatment",
                 'log_name' => "Family history diagnosis created successfully",
                 'description' => "{$user['fullname']} created family history diagnosis successfully",
+                'module_accessed' => ListModuleEnums::Service
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -666,6 +673,7 @@ class ConsultationController extends Controller
                 'action_type' => "Models\Treatment",
                 'log_name' => "Social history diagnosis created successfully",
                 'description' => "{$user['fullname']} created social history diagnosis successfully",
+                'module_accessed' => ListModuleEnums::Service
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -721,6 +729,7 @@ class ConsultationController extends Controller
                 'action_type' => "Models\Treatment",
                 'log_name' => "Drug history diagnosis created successfully",
                 'description' => "{$user['fullname']} created drug history diagnosis successfully",
+                'module_accessed' => ListModuleEnums::Service
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);

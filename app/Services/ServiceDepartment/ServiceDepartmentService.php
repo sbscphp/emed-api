@@ -118,4 +118,19 @@ class ServiceDepartmentService
             })
             ->get();
     }
+
+    public function create_service($data)
+    {
+        return  ServiceDepartment::create($data);
+    }
+
+    public function editservice($validated)
+    {
+        $service = ServiceDepartment::find($validated['id']);
+        if ($service) {
+            $service->update([
+                "name" => $validated['name']
+            ]);
+        }
+    }
 }

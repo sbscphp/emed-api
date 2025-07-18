@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Enums\ListModuleEnums;
 use App\Helpers\ExportHelper;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
@@ -95,7 +96,8 @@ class BillingController extends Controller
         try {
             DB::connection('tenant')->beginTransaction();
             $validated =  $request->validated();
-            $data = $this->serviceFetch->create($validated);
+            $data = $this->serviceFetch->create_service($validated);
+            //   $record = ServiceDepartment::findOrFail($id);
             return JsonResponser::send(false, 'Service created successfully', $data, 200);
             DB::connection('tenant')->commit();
         } catch (\Throwable $th) {
@@ -109,7 +111,7 @@ class BillingController extends Controller
         try {
             DB::connection('tenant')->beginTransaction();
             $validated =  $request->validated();
-            $data = $this->serviceFetch->update($validated['name'], $validated['id']);
+            $data = $this->serviceFetch->editservice($validated);
             return JsonResponser::send(false, 'Service edit successfully', $data, 200);
             DB::connection('tenant')->commit();
         } catch (\Throwable $th) {
@@ -139,6 +141,7 @@ class BillingController extends Controller
                 'action_type' => "Models\BillingLog",
                 'log_name' => "Billing record created successfully",
                 'description' => "{$user->firstname} {$user->lastname} created a billing log for patient: {$billing->patient_name}",
+                'module_accessed' => ListModuleEnums::BILLING
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);

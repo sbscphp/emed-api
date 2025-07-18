@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Enums\ListModuleEnums;
 use App\Enums\PatientVisitStageEnums;
 use App\Enums\PatientVisitStatusEnums;
 use App\Helpers\ExportHelper;
@@ -136,6 +137,8 @@ class RecordManagementController extends Controller
                 'action_type' => "Models\Patient",
                 'log_name' => "Patient details created successfully",
                 'description' => "{$user['fullname']} created patient details successfully",
+                'module_accessed' => ListModuleEnums::Records
+
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -194,6 +197,7 @@ class RecordManagementController extends Controller
                 'action_type' => "Models\Patient",
                 'log_name' => "Patient details updated successfully",
                 'description' => "{$user['fullname']} updated patient details successfully",
+                'module_accessed' => ListModuleEnums::Records
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -253,6 +257,8 @@ class RecordManagementController extends Controller
                 'action_type' => "Models\NextOfKin",
                 'log_name' => "Next of kin created successfully",
                 'description' => "{$user['fullname']} created next of kin successfully",
+                'module_accessed' => ListModuleEnums::Records
+
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -304,6 +310,8 @@ class RecordManagementController extends Controller
                 'action_type' => "Models\NextOfKin",
                 'log_name' => "Next of kin updated successfully",
                 'description' => "{$user['fullname']} updated next of kin successfully",
+                'module_accessed' => ListModuleEnums::Records
+
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -394,6 +402,8 @@ class RecordManagementController extends Controller
                 'action_type' => "Models\EmergencyContact",
                 'log_name' => "Emergency contact created successfully",
                 'description' => "{$user['fullname']} created emergency successfully",
+                'module_accessed' => ListModuleEnums::Records
+
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -443,6 +453,8 @@ class RecordManagementController extends Controller
                 'action_type' => "Models\NextOfKin",
                 'log_name' => "Emergency contact updated successfully",
                 'description' => "{$user['fullname']} updated emergency contact successfully",
+                'module_accessed' => ListModuleEnums::Records
+
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -558,6 +570,8 @@ class RecordManagementController extends Controller
                 'action_type' => "Models\PatientVisit",
                 'log_name' => "Patient visit created successfully",
                 'description' => "{$user['fullname']} created patient visit successfully",
+                'module_accessed' => ListModuleEnums::Records
+
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);

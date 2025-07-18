@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Enums\ListModuleEnums;
 use App\Helpers\ExportHelper;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
@@ -69,6 +70,7 @@ class MedicineTypeController extends Controller
                 'action_type' => "Models\MedicineType",
                 'log_name' => "Medicine Type created successfully",
                 'description' => "{$user->firstname} {$user->lastname} created a new Medicine: {$created->name}",
+                'module_accessed' => ListModuleEnums::PHARMACY
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);

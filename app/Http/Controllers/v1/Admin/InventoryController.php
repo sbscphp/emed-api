@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Enums\ListModuleEnums;
 use App\Http\Controllers\Controller;
 use App\Responser\JsonResponser;
 use App\Services\Inventory\InventoryService;
@@ -74,6 +75,7 @@ class InventoryController extends Controller
                 'action_type' => "Models\\Inventory",
                 'log_name' => "Inventory item created",
                 'description' => "{$currentUser->firstname} {$currentUser->lastname} added inventory: {$inventory->item_name} [Batch: {$inventory->batch_no}]",
+                'module_accessed' => ListModuleEnums::Inventory
             ]);
 
             DB::connection('tenant')->commit();
@@ -104,6 +106,7 @@ class InventoryController extends Controller
                 'action_type' => "Models\\Inventory",
                 'log_name' => "Inventory item updated",
                 'description' => "{$currentUser->firstname} {$currentUser->lastname} updated inventory: {$inventory->item_name} [Batch: {$inventory->batch_no}]",
+                'module_accessed' => ListModuleEnums::Inventory
             ]);
 
             DB::connection('tenant')->commit();

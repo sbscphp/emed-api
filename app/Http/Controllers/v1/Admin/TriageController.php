@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Enums\ListModuleEnums;
 use App\Enums\PatientVisitStageEnums;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
@@ -80,6 +81,8 @@ class TriageController extends Controller
                 'action_type'   => "Models\Patient",
                 'log_name'      => "Triage recorded successfully",
                 'description'   => "{$user->firstname} {$user->lastname} recorded or updated triage details successfully",
+                'module_accessed' => ListModuleEnums::Records
+
             ]);
 
             DB::connection('tenant')->commit();

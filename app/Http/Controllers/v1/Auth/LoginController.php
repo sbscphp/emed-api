@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Auth;
 
+use App\Enums\ListModuleEnums;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
@@ -95,6 +96,8 @@ class LoginController extends Controller
                 'action_type' => "Models\User",
                 'log_name' => "User logged out successfully",
                 'description' => "{$currentUserInstance->lastname} {$currentUserInstance->firstname} Logged out successfully",
+                'module_accessed' => ListModuleEnums::Records
+
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Enums\ListModuleEnums;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreRoleRequest;
@@ -96,6 +97,7 @@ class RoleController extends Controller
                 'action_type' => "Models\Role",
                 'log_name' => "Role created successfully",
                 'description' => "{$user->fullname} created a new role: {$tenantRole->name}",
+                'module_accessed' => ListModuleEnums::Records
             ]);
 
             DB::connection('tenant')->commit();
@@ -179,6 +181,7 @@ class RoleController extends Controller
                     'action_type' => "Models\Role",
                     'log_name' => "Role updated successfully",
                     'description' => "{$user->firstname} {$user->lastname} updated the role: {$role->name}",
+                    'module_accessed' => ListModuleEnums::Records
                 ];
                 GeneralHelper::storeAuditLog($dataToLog);
 

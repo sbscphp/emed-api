@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Enums\ListModuleEnums;
 use App\Helpers\ExportHelper;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
@@ -218,6 +219,7 @@ class PharmacyController extends Controller
                 'action_type' => "Models\Pharmacy",
                 'log_name' => "Pharmacy created successfully",
                 'description' => "{$user->firstname} {$user->lastname} created a new pharmacy: {$pharmacy->name}",
+                'module_accessed' => ListModuleEnums::Inventory
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);

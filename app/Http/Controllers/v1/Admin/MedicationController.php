@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Enums\ListModuleEnums;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\MedicationCsvUploadRequest;
@@ -108,6 +109,7 @@ class MedicationController extends Controller
                 'action_type' => "Models\Medicine",
                 'log_name' => "Medicine created successfully",
                 'description' => "{$user->firstname} {$user->lastname} created a new Medicine: {$med->name}",
+                'module_accessed' => ListModuleEnums::PHARMACY
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);

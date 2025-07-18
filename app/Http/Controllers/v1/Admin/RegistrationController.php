@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Enums\ListModuleEnums;
 use App\Helpers\FileUploadHelper;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
@@ -225,6 +226,7 @@ class RegistrationController extends Controller
                     'action_type' => "App\Models\User",
                     'log_name' => "Tenant Created Successfully",
                     'description' => "{$adminTenant['fullname']} added successfully",
+                    'module_accessed' => ListModuleEnums::Records
                 ];
                 GeneralHelper::storeAuditLog($dataToLog);
 

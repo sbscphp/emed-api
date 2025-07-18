@@ -60,7 +60,8 @@ class GeneralHelper
                     'action_id' => $dataToLog['action_id'],
                     'action' => $dataToLog['action'] ?? 'Update',
                     'log_name' => $dataToLog['log_name'],
-                    'description' => $dataToLog['description']
+                    'description' => $dataToLog['description'],
+                    "module_accessed" => $dataToLog['module_accessed']
                 ]);
 
                 // Ensure the ID is available before inserting into transactions
