@@ -21,6 +21,8 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Response;
 use App\Http\Requests\CreateServiceRequest;
 use App\Http\Resources\BillingLogSubmmaryResource;
+use App\Http\Resources\RegistrationResource;
+use App\Models\Patient;
 use App\Models\ServiceDepartment;
 
 class BillingController extends Controller
@@ -379,6 +381,20 @@ class BillingController extends Controller
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'Error fetching billing summary stats.', [], 500, $th);
         }
+    }
+
+    public function  regstration_list(Request $request)
+    {
+
+        $request->validate([
+            'export' => "nullable|string",
+            'search' => 'nullable|string',
+            'start_date' => "nullable|string",
+            'end_date' => "nullable|string"
+        ]);
+        $patient =  Patient::with('visits_recent.billingLogsForPatient')->get();
+        $data = RegistrationResource::collection($patient)->resolve();
+        return JsonResponser::send(false, 'Billing stats fetched successfully.', $data);
     }
 
     public function getBillingStatistics()
