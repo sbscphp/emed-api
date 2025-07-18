@@ -143,7 +143,7 @@ class BillingController extends Controller
                     'action' => 'Create',
                     'action_type' => "Models\ServiceDepartment",
                     'log_name' => " record Edited successfully",
-                    'description' => "{$user->firstname} {$user->lastname} Edited a Service: {$service->name}",
+                    'description' => "{$tenantUser->firstname} {$tenantUser->lastname} Edited a Service: {$service->name}",
                     'module_accessed' => ListModuleEnums::Service
                 ];
                 GeneralHelper::storeAuditLog($dataToLog);
