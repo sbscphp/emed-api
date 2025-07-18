@@ -347,6 +347,7 @@ class BillingController extends Controller
             ]);
             $billingSummaries = BillingLog::select(
                 'service_unit_id',
+                'payment_status',
                 DB::raw('SUM(grand_total) as total_billing'),
                 DB::raw('COALESCE(SUM(deposit_amount), 0) as amount_paid'),
                 DB::raw('COALESCE(SUM(deposit_amount), 0) - SUM(grand_total) as outstanding_amount'),
