@@ -136,8 +136,9 @@ class BillingController extends Controller
             $service = ServiceDepartment::find($validated['id']);
             if ($service) {
                 $user = Auth::user();
+                $tenantUser = User::where('email', $user->email)->first();
                 $dataToLog = [
-                    'causer_id' => $user->id,
+                    'causer_id' => $tenantUser ? $tenantUser->id : null,
                     'action_id' => $service->id,
                     'action' => 'Create',
                     'action_type' => "Models\ServiceDepartment",
