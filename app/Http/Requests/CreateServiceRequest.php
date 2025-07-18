@@ -22,7 +22,7 @@ class CreateServiceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => 'nullable|exists:tenant.services,id',
+            'id' => 'nullable|numeric|exists:tenant.services,id',
             'name' => 'required|string'
         ];
     }
