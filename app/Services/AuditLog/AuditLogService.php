@@ -156,7 +156,7 @@ class AuditLogService
                 return ExportHelper::downloadPdf($exportData->toArray(), 'audit-logs.pdf');
             }
         }
-        $paginate =  $validated['paginate'];
+        $paginate =  $validated['paginate'] ?? false;
         return $paginate ? $query->paginate(10) : $query->get();
     }
 }
