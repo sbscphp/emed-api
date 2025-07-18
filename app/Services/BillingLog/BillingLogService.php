@@ -241,7 +241,7 @@ class BillingLogService
         $consultation_amount = 0;
         foreach ($consultation as $consult) {
             // patient_id
-            $patientvisit =   optional(PatientVisit::where('id', $consult->patient_id)->first());
+            $patientvisit =   optional(PatientVisit::where('visitno', $consult->visitno)->first());
 
             $billinglog =   optional(BillingLog::where('visit_id', $patientvisit->id)->first());
 
