@@ -23,6 +23,7 @@ use App\Http\Requests\CreateServiceRequest;
 use App\Http\Resources\BillingLogSubmmaryResource;
 use App\Http\Resources\RegistrationResource;
 use App\Models\Patient;
+use App\Models\Pharmacy;
 use App\Models\ServiceDepartment;
 
 class BillingController extends Controller
@@ -386,27 +387,47 @@ class BillingController extends Controller
     public function  regstration_list(Request $request)
     {
 
+        try {
+            DB::connection('tenant')->beginTransaction();
+            $validated =   $request->validate([
+                'export' => "nullable|string",
+                'search' => 'nullable|string',
+                'start_date' => "nullable|string",
+                'end_date' => "nullable|string",
+            ]);
+            $data = $this->billingService->regstration_list($validated);
+            if (!empty($validated['export'])) {
+                $export =  $validated['export'];
+                $patient =  Patient::with('visits_recent.billingLogsForPatient')->get();
+                $exportData = RegistrationResource::collection($patient)->resolve();
+
+                if ($export === 'csv') {
+                    return ExportHelper::streamCsv($exportData, null, 'audit-logs.csv');
+                }
+
+                if ($export === 'pdf') {
+                    return ExportHelper::downloadPdf($exportData, 'audit-logs.pdf');
+                }
+            }
+            return JsonResponser::send(false, 'Billing stats fetched successfully.', $data);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'Error fetching billing summary stats.', [], 500, $th);
+        }
+    }
+
+
+    public function pharmacy_list(Request $request)
+    {
+        DB::connection('tenant')->beginTransaction();
         $validated =   $request->validate([
             'export' => "nullable|string",
             'search' => 'nullable|string',
             'start_date' => "nullable|string",
             'end_date' => "nullable|string",
         ]);
-        $data = $this->billingService->regstration_list($validated);
-        if (!empty($validated['export'])) {
-            $export =  $validated['export'];
-            $patient =  Patient::with('visits_recent.billingLogsForPatient')->get();
-            $exportData = RegistrationResource::collection($patient)->resolve();
 
-            if ($export === 'csv') {
-                return ExportHelper::streamCsv($exportData, null, 'audit-logs.csv');
-            }
-
-            if ($export === 'pdf') {
-                return ExportHelper::downloadPdf($exportData, 'audit-logs.pdf');
-            }
-        }
-        return JsonResponser::send(false, 'Billing stats fetched successfully.', $data);
+        $pharm =  Pharmacy::with(["pharmacist", 'patients'])->get();
+        return JsonResponser::send(false, 'Billing stats fetched successfully.', $pharm);
     }
 
     public function getBillingStatistics()

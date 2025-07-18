@@ -248,6 +248,7 @@ Route::group(["prefix" => "v1"], function () {
                 Route::group(['prefix' => 'summary'], function () {
                     Route::get("billingsummary", [BillingController::class, "billingsummary"]);
                     Route::get("regstration_list", [BillingController::class, "regstration_list"]);
+                    Route::get("pharmacy_list", [BillingController::class, "pharmacy_list"]);
                 });
             });
         });
