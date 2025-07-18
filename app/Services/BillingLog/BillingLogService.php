@@ -14,6 +14,7 @@ use App\Models\Pharmacy;
 use App\Models\Radiology;
 use App\Models\User;
 use App\Repositories\BillingLog\BillingLogRepositoryInterface;
+use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class BillingLogService
@@ -167,6 +168,25 @@ class BillingLogService
     public function sumByServiceUnit(int $serviceUnitId, string $column)
     {
         return BillingLog::where('service_unit_id', $serviceUnitId)->sum($column);
+    }
+
+    public function regstration_list($validated)
+    {
+        $patient =  Patient::with('visits_recent.billingLogsForPatient');
+
+        $patient->when(!empty($validated['search']), function ($query) use ($validated) {
+            $query->where('firstname', $validated['search'])
+                ->orWhere('lastname', $validated['search'])
+                ->orWhere('patientno', $validated['search']);
+        });
+
+        if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
+            $startDate = $validated['start_date'];
+            $endDate = $validated['end_date'];
+            $patient->whereBetween('created_at', [Carbon::parse($startDate), Carbon::parse($endDate)]);
+        }
+
+        return $patient->paginate(10);
     }
 
     public function getStatistics(): array

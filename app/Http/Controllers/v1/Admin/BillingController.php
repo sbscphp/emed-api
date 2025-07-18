@@ -386,14 +386,26 @@ class BillingController extends Controller
     public function  regstration_list(Request $request)
     {
 
-        $request->validate([
+        $validated =   $request->validate([
             'export' => "nullable|string",
             'search' => 'nullable|string',
             'start_date' => "nullable|string",
-            'end_date' => "nullable|string"
+            'end_date' => "nullable|string",
         ]);
-        $patient =  Patient::with('visits_recent.billingLogsForPatient')->get();
-        $data = RegistrationResource::collection($patient)->resolve();
+        $data = $this->billingService->regstration_list($validated);
+        if (!empty($validated['export'])) {
+            $export =  $validated['export'];
+            $patient =  Patient::with('visits_recent.billingLogsForPatient')->get();
+            $exportData = RegistrationResource::collection($patient)->resolve();
+
+            if ($export === 'csv') {
+                return ExportHelper::streamCsv($exportData, null, 'audit-logs.csv');
+            }
+
+            if ($export === 'pdf') {
+                return ExportHelper::downloadPdf($exportData, 'audit-logs.pdf');
+            }
+        }
         return JsonResponser::send(false, 'Billing stats fetched successfully.', $data);
     }
 

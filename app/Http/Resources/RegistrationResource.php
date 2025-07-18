@@ -23,7 +23,7 @@ class RegistrationResource extends JsonResource
             'age' => Carbon::parse($this->dob)->age,
             'patientno' => $this->patientno,
             'created_at' => Carbon::parse($this->created_at)->format('Y-m-d'),
-            'amount' => $amount ?? ""
+            'amount' => $amount ?? "0"
         ];
     }
 }
