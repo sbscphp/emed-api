@@ -426,7 +426,7 @@ class BillingController extends Controller
             'end_date' => "nullable|string",
         ]);
 
-        $pharm =  Pharmacy::with(["pharmacist", 'patients'])->get();
+        $pharm =  Pharmacy::with(["pharmacist", 'treatments_one.Patient.visits_recent.billingLogsForPatient'])->get();
         return JsonResponser::send(false, 'Billing stats fetched successfully.', $pharm);
     }
 

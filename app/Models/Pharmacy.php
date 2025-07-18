@@ -46,6 +46,11 @@ class Pharmacy extends Model
         return $this->hasMany(Treatment::class);
     }
 
+    public function treatments_one()
+    {
+        return $this->hasOne(Treatment::class);
+    }
+
     public function consultations()
     {
         return $this->hasManyThrough(
