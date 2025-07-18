@@ -123,7 +123,22 @@ class ServiceDepartmentService
             ->get();
     }
 
-    public function create_service($data) {}
+    public function create_service($validated)
+    {
+
+        $service =  ServiceDepartment::create($validated);
+        $user = Auth::user();
+        $dataToLog = [
+            'causer_id' => $user->id,
+            'action_id' => $service->id,
+            'action' => 'Create',
+            'action_type' => "Models\ServiceDepartment",
+            'log_name' => " record created successfully",
+            'description' => "{$user->firstname} {$user->lastname} created a Service: {$service->name}",
+            'module_accessed' => ListModuleEnums::Service
+        ];
+        return  GeneralHelper::storeAuditLog($dataToLog);
+    }
 
     public function editservice($validated)
     {

@@ -97,22 +97,13 @@ class BillingController extends Controller
         try {
             DB::connection('tenant')->beginTransaction();
             $validated =  $request->validated();
-            // $data = $this->serviceFetch->create_service($validated);
+            $service = $this->serviceFetch->create_service($validated);
             //   $record = ServiceDepartment::findOrFail($id);
-
-            $service =  ServiceDepartment::create($validated);
-            $user = Auth::user();
-            $dataToLog = [
-                'causer_id' => $user->id,
-                'action_id' => $service->id,
-                'action' => 'Create',
-                'action_type' => "Models\ServiceDepartment",
-                'log_name' => " record created successfully",
-                'description' => "{$user->firstname} {$user->lastname} created a Service: {$service->name}",
-                'module_accessed' => ListModuleEnums::Service
-            ];
-            GeneralHelper::storeAuditLog($dataToLog);
             return JsonResponser::send(false, 'Service created successfully', $service, 200);
+            if (!$service) {
+                DB::connection('tenant')->rollBack();
+                return JsonResponser::send(true, 'Service not found', [], 404);
+            }
             DB::connection('tenant')->commit();
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
