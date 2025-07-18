@@ -333,19 +333,6 @@ class BillingController extends Controller
         }
     }
 
-    public function getBillingStatistics()
-    {
-        try {
-            config(['database.default' => 'tenant']);
-            $stats = $this->billingService->getStatistics();
-
-            return JsonResponser::send(false, 'Billing stats fetched successfully.', $stats);
-        } catch (\Exception $e) {
-            return JsonResponser::send(true, 'Error fetching billing stats.', [], 500, $e);
-        }
-    }
-
-
     public function billingsummary()
     {
         dd('here');
@@ -366,5 +353,17 @@ class BillingController extends Controller
         // } catch (\Throwable $th) {
         //     return JsonResponser::send(true, 'Error fetching billing summary stats.', [], 500, $th);
         // }
+    }
+
+    public function getBillingStatistics()
+    {
+        try {
+            config(['database.default' => 'tenant']);
+            $stats = $this->billingService->getStatistics();
+
+            return JsonResponser::send(false, 'Billing stats fetched successfully.', $stats);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Error fetching billing stats.', [], 500, $e);
+        }
     }
 }

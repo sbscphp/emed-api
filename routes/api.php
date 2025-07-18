@@ -196,9 +196,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/service-unit/{id}', [BillingController::class, 'getBillingByServiceUnit']);
                     Route::get('/service-type/all', [BillingController::class, 'getBillingByServiceType']);
                     Route::post('/createservice', [BillingController::class, 'createservice']);
-                    // editservice
                     Route::post('/editservice', [BillingController::class, 'editservice']);
-                    Route::get('/billingsummary', [BillingController::class, 'billingsummary']);
                 });
 
                 Route::group(['prefix' => 'report', 'middleware' => 'admin.superadmin'], function () {
@@ -245,6 +243,10 @@ Route::group(["prefix" => "v1"], function () {
                     Route::put("account_deactive", [UserController::class, "account_deactive"]);
                     Route::put("account_deletion", [UserController::class, "account_deletion"]);
                     Route::put("user_upload_image", [UserController::class, "user_upload_image"]);
+                });
+
+                Route::group(['prefix' => 'summary'], function () {
+                    Route::get("billingsummary", [BillingController::class, "billingsummary"]);
                 });
             });
         });
