@@ -20,6 +20,7 @@ use App\Models\BillingLog;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Response;
 use App\Http\Requests\CreateServiceRequest;
+use App\Http\Resources\BillingLogSubmmaryResource;
 use App\Models\ServiceDepartment;
 
 class BillingController extends Controller
@@ -333,13 +334,16 @@ class BillingController extends Controller
         }
     }
 
-    public function billingsummary()
+    public function billingsummary(Request $request)
     {
         // dd('here');
         try {
             DB::connection('tenant')->beginTransaction();
             // $billingSummaries = BillingLog::with('serviceUnit')
             //     ->get();
+            $validated =   $request->validate([
+                'export' => 'nullable|string'
+            ]);
             $billingSummaries = BillingLog::select(
                 'service_unit_id',
                 DB::raw('SUM(grand_total) as total_billing'),
@@ -350,12 +354,21 @@ class BillingController extends Controller
                 ->groupBy('service_unit_id')
                 ->with('serviceUnit')
                 ->get();
+            $exportData =  BillingLogSubmmaryResource::collection($billingSummaries)->resolve();
+            if (!empty($validated['export'])) {
 
-            // dd(json_encode($billingSummaries));
-            return JsonResponser::send(false, 'Billing summary fetched successfully.', $billingSummaries, 200);
-            // return JsonResponser::send(false, 'Billing records retrieved successfully.', $data, 200);
-            // return JsonResponser::send(false, 'Record(s) found successfully.', $logs);
+                $export =  $validated['export'];
 
+                if ($export === 'csv') {
+                    return ExportHelper::streamCsv($exportData, null, 'audit-logs.csv');
+                }
+
+                if ($export === 'pdf') {
+                    return ExportHelper::downloadPdf($exportData, 'audit-logs.pdf');
+                }
+            }
+
+            return JsonResponser::send(false, 'Billing summary fetched successfully.', $exportData, 200);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'Error fetching billing summary stats.', [], 500, $th);
         }
