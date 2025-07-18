@@ -341,23 +341,10 @@ class BillingController extends Controller
             // $billingSummaries = BillingLog::with('serviceUnit')
             //     ->get();
             $billingSummaries = BillingLog::select(
-                'service_unit_id',
                 DB::raw('SUM(grand_total) as total_billing'),
-                'invoice_number',
-                'visit_id',
-                'patient_id',
-                'patient_name',
-                'billing_date',
-                'service_type_id',
-                'service_unit_id',
-                'item_name',
-                'unit_price',
-                'quantity',
-                'payment_status',
-                'deposit_amount',
-                'payment_method',
-                'sub_total',
-                'tax_amount',
+                DB::raw('SUM(deposit_amount) as amout_paid'),
+                DB::raw('SUM(deposit_amount) - SUM(grand_total)  as outstanding_amount'),
+                DB::raw('COUNT(patient_id) as total_invoice'),
             )
                 ->groupBy('service_unit_id')
                 ->with('serviceUnit')
