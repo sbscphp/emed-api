@@ -133,11 +133,11 @@ class BillingController extends Controller
         ]);
         $service = $this->serviceFetch->editservice($validated);
 
-        if ($service) {
+        // if ($service) {
 
-            DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Service not found', [], 404);
-        }
+        //     DB::connection('tenant')->rollBack();
+        //     return JsonResponser::send(true, 'Service not found', [], 404);
+        // }
 
         DB::connection('tenant')->commit();
         // } catch (\Throwable $th) {
