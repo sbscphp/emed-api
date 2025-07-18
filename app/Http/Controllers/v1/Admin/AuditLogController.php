@@ -204,10 +204,35 @@ class AuditLogController extends Controller
             ]);
 
             $logs = $this->auditLogService->data_changes($validated);
-            return JsonResponser::send(true, 'Record(s) found successfully.', $logs);
+            if (!empty($validated['export'])) {
+                $query = AuditLog::whereIn('module_accessed', ['Billing', 'Records', 'Pharmacy'])->with(['audit_log_transactions', 'causer']);
+                $logs = $query->get();
+                $export = $validated['export'];
+
+                $exportData = $logs->map(function ($log) {
+                    return [
+                        'Action Type' => $log->action_type,
+                        'Description' => $log->description,
+                        'Log Name' => $log->log_name,
+                        'Causer' => optional($log->causer)->fullname ?? 'System',
+                        'Created At' => $log->created_at->toDateTimeString(),
+                    ];
+                });
+
+                if ($export === 'csv') {
+                    return ExportHelper::streamCsv($exportData->toArray(), null, 'audit-logs.csv');
+                }
+
+                if ($export === 'pdf') {
+                    return ExportHelper::downloadPdf($exportData->toArray(), 'audit-logs.pdf');
+                }
+            }
+
+
+            return JsonResponser::send(false, 'Record(s) found successfully.', $logs);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(false, 'Internal Server Error.', [], 500, $th);
+            return JsonResponser::send(true, 'Internal Server Error.', [], 500, $th);
         }
     }
 }
