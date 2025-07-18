@@ -197,7 +197,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/service-type/all', [BillingController::class, 'getBillingByServiceType']);
                     Route::post('/createservice', [BillingController::class, 'createservice']);
                     // editservice
-                    Route::put('/editservice', [BillingController::class, 'editservice']);
+                    Route::post('/editservice', [BillingController::class, 'editservice']);
                 });
 
                 Route::group(['prefix' => 'report', 'middleware' => 'admin.superadmin'], function () {
