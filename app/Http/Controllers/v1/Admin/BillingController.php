@@ -112,6 +112,7 @@ class BillingController extends Controller
             DB::connection('tenant')->beginTransaction();
             $validated =  $request->validated();
             $data = $this->serviceFetch->editservice($validated);
+
             return JsonResponser::send(false, 'Service edit successfully', $data, 200);
             DB::connection('tenant')->commit();
         } catch (\Throwable $th) {

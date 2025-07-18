@@ -2,10 +2,13 @@
 
 namespace App\Services\ServiceDepartment;
 
+use App\Enums\ListModuleEnums;
+use App\Helpers\GeneralHelper;
 use App\Models\ServiceDepartment;
 use App\Models\ServiceUnit;
 use Carbon\Carbon;
 use App\Repositories\ServiceDepartment\ServiceDepartmentInterface;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * Class ServiceDepartmentService
@@ -121,13 +124,37 @@ class ServiceDepartmentService
 
     public function create_service($data)
     {
-        return  ServiceDepartment::create($data);
+
+        $service =  ServiceDepartment::create($data);
+        $user = Auth::user();
+        $dataToLog = [
+            'causer_id' => $user->id,
+            'action_id' => $service->id,
+            'action' => 'Create',
+            'action_type' => "Models\ServiceDepartment",
+            'log_name' => " record created successfully",
+            'description' => "{$user->firstname} {$user->lastname} created a Service: {$service->name}",
+            'module_accessed' => ListModuleEnums::Service
+        ];
+        GeneralHelper::storeAuditLog($dataToLog);
+        return $service;
     }
 
     public function editservice($validated)
     {
         $service = ServiceDepartment::find($validated['id']);
         if ($service) {
+            $user = Auth::user();
+            $dataToLog = [
+                'causer_id' => $user->id,
+                'action_id' => $service->id,
+                'action' => 'Create',
+                'action_type' => "Models\ServiceDepartment",
+                'log_name' => " record Edited successfully",
+                'description' => "{$user->firstname} {$user->lastname} Edited a Service: {$service->name}",
+                'module_accessed' => ListModuleEnums::Service
+            ];
+            GeneralHelper::storeAuditLog($dataToLog);
             $service->update([
                 "name" => $validated['name']
             ]);
