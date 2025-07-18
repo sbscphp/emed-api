@@ -244,9 +244,12 @@ class BillingLogService
 
             $patientvisit =   PatientVisit::where('visitno', $consult->visitno)->first() ?? "";
 
-            $billinglog =   BillingLog::where('visit_id', $patientvisit->id)->first() ?? "";
-            dd(json_encode([$patientvisit, "\r\n",  $billinglog]));
-            $consultation_amount = $consultation_amount + $billinglog->grand_total;
+            // $billinglog =   BillingLog::where('visit_id', $patientvisit->id)->first() ?? "";
+            // $consultation_amount = $consultation_amount + $billinglog->grand_total;
+
+            $billinglog = $patientvisit ? BillingLog::where('visit_id', $patientvisit->id)->first() : null;
+
+            $consultation_amount += $billinglog?->grand_total ?? 0;
         }
 
 
