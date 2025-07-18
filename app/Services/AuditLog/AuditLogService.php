@@ -2,8 +2,10 @@
 
 namespace App\Services\AuditLog;
 
+use App\Helpers\ExportHelper;
 use App\Models\AuditLog;
 use App\Repositories\AuditLog\AuditLogInterface;
+use Carbon\Carbon;
 
 /**
  * Class AuditLogService
@@ -100,26 +102,60 @@ class AuditLogService
      *
      * @param \App\Models\AuditLog
      */
-    public function getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate, $export)
+    public function getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate, $export,   $action, $module_accessed)
     {
-        return $this->AuditLogInterface->getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate, $export);
+        return $this->AuditLogInterface->getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate, $export, $action, $module_accessed);
     }
 
 
     public function data_changes($validated)
     {
         //   AuditLog
-        $query = AuditLog::with(['audit_log_transactions', 'causer']);
+        $query = AuditLog::whereIn('module_accessed', ['Billing', 'Records', 'Pharmacy'])->with(['audit_log_transactions', 'causer']);
 
         if (isset($validated['search'])) {
             $search = $validated['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('action_type', 'LIKE', '%' . $search . '%')
                     ->orWhere('log_name', 'LIKE', '%' . $search . '%')
+                    ->orWhere('module_accessed', 'LIKE', '%' . $search . '%')
+                    ->orWhere('action', 'LIKE', '%' . $search . '%')
                     ->orWhereHas('causer', function ($q2) use ($search) {
                         $q2->where('fullname', 'LIKE', '%' . $search . '%');
                     });
             });
         }
+
+        $startDate = $validated['start_date'];
+        $endDate = $validated['end_date'];
+        $paginate =  $validated['paginate'];
+        if (isset($startDate) && isset($endDate)) {
+            $query->whereBetween('created_at', [Carbon::parse($startDate), Carbon::parse($endDate)]);
+        }
+
+        $export = $validated['export'];
+        if ($export === 'csv' || $export === 'pdf') {
+            $logs = $query->get();
+
+            $exportData = $logs->map(function ($log) {
+                return [
+                    'Action Type' => $log->action_type,
+                    'Description' => $log->description,
+                    'Log Name' => $log->log_name,
+                    'Causer' => optional($log->causer)->fullname ?? 'System',
+                    'Created At' => $log->created_at->toDateTimeString(),
+                ];
+            });
+
+            if ($export === 'csv') {
+                return ExportHelper::streamCsv($exportData->toArray(), null, 'audit-logs.csv');
+            }
+
+            if ($export === 'pdf') {
+                return ExportHelper::downloadPdf($exportData->toArray(), 'audit-logs.pdf');
+            }
+        }
+
+        return $paginate ? $query->paginate(10) : $query->get();
     }
 }

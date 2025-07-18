@@ -38,6 +38,8 @@ class AuditLogController extends Controller
             $activityType = $request->activity_type;
             $paginate = $request->paginate ?? false;
             $export = $request->export;
+            $action = $request->action;
+            $module_accessed = $request->module_accessed;
 
             $logs = $this->auditLogService->getAllAuditLogs(
                 $search,
@@ -46,7 +48,9 @@ class AuditLogController extends Controller
                 $endDate,
                 $activityType,
                 $paginate,
-                $export
+                $export,
+                $action,
+                $module_accessed
             );
 
             if ($export === 'csv' || $export === 'pdf') {
@@ -187,13 +191,23 @@ class AuditLogController extends Controller
 
     public function data_changes(Request $request)
     {
-        $validated = $request->validate([
-            "search" => "nullable|string",
-            "start_date" => "nullable|date",
-            "end_date" => "nullable|date",
-            "activity_type" => "nullable|string"
-        ]);
 
-        $logs = $this->auditLogService->data_changes($validated);
+        try {
+            DB::connection('tenant')->beginTransaction();
+            $validated = $request->validate([
+                "search" => "nullable|string",
+                "start_date" => "nullable|date",
+                "end_date" => "nullable|date",
+                "activity_type" => "nullable|string",
+                'export' => 'nullable|string',
+                'paginate' => 'nullable|boolean'
+            ]);
+
+            $logs = $this->auditLogService->data_changes($validated);
+            return JsonResponser::send(true, 'Record(s) found successfully.', $logs);
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(false, 'Internal Server Error.', [], 500, $th);
+        }
     }
 }

@@ -151,7 +151,7 @@ class ServiceDepartmentService
             $dataToLog = [
                 'causer_id' => $tenantUser ? $tenantUser->id : null,
                 'action_id' => $service->id,
-                'action' => 'Create',
+                'action' => 'Update',
                 'action_type' => "Models\ServiceDepartment",
                 'log_name' => " record Edited successfully",
                 'description' => "{$tenantUser->firstname} {$tenantUser->lastname} Edited a Service: {$service->name}",
