@@ -17,7 +17,7 @@ class BillingLogSubmmaryResource extends JsonResource
         return [
             "name" => $this->serviceUnit->name ?? "",
             "total_invoice" => strval(abs(intval($this->total_invoice))),
-            "amount_paid" => $this->amount_paid ?? 0,
+            "amount_paid" => $this->payment_status == 'paid' ? $this->total_billing : $this->amount_paid ?? 0,
             "outstanding_amount" => $this->payment_status == 'paid' ? 0 : strval(abs(intval($this->outstanding_amount))),
             //"service_unit_id" => $this->service_unit_id,
             "total_billing" => strval(abs(intval($this->total_billing))),
