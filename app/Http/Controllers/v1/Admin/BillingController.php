@@ -374,7 +374,7 @@ class BillingController extends Controller
                 }
             }
 
-            return JsonResponser::send(false, 'Billing summary fetched successfully.', $exportData, 200);
+            return JsonResponser::send(false, 'Billing summary fetched successfully.', $billingSummaries, 200);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'Error fetching billing summary stats.', [], 500, $th);
         }
