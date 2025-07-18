@@ -99,12 +99,12 @@ class BillingController extends Controller
             $validated =  $request->validated();
             $service = $this->serviceFetch->create_service($validated);
             //   $record = ServiceDepartment::findOrFail($id);
+            DB::connection('tenant')->commit();
             return JsonResponser::send(false, 'Service created successfully', $service, 200);
             if (!$service) {
                 DB::connection('tenant')->rollBack();
                 return JsonResponser::send(true, 'Service not found', [], 404);
             }
-            DB::connection('tenant')->commit();
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Internal server error', [], 500, $th);
@@ -123,13 +123,12 @@ class BillingController extends Controller
                 'name' => 'required|string'
             ]);
             $service = $this->serviceFetch->editservice($validated);
+            DB::connection('tenant')->commit();
             return JsonResponser::send(false, 'Service created successfully', $service, 200);
             if (!$service) {
                 DB::connection('tenant')->rollBack();
                 return JsonResponser::send(true, 'Service not found', [], 404);
             }
-
-            DB::connection('tenant')->commit();
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Internal server error', [], 500, $th);
