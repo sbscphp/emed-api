@@ -122,7 +122,7 @@ class BillingController extends Controller
 
     public function editservice(Request $request)
     {
-        dd($request->all());
+        // dd($request->all());
         try {
 
             DB::connection('tenant')->beginTransaction();
