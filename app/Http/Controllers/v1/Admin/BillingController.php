@@ -348,22 +348,23 @@ class BillingController extends Controller
 
     public function billingsummary()
     {
-        try {
-            DB::connection('tenant')->beginTransaction();
-            // $billingSummaries = BillingLog::with('serviceUnit')
-            //     ->get();
-            $billingSummaries = BillingLog::select('service_unit_id', DB::raw('SUM(grand_total) as total_billing'))
-                ->groupBy('service_unit_id')
-                ->with('serviceUnit')
-                ->get();
+        dd('here');
+        // try {
+        //     DB::connection('tenant')->beginTransaction();
+        //     // $billingSummaries = BillingLog::with('serviceUnit')
+        //     //     ->get();
+        //     $billingSummaries = BillingLog::select('service_unit_id', DB::raw('SUM(grand_total) as total_billing'))
+        //         ->groupBy('service_unit_id')
+        //         ->with('serviceUnit')
+        //         ->get();
 
-            dd(json_encode($billingSummaries));
-            // return JsonResponser::send(false, 'Billing summary fetched successfully.', $billingSummaries, 200);
-            // return JsonResponser::send(false, 'Billing records retrieved successfully.', $data, 200);
-            // return JsonResponser::send(false, 'Record(s) found successfully.', $logs);
+        //     dd(json_encode($billingSummaries));
+        //     // return JsonResponser::send(false, 'Billing summary fetched successfully.', $billingSummaries, 200);
+        //     // return JsonResponser::send(false, 'Billing records retrieved successfully.', $data, 200);
+        //     // return JsonResponser::send(false, 'Record(s) found successfully.', $logs);
 
-        } catch (\Throwable $th) {
-            return JsonResponser::send(true, 'Error fetching billing summary stats.', [], 500, $th);
-        }
+        // } catch (\Throwable $th) {
+        //     return JsonResponser::send(true, 'Error fetching billing summary stats.', [], 500, $th);
+        // }
     }
 }
