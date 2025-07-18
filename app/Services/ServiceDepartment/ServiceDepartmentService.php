@@ -155,7 +155,7 @@ class ServiceDepartmentService
                 'module_accessed' => ListModuleEnums::Service
             ];
             GeneralHelper::storeAuditLog($dataToLog);
-            $service->update([
+            return $service->update([
                 "name" => $validated['name']
             ]);
         }
