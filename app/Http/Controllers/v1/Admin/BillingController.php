@@ -136,7 +136,7 @@ class BillingController extends Controller
         // if ($service) {
 
         //     DB::connection('tenant')->rollBack();
-        JsonResponser::send(false, 'Service created successfully', $service, 200);
+        return JsonResponser::send(false, 'Service created successfully', $service, 200);
         // }
 
         DB::connection('tenant')->commit();
