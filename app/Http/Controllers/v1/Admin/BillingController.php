@@ -344,4 +344,14 @@ class BillingController extends Controller
             return JsonResponser::send(true, 'Error fetching billing stats.', [], 500, $e);
         }
     }
+
+
+    public function billingsummary()
+    {
+        $billingSummaries = BillingLog::select('service_unit_id', DB::raw('SUM(grand_total) as total_billing'))
+            ->groupBy('service_unit_id')
+            ->with('serviceUnit')
+            ->get();
+        return JsonResponser::send(false, 'Billing summary fetched successfully.', $billingSummaries);
+    }
 }

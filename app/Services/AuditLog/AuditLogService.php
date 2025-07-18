@@ -134,28 +134,7 @@ class AuditLogService
             $query->whereBetween('created_at', [Carbon::parse($startDate), Carbon::parse($endDate)]);
         }
 
-        if (!empty($validated['export'])) {
-            $logs = $query->get();
-            $export = $validated['export'];
 
-            $exportData = $logs->map(function ($log) {
-                return [
-                    'Action Type' => $log->action_type,
-                    'Description' => $log->description,
-                    'Log Name' => $log->log_name,
-                    'Causer' => optional($log->causer)->fullname ?? 'System',
-                    'Created At' => $log->created_at->toDateTimeString(),
-                ];
-            });
-
-            if ($export === 'csv') {
-                return ExportHelper::streamCsv($exportData->toArray(), null, 'audit-logs.csv');
-            }
-
-            if ($export === 'pdf') {
-                return ExportHelper::downloadPdf($exportData->toArray(), 'audit-logs.pdf');
-            }
-        }
         $paginate =  $validated['paginate'] ?? false;
         return $paginate ? $query->paginate(10) : $query->get();
     }
