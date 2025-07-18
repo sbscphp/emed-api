@@ -20,7 +20,7 @@ class BillingLogSubmmaryResource extends JsonResource
             "amout_paid" => $this->amout_paid,
             "outstanding_amount" => $this->outstanding_amount,
             "total_invoice" => $this->total_invoice,
-            "name" => $this->service_unit?->name ?? "",
+            "name" => $this->serviceUnit->name ?? "",
 
         ];
     }
