@@ -126,16 +126,17 @@ class AuditLogService
             });
         }
 
-        $startDate = $validated['start_date'];
-        $endDate = $validated['end_date'];
-        $paginate =  $validated['paginate'];
-        if (isset($startDate) && isset($endDate)) {
+
+
+        if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
+            $startDate = $validated['start_date'];
+            $endDate = $validated['end_date'];
             $query->whereBetween('created_at', [Carbon::parse($startDate), Carbon::parse($endDate)]);
         }
 
-        $export = $validated['export'];
-        if ($export === 'csv' || $export === 'pdf') {
+        if (!empty($validated['export'])) {
             $logs = $query->get();
+            $export = $validated['export'];
 
             $exportData = $logs->map(function ($log) {
                 return [
@@ -155,7 +156,7 @@ class AuditLogService
                 return ExportHelper::downloadPdf($exportData->toArray(), 'audit-logs.pdf');
             }
         }
-
+        $paginate =  $validated['paginate'];
         return $paginate ? $query->paginate(10) : $query->get();
     }
 }
