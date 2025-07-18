@@ -21,6 +21,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Response;
 use App\Http\Requests\CreateServiceRequest;
 use App\Http\Resources\BillingLogSubmmaryResource;
+use App\Http\Resources\PharmacyResourceList;
 use App\Http\Resources\RegistrationResource;
 use App\Models\Patient;
 use App\Models\Pharmacy;
@@ -426,8 +427,21 @@ class BillingController extends Controller
             'end_date' => "nullable|string",
         ]);
 
-        $pharm =  Pharmacy::with(["pharmacist", 'treatments_one.Patient.visits_recent.billingLogsForPatient'])->get();
-        return JsonResponser::send(false, 'Billing stats fetched successfully.', $pharm);
+        $data = $this->billingService->pharmacy_list($validated);
+        $pharm =  Pharmacy::with(["pharmacist", 'treatments_one.patient.visits_recent.billingLogsForPatient'])->get();
+        if (!empty($validated['export'])) {
+            $export =  $validated['export'];
+            $exportData = PharmacyResourceList::collection($pharm)->resolve();
+
+            if ($export === 'csv') {
+                return ExportHelper::streamCsv($exportData, null, 'audit-logs.csv');
+            }
+
+            if ($export === 'pdf') {
+                return ExportHelper::downloadPdf($exportData, 'audit-logs.pdf');
+            }
+        }
+        return JsonResponser::send(false, 'Billing stats fetched successfully.', $data);
     }
 
     public function getBillingStatistics()
