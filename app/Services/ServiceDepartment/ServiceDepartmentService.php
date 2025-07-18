@@ -126,7 +126,7 @@ class ServiceDepartmentService
     public function create_service($validated)
     {
 
-        $service =  ServiceDepartment::create($validated);
+        $service =  ServiceUnit::create($validated);
         $user = Auth::user();
         $dataToLog = [
             'causer_id' => $user->id,
@@ -143,7 +143,7 @@ class ServiceDepartmentService
     public function editservice($validated)
     {
 
-        $service = ServiceDepartment::find($validated['id']);
+        $service = ServiceUnit::find($validated['id']);
         if ($service) {
             $user = Auth::user();
             $tenantUser = User::on('tenant')->where('email', $user->email)->first();
