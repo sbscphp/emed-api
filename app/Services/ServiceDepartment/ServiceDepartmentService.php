@@ -6,6 +6,7 @@ use App\Enums\ListModuleEnums;
 use App\Helpers\GeneralHelper;
 use App\Models\ServiceDepartment;
 use App\Models\ServiceUnit;
+use App\Models\User;
 use Carbon\Carbon;
 use App\Repositories\ServiceDepartment\ServiceDepartmentInterface;
 use Illuminate\Support\Facades\Auth;
