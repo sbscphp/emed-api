@@ -150,6 +150,10 @@ class BillingController extends Controller
                     "name" => $validated['name']
                 ]);
                 return JsonResponser::send(false, 'Service edit successfully', $service, 200);
+            } else {
+
+                DB::connection('tenant')->rollBack();
+                return JsonResponser::send(true, 'Service not found', [], 404);
             }
 
             DB::connection('tenant')->commit();
