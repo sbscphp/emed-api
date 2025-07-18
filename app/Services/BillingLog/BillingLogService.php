@@ -242,9 +242,9 @@ class BillingLogService
         foreach ($consultation as $consult) {
             // patient_id
 
-            $patientvisit =   optional(PatientVisit::where('visitno', $consult->visitno)->first());
+            $patientvisit =   PatientVisit::where('visitno', $consult->visitno)->first() ?? "";
 
-            $billinglog =   optional(BillingLog::where('visit_id', $patientvisit->id)->first());
+            $billinglog =   BillingLog::where('visit_id', $patientvisit->id)->first() ?? "";
             dd(json_encode([$patientvisit, "\r\n",  $billinglog]));
             $consultation_amount = $consultation_amount + $billinglog->grand_total;
         }
