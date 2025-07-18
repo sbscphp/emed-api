@@ -128,13 +128,14 @@ class ServiceDepartmentService
 
         $service =  ServiceUnit::create($validated);
         $user = Auth::user();
+        $tenantUser = User::on('tenant')->where('email', $user->email)->first();
         $dataToLog = [
-            'causer_id' => $user->id,
+            'causer_id' => $tenantUser ? $tenantUser->id : null,
             'action_id' => $service->id,
             'action' => 'Create',
             'action_type' => "Models\ServiceDepartment",
             'log_name' => " record created successfully",
-            'description' => "{$user->firstname} {$user->lastname} created a Service: {$service->name}",
+            'description' => "{$tenantUser->firstname} {$tenantUser->firstname} created a Service: {$service->name}",
             'module_accessed' => ListModuleEnums::Service
         ];
         return  GeneralHelper::storeAuditLog($dataToLog);
