@@ -123,27 +123,27 @@ class BillingController extends Controller
     public function editservice(Request $request)
     {
         // dd($request->all());
-        try {
+        // try {
 
-            DB::connection('tenant')->beginTransaction();
+        DB::connection('tenant')->beginTransaction();
 
-            $validated =  $request->validate([
-                'id' => 'nullable|numeric',
-                'name' => 'required|string'
-            ]);
-            $service = $this->serviceFetch->editservice($validated);
+        $validated =  $request->validate([
+            'id' => 'nullable|numeric',
+            'name' => 'required|string'
+        ]);
+        $service = $this->serviceFetch->editservice($validated);
 
-            if ($service) {
+        if ($service) {
 
-                DB::connection('tenant')->rollBack();
-                return JsonResponser::send(true, 'Service not found', [], 404);
-            }
-
-            DB::connection('tenant')->commit();
-        } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+            return JsonResponser::send(true, 'Service not found', [], 404);
         }
+
+        DB::connection('tenant')->commit();
+        // } catch (\Throwable $th) {
+        //     DB::connection('tenant')->rollBack();
+        //     return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+        // }
     }
 
     public function store(BillingLogRequest $request)
