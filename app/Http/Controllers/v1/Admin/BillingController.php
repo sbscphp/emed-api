@@ -131,27 +131,9 @@ class BillingController extends Controller
                 'id' => 'nullable|numeric',
                 'name' => 'required|string'
             ]);
-            //$data = $this->serviceFetch->editservice($validated);
+            $service = $this->serviceFetch->editservice($validated);
 
-            $service = ServiceDepartment::find($validated['id']);
             if ($service) {
-                $user = Auth::user();
-                $tenantUser = User::on('tenant')->where('email', $user->email)->first();
-                $dataToLog = [
-                    'causer_id' => $tenantUser ? $tenantUser->id : null,
-                    'action_id' => $service->id,
-                    'action' => 'Create',
-                    'action_type' => "Models\ServiceDepartment",
-                    'log_name' => " record Edited successfully",
-                    'description' => "{$tenantUser->firstname} {$tenantUser->lastname} Edited a Service: {$service->name}",
-                    'module_accessed' => ListModuleEnums::Service
-                ];
-                GeneralHelper::storeAuditLog($dataToLog);
-                $service->update([
-                    "name" => $validated['name']
-                ]);
-                return JsonResponser::send(false, 'Service edit successfully', $service, 200);
-            } else {
 
                 DB::connection('tenant')->rollBack();
                 return JsonResponser::send(true, 'Service not found', [], 404);
