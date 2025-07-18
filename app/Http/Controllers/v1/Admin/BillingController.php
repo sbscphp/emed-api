@@ -122,10 +122,11 @@ class BillingController extends Controller
 
     public function editservice(Request $request)
     {
+        dd($request->all());
         try {
 
             DB::connection('tenant')->beginTransaction();
-            dd($request->all());
+
             $validated =  $request->validate([
                 'id' => 'nullable|numeric',
                 'name' => 'required|string'

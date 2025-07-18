@@ -28,7 +28,7 @@ use Illuminate\Support\Facades\Artisan;
 
 Route::group(["prefix" => "v1"], function () {
     /** Cache **/
-
+    // https://emed.sbscuk.co.uk/public/api/v1/clear-cache
     Route::get('/clear-cache', function () {
         Artisan::call('optimize:clear');
         Artisan::call('config:cache');
