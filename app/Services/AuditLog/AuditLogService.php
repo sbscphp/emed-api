@@ -136,6 +136,6 @@ class AuditLogService
 
 
         $paginate =  $validated['paginate'] ?? false;
-        return $paginate ? $query->paginate(10) : $query->get();
+        return intval($paginate) == 1 ? $query->paginate(10) : $query->get();
     }
 }

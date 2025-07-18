@@ -200,7 +200,9 @@ class AuditLogController extends Controller
                 "end_date" => "nullable|date",
                 "activity_type" => "nullable|string",
                 'export' => 'nullable|string',
-                'paginate' => 'nullable|boolean'
+                'paginate' => 'nullable|in:1,0'
+
+
             ]);
 
             $logs = $this->auditLogService->data_changes($validated);
