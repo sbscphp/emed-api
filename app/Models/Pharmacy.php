@@ -48,7 +48,7 @@ class Pharmacy extends Model
 
     public function treatments_one()
     {
-        return $this->hasOne(Treatment::class);
+        return $this->hasOne(Treatment::class, 'id', 'pharmacy_id');
     }
 
     public function consultations()
