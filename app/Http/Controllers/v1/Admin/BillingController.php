@@ -348,15 +348,15 @@ class BillingController extends Controller
 
     public function billingsummary()
     {
-        try {
-            DB::connection('tenant')->beginTransaction();
-            $billingSummaries = BillingLog::select('service_unit_id', DB::raw('SUM(grand_total) as total_billing'))
-                ->groupBy('service_unit_id')
-                ->with('serviceUnit')
-                ->get();
-            return JsonResponser::send(false, 'Billing summary fetched successfully.', $billingSummaries);
-        } catch (\Throwable $th) {
-            return JsonResponser::send(true, 'Error fetching billing summary stats.', [], 500, $th);
-        }
+        // try {
+        DB::connection('tenant')->beginTransaction();
+        $billingSummaries = BillingLog::select('service_unit_id', DB::raw('SUM(grand_total) as total_billing'))
+            ->groupBy('service_unit_id')
+            ->with('serviceUnit')
+            ->get();
+        return JsonResponser::send(false, 'Billing summary fetched successfully.', $billingSummaries);
+        // } catch (\Throwable $th) {
+        //     return JsonResponser::send(true, 'Error fetching billing summary stats.', [], 500, $th);
+        // }
     }
 }
