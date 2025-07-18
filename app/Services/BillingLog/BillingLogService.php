@@ -241,6 +241,7 @@ class BillingLogService
         $consultation_amount = 0;
         foreach ($consultation as $consult) {
             // patient_id
+            dd(json_encode($consult));
             $patientvisit =   optional(PatientVisit::where('visitno', $consult->visitno)->first());
 
             $billinglog =   optional(BillingLog::where('visit_id', $patientvisit->id)->first());
