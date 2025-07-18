@@ -218,11 +218,12 @@ class BillingLogService
         $laboratory =  Laboratory::all();
         $lab_amount = 0;
         foreach ($laboratory as $lab) {
-            $patientvisit =   optional(PatientVisit::where('visitno', $lab->visitno)->first());
+            $patientvisit =  PatientVisit::where('visitno', $lab->visitno)->first();
 
-            $billinglog =   optional(BillingLog::where('visit_id', $patientvisit->id)->first());
+            // $billinglog =   optional(BillingLog::where('visit_id', $patientvisit->id)->first());
+            $billinglog = $patientvisit ? BillingLog::where('visit_id', $patientvisit->id)->first() : null;
 
-            $lab_amount = $lab_amount + $billinglog->grand_total;
+            $lab_amount  += $billinglog?->grand_total ?? 0;
         }
 
 
@@ -230,11 +231,13 @@ class BillingLogService
 
         $radiology_amount = 0;
         foreach ($radiology as $radio) {
-            $patientvisit =   optional(PatientVisit::where('visitno', $radio->visitno)->first());
+            $patientvisit =   PatientVisit::where('visitno', $radio->visitno)->first();
 
-            $billinglog =   optional(BillingLog::where('visit_id', $patientvisit->id)->first());
+            // $billinglog =   optional(BillingLog::where('visit_id', $patientvisit->id)->first());
+            $billinglog = $patientvisit ? BillingLog::where('visit_id', $patientvisit->id)->first() : null;
 
-            $radiology_amount = $radiology_amount + $billinglog->grand_total;
+            // $radiology_amount = $radiology_amount + $billinglog->grand_total;
+            $radiology_amount += $billinglog?->grand_total ?? 0;
         }
 
         $consultation =  Consultation::get();
@@ -242,7 +245,7 @@ class BillingLogService
         foreach ($consultation as $consult) {
             // patient_id
 
-            $patientvisit =   PatientVisit::where('visitno', $consult->visitno)->first() ?? "";
+            $patientvisit =   PatientVisit::where('visitno', $consult->visitno)->first();
 
             // $billinglog =   BillingLog::where('visit_id', $patientvisit->id)->first() ?? "";
             // $consultation_amount = $consultation_amount + $billinglog->grand_total;
