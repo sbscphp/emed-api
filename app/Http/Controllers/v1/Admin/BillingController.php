@@ -120,11 +120,14 @@ class BillingController extends Controller
         }
     }
 
-    public function editservice(CreateServiceRequest $request)
+    public function editservice(Request $request)
     {
         try {
             DB::connection('tenant')->beginTransaction();
-            $validated =  $request->validated();
+            $validated =  $request->validate([
+                'id' => 'nullable|numeric',
+                'name' => 'required|string'
+            ]);
             //$data = $this->serviceFetch->editservice($validated);
 
             $service = ServiceDepartment::find($validated['id']);
