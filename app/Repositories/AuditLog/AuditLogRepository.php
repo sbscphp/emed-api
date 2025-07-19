@@ -89,8 +89,9 @@ class AuditLogRepository implements AuditLogInterface
      *
      * @param \App\Models\AuditLog
      */
-    public function getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate, $export = null, $module_accessed)
+    public function getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate, $export = null, $action, $module_accessed)
     {
+
         $query = AuditLog::with(['audit_log_transactions', 'causer']);
 
         if (isset($search)) {
@@ -113,6 +114,10 @@ class AuditLogRepository implements AuditLogInterface
 
         if (!empty($module_accessed)) {
             $query->where("module_accessed",  'LIKE', "%{$module_accessed}%");
+        }
+
+        if (!empty($action)) {
+            $query->where("action_type",  'LIKE', "%{$action}%");
         }
 
         if (isset($sortBy)) {

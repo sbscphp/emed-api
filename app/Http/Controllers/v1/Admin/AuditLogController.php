@@ -82,7 +82,7 @@ class AuditLogController extends Controller
             $startDate = $request->start_date;
             $endDate = $request->end_date;
             $activityType = $request->activity_type;
-            $paginate = false;
+            $paginate = $request->paginate ?? false;
             $export = $request->export;
             $action = $request->action;
             $module_accessed = $request->module_accessed;
