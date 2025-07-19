@@ -252,6 +252,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get("consultation_list", [BillingController::class, "consultation_list"]);
                     // laboratory_list
                     Route::get("laboratory_list", [BillingController::class, "laboratory_list"]);
+                    Route::get("radiology_list", [BillingController::class, "radiology_list"]);
                 });
             });
         });

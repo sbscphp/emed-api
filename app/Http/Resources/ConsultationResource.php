@@ -19,6 +19,7 @@ class ConsultationResource extends JsonResource
         return [
             "firstname" => $patient?->firstname,
             "lastname" => $patient?->lastname,
+            "patientno" => $patient?->patientno,
             "gender" => $patient?->gender,
             "age" => Carbon::parse($patient?->dob)->age,
             "amount" => $patient?->visits_recent?->billingLogsForPatient?->payment_status,

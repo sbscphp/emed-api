@@ -28,6 +28,7 @@ use App\Models\Consultation;
 use App\Models\Laboratory;
 use App\Models\Patient;
 use App\Models\Pharmacy;
+use App\Models\Radiology;
 use App\Models\ServiceDepartment;
 
 class BillingController extends Controller
@@ -481,18 +482,50 @@ class BillingController extends Controller
 
     public function laboratory_list(Request $request)
     {
+
+        try {
+            $validated =   $request->validate([
+                'export' => "nullable|string",
+                'search' => 'nullable|string',
+                'start_date' => "nullable|string",
+                'end_date' => "nullable|string",
+            ]);
+            $laboratory = Laboratory::with('patient.visits_recent.billingLogsForPatient')->get();
+            $data = $this->billingService->laboratory_list($validated);
+            if (!empty($validated['export'])) {
+                $export =  $validated['export'];
+                // $exportData = PharmacyResourceList::collection($pharm)->resolve();
+                $exportData = ConsultationResource::collection($laboratory)->resolve();
+                if ($export === 'csv') {
+                    return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
+                }
+
+                if ($export === 'pdf') {
+                    return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+                }
+            }
+            return JsonResponser::send(false, ' fetched successfully.',  $data);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'Error fetching.', [], 500, $th);
+        }
+    }
+
+    public function radiology_list(Request $request)
+    {
+
         $validated =   $request->validate([
             'export' => "nullable|string",
             'search' => 'nullable|string',
             'start_date' => "nullable|string",
             'end_date' => "nullable|string",
         ]);
-        $laboratory = Laboratory::with('patient.visits_recent.billingLogsForPatient')->get();
-        $data = $this->billingService->laboratory_list($validated);
+
+        $radiology =  Radiology::with('patient.visits_recent.billingLogsForPatient')->get();
+        $data = $this->billingService->radiology_list($validated);
         if (!empty($validated['export'])) {
             $export =  $validated['export'];
             // $exportData = PharmacyResourceList::collection($pharm)->resolve();
-            $exportData = ConsultationResource::collection($laboratory)->resolve();
+            $exportData = ConsultationResource::collection($radiology)->resolve();
             if ($export === 'csv') {
                 return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
             }
@@ -501,8 +534,10 @@ class BillingController extends Controller
                 return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
             }
         }
+
         return JsonResponser::send(false, ' fetched successfully.',  $data);
     }
+
 
     public function getBillingStatistics()
     {
