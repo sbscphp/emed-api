@@ -318,18 +318,18 @@ class BillingLogService
 
     public function billingLog($validated)
     {
-        $billingLog = BillingLog::with(['serviceType', 'patient']);
-
-        $billingLog->when(!empty($validated['search']), function ($query) use ($validated) {
-            $query->whereHas('patient', function ($q) use ($validated) {
-                $q->where('firstname', 'like', '%' . $validated['search'] . '%')
-                    ->orWhere('lastname', 'like', '%' . $validated['search'] . '%')
-                    ->orWhere('patientno', 'like', '%' . $validated['search'] . '%')
+        $billingLog = BillingLog::with(['serviceType', 'patient'])
+            ->when(!empty($validated['search']), function ($query) use ($validated) {
+                $query->whereHas('patient', function ($q) use ($validated) {
+                    $q->where('firstname', 'like', '%' . $validated['search'] . '%')
+                        ->orWhere('lastname', 'like', '%' . $validated['search'] . '%')
+                        ->orWhere('patientno', 'like', '%' . $validated['search'] . '%');
+                })
                     ->orWhereHas('serviceType', function ($q) use ($validated) {
                         $q->where('name', 'like', '%' . $validated['search'] . '%');
                     });
             });
-        });
+
 
         if (!empty($validated['paid_type'])) {
             $billingLog->where("payment_status", $validated['paid_type']);
