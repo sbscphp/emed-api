@@ -25,6 +25,7 @@ use App\Http\Resources\ConsultationResource;
 use App\Http\Resources\PharmacyResourceList;
 use App\Http\Resources\RegistrationResource;
 use App\Models\Consultation;
+use App\Models\Laboratory;
 use App\Models\Patient;
 use App\Models\Pharmacy;
 use App\Models\ServiceDepartment;
@@ -449,32 +450,58 @@ class BillingController extends Controller
 
     public function consultation_list(Request $request)
     {
-        // try {
-        DB::connection('tenant')->beginTransaction();
+        try {
+            DB::connection('tenant')->beginTransaction();
+            $validated =   $request->validate([
+                'export' => "nullable|string",
+                'search' => 'nullable|string',
+                'start_date' => "nullable|string",
+                'end_date' => "nullable|string",
+            ]);
+            $consultation = Consultation::with('patient.visits_recent.billingLogsForPatient')->get();
+            $data = $this->billingService->consultation_list($validated);
+            if (!empty($validated['export'])) {
+                $export =  $validated['export'];
+                // $exportData = PharmacyResourceList::collection($pharm)->resolve();
+                $exportData = ConsultationResource::collection($consultation)->resolve();
+                if ($export === 'csv') {
+                    return ExportHelper::streamCsv($exportData, null, 'Consultation.csv');
+                }
+
+                if ($export === 'pdf') {
+                    return ExportHelper::downloadPdf($exportData, 'Consultation.pdf');
+                }
+            }
+            return JsonResponser::send(false, ' fetched successfully.',  $data);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'Error fetching.', [], 500, $th);
+        }
+    }
+
+
+    public function laboratory_list(Request $request)
+    {
         $validated =   $request->validate([
             'export' => "nullable|string",
             'search' => 'nullable|string',
             'start_date' => "nullable|string",
             'end_date' => "nullable|string",
         ]);
-        $consultation = Consultation::with('patient.visits_recent.billingLogsForPatient')->get();
-        $data = $this->billingService->consultation_list($validated);
+        $laboratory = Laboratory::with('patient.visits_recent.billingLogsForPatient')->get();
+        $data = $this->billingService->laboratory_list($validated);
         if (!empty($validated['export'])) {
             $export =  $validated['export'];
             // $exportData = PharmacyResourceList::collection($pharm)->resolve();
-            $exportData = ConsultationResource::collection($consultation)->resolve();
+            $exportData = ConsultationResource::collection($laboratory)->resolve();
             if ($export === 'csv') {
-                return ExportHelper::streamCsv($exportData, null, 'Consultation.csv');
+                return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
             }
 
             if ($export === 'pdf') {
-                return ExportHelper::downloadPdf($exportData, 'Consultation.pdf');
+                return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
             }
         }
         return JsonResponser::send(false, ' fetched successfully.',  $data);
-        // } catch (\Throwable $th) {
-        //     return JsonResponser::send(true, 'Error fetching.', [], 500, $th);
-        // }
     }
 
     public function getBillingStatistics()
