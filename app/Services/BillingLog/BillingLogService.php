@@ -366,8 +366,10 @@ class BillingLogService
         $med =  Medication::with('pharmacy')
             ->when(!empty($validated['search']), function ($query) use ($validated) {
                 $query->whereHas('pharmacy', function ($q) use ($validated) {
+                    // pharmacy_id
                     $q->where('name', 'like', '%' . $validated['search'] . '%')
-                        ->orWhere('type', 'like', '%' . $validated['search'] . '%');
+                        ->orWhere('type', 'like', '%' . $validated['search'] . '%')
+                        ->orWhere('pharmacy_id', 'like', '%' . $validated['search'] . '%');
                 });
             });
 
@@ -376,6 +378,14 @@ class BillingLogService
             $endDate = $validated['end_date'];
             $med->where('created_at', [Carbon::parse($startDate), Carbon::parse($endDate)]);
         }
+
+        if (!empty($validated['search'])) {
+            $med->where('generic_name', $validated['search'])
+                ->orWhere('brand_name', $validated['search'])
+                ->orWhere('medicine_name', $validated['search'])
+                ->orWhere('medicine_type', $validated['search']);
+        }
+
 
         return  $med->paginate();
     }
