@@ -378,15 +378,14 @@ class BillingLogService
         }
 
         if (!empty($validated['search'])) {
-            $med->when(!empty($validated['search']), function ($query) use ($validated) {
-                $query->whereHas('medication', function ($q) use ($validated) {
-                    $q->where('generic_name', $validated['search'])
-                        ->orWhere('brand_name', $validated['search'])
-                        ->orWhere('medicine_name', $validated['search'])
-                        ->orWhere('medicine_type', $validated['search']);
-                });
+            $med->whereHas('medication', function ($q) use ($validated) {
+                $q->where('generic_name', 'like', "%{$validated['search']}%")
+                    ->orWhere('brand_name', 'like', "%{$validated['search']}%")
+                    ->orWhere('medicine_name', 'like', "%{$validated['search']}%")
+                    ->orWhere('medicine_type', 'like', "%{$validated['search']}%");
             });
         }
+
 
 
         return  $med->paginate();
