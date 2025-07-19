@@ -27,6 +27,7 @@ use App\Http\Resources\PharmacyResourceList;
 use App\Http\Resources\RegistrationResource;
 use App\Models\Consultation;
 use App\Models\Laboratory;
+use App\Models\Medication;
 use App\Models\Patient;
 use App\Models\Pharmacy;
 use App\Models\Radiology;
@@ -575,8 +576,22 @@ class BillingController extends Controller
             $data  = $this->billingService->billingmgt();
             return JsonResponser::send(false, ' fetched successfully.',  $data);
         } catch (\Throwable $th) {
-            return JsonResponser::send(true, 'Error fetching.', [], 500, $e);
+            return JsonResponser::send(true, 'Error fetching.', [], 500, $th);
         }
+    }
+
+
+    public function billingmgt_pharmacy(Request $request)
+    {
+        $validated =   $request->validate([
+            'export' => "nullable|string",
+            'search' => 'nullable|string',
+            'start_date' => "nullable|string",
+            'end_date' => "nullable|string",
+        ]);
+
+        $med =  Medication::with('pharmacy')->get();
+        return JsonResponser::send(false, ' fetched successfully.',  $med);
     }
 
 
