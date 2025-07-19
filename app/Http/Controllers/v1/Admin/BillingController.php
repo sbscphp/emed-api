@@ -20,6 +20,7 @@ use App\Models\BillingLog;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Response;
 use App\Http\Requests\CreateServiceRequest;
+use App\Http\Resources\BillingLogResource;
 use App\Http\Resources\BillingLogSubmmaryResource;
 use App\Http\Resources\ConsultationResource;
 use App\Http\Resources\PharmacyResourceList;
@@ -549,8 +550,22 @@ class BillingController extends Controller
         ]);
 
         $billingLog =   BillingLog::with(['serviceType', 'patient'])->get();
+        $data = $this->billingService->billingLog($validated);
+        if (!empty($validated['export'])) {
+            $export =  $validated['export'];
+            // $exportData = PharmacyResourceList::collection($pharm)->resolve();
 
-        return JsonResponser::send(false, ' fetched successfully.',  $billingLog);
+            $exportData = BillingLogResource::collection($billingLog)->resolve();
+            if ($export === 'csv') {
+                return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
+            }
+
+            if ($export === 'pdf') {
+                return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+            }
+        }
+
+        return JsonResponser::send(false, ' fetched successfully.',  $data);
     }
 
 

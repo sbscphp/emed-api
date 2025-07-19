@@ -315,6 +315,36 @@ class BillingLogService
         return   $radiology->paginate();
     }
 
+
+    public function billingLog($validated)
+    {
+        $billingLog = BillingLog::with(['serviceType', 'patient']);
+
+        $billingLog->when(!empty($validated['search']), function ($query) use ($validated) {
+            $query->whereHas('patient', function ($q) use ($validated) {
+                $q->where('firstname', 'like', '%' . $validated['search'] . '%')
+                    ->orWhere('lastname', 'like', '%' . $validated['search'] . '%')
+                    ->orWhere('patientno', 'like', '%' . $validated['search'] . '%')
+                    ->orWhereHas('serviceType', function ($q) use ($validated) {
+                        $q->where('name', 'like', '%' . $validated['search'] . '%');
+                    });
+            });
+        });
+
+        if (!empty($validated['paid_type'])) {
+            $billingLog->where("payment_status", $validated['paid_type']);
+        }
+
+
+        if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
+            $startDate = $validated['start_date'];
+            $endDate = $validated['end_date'];
+            $billingLog->where('created_at', [Carbon::parse($startDate), Carbon::parse($endDate)]);
+        }
+
+        return $billingLog->paginate();
+    }
+
     public function getStatistics(): array
     {
         $query = BillingLog::query();
