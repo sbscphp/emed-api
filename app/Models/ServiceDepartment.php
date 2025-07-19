@@ -15,6 +15,6 @@ class ServiceDepartment extends Model
 
     public function patients()
     {
-        return $this->hasMany(Patient::class);
+        return $this->hasOne(Patient::class, "service_id", 'id');
     }
 }

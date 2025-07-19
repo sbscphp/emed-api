@@ -584,29 +584,33 @@ class BillingController extends Controller
 
     public function billingmgt_pharmacy(Request $request)
     {
-        $validated =   $request->validate([
-            'export' => "nullable|string",
-            'search' => 'nullable|string',
-            'start_date' => "nullable|string",
-            'end_date' => "nullable|string",
-        ]);
+        try {
+            $validated =   $request->validate([
+                'export' => "nullable|string",
+                'search' => 'nullable|string',
+                'start_date' => "nullable|string",
+                'end_date' => "nullable|string",
+            ]);
 
-        $med =  Pharmacy::with('medication')->get();
-        $data = $this->billingService->billingmgt_pharmacy($validated);
-        if (!empty($validated['export'])) {
-            $export =  $validated['export'];
-            // $exportData = PharmacyResourceList::collection($pharm)->resolve(); MedicationResource
+            $med =  Pharmacy::with('medication')->get();
+            $data = $this->billingService->billingmgt_pharmacy($validated);
+            if (!empty($validated['export'])) {
+                $export =  $validated['export'];
+                // $exportData = PharmacyResourceList::collection($pharm)->resolve(); MedicationResource
 
-            $exportData = MedicationResource::collection($med)->resolve();
-            if ($export === 'csv') {
-                return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
+                $exportData = MedicationResource::collection($med)->resolve();
+                if ($export === 'csv') {
+                    return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
+                }
+
+                if ($export === 'pdf') {
+                    return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+                }
             }
-
-            if ($export === 'pdf') {
-                return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
-            }
+            return JsonResponser::send(false, ' fetched successfully.',  $data);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'Error fetching.', [], 500, $th);
         }
-        return JsonResponser::send(false, ' fetched successfully.',  $data);
     }
 
 
