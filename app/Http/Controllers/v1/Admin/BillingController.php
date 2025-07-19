@@ -569,6 +569,17 @@ class BillingController extends Controller
     }
 
 
+    public function billingmgt()
+    {
+        try {
+            $data  = $this->billingService->billingmgt();
+            return JsonResponser::send(false, ' fetched successfully.',  $data);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'Error fetching.', [], 500, $e);
+        }
+    }
+
+
     public function getBillingStatistics()
     {
         try {

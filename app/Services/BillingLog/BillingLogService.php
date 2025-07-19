@@ -345,6 +345,21 @@ class BillingLogService
         return $billingLog->paginate();
     }
 
+
+    public function billingmgt()
+    {
+
+        $data = [
+            ["name" => "registration", "total" => Patient::count()],
+            ["name" => "pharmacy", "total" => Pharmacy::count()],
+            ["name" => "laboratory", "total" => Laboratory::count()],
+            ["name" => "Radiology", "total" => Radiology::count()],
+            ["name" => "Consultation", "total" => Consultation::count()]
+        ];
+
+        return $data;
+    }
+
     public function getStatistics(): array
     {
         $query = BillingLog::query();

@@ -254,6 +254,10 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get("radiology_list", [BillingController::class, "radiology_list"]);
                     Route::get("payment_daft", [BillingController::class, "payment_daft"]);
                 });
+
+                Route::group(['prefix' => 'billingmgt'], function () {
+                    Route::get("/", [BillingController::class, "billingmgt"]);
+                });
             });
         });
     });
