@@ -32,6 +32,11 @@ class Pharmacy extends Model
     {
         return $this->belongsTo(State::class, 'state_id');
     }
+
+    public function medication()
+    {
+        return $this->hasOne(Medication::class);
+    }
     /**
      * @property User $pharmacist
      * @property \Illuminate\Database\Eloquent\Collection|Treatment[] $treatments
