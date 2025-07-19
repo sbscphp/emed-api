@@ -232,14 +232,15 @@ class BillingLogService
     {
         $consultation = Consultation::with('patient.visits_recent.billingLogsForPatient');
 
-
-        $consultation->whereHas('patient', function ($q) use ($validated) {
-            $q->where('firstname', 'like', '%' . $validated['search'] . '%')
-                ->orWhere('lastname', 'like', '%' . $validated['search'] . '%')
-                ->orwhere('patientno', 'like', '%' . $validated['search'] . '%')
-                ->orWhereHas('patient.visits_recent.billingLogsForPatient', function ($q) use ($validated) {
-                    $q->where('payment_status', 'like', '%' . $validated['search'] . '%');
-                });
+        $consultation->when(!empty($validated['search']), function ($query) use ($validated) {
+            $query->whereHas('patient', function ($q) use ($validated) {
+                $q->where('firstname', 'like', '%' . $validated['search'] . '%')
+                    ->orWhere('lastname', 'like', '%' . $validated['search'] . '%')
+                    ->orwhere('patientno', 'like', '%' . $validated['search'] . '%')
+                    ->orWhereHas('patient.visits_recent.billingLogsForPatient', function ($q) use ($validated) {
+                        $q->where('payment_status', 'like', '%' . $validated['search'] . '%');
+                    });
+            });
         });
 
         if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
