@@ -103,7 +103,7 @@ class AuditLogRepository implements AuditLogInterface
             });
         }
 
-        if (isset($startDate) && isset($endDate)) {
+        if (!empty($startDate) && !empty($endDate)) {
             $query->whereBetween('created_at', [Carbon::parse($startDate), Carbon::parse($endDate)]);
         }
 
@@ -118,7 +118,7 @@ class AuditLogRepository implements AuditLogInterface
         }
 
         // Handle export (CSV or PDF)
-        if ($export === 'csv' || $export === 'pdf') {
+        if (!empty($export) || $export === 'csv' || $export === 'pdf') {
             $logs = $query->get();
 
             $exportData = $logs->map(function ($log) {
