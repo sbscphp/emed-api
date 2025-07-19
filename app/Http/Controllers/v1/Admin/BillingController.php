@@ -21,6 +21,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Response;
 use App\Http\Requests\CreateServiceRequest;
 use App\Http\Resources\BillingLogSubmmaryResource;
+use App\Http\Resources\ConsultationResource;
 use App\Http\Resources\PharmacyResourceList;
 use App\Http\Resources\RegistrationResource;
 use App\Models\Consultation;
@@ -435,27 +436,45 @@ class BillingController extends Controller
             $exportData = PharmacyResourceList::collection($pharm)->resolve();
 
             if ($export === 'csv') {
-                return ExportHelper::streamCsv($exportData, null, 'audit-logs.csv');
+                return ExportHelper::streamCsv($exportData, null, 'pharmacy.csv');
             }
 
             if ($export === 'pdf') {
-                return ExportHelper::downloadPdf($exportData, 'audit-logs.pdf');
+                return ExportHelper::downloadPdf($exportData, 'pharmacy.pdf');
             }
         }
         return JsonResponser::send(false, 'Billing stats fetched successfully.', $data);
     }
 
+
     public function consultation_list(Request $request)
     {
-        DB::connection('tenant')->beginTransaction();
-        $validated =   $request->validate([
-            'export' => "nullable|string",
-            'search' => 'nullable|string',
-            'start_date' => "nullable|string",
-            'end_date' => "nullable|string",
-        ]);
-        $consultation = Consultation::with('patient.visits_recent.billingLogsForPatient')->get();
-        return JsonResponser::send(false, 'Billing stats fetched successfully.', $consultation);
+        try {
+            DB::connection('tenant')->beginTransaction();
+            $validated =   $request->validate([
+                'export' => "nullable|string",
+                'search' => 'nullable|string',
+                'start_date' => "nullable|string",
+                'end_date' => "nullable|string",
+            ]);
+            $consultation = Consultation::with('patient.visits_recent.billingLogsForPatient')->get();
+            $data = $this->billingService->consultation_list($validated);
+            if (!empty($validated['export'])) {
+                $export =  $validated['export'];
+                // $exportData = PharmacyResourceList::collection($pharm)->resolve();
+                $exportData = ConsultationResource::collection($consultation)->resolve();
+                if ($export === 'csv') {
+                    return ExportHelper::streamCsv($exportData, null, 'Consultation.csv');
+                }
+
+                if ($export === 'pdf') {
+                    return ExportHelper::downloadPdf($exportData, 'Consultation.pdf');
+                }
+            }
+            return JsonResponser::send(false, ' fetched successfully.',  $data);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'Error fetching.', [], 500, $th);
+        }
     }
 
     public function getBillingStatistics()

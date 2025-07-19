@@ -228,6 +228,31 @@ class BillingLogService
     }
 
 
+    public function consultation_list($validated)
+    {
+        $consultation = Consultation::with('patient.visits_recent.billingLogsForPatient');
+
+
+        $consultation->whereHas('patient', function ($q) use ($validated) {
+            $q->where('firstname', 'like', '%' . $validated['search'] . '%')
+                ->orWhere('lastname', 'like', '%' . $validated['search'] . '%')
+                ->orwhere('patientno', 'like', '%' . $validated['search'] . '%')
+                ->orWhereHas('patient.visits_recent.billingLogsForPatient', function ($q) use ($validated) {
+                    $q->where('payment_status', 'like', '%' . $validated['search'] . '%');
+                });
+        });
+
+        if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
+            $consultation->whereHas('patient.visits_recent.billingLogsForPatient', function ($q) use ($validated) {
+                $startDate = $validated['start_date'];
+                $endDate = $validated['end_date'];
+                $q->where('created_at', [Carbon::parse($startDate), Carbon::parse($endDate)]);
+            });
+        }
+
+        return   $consultation->paginate();
+    }
+
     public function getStatistics(): array
     {
         $query = BillingLog::query();
