@@ -373,6 +373,9 @@ class BillingController extends Controller
                     });
                 })
                 ->get();
+            if (count($billingSummaries) == 0) {
+                return JsonResponser::send(true, 'No Data.', [], 500);
+            }
             $exportData =  BillingLogSubmmaryResource::collection($billingSummaries)->resolve();
             if (!empty($validated['export'])) {
 
@@ -408,6 +411,9 @@ class BillingController extends Controller
             if (!empty($validated['export'])) {
                 $export =  $validated['export'];
                 $patient =  Patient::with('visits_recent.billingLogsForPatient')->get();
+                if (count($patient) == 0) {
+                    return JsonResponser::send(true, 'No Data.', [], 500);
+                }
                 $exportData = RegistrationResource::collection($patient)->resolve();
 
                 if ($export === 'csv') {
@@ -437,6 +443,9 @@ class BillingController extends Controller
 
         $data = $this->billingService->pharmacy_list($validated);
         $pharm =  Pharmacy::with(["pharmacist", 'treatments_one.patient.visits_recent.billingLogsForPatient'])->get();
+        if (count($pharm) == 0) {
+            return JsonResponser::send(true, 'No Data.', [], 500);
+        }
         if (!empty($validated['export'])) {
             $export =  $validated['export'];
             $exportData = PharmacyResourceList::collection($pharm)->resolve();
@@ -464,6 +473,9 @@ class BillingController extends Controller
                 'end_date' => "nullable|string",
             ]);
             $consultation = Consultation::with('patient.visits_recent.billingLogsForPatient')->get();
+            if (count($consultation) == 0) {
+                return JsonResponser::send(true, 'No Data.', [], 500);
+            }
             $data = $this->billingService->consultation_list($validated);
             if (!empty($validated['export'])) {
                 $export =  $validated['export'];
@@ -488,6 +500,7 @@ class BillingController extends Controller
     {
 
         try {
+            DB::connection('tenant')->beginTransaction();
             $validated =   $request->validate([
                 'export' => "nullable|string",
                 'search' => 'nullable|string',
@@ -495,6 +508,9 @@ class BillingController extends Controller
                 'end_date' => "nullable|string",
             ]);
             $laboratory = Laboratory::with('patient.visits_recent.billingLogsForPatient')->get();
+            if (count($laboratory) == 0) {
+                return JsonResponser::send(true, 'No Data.', [], 500);
+            }
             $data = $this->billingService->laboratory_list($validated);
             if (!empty($validated['export'])) {
                 $export =  $validated['export'];
@@ -525,6 +541,9 @@ class BillingController extends Controller
         ]);
 
         $radiology =  Radiology::with('patient.visits_recent.billingLogsForPatient')->get();
+        if (count($radiology) == 0) {
+            return JsonResponser::send(true, 'No Data.', [], 500);
+        }
         $data = $this->billingService->radiology_list($validated);
         if (!empty($validated['export'])) {
             $export =  $validated['export'];
@@ -544,40 +563,50 @@ class BillingController extends Controller
 
     public function payment_daft(Request $request)
     {
-        $validated =   $request->validate([
-            'export' => "nullable|string",
-            'search' => 'nullable|string',
-            'start_date' => "nullable|string",
-            'end_date' => "nullable|string",
-            'paid_type' => 'nullable|string|in:paid,part_paid,pending'
-        ]);
+        try {
+            DB::connection('tenant')->beginTransaction();
+            $validated =   $request->validate([
+                'export' => "nullable|string",
+                'search' => 'nullable|string',
+                'start_date' => "nullable|string",
+                'end_date' => "nullable|string",
+                'paid_type' => 'nullable|string|in:paid,part_paid,pending'
+            ]);
 
-        $billingLog =   BillingLog::with(['serviceType', 'patient'])->get();
-        $data = $this->billingService->billingLog($validated);
-        if (!empty($validated['export'])) {
-            $export =  $validated['export'];
-            // $exportData = PharmacyResourceList::collection($pharm)->resolve();
+            $billingLog =   BillingLog::with(['serviceType', 'patient'])->get();
+            if (count($billingLog) == 0) {
+                return JsonResponser::send(true, 'No Data.', [], 500);
+            }
+            $data = $this->billingService->billingLog($validated);
+            if (!empty($validated['export'])) {
+                $export =  $validated['export'];
+                // $exportData = PharmacyResourceList::collection($pharm)->resolve();
 
-            $exportData = BillingLogResource::collection($billingLog)->resolve();
-            if ($export === 'csv') {
-                return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
+                $exportData = BillingLogResource::collection($billingLog)->resolve();
+                if ($export === 'csv') {
+                    return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
+                }
+
+                if ($export === 'pdf') {
+                    return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+                }
             }
 
-            if ($export === 'pdf') {
-                return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
-            }
+            return JsonResponser::send(false, ' fetched successfully.',  $data);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'Error fetching.', [], 500, $th);
         }
-
-        return JsonResponser::send(false, ' fetched successfully.',  $data);
     }
 
 
     public function billingmgt()
     {
         try {
+            DB::connection('tenant')->beginTransaction();
             $data  = $this->billingService->billingmgt();
             return JsonResponser::send(false, ' fetched successfully.',  $data);
         } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Error fetching.', [], 500, $th);
         }
     }
@@ -586,6 +615,7 @@ class BillingController extends Controller
     public function billingmgt_pharmacy(Request $request)
     {
         try {
+            DB::connection('tenant')->beginTransaction();
             $validated =   $request->validate([
                 'export' => "nullable|string",
                 'search' => 'nullable|string',
@@ -594,6 +624,9 @@ class BillingController extends Controller
             ]);
 
             $med =  Pharmacy::with('medication')->get();
+            if (count($med) == 0) {
+                return JsonResponser::send(true, 'No Data.', [], 500);
+            }
             $data = $this->billingService->billingmgt_pharmacy($validated);
             if (!empty($validated['export'])) {
                 $export =  $validated['export'];
@@ -610,6 +643,7 @@ class BillingController extends Controller
             }
             return JsonResponser::send(false, ' fetched successfully.',  $data);
         } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Error fetching.', [], 500, $th);
         }
     }
@@ -617,32 +651,38 @@ class BillingController extends Controller
 
     public function regstration_billingmgt(Request $request)
     {
-        $validated =   $request->validate([
-            'export' => "nullable|string",
-            'search' => 'nullable|string',
-            'start_date' => "nullable|string",
-            'end_date' => "nullable|string",
-        ]);
+        try {
+            DB::connection('tenant')->beginTransaction();
+            $validated =   $request->validate([
+                'export' => "nullable|string",
+                'search' => 'nullable|string',
+                'start_date' => "nullable|string",
+                'end_date' => "nullable|string",
+            ]);
 
-        $data = $this->billingService->regstration_billingmgt($validated);
+            $data = $this->billingService->regstration_billingmgt($validated);
 
-        if (!empty($validated['export'])) {
-            $export =  $validated['export'];
-            // $exportData = PharmacyResourceList::collection($pharm)->resolve(); MedicationResource
-            $service = ServiceDepartment::with('patients.visits_recent.billingLogsForPatient')->get();
-            if (count($service) == 0) {
-                return JsonResponser::send(true, 'No Data.', [], 500);
-            }
-            $exportData = RegistrationBillingmgt::collection($service)->resolve();
-            if ($export === 'csv') {
-                return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
-            }
+            if (!empty($validated['export'])) {
+                $export =  $validated['export'];
+                // $exportData = PharmacyResourceList::collection($pharm)->resolve(); MedicationResource
+                $service = ServiceDepartment::with('patients.visits_recent.billingLogsForPatient')->get();
+                if (count($service) == 0) {
+                    return JsonResponser::send(true, 'No Data.', [], 500);
+                }
+                $exportData = RegistrationBillingmgt::collection($service)->resolve();
+                if ($export === 'csv') {
+                    return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
+                }
 
-            if ($export === 'pdf') {
-                return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+                if ($export === 'pdf') {
+                    return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+                }
             }
+            return JsonResponser::send(false, ' fetched successfully.',  $data);
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, 'Error fetching.', [], 500, $th);
         }
-        return JsonResponser::send(false, ' fetched successfully.',  $data);
     }
 
 
