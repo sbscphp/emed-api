@@ -538,6 +538,21 @@ class BillingController extends Controller
         return JsonResponser::send(false, ' fetched successfully.',  $data);
     }
 
+    public function payment_daft(Request $request)
+    {
+        $validated =   $request->validate([
+            'export' => "nullable|string",
+            'search' => 'nullable|string',
+            'start_date' => "nullable|string",
+            'end_date' => "nullable|string",
+            'paid_type' => "nullable|string|in,paid, part_paid, pending"
+        ]);
+
+        $billingLog =   BillingLog::with(['serviceType', 'patient'])->get();
+
+        return JsonResponser::send(false, ' fetched successfully.',  $billingLog);
+    }
+
 
     public function getBillingStatistics()
     {
