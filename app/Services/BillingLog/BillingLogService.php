@@ -246,7 +246,7 @@ class BillingLogService
 
 
         if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
-            $consultation->whereHas('billingLogsForPatient', function ($q) use ($validated) {
+            $consultation->whereHas('patient.visits_recent.billingLogsForPatient', function ($q) use ($validated) {
                 $startDate = $validated['start_date'];
                 $endDate = $validated['end_date'];
                 $q->where('created_at', [Carbon::parse($startDate), Carbon::parse($endDate)]);
