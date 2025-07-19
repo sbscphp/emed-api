@@ -363,32 +363,31 @@ class BillingLogService
 
     public function billingmgt_pharmacy($validated)
     {
-        $med =  Pharmacy::with('medication')
+        $med = Pharmacy::with('medication')
             ->when(!empty($validated['search']), function ($query) use ($validated) {
-                // pharmacy_id
-                $query->where('name', 'like', '%' . $validated['search'] . '%')
-                    ->orWhere('type', 'like', '%' . $validated['search'] . '%')
-                    ->orWhere('pharmacy_id', 'like', '%' . $validated['search'] . '%');
+                $query->where(function ($q) use ($validated) {
+                    $q->where('name', 'like', '%' . $validated['search'] . '%')
+                        ->orWhere('type', 'like', '%' . $validated['search'] . '%')
+                        ->orWhere('pharmacy_id', 'like', '%' . $validated['search'] . '%');
+                });
             });
 
         if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
-            $startDate = $validated['start_date'];
-            $endDate = $validated['end_date'];
-            $med->where('created_at', [Carbon::parse($startDate), Carbon::parse($endDate)]);
+            $startDate = Carbon::parse($validated['start_date'])->startOfDay();
+            $endDate = Carbon::parse($validated['end_date'])->endOfDay();
+            $med->whereBetween('created_at', [$startDate, $endDate]);
         }
 
-        if (!empty($validated['search'])) {
-            $med->whereHas('medication', function ($q) use ($validated) {
+        $med->when(!empty($validated['search']), function ($query) use ($validated) {
+            $query->whereHas('medication', function ($q) use ($validated) {
                 $q->where('generic_name', 'like', "%{$validated['search']}%")
                     ->orWhere('brand_name', 'like', "%{$validated['search']}%")
                     ->orWhere('medicine_name', 'like', "%{$validated['search']}%")
                     ->orWhere('medicine_type', 'like', "%{$validated['search']}%");
             });
-        }
+        });
 
-
-
-        return  $med->paginate();
+        return $med->paginate();
     }
 
     public function getStatistics(): array
