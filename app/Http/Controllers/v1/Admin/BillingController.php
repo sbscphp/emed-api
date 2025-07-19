@@ -23,6 +23,7 @@ use App\Http\Requests\CreateServiceRequest;
 use App\Http\Resources\BillingLogResource;
 use App\Http\Resources\BillingLogSubmmaryResource;
 use App\Http\Resources\ConsultationResource;
+use App\Http\Resources\MedicationResource;
 use App\Http\Resources\PharmacyResourceList;
 use App\Http\Resources\RegistrationResource;
 use App\Models\Consultation;
@@ -591,7 +592,21 @@ class BillingController extends Controller
         ]);
 
         $med =  Medication::with('pharmacy')->get();
-        return JsonResponser::send(false, ' fetched successfully.',  $med);
+        $data = $this->billingService->billingmgt_pharmacy($validated);
+        if (!empty($validated['export'])) {
+            $export =  $validated['export'];
+            // $exportData = PharmacyResourceList::collection($pharm)->resolve(); MedicationResource
+
+            $exportData = MedicationResource::collection($med)->resolve();
+            if ($export === 'csv') {
+                return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
+            }
+
+            if ($export === 'pdf') {
+                return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+            }
+        }
+        return JsonResponser::send(false, ' fetched successfully.',  $data);
     }
 
 

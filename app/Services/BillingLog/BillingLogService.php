@@ -360,6 +360,26 @@ class BillingLogService
         return $data;
     }
 
+
+    public function billingmgt_pharmacy($validated)
+    {
+        $med =  Medication::with('pharmacy')
+            ->when(!empty($validated['search']), function ($query) use ($validated) {
+                $query->whereHas('pharmacy', function ($q) use ($validated) {
+                    $q->where('name', 'like', '%' . $validated['search'] . '%')
+                        ->orWhere('type', 'like', '%' . $validated['search'] . '%');
+                });
+            });
+
+        if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
+            $startDate = $validated['start_date'];
+            $endDate = $validated['end_date'];
+            $med->where('created_at', [Carbon::parse($startDate), Carbon::parse($endDate)]);
+        }
+
+        return  $med->paginate();
+    }
+
     public function getStatistics(): array
     {
         $query = BillingLog::query();
