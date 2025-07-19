@@ -12,6 +12,7 @@ use App\Models\Patient;
 use App\Models\PatientVisit;
 use App\Models\Pharmacy;
 use App\Models\Radiology;
+use App\Models\ServiceDepartment;
 use App\Models\User;
 use App\Repositories\BillingLog\BillingLogRepositoryInterface;
 use Carbon\Carbon;
@@ -224,7 +225,7 @@ class BillingLogService
             });
         }
 
-        return  $pharm->paginate();
+        return  $pharm->paginate(10);
     }
 
 
@@ -253,7 +254,7 @@ class BillingLogService
             });
         }
 
-        return   $consultation->paginate();
+        return   $consultation->paginate(10);
     }
 
     public function laboratory_list($validated)
@@ -283,7 +284,7 @@ class BillingLogService
             });
         }
 
-        return   $laboratory->paginate();
+        return   $laboratory->paginate(10);
     }
 
     public function radiology_list($validated)
@@ -312,7 +313,7 @@ class BillingLogService
             });
         }
 
-        return   $radiology->paginate();
+        return   $radiology->paginate(10);
     }
 
 
@@ -342,7 +343,7 @@ class BillingLogService
             $billingLog->where('created_at', [Carbon::parse($startDate), Carbon::parse($endDate)]);
         }
 
-        return $billingLog->paginate();
+        return $billingLog->paginate(10);
     }
 
 
@@ -387,7 +388,25 @@ class BillingLogService
             });
         });
 
-        return $med->paginate();
+        return $med->paginate(10);
+    }
+
+    public function regstration_billingmgt($validated)
+    {
+        // ServiceDepartment
+        $service = ServiceDepartment::with('patients.visits_recent.billingLogsForPatient')
+            ->when(!empty($validated['search']), function ($query) use ($validated) {
+                $query->where(function ($q) use ($validated) {
+                    $q->where('name', 'like', '%' . $validated['search'] . '%')
+                        ->orWhereHas('patients', function ($q2) use ($validated) {
+                            $q2->where('firstname', 'like', '%' . $validated['search'] . '%')
+                                ->orWhere('lastname', 'like', '%' . $validated['search'] . '%')
+                                ->orWhere('patientno', 'like', '%' . $validated['search'] . '%');
+                        });
+                });
+            });
+
+        return $service->paginate(10);
     }
 
     public function getStatistics(): array

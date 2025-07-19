@@ -610,6 +610,20 @@ class BillingController extends Controller
     }
 
 
+    public function regstration_billingmgt(Request $request)
+    {
+        $validated =   $request->validate([
+            'export' => "nullable|string",
+            'search' => 'nullable|string',
+            'start_date' => "nullable|string",
+            'end_date' => "nullable|string",
+        ]);
+
+        $data = $this->billingService->regstration_billingmgt($validated);
+        return JsonResponser::send(false, ' fetched successfully.',  $data);
+    }
+
+
     public function getBillingStatistics()
     {
         try {
