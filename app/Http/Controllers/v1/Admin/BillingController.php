@@ -591,7 +591,7 @@ class BillingController extends Controller
             'end_date' => "nullable|string",
         ]);
 
-        $med =  Medication::with('pharmacy')->get();
+        $med =  Pharmacy::with('medication')->get();
         $data = $this->billingService->billingmgt_pharmacy($validated);
         if (!empty($validated['export'])) {
             $export =  $validated['export'];

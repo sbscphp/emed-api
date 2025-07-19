@@ -15,10 +15,10 @@ class MedicationResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            "Name" => $this->medicine_name ?? "",
-            "Active Ingredient" => $this->medicine_type,
-            "selling_price" => $this->selling_price,
-            "Registration Number" => $this->pharmacy?->pharmacy_id ?? "",
+            "Name" => $this->medication?->medicine_name ?? "",
+            "Active Ingredient" => $this->medication?->medicine_type ?? "",
+            "selling_price" => $this->medication->selling_price ?? "",
+            "Registration Number" => $this->pharmacy_id ?? "",
         ];
     }
 }
