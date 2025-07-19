@@ -23,6 +23,7 @@ use App\Http\Requests\CreateServiceRequest;
 use App\Http\Resources\BillingLogSubmmaryResource;
 use App\Http\Resources\PharmacyResourceList;
 use App\Http\Resources\RegistrationResource;
+use App\Models\Consultation;
 use App\Models\Patient;
 use App\Models\Pharmacy;
 use App\Models\ServiceDepartment;
@@ -442,6 +443,19 @@ class BillingController extends Controller
             }
         }
         return JsonResponser::send(false, 'Billing stats fetched successfully.', $data);
+    }
+
+    public function consultation_list(Request $request)
+    {
+        DB::connection('tenant')->beginTransaction();
+        $validated =   $request->validate([
+            'export' => "nullable|string",
+            'search' => 'nullable|string',
+            'start_date' => "nullable|string",
+            'end_date' => "nullable|string",
+        ]);
+        $consultation = Consultation::with('patient.visits_recent.billingLogsForPatient')->get();
+        return JsonResponser::send(false, 'Billing stats fetched successfully.', $consultation);
     }
 
     public function getBillingStatistics()
