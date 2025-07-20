@@ -409,6 +409,21 @@ class BillingLogService
         return $service->paginate(10);
     }
 
+
+    public function laboratory_billingmgt($validated)
+    {
+        $laboratory = Laboratory::with('patient.visits_recent.billingLogsForPatient')
+            ->when(!empty($validated['search']), function ($query) use ($validated) {
+                $query->where(function ($q) use ($validated) {
+                    $q->where('lab_dept', 'like', '%' . $validated['search'] . '%')
+                        ->orWhere('test_name', 'like', '%' . $validated['search'] . '%')
+                        ->orWhere('ordered_test', 'like', '%' . $validated['search'] . '%');
+                });
+            });
+
+        return $laboratory->paginate(10);
+    }
+
     public function getStatistics(): array
     {
         $query = BillingLog::query();

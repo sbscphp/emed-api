@@ -259,6 +259,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get("/", [BillingController::class, "billingmgt"]);
                     Route::get("billingmgt_pharmacy", [BillingController::class, "billingmgt_pharmacy"]);
                     Route::get("regstration_billingmgt", [BillingController::class, "regstration_billingmgt"]);
+                    Route::get("laboratory_billingmgt", [BillingController::class, "laboratory_billingmgt"]);
                 });
             });
         });
