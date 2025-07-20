@@ -109,7 +109,7 @@ class Patient extends Model
 
     public function billingLogsForPatient()
     {
-        return $this->hasOne(BillingLog::class, 'patient_id', 'patient_id');
+        return $this->hasOne(BillingLog::class, 'patient_id', 'id');
     }
 
     public function treatments()
