@@ -778,7 +778,7 @@ class BillingController extends Controller
         if (!empty($validated['export'])) {
             $export =  $validated['export'];
             // $exportData = PharmacyResourceList::collection($pharm)->resolve(); MedicationResource
-            $consultation =  Consultation::with(['patient.billingLogs', 'patient.service'])->get();
+            $consultation =  Consultation::with(['patient.billingLogsForPatient', 'patient.service'])->get();
             if (count($consultation) == 0) {
                 return JsonResponser::send(true, 'No Data.', [], 500);
             }
