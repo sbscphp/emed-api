@@ -26,6 +26,7 @@ use App\Http\Resources\ConsultationResource;
 use App\Http\Resources\LaboratoryBillingmgt;
 use App\Http\Resources\MedicationResource;
 use App\Http\Resources\PharmacyResourceList;
+use App\Http\Resources\RadiologyBillingmgt;
 use App\Http\Resources\RegistrationBillingmgt;
 use App\Http\Resources\RegistrationResource;
 use App\Models\Consultation;
@@ -689,32 +690,76 @@ class BillingController extends Controller
     public function laboratory_billingmgt(Request $request)
     {
 
-        $validated =   $request->validate([
-            'export' => "nullable|string",
-            'search' => 'nullable|string',
-            'start_date' => "nullable|string",
-            'end_date' => "nullable|string",
-        ]);
-        $data = $this->billingService->laboratory_billingmgt($validated);
+        try {
+            DB::connection('tenant')->beginTransaction();
+            $validated =   $request->validate([
+                'export' => "nullable|string",
+                'search' => 'nullable|string',
+                'start_date' => "nullable|string",
+                'end_date' => "nullable|string",
+            ]);
+            $data = $this->billingService->laboratory_billingmgt($validated);
 
-        if (!empty($validated['export'])) {
-            $export =  $validated['export'];
-            // $exportData = PharmacyResourceList::collection($pharm)->resolve(); MedicationResource
-            $laboratory = Laboratory::with('patient.visits_recent.billingLogsForPatient')->get();
-            if (count($laboratory) == 0) {
-                return JsonResponser::send(true, 'No Data.', [], 500);
-            }
-            $exportData = LaboratoryBillingmgt::collection($laboratory)->resolve();
-            if ($export === 'csv') {
-                return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
+            if (!empty($validated['export'])) {
+                $export =  $validated['export'];
+                // $exportData = PharmacyResourceList::collection($pharm)->resolve(); MedicationResource
+                $laboratory = Laboratory::with('patient.visits_recent.billingLogsForPatient')->get();
+                if (count($laboratory) == 0) {
+                    return JsonResponser::send(true, 'No Data.', [], 500);
+                }
+                $exportData = LaboratoryBillingmgt::collection($laboratory)->resolve();
+                if ($export === 'csv') {
+                    return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
+                }
+
+                if ($export === 'pdf') {
+                    return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+                }
             }
 
-            if ($export === 'pdf') {
-                return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
-            }
+            return JsonResponser::send(false, ' fetched successfully.',  $data);
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, 'Error fetching.', [], 500, $th);
         }
+    }
 
-        return JsonResponser::send(false, ' fetched successfully.',  $data);
+
+    public  function radiology_billingmgt(Request $request)
+    {
+
+        try {
+            DB::connection('tenant')->beginTransaction();
+            $validated =   $request->validate([
+                'export' => "nullable|string",
+                'search' => 'nullable|string',
+                'start_date' => "nullable|string",
+                'end_date' => "nullable|string",
+            ]);
+
+            $data = $this->billingService->radiology_billingmgt($validated);
+            if (!empty($validated['export'])) {
+                $export =  $validated['export'];
+                // $exportData = PharmacyResourceList::collection($pharm)->resolve(); MedicationResource
+                $radiology = Radiology::with('patient.visits_recent.billingLogsForPatient')->get();
+                if (count($radiology) == 0) {
+                    return JsonResponser::send(true, 'No Data.', [], 500);
+                }
+                $exportData = RadiologyBillingmgt::collection($radiology)->resolve();
+                if ($export === 'csv') {
+                    return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
+                }
+
+                if ($export === 'pdf') {
+                    return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+                }
+            }
+
+            return JsonResponser::send(false, ' fetched successfully.',  $data);
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, 'Error fetching.', [], 500, $th);
+        }
     }
 
 
