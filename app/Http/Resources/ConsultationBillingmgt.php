@@ -15,7 +15,7 @@ class ConsultationBillingmgt extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            "name" => $this->patient?->billingLogs?->serviceType?->name ?? "",
+            "name" => $this->patient?->service?->name ?? "",
             "price" => $this->patient?->billingLogs?->grand_total ?? ""
         ];
     }
