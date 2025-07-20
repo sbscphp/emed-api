@@ -16,7 +16,7 @@ class ConsultationBillingmgt extends JsonResource
     {
         return [
             "name" => $this->patient?->service?->name ?? "",
-            "price" => $this->patient?->billingLogsForPatient?->grand_total ?? ""
+            "price" => $this->patient?->billingLogsForPatient?->grand_total ?? '0'
         ];
     }
 }
