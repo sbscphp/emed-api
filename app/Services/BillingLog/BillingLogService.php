@@ -439,6 +439,18 @@ class BillingLogService
         return $radiology->paginate(10);
     }
 
+    public function consultation_billingmgt($validated)
+    {
+        $consultation =  Consultation::with('patient.billingLogs.serviceType')
+            ->when(!empty($validated['search']), function ($query) use ($validated) {
+                $query->whereHas("patient.billingLogs.serviceType", function ($q2) use ($validated) {
+                    $q2->where('name', 'like', '%' . $validated['search'] . '%');
+                });
+            });
+
+        return $consultation->paginate(10);
+    }
+
     public function getStatistics(): array
     {
         $query = BillingLog::query();

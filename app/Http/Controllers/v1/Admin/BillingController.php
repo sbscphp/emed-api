@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Response;
 use App\Http\Requests\CreateServiceRequest;
 use App\Http\Resources\BillingLogResource;
 use App\Http\Resources\BillingLogSubmmaryResource;
+use App\Http\Resources\ConsultationBillingmgt;
 use App\Http\Resources\ConsultationResource;
 use App\Http\Resources\LaboratoryBillingmgt;
 use App\Http\Resources\MedicationResource;
@@ -760,6 +761,37 @@ class BillingController extends Controller
             DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Error fetching.', [], 500, $th);
         }
+    }
+
+
+    public function consultation_billingmgt(Request $request)
+    {
+        $validated =   $request->validate([
+            'export' => "nullable|string",
+            'search' => 'nullable|string',
+            'start_date' => "nullable|string",
+            'end_date' => "nullable|string",
+        ]);
+        // consultation_billingmgt
+
+        $data = $this->billingService->consultation_billingmgt($validated);
+        if (!empty($validated['export'])) {
+            $export =  $validated['export'];
+            // $exportData = PharmacyResourceList::collection($pharm)->resolve(); MedicationResource
+            $consultation =  Consultation::with('patient.billingLogs.serviceType')->get();
+            if (count($consultation) == 0) {
+                return JsonResponser::send(true, 'No Data.', [], 500);
+            }
+            $exportData = ConsultationBillingmgt::collection($consultation)->resolve();
+            if ($export === 'csv') {
+                return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
+            }
+
+            if ($export === 'pdf') {
+                return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+            }
+        }
+        return JsonResponser::send(false, ' fetched successfully.',  $data);
     }
 
 
