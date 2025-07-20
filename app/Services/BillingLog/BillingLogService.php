@@ -441,9 +441,9 @@ class BillingLogService
 
     public function consultation_billingmgt($validated)
     {
-        $consultation =  Consultation::with('patient.billingLogs.serviceType')
+        $consultation =  Consultation::with(['patient.billingLogs', 'patient.service'])
             ->when(!empty($validated['search']), function ($query) use ($validated) {
-                $query->whereHas("patient.billingLogs.serviceType", function ($q2) use ($validated) {
+                $query->whereHas("patient.service", function ($q2) use ($validated) {
                     $q2->where('name', 'like', '%' . $validated['search'] . '%');
                 });
             });
