@@ -399,7 +399,7 @@ class BillingController extends Controller
         }
     }
 
-    public function  regstration_list(Request $request)
+    public function  registration_list(Request $request)
     {
 
         try {
@@ -410,7 +410,7 @@ class BillingController extends Controller
                 'start_date' => "nullable|string",
                 'end_date' => "nullable|string",
             ]);
-            $data = $this->billingService->regstration_list($validated);
+            $data = $this->billingService->registration_list($validated);
             if (!empty($validated['export'])) {
                 $export =  $validated['export'];
                 $patient =  Patient::with('visits_recent.billingLogsForPatient')->get();
