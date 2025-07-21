@@ -562,7 +562,7 @@ class BillingController extends Controller
         //     }
         // }
 
-        $service = BillingLog::with('serviceUnit')->where('service_unit_id', 1)->get();
+        $service = BillingLog::with(['serviceUnit', 'patient'])->where('service_unit_id', 1)->get();
 
         return JsonResponser::send(false, ' fetched successfully.',  $service);
     }
