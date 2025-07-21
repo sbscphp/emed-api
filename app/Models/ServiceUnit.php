@@ -15,6 +15,6 @@ class ServiceUnit extends Model
 
     public function billingLogs()
     {
-        return $this->hasMany(BillingLog::class);
+        return $this->hasOne(BillingLog::class, "service_unit_id", "id");
     }
 }

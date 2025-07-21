@@ -37,6 +37,7 @@ use App\Models\Patient;
 use App\Models\Pharmacy;
 use App\Models\Radiology;
 use App\Models\ServiceDepartment;
+use App\Models\ServiceUnit;
 
 class BillingController extends Controller
 {
@@ -543,25 +544,27 @@ class BillingController extends Controller
             'end_date' => "nullable|string",
         ]);
 
-        $radiology =  Radiology::with('patient.visits_recent.billingLogsForPatient')->get();
-        if (count($radiology) == 0) {
-            return JsonResponser::send(false, 'No Data.', [], 200);
-        }
-        $data = $this->billingService->radiology_list($validated);
-        if (!empty($validated['export'])) {
-            $export =  $validated['export'];
-            // $exportData = PharmacyResourceList::collection($pharm)->resolve();
-            $exportData = ConsultationResource::collection($radiology)->resolve();
-            if ($export === 'csv') {
-                return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
-            }
+        // $radiology =  Radiology::with('patient.visits_recent.billingLogsForPatient')->get();
+        // if (count($radiology) == 0) {
+        //     return JsonResponser::send(false, 'No Data.', [], 200);
+        // }
+        // $data = $this->billingService->radiology_list($validated);
+        // if (!empty($validated['export'])) {
+        //     $export =  $validated['export'];
+        //     // $exportData = PharmacyResourceList::collection($pharm)->resolve();
+        //     $exportData = ConsultationResource::collection($radiology)->resolve();
+        //     if ($export === 'csv') {
+        //         return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
+        //     }
 
-            if ($export === 'pdf') {
-                return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
-            }
-        }
+        //     if ($export === 'pdf') {
+        //         return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+        //     }
+        // }
 
-        return JsonResponser::send(false, ' fetched successfully.',  $data);
+        $service = ServiceUnit::where("name", "Radiology")->with('billingLogs')->get();
+
+        return JsonResponser::send(false, ' fetched successfully.',  $service);
     }
 
     public function payment_daft(Request $request)
