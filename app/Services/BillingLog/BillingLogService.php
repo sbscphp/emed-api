@@ -189,7 +189,7 @@ class BillingLogService
         }
 
         if (!empty($validated['gender'])) {
-            $patient->where('gender', $validated['gender']);
+            $patient->whereRaw('LOWER(gender) = ?', [strtolower($validated['search'])]);
         }
 
         return $patient->paginate(10);
