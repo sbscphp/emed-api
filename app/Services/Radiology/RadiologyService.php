@@ -2,6 +2,7 @@
 
 namespace App\Services\Radiology;
 
+use App\Models\Radiology;
 use App\Repositories\Radiology\RadiologyInterface;
 
 /**
@@ -92,5 +93,41 @@ class RadiologyService
     public function findByAttribute($attr, $value)
     {
         return $this->RadiologyInterface->findByAttribute($attr, $value);
+    }
+
+    public function radiology_list($validated)
+    {
+
+        $radiology = Radiology::with(['patient.visits_recent.billingLogsForPatient', 'pharmacist'])
+            ->when(!empty($validated['search']), function ($query) use ($validated) {
+                $query->where("test_name", $validated['search'])
+                    ->whereHas('patient', function ($q1) use ($validated) {
+                        $q1->where('firstname', $validated['search'])
+                            ->orWhere('lastname', $validated['search'])
+                            ->orWhere('patientno', $validated['search']);
+                    })
+                    ->orWhereHas('patient.visits_recent.billingLogsForPatient', function ($query) use ($validated) {
+                        // payment_status
+                        $query->where('payment_status', $validated['search']);
+                    });
+            });
+
+        if (!empty($validated['phone_number'])) {
+            $radiology->whereHas('patient', function ($q1) use ($validated) {
+                $q1->where("phoneno", $validated["phone_number"]);
+            });
+        }
+
+
+        if (!empty($validated['test_status'])) {
+            $radiology->where('test_name', $validated['test_status']);
+        }
+
+        if (!empty($validated['payment_status'])) {
+            $radiology->whereHas('patient.visits_recent.billingLogsForPatient', function ($q1) use ($validated) {
+                $q1->where("payment_status", $validated["payment_status"]);
+            });
+        }
+        $radiology->paginate(10);
     }
 }

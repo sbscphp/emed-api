@@ -590,24 +590,24 @@ class BillingLogService
             'completed_payment' => (clone $query)->where('payment_status', 'paid')->sum('grand_total'),
             'insurance_claimed' => (clone $query)->where('payment_method', 'insurance')->count(),
             "registration" => [
-                'total' => Patient::count(),
-                "amount" => $patient_total
+                'total' => BillingLog::where('service_unit_id', 1)->count(),
+                "amount" => BillingLog::where('service_unit_id', 1)->pluck('grand_total')->sum()
             ],
             'pharmacy' => [
-                "total" => Pharmacy::count(),
-                "amount" => $bill_total,
+                "total" =>  BillingLog::where('service_unit_id', 2)->count(),
+                "amount" =>  BillingLog::where('service_unit_id', 2)->pluck('grand_total')->sum(),
             ],
             "laboratory" => [
-                "total" => Laboratory::count(),
-                "amount" => $lab_amount
+                "total" => BillingLog::where('service_unit_id', 4)->count(),
+                "amount" =>  BillingLog::where('service_unit_id', 4)->pluck('grand_total')->sum()
             ],
             "radiology" => [
-                "total" => Radiology::count(),
-                "amount" => $radiology_amount
+                "total" => BillingLog::where('service_unit_id', 5)->count(),
+                "amount" => BillingLog::where('service_unit_id', 5)->pluck('grand_total')->sum()
             ],
             "consultation" => [
-                "total" => Consultation::count(),
-                "amount" => $consultation_amount,
+                "total" => BillingLog::where('service_unit_id', 3)->count(),
+                "amount" => BillingLog::where('service_unit_id', 3)->pluck('grand_total')->sum(),
             ],
 
 

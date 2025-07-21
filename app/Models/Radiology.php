@@ -24,4 +24,9 @@ class Radiology extends Model
     {
         return $this->belongsTo(Patient::class);
     }
+
+    public function pharmacist()
+    {
+        return $this->belongsTo(User::class, 'admin_id');
+    }
 }

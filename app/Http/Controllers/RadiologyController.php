@@ -1,0 +1,52 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Radiology;
+use App\Services\Radiology\RadiologyService;
+use Illuminate\Http\Request;
+use App\Responser\JsonResponser;
+
+class RadiologyController extends Controller
+{
+    public $radiologyService;
+
+
+    public function __construct(RadiologyService $radiologyService)
+    {
+        $this->radiologyService = $radiologyService;
+    }
+    public function index(Request $request)
+    {
+
+        $validated =   $request->validate([
+            'export' => "nullable|string",
+            'search' => 'nullable|string',
+            'start_date' => "nullable|string",
+            'end_date' => "nullable|string",
+            'phone_number' => "nullable|string",
+            'payment_status' => "nullable|string",
+            'test_status' => "nullable|string",
+        ]);
+
+
+        $radiology =  Radiology::with(['patient.visits_recent.billingLogsForPatient', 'pharmacist'])->get();
+        if (count($radiology) == 0) {
+            return JsonResponser::send(false, 'No Data.', [], 200);
+        }
+        $data = $this->radiologyService->radiology_list($validated);
+        if (!empty($validated['export'])) {
+            // $export =  $validated['export'];
+            // // $exportData = PharmacyResourceList::collection($pharm)->resolve();
+            // $exportData = ConsultationResource::collection($radiology)->resolve();
+            // if ($export === 'csv') {
+            //     return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
+            // }
+
+            // if ($export === 'pdf') {
+            //     return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+            // }
+        }
+        return JsonResponser::send(false, 'Billing records retrieved successfully.', $data, 200);
+    }
+}

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\RadiologyController;
 use App\Http\Controllers\v1\Admin\AuditLogController;
 use App\Http\Controllers\v1\Admin\BillingController;
 use App\Http\Controllers\v1\Admin\MedicationInventoryController;
@@ -263,6 +264,11 @@ Route::group(["prefix" => "v1"], function () {
                     // radiology_billingmgt
                     Route::get("radiology_billingmgt", [BillingController::class, "radiology_billingmgt"]);
                     Route::get("consultation_billingmgt", [BillingController::class, "consultation_billingmgt"]);
+                });
+
+
+                Route::group(['prefix' => 'radiology'], function () {
+                    Route::get('/', [RadiologyController::class, "index"]);
                 });
             });
         });
