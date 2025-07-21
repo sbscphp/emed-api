@@ -51,4 +51,26 @@ class RadiologyController extends Controller
         }
         return JsonResponser::send(false, 'Billing records retrieved successfully.', $data, 200);
     }
+
+
+    public function patient(Request $request)
+    {
+        $validated =   $request->validate([
+            'export' => "nullable|string",
+            'search' => 'nullable|string',
+            'start_date' => "nullable|string",
+            'end_date' => "nullable|string",
+            'phone_number' => "nullable|string",
+            'payment_status' => "nullable|string",
+            'test_status' => "nullable|string",
+        ]);
+
+        $radiology =  Radiology::with(['patient.visits_recent.billingLogsForPatient', 'pharmacist'])
+            ->whereHas('patient', function ($q) {
+                $q->where('id', 3);
+            })
+            ->get();
+
+        return JsonResponser::send(false, 'Billing records retrieved successfully.', $radiology, 200);
+    }
 }

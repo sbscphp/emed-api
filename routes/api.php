@@ -269,6 +269,7 @@ Route::group(["prefix" => "v1"], function () {
 
                 Route::group(['prefix' => 'radiology'], function () {
                     Route::get('/', [RadiologyController::class, "index"]);
+                    Route::get('/patient', [RadiologyController::class, "patient"]);
                 });
             });
         });
