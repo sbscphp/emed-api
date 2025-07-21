@@ -45,6 +45,14 @@ class VendorRepository implements VendorInterface
             });
         }
 
+        // status
+
+        if (!empty($filters['status'])) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('status', $filters['status']);
+            });
+        }
+
         if (!empty($from) && !empty($to)) {
             $query->whereBetween('created_at', [
                 Carbon::parse($from)->startOfDay(),

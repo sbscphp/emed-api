@@ -27,7 +27,7 @@ class VendorController extends Controller
     {
         try {
             config(['database.default' => 'tenant']);
-            $filters = $request->only(['search', 'type', 'export', 'vendor_name', 'contact_person', 'email', 'phone_number']);
+            $filters = $request->only(['search', 'type', 'export', 'vendor_name', 'contact_person', 'email', 'phone_number', 'status']);
             // vendor_name,  contact_person, email,  phone_number
 
             $from = $request->from;
