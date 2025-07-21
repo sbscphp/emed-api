@@ -136,4 +136,53 @@ class RadiologyService
         }
         $radiology->paginate(10);
     }
+
+
+    public function radiology_patient($validated)
+    {
+        $radiology =  Radiology::with(['patient.visits_recent.billingLogsForPatient', 'pharmacist'])
+            ->whereHas('patient', function ($q) use ($validated) {
+                $q->where('id', $validated['patient_id']);
+            })
+            ->when(!empty($validated['search']), function ($query) use ($validated) {
+                $query->where("test_name", $validated['search'])
+                    ->whereHas('patient', function ($q1) use ($validated) {
+                        $q1->where('firstname', $validated['search'])
+                            ->orWhere('lastname', $validated['search'])
+                            ->orWhere('patientno', $validated['search']);
+                    })
+                    ->orWhereHas('patient.visits_recent.billingLogsForPatient', function ($query) use ($validated) {
+                        // payment_status payment_method
+                        $query->where('payment_status', $validated['search'])
+                            ->orWhere('payment_method', $validated['search']);
+                    });
+            });
+
+
+
+        if (!empty($validated['phone_number'])) {
+            $radiology->whereHas('patient', function ($q1) use ($validated) {
+                $q1->where("phoneno", $validated["phone_number"]);
+            });
+        }
+
+        if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
+            $startDate = $validated['start_date'];
+            $endDate = $validated['end_date'];
+            $radiology->whereBetween('created_at', [Carbon::parse($startDate), Carbon::parse($endDate)]);
+        }
+
+        if (!empty($validated['test_status'])) {
+            $radiology->where('test_name', $validated['test_status']);
+        }
+
+        if (!empty($validated['payment_status'])) {
+            $radiology->whereHas('patient.visits_recent.billingLogsForPatient', function ($q1) use ($validated) {
+                $q1->where("payment_status", $validated["payment_status"]);
+            });
+        }
+
+
+        $radiology->paginate(10);
+    }
 }

@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Responser\JsonResponser;
 use App\Helpers\ExportHelper;
 use App\Http\Resources\RadiologyResourceAll;
+use App\Models\Patient;
 
 class RadiologyController extends Controller
 {
@@ -63,14 +64,37 @@ class RadiologyController extends Controller
             'phone_number' => "nullable|string",
             'payment_status' => "nullable|string",
             'test_status' => "nullable|string",
+            'patient_id' => "required|numeric"
         ]);
 
         $radiology =  Radiology::with(['patient.visits_recent.billingLogsForPatient', 'pharmacist'])
-            ->whereHas('patient', function ($q) {
-                $q->where('id', 3);
+            ->whereHas('patient', function ($q) use ($validated) {
+                $q->where('id', $validated['patient_id']);
             })
             ->get();
 
-        return JsonResponser::send(false, 'Billing records retrieved successfully.', $radiology, 200);
+        if (count($radiology) == 0) {
+            return JsonResponser::send(false, 'No Data.', [], 200);
+        }
+        $data = $this->radiologyService->radiology_patient($validated);
+        if (!empty($validated['export'])) {
+            $export =  $validated['export'];
+            // $exportData = PharmacyResourceList::collection($pharm)->resolve();
+            $exportData = RadiologyResourceAll::collection($radiology)->resolve();
+            if ($export === 'csv') {
+                return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
+            }
+
+            if ($export === 'pdf') {
+                return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+            }
+        }
+
+        $data = [
+            'data' => $radiology,
+            'patient' => Patient::with('visits_recent')->first()
+        ];
+
+        return JsonResponser::send(false, 'Billing records retrieved successfully.', $data, 200);
     }
 }
