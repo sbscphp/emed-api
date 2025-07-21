@@ -543,6 +543,7 @@ class BillingController extends Controller
             'search' => 'nullable|string',
             'start_date' => "nullable|string",
             'end_date' => "nullable|string",
+            'payment_status' => "nullable|string"
         ]);
 
         // $radiology =  Radiology::with('patient.visits_recent.billingLogsForPatient')->get();

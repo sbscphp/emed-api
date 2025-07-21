@@ -315,6 +315,13 @@ class BillingLogService
         });
 
 
+        if (!empty($validated['payment_status'])) {
+
+            $radiology->where('payment_status', $validated['payment_status']);
+        }
+
+
+
         if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
 
             $startDate = $validated['start_date'];
