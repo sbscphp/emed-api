@@ -306,7 +306,7 @@ class BillingLogService
 
     public function laboratory_list($validated)
     {
-        $laboratory = BillingLog::with(['serviceUnit', 'patient.laboratory'])->where('name', 'Laboratory')->get();
+        $laboratory = BillingLog::with(['serviceUnit', 'patient.laboratory'])->where('service_unit_id', 4)->get();
 
         $laboratory->when(!empty($validated['search']), function ($query) use ($validated) {
             $query->where('payment_status', 'like', '%' . $validated['search'] . '%')
@@ -330,7 +330,7 @@ class BillingLogService
     public function radiology_list($validated)
     {
         //$radiology =  Radiology::with('patient.visits_recent.billingLogsForPatient');
-        $radiology = BillingLog::with(['serviceUnit', 'patient'])->where('name', 'Radiology');
+        $radiology = BillingLog::with(['serviceUnit', 'patient'])->where('service_unit_id', 5);
 
 
 
