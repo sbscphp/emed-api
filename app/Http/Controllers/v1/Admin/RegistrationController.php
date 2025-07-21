@@ -40,231 +40,231 @@ class RegistrationController extends Controller
     //create a central tenant DB for all onboard tenant for testing on production or manually create on local
     public function onboardTenant(TenantOnboardingRequest $request)
     {
+        // try {
+        DB::connection('landlord')->beginTransaction();
+
+        $data = $request->validated();
+        $adminRole = $this->roleService->getAdminRole();
+
+        $registrationData = [
+            'name' => $data['name'],
+            'state_city' => $data['state_city'],
+            'registration_number' => $data['registration_number'],
+            'email' => $data['email'],
+            'phone_number' => $data['phone_number'],
+            'address' => $data['address'],
+        ];
+
+        if ($request->hasFile('license')) {
+            $registrationData['license'] = FileUploadHelper::singleBinaryFileUpload(
+                $request->file('license'),
+                'License'
+            );
+        }
+
+        $registration = $this->registrationService->create($registrationData);
+
+        $domain = Str::slug($data['name'], '-') . '.emed.com';
+        $existingTenant = Tenant::where('name', $registrationData['name'])->first();
+        if ($existingTenant) {
+            DB::connection('landlord')->rollBack();
+            return JsonResponser::send(false, "Tenant {$data['name']} already exists.", [], 409);
+        }
+
+        $isProduction = app()->environment(['production', 'staging', 'qa']);
+        $tenantDatabase = $isProduction
+            // ? 'tenant_john_hospital'
+            ? 'jkpmjemy_tenant_john_hospital'
+            : 'tenant_' . Str::slug($data['name'], '_');
+
+        // Create tenant
+
+        $tenant = Tenant::create([
+            'name' => $data['name'],
+            'domain' => $domain,
+            'database' => $tenantDatabase,
+        ]);
+
         try {
-            DB::connection('landlord')->beginTransaction();
-
-            $data = $request->validated();
-            $adminRole = $this->roleService->getAdminRole();
-
-            $registrationData = [
-                'name' => $data['name'],
-                'state_city' => $data['state_city'],
-                'registration_number' => $data['registration_number'],
-                'email' => $data['email'],
-                'phone_number' => $data['phone_number'],
-                'address' => $data['address'],
-            ];
-
-            if ($request->hasFile('license')) {
-                $registrationData['license'] = FileUploadHelper::singleBinaryFileUpload(
-                    $request->file('license'),
-                    'License'
-                );
+            if (!$isProduction) {
+                DB::statement("CREATE DATABASE IF NOT EXISTS {$tenantDatabase} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+            } else {
+                $dbExists = DB::connection('landlord')->select("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?", [$tenantDatabase]);
+                if (empty($dbExists)) {
+                    DB::connection('landlord')->rollBack();
+                    return JsonResponser::send(
+                        false,
+                        "Database {$tenantDatabase} does not exist. Please create it manually before onboarding this tenant.",
+                        null,
+                        500
+                    );
+                }
             }
 
-            $registration = $this->registrationService->create($registrationData);
+            $tenant->makeCurrent();
 
-            $domain = Str::slug($data['name'], '-') . '.emed.com';
-            $existingTenant = Tenant::where('name', $registrationData['name'])->first();
-            if ($existingTenant) {
-                DB::connection('landlord')->rollBack();
-                return JsonResponser::send(false, "Tenant {$data['name']} already exists.", [], 409);
+            config(['database.connections.tenant.database' => $tenantDatabase]);
+            DB::purge('tenant');
+            DB::reconnect('tenant');
+
+            // Run migrations
+            // Artisan::call('migrate', [
+            //     '--database' => 'tenant',
+            //     '--path' => 'database/migrations/tenant',
+            //     '--force' => true,
+            // ]);
+            if (!Schema::connection('tenant')->hasTable('tenants')) {
+                Artisan::call('migrate', [
+                    '--database' => 'tenant',
+                    '--path' => 'database/migrations/tenant',
+                    '--force' => true,
+                ]);
             }
 
-            $isProduction = app()->environment(['production', 'staging', 'qa']);
-            $tenantDatabase = $isProduction
-                // ? 'tenant_john_hospital'
-                ? 'jkpmjemy_tenant_john_hospital'
-                : 'tenant_' . Str::slug($data['name'], '_');
-
-            // Create tenant
-
-            $tenant = Tenant::create([
-                'name' => $data['name'],
-                'domain' => $domain,
-                'database' => $tenantDatabase,
+            // Run seeders
+            Artisan::call('db:seed', [
+                '--database' => 'tenant',
+                '--class' => 'RolePermissionSeeder',
+                '--force' => true,
             ]);
 
-            try {
-                if (!$isProduction) {
-                    DB::statement("CREATE DATABASE IF NOT EXISTS {$tenantDatabase} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-                } else {
-                    $dbExists = DB::connection('landlord')->select("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?", [$tenantDatabase]);
-                    if (empty($dbExists)) {
-                        DB::connection('landlord')->rollBack();
-                        return JsonResponser::send(
-                            false,
-                            "Database {$tenantDatabase} does not exist. Please create it manually before onboarding this tenant.",
-                            null,
-                            500
-                        );
-                    }
-                }
+            Artisan::call('db:seed', [
+                '--database' => 'tenant',
+                '--class' => 'ServicesTableSeeder',
+                '--force' => true,
+            ]);
 
-                $tenant->makeCurrent();
+            Artisan::call('db:seed', [
+                '--database' => 'tenant',
+                '--class' => 'StateSeeder',
+                '--force' => true,
+            ]);
 
-                config(['database.connections.tenant.database' => $tenantDatabase]);
-                DB::purge('tenant');
-                DB::reconnect('tenant');
+            Artisan::call('db:seed', [
+                '--database' => 'tenant',
+                '--class' => 'ServiceUnitSeeder',
+                '--force' => true,
+            ]);
 
-                // Run migrations
-                // Artisan::call('migrate', [
-                //     '--database' => 'tenant',
-                //     '--path' => 'database/migrations/tenant',
-                //     '--force' => true,
-                // ]);
-                if (!Schema::connection('tenant')->hasTable('tenants')) {
-                    Artisan::call('migrate', [
-                        '--database' => 'tenant',
-                        '--path' => 'database/migrations/tenant',
-                        '--force' => true,
-                    ]);
-                }
+            Artisan::call('db:seed', [
+                '--database' => 'tenant',
+                '--class' => 'UsersTableSeeder',
+                '--force' => true,
+            ]);
 
-                // Run seeders
-                Artisan::call('db:seed', [
-                    '--database' => 'tenant',
-                    '--class' => 'RolePermissionSeeder',
-                    '--force' => true,
-                ]);
+            // Insert tenant metadata into tenant database
+            DB::connection('tenant')->table('tenants')->insert([
+                'id' => $tenant->id,
+                'name' => $tenant->name,
+                'domain' => $tenant->domain,
+                'database' => $tenantDatabase,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
 
-                Artisan::call('db:seed', [
-                    '--database' => 'tenant',
-                    '--class' => 'ServicesTableSeeder',
-                    '--force' => true,
-                ]);
+            $adminLandlord = User::on('landlord')->create([
+                'uuid' => Str::uuid(),
+                'fullname' => $data['admin_fullname'],
+                'role' => $data['admin_role'],
+                'phone_number' => $data['admin_phone_number'],
+                'email' => $data['admin_email'],
+                'password' => $data['admin_password'],
+                'tenant_id' => $tenant->id,
+                'remember_token' => Str::random(60),
+            ]);
 
-                Artisan::call('db:seed', [
-                    '--database' => 'tenant',
-                    '--class' => 'StateSeeder',
-                    '--force' => true,
-                ]);
+            // $adminData = [
+            //     'id' => $adminLandlord->id,
+            //     'uuid' => $adminLandlord->uuid,
+            //     'fullname' => $adminLandlord->fullname,
+            //     'role' => $adminLandlord->role,
+            //     'phone_number' => $adminLandlord->phone_number,
+            //     'email' => $adminLandlord->email,
+            //     'password' => $adminLandlord->password,
+            //     'tenant_id' => $tenant->id,
+            //     'remember_token' => $adminLandlord->remember_token,
+            // ];
+            $existingTenantUser = DB::connection('tenant')->table('users')->where('id', $adminLandlord->id)->first();
 
-                Artisan::call('db:seed', [
-                    '--database' => 'tenant',
-                    '--class' => 'ServiceUnitSeeder',
-                    '--force' => true,
-                ]);
-
-                Artisan::call('db:seed', [
-                    '--database' => 'tenant',
-                    '--class' => 'UsersTableSeeder',
-                    '--force' => true,
-                ]);
-
-                // Insert tenant metadata into tenant database
-                DB::connection('tenant')->table('tenants')->insert([
-                    'id' => $tenant->id,
-                    'name' => $tenant->name,
-                    'domain' => $tenant->domain,
-                    'database' => $tenantDatabase,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-
-                $adminLandlord = User::on('landlord')->create([
-                    'uuid' => Str::uuid(),
-                    'fullname' => $data['admin_fullname'],
-                    'role' => $data['admin_role'],
-                    'phone_number' => $data['admin_phone_number'],
-                    'email' => $data['admin_email'],
-                    'password' => $data['admin_password'],
+            if (!$existingTenantUser) {
+                $adminData = [
+                    'id' => $adminLandlord->id,
+                    'uuid' => $adminLandlord->uuid,
+                    'fullname' => $adminLandlord->fullname,
+                    'role' => $adminLandlord->role,
+                    'phone_number' => $adminLandlord->phone_number,
+                    'email' => $adminLandlord->email,
+                    'password' => $adminLandlord->password,
                     'tenant_id' => $tenant->id,
-                    'remember_token' => Str::random(60),
-                ]);
-
-                // $adminData = [
-                //     'id' => $adminLandlord->id,
-                //     'uuid' => $adminLandlord->uuid,
-                //     'fullname' => $adminLandlord->fullname,
-                //     'role' => $adminLandlord->role,
-                //     'phone_number' => $adminLandlord->phone_number,
-                //     'email' => $adminLandlord->email,
-                //     'password' => $adminLandlord->password,
-                //     'tenant_id' => $tenant->id,
-                //     'remember_token' => $adminLandlord->remember_token,
-                // ];
-                $existingTenantUser = DB::connection('tenant')->table('users')->where('id', $adminLandlord->id)->first();
-
-                if (!$existingTenantUser) {
-                    $adminData = [
-                        'id' => $adminLandlord->id,
-                        'uuid' => $adminLandlord->uuid,
-                        'fullname' => $adminLandlord->fullname,
-                        'role' => $adminLandlord->role,
-                        'phone_number' => $adminLandlord->phone_number,
-                        'email' => $adminLandlord->email,
-                        'password' => $adminLandlord->password,
-                        'tenant_id' => $tenant->id,
-                        'remember_token' => $adminLandlord->remember_token,
-                    ];
-
-                    DB::connection('tenant')->table('users')->insert($adminData);
-                }
-
-
-                // $adminTenantId = DB::connection('tenant')->table('users')->insertGetId($adminData);
-                // $adminTenant = User::on('tenant')->find($adminTenantId);
-                $adminTenant = User::on('tenant')->find($adminLandlord->id);
-
-                $adminTenant->addRole($adminRole);
-                $adminTenant->permissions()->sync($adminRole->permissions);
-                $verificationCode = $adminTenant->remember_token;
-                $verificationUrl = url('/verify-email/' . $verificationCode . '?email=' . urlencode($data['admin_email']));
-
-                $adminTenant->remember_token = $verificationCode;
-                $adminTenant->save();
-
-                Mail::to($adminTenant->email)->send(new TenantEmailVerification($verificationUrl, [
-                    'firstname' => $data['admin_fullname'],
-                    'email' => $data['admin_email'],
-                    'verification_code' => $verificationCode,
-                ]));
-
-                $dataToLog = [
-                    'causer_id' => $adminTenant->id,
-                    'action_id' => $adminTenant->id,
-                    'action_type' => "App\Models\User",
-                    'log_name' => "Tenant Created Successfully",
-                    'description' => "{$adminTenant['fullname']} added successfully",
-                    'module_accessed' => ListModuleEnums::Records
+                    'remember_token' => $adminLandlord->remember_token,
                 ];
-                GeneralHelper::storeAuditLog($dataToLog);
 
-                // Commit landlord transaction only after all tenant setup is complete
-                DB::connection('landlord')->commit();
-
-                return JsonResponser::send(
-                    true,
-                    'Tenant onboarding completed successfully. Please check your email to verify your account.',
-                    [
-                        'tenant' => $tenant,
-                        'registration' => $registration,
-                        'admin' => $adminTenant,
-                    ],
-                    200
-                );
-            } catch (\Exception $e) {
-                DB::connection('landlord')->rollBack();
-                if (!$isProduction) {
-                    DB::statement("DROP DATABASE IF EXISTS {$tenantDatabase}");
-                }
-                return JsonResponser::send(
-                    false,
-                    'An error occurred during tenant database setup: ' . $e->getMessage(),
-                    null,
-                    500
-                );
+                DB::connection('tenant')->table('users')->insert($adminData);
             }
+
+
+            // $adminTenantId = DB::connection('tenant')->table('users')->insertGetId($adminData);
+            // $adminTenant = User::on('tenant')->find($adminTenantId);
+            $adminTenant = User::on('tenant')->find($adminLandlord->id);
+
+            $adminTenant->addRole($adminRole);
+            $adminTenant->permissions()->sync($adminRole->permissions);
+            $verificationCode = $adminTenant->remember_token;
+            $verificationUrl = url('/verify-email/' . $verificationCode . '?email=' . urlencode($data['admin_email']));
+
+            $adminTenant->remember_token = $verificationCode;
+            $adminTenant->save();
+
+            Mail::to($adminTenant->email)->send(new TenantEmailVerification($verificationUrl, [
+                'firstname' => $data['admin_fullname'],
+                'email' => $data['admin_email'],
+                'verification_code' => $verificationCode,
+            ]));
+
+            $dataToLog = [
+                'causer_id' => $adminTenant->id,
+                'action_id' => $adminTenant->id,
+                'action_type' => "App\Models\User",
+                'log_name' => "Tenant Created Successfully",
+                'description' => "{$adminTenant['fullname']} added successfully",
+                'module_accessed' => ListModuleEnums::Records
+            ];
+            GeneralHelper::storeAuditLog($dataToLog);
+
+            // Commit landlord transaction only after all tenant setup is complete
+            DB::connection('landlord')->commit();
+
+            return JsonResponser::send(
+                true,
+                'Tenant onboarding completed successfully. Please check your email to verify your account.',
+                [
+                    'tenant' => $tenant,
+                    'registration' => $registration,
+                    'admin' => $adminTenant,
+                ],
+                200
+            );
         } catch (\Exception $e) {
             DB::connection('landlord')->rollBack();
+            if (!$isProduction) {
+                DB::statement("DROP DATABASE IF EXISTS {$tenantDatabase}");
+            }
             return JsonResponser::send(
                 false,
-                'An error occurred during tenant onboarding: ' . $e->getMessage(),
+                'An error occurred during tenant database setup: ' . $e->getMessage(),
                 null,
                 500
             );
         }
+        // } catch (\Exception $e) {
+        //     DB::connection('landlord')->rollBack();
+        //     return JsonResponser::send(
+        //         false,
+        //         'An error occurred during tenant onboarding: ' . $e->getMessage(),
+        //         null,
+        //         500
+        //     );
+        // }
     }
 
     //LOGIN::THROUGH LANDLORD DB
