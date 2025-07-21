@@ -46,7 +46,7 @@ class BillingLog extends Model
 
     public function visits_recent()
     {
-        return $this->hasOne(PatientVisit::class, 'visit_id', 'id')->latest();
+        return $this->hasOne(PatientVisit::class,  'id', 'visit_id')->latest();
     }
 
     public function service()
