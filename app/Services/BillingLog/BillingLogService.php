@@ -179,7 +179,7 @@ class BillingLogService
             $query->where('firstname',  'like',  "%{$validated['search']}%")
                 ->orWhere('lastname',  'like',  "%{$validated['search']}%")
                 ->orWhere('patientno',  'like', "%{$validated['search']}%")
-                ->orWhere('gender', $validated['search']);
+                ->orWhereRaw('LOWER(gender) = ?', [strtolower($validated['search'])]);
         });
 
         if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
