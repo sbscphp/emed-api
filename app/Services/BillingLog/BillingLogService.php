@@ -315,9 +315,9 @@ class BillingLogService
         });
 
 
-        if (!empty($validated['payment_status'])) {
+        if (!empty($validated['payment_method'])) {
 
-            $radiology->where('payment_status', $validated['payment_status']);
+            $radiology->where('payment_method', $validated['payment_method']);
         }
 
 
