@@ -545,7 +545,7 @@ class BillingController extends Controller
 
         $radiology =  Radiology::with('patient.visits_recent.billingLogsForPatient')->get();
         if (count($radiology) == 0) {
-            return JsonResponser::send(true, 'No Data.', [], 500);
+            return JsonResponser::send(false, 'No Data.', [], 500);
         }
         $data = $this->billingService->radiology_list($validated);
         if (!empty($validated['export'])) {
