@@ -26,7 +26,7 @@ class InventoryController extends Controller
     {
         try {
             config(['database.default' => 'tenant']);
-            $filters = $request->only(['search']);
+            $filters = $request->only(['search', 'type_name']);
             $export = $request->input('export');
             $from = $request->from;
             $to = $request->to;

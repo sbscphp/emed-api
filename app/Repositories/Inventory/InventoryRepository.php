@@ -26,9 +26,20 @@ class InventoryRepository implements InventoryInterface
             $query->where(function ($q) use ($search) {
                 $q->where('batch_no', 'like', "%$search%")
                     ->orWhere('item_name', 'like', "%$search%")
-                    ->orWhere('supplier', 'like', "%$search%");
+                    ->orWhere('supplier', 'like', "%$search%")
+                    ->orWhereHas('medicineType', function ($qu) use ($search) {
+                        $qu->where("type_name", "%$search%");
+                    });
             });
         }
+
+        if (!empty($filters['type_name'])) {
+            $query->orWhereHas('medicineType', function ($qu) use ($filters) {
+                $qu->where("type_name", $filters['type_name']);
+            });
+        }
+
+
 
         if (!empty($from) && !empty($to)) {
             $query->whereBetween('expiry_date', [
