@@ -173,14 +173,16 @@ class BillingLogService
 
     public function registration_list($validated)
     {
-        $patient =  Patient::with('visits_recent.billingLogsForPatient');
-
-        $patient->when(!empty($validated['search']), function ($query) use ($validated) {
-            $query->where('firstname',  'like',  "%{$validated['search']}%")
-                ->orWhere('lastname',  'like',  "%{$validated['search']}%")
-                ->orWhere('patientno',  'like', "%{$validated['search']}%")
-                ->orWhereRaw('LOWER(gender) = ?', [strtolower($validated['search'])]);
-        });
+        // $patient =  Patient::with('visits_recent.billingLogsForPatient');
+        $patient =  BillingLog::with(['serviceUnit', 'patient', 'visits_recent.consultation.pharmacist', 'visits_recent.billingLogsForPatient'])->where('service_unit_id', 3)
+            ->when(!empty($validated['search']), function ($query) use ($validated) {
+                $query->whereHas('patient', function ($q) use ($validated) {
+                    $q->where('firstname',  'like',  "%{$validated['search']}%")
+                        ->orWhere('lastname',  'like',  "%{$validated['search']}%")
+                        ->orWhere('patientno',  'like', "%{$validated['search']}%")
+                        ->orWhereRaw('LOWER(gender) = ?', [strtolower($validated['search'])]);
+                });
+            });
 
         if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
             $startDate = $validated['start_date'];
@@ -189,9 +191,10 @@ class BillingLogService
         }
 
         if (!empty($validated['gender'])) {
-            $patient->whereRaw('LOWER(gender) = ?', [strtolower($validated['search'])]);
+            $patient->whereHas('patient', function ($q) use ($validated) {
+                $q->whereRaw('LOWER(gender) = ?', [strtolower($validated['gender'])]);
+            });
         }
-
         return $patient->paginate(10);
     }
 

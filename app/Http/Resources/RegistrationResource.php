@@ -16,12 +16,13 @@ class RegistrationResource extends JsonResource
     public function toArray(Request $request): array
     {
         $amount  = $this->visits_recent?->billingLogsForPatient?->grand_total;
+        // visits_recent.billingLogsForPatient
         return [
-            'firstname' => $this->firstname,
-            'lastname' => $this->lastname,
-            'gender' => $this->gender,
-            'age' => Carbon::parse($this->dob)->age,
-            'patientno' => $this->patientno,
+            'firstname' => $this->patient?->firstname,
+            'lastname' => $this->patient?->lastname,
+            'gender' => $this->patient?->gender,
+            'age' => Carbon::parse($this->patient?->dob)->age,
+            'patientno' => $this->patient?->patientno,
             'created_at' => Carbon::parse($this->created_at)->format('Y-m-d'),
             'amount' => $amount ?? "0"
         ];

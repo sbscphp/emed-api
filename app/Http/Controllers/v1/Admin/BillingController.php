@@ -415,7 +415,8 @@ class BillingController extends Controller
             $data = $this->billingService->registration_list($validated);
             if (!empty($validated['export'])) {
                 $export =  $validated['export'];
-                $patient =  Patient::with('visits_recent.billingLogsForPatient')->get();
+                // $patient =  Patient::with('visits_recent.billingLogsForPatient')->get();
+                $patient =  BillingLog::with(['serviceUnit', 'patient', 'visits_recent.consultation.pharmacist', 'visits_recent.billingLogsForPatient'])->where('service_unit_id', 3)->get();
                 if (count($patient) == 0) {
                     return JsonResponser::send(true, 'No Data.', [], 500);
                 }
