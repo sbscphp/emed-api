@@ -22,8 +22,8 @@ class ConsultationResource extends JsonResource
             "patientno" => $patient?->patientno,
             "gender" => $patient?->gender,
             "age" => Carbon::parse($patient?->dob)->age,
-            "amount" => $patient?->visits_recent?->billingLogsForPatient?->payment_status,
-            'created_at' => Carbon::parse($patient?->visits_recent?->billingLogsForPatient?->created_at)->format('Y-m-d'),
+            "amount" => $this->payment_status,
+            'created_at' => Carbon::parse($this->created_at)->format('Y-m-d'),
         ];
     }
 }

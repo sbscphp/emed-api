@@ -477,7 +477,7 @@ class BillingController extends Controller
                 'start_date' => "nullable|string",
                 'end_date' => "nullable|string",
             ]);
-            $consultation = Consultation::with('patient.visits_recent.billingLogsForPatient')->get();
+            $consultation =  BillingLog::with(['serviceUnit', 'patient'])->where('service_unit_id', 3)->get();
             if (count($consultation) == 0) {
                 return JsonResponser::send(true, 'No Data.', [], 500);
             }
@@ -537,7 +537,7 @@ class BillingController extends Controller
         if (!empty($validated['export'])) {
             $export =  $validated['export'];
             // $exportData = PharmacyResourceList::collection($pharm)->resolve();
-            $Laboratory = BillingLog::with(['serviceUnit', 'patient.laboratory'])->where('name', 'Laboratory')->get();
+            $Laboratory = BillingLog::with(['serviceUnit', 'patient.laboratory'])->where('service_unit_id', 4)->get();
             $exportData = LaboratoryBillingmgt::collection($Laboratory)->resolve();
             if ($export === 'csv') {
                 return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
@@ -589,7 +589,7 @@ class BillingController extends Controller
         if (!empty($validated['export'])) {
             $export =  $validated['export'];
             // $exportData = PharmacyResourceList::collection($pharm)->resolve();
-            $radiology = BillingLog::with(['serviceUnit', 'patient'])->where('name', 'Radiology')->get();
+            $radiology = BillingLog::with(['serviceUnit', 'patient'])->where('service_unit_id', 5)->get();
             $exportData = RadiologyResourceBilling::collection($radiology)->resolve();
             if ($export === 'csv') {
                 return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
