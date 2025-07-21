@@ -65,10 +65,10 @@ class RegistrationController extends Controller
         $registration = $this->registrationService->create($registrationData);
 
         $domain = Str::slug($data['name'], '-') . '.emed.com';
-        $existingTenant = Tenant::where('name', $registrationData['name'])->first();
+        $existingTenant = Tenant::where('domain',   $domain)->first();
         if ($existingTenant) {
             DB::connection('landlord')->rollBack();
-            return JsonResponser::send(false, "Tenant {$data['name']} already exists.", [], 409);
+            return JsonResponser::send(false, "Tenant {$data['name']} already exists.", [], 500);
         }
 
         $isProduction = app()->environment(['production', 'staging', 'qa']);
