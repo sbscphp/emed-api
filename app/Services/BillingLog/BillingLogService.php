@@ -199,13 +199,6 @@ class BillingLogService
     {
         //   $pharm =  Pharmacy::with(["pharmacist", 'treatments_one.patient.visits_recent.billingLogsForPatient']);
         $pharm =  BillingLog::with(['serviceUnit', 'patient', 'visits_recent.consultation.pharmacist'])->where('service_unit_id', 3)
-            // $pharm->when(!empty($validated['search']), function ($query) use ($validated) {
-            //     // $query->where('firstname', $validated['search'])
-            //     //     ->orWhere('lastname', $validated['search'])
-            //     //     ->orWhere('patientno', $validated['search']);
-            //     $query->whereHas('patient', function($q) use(){});
-            // });
-
             ->when(!empty($validated['search']), function ($query) use ($validated) {
                 $query->where('payment_status', 'like', '%' . $validated['search'] . '%')
                     ->whereHas('patient', function ($q) use ($validated) {
@@ -223,7 +216,7 @@ class BillingLogService
 
             $startDate = $validated['start_date'];
             $endDate = $validated['end_date'];
-            $pharm->where('created_at', [Carbon::parse($startDate), Carbon::parse($endDate)]);
+            $pharm->whereBetween('created_at', [Carbon::parse($startDate), Carbon::parse($endDate)]);
         }
 
         return  $pharm->paginate(10);
