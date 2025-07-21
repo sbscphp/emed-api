@@ -39,6 +39,10 @@ class InventoryRepository implements InventoryInterface
             });
         }
 
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
 
 
         if (!empty($from) && !empty($to)) {
