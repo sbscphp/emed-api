@@ -28,7 +28,7 @@ use App\Http\Resources\LaboratoryBillingmgt;
 use App\Http\Resources\MedicationResource;
 use App\Http\Resources\PharmacyResourceList;
 use App\Http\Resources\RadiologyBillingmgt;
-use App\Http\Resources\radiologyResourceBilling;
+use App\Http\Resources\RadiologyResourceBilling;
 use App\Http\Resources\RegistrationBillingmgt;
 use App\Http\Resources\RegistrationResource;
 use App\Models\Consultation;
