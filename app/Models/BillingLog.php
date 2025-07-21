@@ -44,6 +44,11 @@ class BillingLog extends Model
         return $this->belongsTo(Patient::class, 'patient_id');
     }
 
+    public function visits_recent()
+    {
+        return $this->hasOne(PatientVisit::class, 'visit_id', 'id')->latest();
+    }
+
     public function service()
     {
         return $this->belongsTo(ServiceDepartment::class, 'service_id');

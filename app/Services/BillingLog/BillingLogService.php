@@ -197,37 +197,33 @@ class BillingLogService
 
     public function pharmacy_list($validated)
     {
-        $pharm =  Pharmacy::with(["pharmacist", 'treatments_one.patient.visits_recent.billingLogsForPatient']);
+        //   $pharm =  Pharmacy::with(["pharmacist", 'treatments_one.patient.visits_recent.billingLogsForPatient']);
+        $pharm =  BillingLog::with(['serviceUnit', 'patient', 'visits_recent.consultation.pharmacist'])->where('service_unit_id', 3)
+            // $pharm->when(!empty($validated['search']), function ($query) use ($validated) {
+            //     // $query->where('firstname', $validated['search'])
+            //     //     ->orWhere('lastname', $validated['search'])
+            //     //     ->orWhere('patientno', $validated['search']);
+            //     $query->whereHas('patient', function($q) use(){});
+            // });
 
-        // $pharm->when(!empty($validated['search']), function ($query) use ($validated) {
-        //     // $query->where('firstname', $validated['search'])
-        //     //     ->orWhere('lastname', $validated['search'])
-        //     //     ->orWhere('patientno', $validated['search']);
-        //     $query->whereHas('patient', function($q) use(){});
-        // });
-
-        $pharm->when(!empty($validated['search']), function ($query) use ($validated) {
-            $query->whereHas('treatments_one.patient', function ($q) use ($validated) {
-                $q->where('firstname', 'like', '%' . $validated['search'] . '%')
-                    ->orWhere('lastname', 'like', '%' . $validated['search'] . '%')
-                    ->orwhere('patientno', 'like', '%' . $validated['search'] . '%');
-            })
-                ->orWhereHas('pharmacist', function ($q) use ($validated) {
-                    $q->where('first_name', 'like', '%' . $validated['search'] . '%')
-                        ->orWhere('last_name', 'like', '%' . $validated['search'] . '%');
-                })
-
-                ->orWhereHas('treatments_one.patient.visits_recent.billingLogsForPatient', function ($q) use ($validated) {
-                    $q->where('payment_status', 'like', '%' . $validated['search'] . '%');
-                });
-        });
+            ->when(!empty($validated['search']), function ($query) use ($validated) {
+                $query->where('payment_status', 'like', '%' . $validated['search'] . '%')
+                    ->whereHas('patient', function ($q) use ($validated) {
+                        $q->where('firstname', 'like', '%' . $validated['search'] . '%')
+                            ->orWhere('lastname', 'like', '%' . $validated['search'] . '%')
+                            ->orwhere('patientno', 'like', '%' . $validated['search'] . '%');
+                    })
+                    ->orWhereHas('visits_recent.consultation.pharmacist', function ($q) use ($validated) {
+                        $q->where('first_name', 'like', '%' . $validated['search'] . '%')
+                            ->orWhere('last_name', 'like', '%' . $validated['search'] . '%');
+                    });
+            });
 
         if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
-            $pharm->whereHas('treatments_one.patient.visits_recent.billingLogsForPatient', function ($q) use ($validated) {
-                $startDate = $validated['start_date'];
-                $endDate = $validated['end_date'];
-                $q->where('created_at', [Carbon::parse($startDate), Carbon::parse($endDate)]);
-            });
+
+            $startDate = $validated['start_date'];
+            $endDate = $validated['end_date'];
+            $pharm->where('created_at', [Carbon::parse($startDate), Carbon::parse($endDate)]);
         }
 
         return  $pharm->paginate(10);

@@ -47,4 +47,9 @@ class Consultation extends Model
     {
         return $this->belongsTo(PatientVisit::class, 'visitno');
     }
+
+    public function pharmacist()
+    {
+        return $this->belongsTo(User::class, 'admin_id');
+    }
 }
