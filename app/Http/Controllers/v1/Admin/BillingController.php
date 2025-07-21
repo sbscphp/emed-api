@@ -504,35 +504,54 @@ class BillingController extends Controller
     public function laboratory_list(Request $request)
     {
 
-        try {
-            DB::connection('tenant')->beginTransaction();
-            $validated =   $request->validate([
-                'export' => "nullable|string",
-                'search' => 'nullable|string',
-                'start_date' => "nullable|string",
-                'end_date' => "nullable|string",
-            ]);
-            $laboratory = Laboratory::with('patient.visits_recent.billingLogsForPatient')->get();
-            if (count($laboratory) == 0) {
-                return JsonResponser::send(true, 'No Data.', [], 500);
-            }
-            $data = $this->billingService->laboratory_list($validated);
-            if (!empty($validated['export'])) {
-                $export =  $validated['export'];
-                // $exportData = PharmacyResourceList::collection($pharm)->resolve();
-                $exportData = ConsultationResource::collection($laboratory)->resolve();
-                if ($export === 'csv') {
-                    return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
-                }
+        // try {
+        DB::connection('tenant')->beginTransaction();
+        $validated =   $request->validate([
+            'export' => "nullable|string",
+            'search' => 'nullable|string',
+            'start_date' => "nullable|string",
+            'end_date' => "nullable|string",
+        ]);
+        // $laboratory = Laboratory::with('patient.visits_recent.billingLogsForPatient')->get();
+        // if (count($laboratory) == 0) {
+        //     return JsonResponser::send(true, 'No Data.', [], 500);
+        // }
+        // $data = $this->billingService->laboratory_list($validated);
+        // if (!empty($validated['export'])) {
+        //     $export =  $validated['export'];
+        //     // $exportData = PharmacyResourceList::collection($pharm)->resolve();
+        //     $exportData = ConsultationResource::collection($laboratory)->resolve();
+        //     if ($export === 'csv') {
+        //         return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
+        //     }
 
-                if ($export === 'pdf') {
-                    return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
-                }
+        //     if ($export === 'pdf') {
+        //         return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+        //     }
+        // }
+        // return JsonResponser::send(false, ' fetched successfully.',  $data);
+
+
+
+        $data = $this->billingService->laboratory_list($validated);
+        if (!empty($validated['export'])) {
+            $export =  $validated['export'];
+            // $exportData = PharmacyResourceList::collection($pharm)->resolve();
+            $Laboratory = BillingLog::with(['serviceUnit', 'patient.laboratory'])->where('name', 'Laboratory')->get();
+            $exportData = LaboratoryBillingmgt::collection($Laboratory)->resolve();
+            if ($export === 'csv') {
+                return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
             }
-            return JsonResponser::send(false, ' fetched successfully.',  $data);
-        } catch (\Throwable $th) {
-            return JsonResponser::send(true, 'Error fetching.', [], 500, $th);
+
+            if ($export === 'pdf') {
+                return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+            }
         }
+
+        return JsonResponser::send(false, ' fetched successfully.',  $data);
+        // } catch (\Throwable $th) {
+        //     return JsonResponser::send(true, 'Error fetching.', [], 500, $th);
+        // }
     }
 
     public function radiology_list(Request $request)
@@ -570,7 +589,7 @@ class BillingController extends Controller
         if (!empty($validated['export'])) {
             $export =  $validated['export'];
             // $exportData = PharmacyResourceList::collection($pharm)->resolve();
-            $radiology = BillingLog::with(['serviceUnit', 'patient'])->where('service_unit_id', 1)->get();
+            $radiology = BillingLog::with(['serviceUnit', 'patient'])->where('name', 'Radiology')->get();
             $exportData = RadiologyResourceBilling::collection($radiology)->resolve();
             if ($export === 'csv') {
                 return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');

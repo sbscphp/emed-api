@@ -16,9 +16,9 @@ class LaboratoryBillingmgt extends JsonResource
     {
 
         return [
-            "name" => $this->lab_dept,
-            "class" => $this->ordered_test,
-            "price" => $this->patient?->visits_recent?->billingLogsForPatient?->grand_total ?? ""
+            "name" => $this->patient?->laboratory?->lab_dept ?? "",
+            "class" => $this->patient?->laboratory?->ordered_test ?? "",
+            "price" => $this->grand_total ?? ""
         ];
     }
 }

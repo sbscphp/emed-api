@@ -25,10 +25,11 @@ class ServiceUnitSeeder extends Seeder
         $now = Carbon::now();
 
         $units = [
-            ['name' => 'Records', 'created_at' => $now, 'updated_at' => $now],
+            ['name' => 'Registration', 'created_at' => $now, 'updated_at' => $now],
             ['name' => 'Pharmacy', 'created_at' => $now, 'updated_at' => $now],
             ['name' => 'Consultation', 'created_at' => $now, 'updated_at' => $now],
             ['name' => 'Laboratory', 'created_at' => $now, 'updated_at' => $now],
+            ['name' => 'Radiology', 'created_at' => $now, 'updated_at' => $now],
         ];
 
         DB::table('service_units')->insert($units);
