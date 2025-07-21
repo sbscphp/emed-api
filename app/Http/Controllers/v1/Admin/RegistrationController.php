@@ -65,7 +65,7 @@ class RegistrationController extends Controller
             $registration = $this->registrationService->create($registrationData);
 
             $domain = Str::slug($data['name'], '-') . '.emed.com';
-            $existingTenant = Tenant::where('domain', $domain)->first();
+            $existingTenant = Tenant::where('name', $registrationData['name'])->first();
             if ($existingTenant) {
                 DB::connection('landlord')->rollBack();
                 return JsonResponser::send(false, "Tenant {$data['name']} already exists.", [], 409);
@@ -78,6 +78,7 @@ class RegistrationController extends Controller
                 : 'tenant_' . Str::slug($data['name'], '_');
 
             // Create tenant
+
             $tenant = Tenant::create([
                 'name' => $data['name'],
                 'domain' => $domain,
