@@ -269,6 +269,7 @@ class BillingLogService
 
         $radiology->when(!empty($validated['search']), function ($query) use ($validated) {
             $query->where('payment_status', 'like', '%' . $validated['search'] . '%')
+                ->orWhere('payment_method', 'like', '%' . $validated['search'] . '%')
                 ->orWhereHas('patient', function ($q) use ($validated) {
                     $q->where('firstname', 'like', '%' . $validated['search'] . '%')
                         ->orWhere('lastname', 'like', '%' . $validated['search'] . '%')
@@ -309,6 +310,7 @@ class BillingLogService
         $laboratory = BillingLog::with(['serviceUnit', 'patient.laboratory'])->where('service_unit_id', 4)
             ->when(!empty($validated['search']), function ($query) use ($validated) {
                 $query->where('payment_status', 'like', '%' . $validated['search'] . '%')
+                    ->orWhere('payment_method', 'like', '%' . $validated['search'] . '%')
                     ->orWhereHas('patient', function ($q) use ($validated) {
                         $q->where('firstname', 'like', '%' . $validated['search'] . '%')
                             ->orWhere('lastname', 'like', '%' . $validated['search'] . '%')
@@ -332,6 +334,7 @@ class BillingLogService
         $radiology = BillingLog::with(['serviceUnit', 'patient'])->where('service_unit_id', 5)
             ->when(!empty($validated['search']), function ($query) use ($validated) {
                 $query->where('payment_status', 'like', '%' . $validated['search'] . '%')
+                    ->orWhere('payment_method', 'like', '%' . $validated['search'] . '%')
                     ->orWhereHas('patient', function ($q) use ($validated) {
                         $q->where('firstname', 'like', '%' . $validated['search'] . '%')
                             ->orWhere('lastname', 'like', '%' . $validated['search'] . '%')
