@@ -6,6 +6,8 @@ use App\Models\Radiology;
 use App\Services\Radiology\RadiologyService;
 use Illuminate\Http\Request;
 use App\Responser\JsonResponser;
+use App\Helpers\ExportHelper;
+use App\Http\Resources\RadiologyResourceAll;
 
 class RadiologyController extends Controller
 {
@@ -36,16 +38,16 @@ class RadiologyController extends Controller
         }
         $data = $this->radiologyService->radiology_list($validated);
         if (!empty($validated['export'])) {
-            // $export =  $validated['export'];
-            // // $exportData = PharmacyResourceList::collection($pharm)->resolve();
-            // $exportData = ConsultationResource::collection($radiology)->resolve();
-            // if ($export === 'csv') {
-            //     return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
-            // }
+            $export =  $validated['export'];
+            // $exportData = PharmacyResourceList::collection($pharm)->resolve();
+            $exportData = RadiologyResourceAll::collection($radiology)->resolve();
+            if ($export === 'csv') {
+                return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
+            }
 
-            // if ($export === 'pdf') {
-            //     return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
-            // }
+            if ($export === 'pdf') {
+                return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+            }
         }
         return JsonResponser::send(false, 'Billing records retrieved successfully.', $data, 200);
     }

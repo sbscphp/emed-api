@@ -4,6 +4,7 @@ namespace App\Services\Radiology;
 
 use App\Models\Radiology;
 use App\Repositories\Radiology\RadiologyInterface;
+use Carbon\Carbon;
 
 /**
  * Class RadiologyService
@@ -118,6 +119,11 @@ class RadiologyService
             });
         }
 
+        if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
+            $startDate = $validated['start_date'];
+            $endDate = $validated['end_date'];
+            $radiology->whereBetween('created_at', [Carbon::parse($startDate), Carbon::parse($endDate)]);
+        }
 
         if (!empty($validated['test_status'])) {
             $radiology->where('test_name', $validated['test_status']);
