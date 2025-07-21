@@ -189,7 +189,7 @@ class BillingLogService
         }
 
         if (!empty($validated['gender'])) {
-            $patient->where('gender', $validated['search']);
+            $patient->where('gender', $validated['gender']);
         }
 
         return $patient->paginate(10);

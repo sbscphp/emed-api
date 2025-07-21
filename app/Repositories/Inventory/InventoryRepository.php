@@ -63,6 +63,7 @@ class InventoryRepository implements InventoryInterface
                 'Supplier' => $item->supplier,
                 'ExpiryDate' => $item->expiry_date,
                 'Note' => $item->note,
+                'Status' => $item->status,
                 'Created At' => $item->created_at->toDateTimeString(),
             ];
         };
