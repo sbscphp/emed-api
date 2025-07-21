@@ -171,14 +171,14 @@ class BillingLogService
         return BillingLog::where('service_unit_id', $serviceUnitId)->sum($column);
     }
 
-    public function regstration_list($validated)
+    public function registration_list($validated)
     {
         $patient =  Patient::with('visits_recent.billingLogsForPatient');
 
         $patient->when(!empty($validated['search']), function ($query) use ($validated) {
-            $query->where('firstname', $validated['search'])
-                ->orWhere('lastname', $validated['search'])
-                ->orWhere('patientno', $validated['search'])
+            $query->where('firstname',  'like',  "%{$validated['search']}%")
+                ->orWhere('lastname',  'like',  "%{$validated['search']}%")
+                ->orWhere('patientno',  'like', "%{$validated['search']}%")
                 ->orWhere('gender', $validated['search']);
         });
 
@@ -186,6 +186,10 @@ class BillingLogService
             $startDate = $validated['start_date'];
             $endDate = $validated['end_date'];
             $patient->whereBetween('created_at', [Carbon::parse($startDate), Carbon::parse($endDate)]);
+        }
+
+        if (!empty($validated['gender'])) {
+            $patient->where('gender', $validated['search']);
         }
 
         return $patient->paginate(10);

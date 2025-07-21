@@ -110,7 +110,7 @@ class TriageService
         return $this->TriageInterface->getByPatientId($patientId);
     }
 
-    public function getPatientsAndStatsByService($serviceId, $search = null, $from, $to)
+    public function getPatientsAndStatsByService($serviceId, $search = null, $from, $to, $status, $type, $phone_number)
     {
 
 
@@ -147,6 +147,26 @@ class TriageService
                     ->orWhere('triages.severity', 'like', "%$search%");
             });
         }
+
+
+        if (!empty($status)) {
+            $query->where('patient_visits.stage', 'like', "%$search%");
+            // patient_type
+        }
+
+
+        if (!empty($type)) {
+            $query->where('patients.patient_type', 'like', "%$type%");
+            // patient_type
+        }
+
+
+        if (!empty($phone_number)) {
+            $query->where('patients.patient_type', 'like', "%$phone_number%");
+            // patient_type
+        }
+
+
 
 
         $query->when($from && $to, function ($q) use ($from, $to) {

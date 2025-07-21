@@ -445,7 +445,7 @@ class BillingController extends Controller
         ]);
 
         $data = $this->billingService->pharmacy_list($validated);
-        $pharm =  Pharmacy::with(["pharmacist", 'treatments_one.patient.visits_recent.billingLogsForPatient'])->get();
+        $pharm =  Pharmacy::with(["pharmacist", 'treatments_one.patient.visits_recent.billingLogsForPatient', 'patient.billingLogsForPatient'])->get();
         if (count($pharm) == 0) {
             return JsonResponser::send(true, 'No Data.', [], 500);
         }
