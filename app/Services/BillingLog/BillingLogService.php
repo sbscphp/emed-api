@@ -294,28 +294,32 @@ class BillingLogService
 
     public function radiology_list($validated)
     {
-        $radiology =  Radiology::with('patient.visits_recent.billingLogsForPatient');
+        //$radiology =  Radiology::with('patient.visits_recent.billingLogsForPatient');
+        $radiology = BillingLog::with(['serviceUnit', 'patient'])->where('service_unit_id', 1);
+
+
+
 
         $radiology->when(!empty($validated['search']), function ($query) use ($validated) {
-            $query->whereHas('patient', function ($q) use ($validated) {
-                $q->where('firstname', 'like', '%' . $validated['search'] . '%')
-                    ->orWhere('lastname', 'like', '%' . $validated['search'] . '%')
-                    ->orWhere('patientno', 'like', '%' . $validated['search'] . '%')
-                    ->orWhereHas('visits_recent', function ($q) use ($validated) {
-                        $q->whereHas('billingLogsForPatient', function ($q) use ($validated) {
-                            $q->where('payment_status', 'like', '%' . $validated['search'] . '%');
-                        });
-                    });
-            });
+            $query->where('payment_status', 'like', '%' . $validated['search'] . '%')
+                ->orWhereHas('patient', function ($q) use ($validated) {
+                    $q->where('firstname', 'like', '%' . $validated['search'] . '%')
+                        ->orWhere('lastname', 'like', '%' . $validated['search'] . '%')
+                        ->orWhere('patientno', 'like', '%' . $validated['search'] . '%');
+                    // ->orWhereHas('visits_recent', function ($q) use ($validated) {
+                    //     $q->whereHas('billingLogsForPatient', function ($q) use ($validated) {
+                    //         $q->where('payment_status', 'like', '%' . $validated['search'] . '%');
+                    //     });
+                    // });
+                });
         });
 
 
         if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
-            $radiology->whereHas('patient.visits_recent.billingLogsForPatient', function ($q) use ($validated) {
-                $startDate = $validated['start_date'];
-                $endDate = $validated['end_date'];
-                $q->where('created_at', [Carbon::parse($startDate), Carbon::parse($endDate)]);
-            });
+
+            $startDate = $validated['start_date'];
+            $endDate = $validated['end_date'];
+            $radiology->where('created_at', [Carbon::parse($startDate), Carbon::parse($endDate)]);
         }
 
         return   $radiology->paginate(10);

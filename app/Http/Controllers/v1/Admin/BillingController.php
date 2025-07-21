@@ -28,6 +28,7 @@ use App\Http\Resources\LaboratoryBillingmgt;
 use App\Http\Resources\MedicationResource;
 use App\Http\Resources\PharmacyResourceList;
 use App\Http\Resources\RadiologyBillingmgt;
+use App\Http\Resources\radiologyResourceBilling;
 use App\Http\Resources\RegistrationBillingmgt;
 use App\Http\Resources\RegistrationResource;
 use App\Models\Consultation;
@@ -562,7 +563,22 @@ class BillingController extends Controller
         //     }
         // }
 
-        $service = BillingLog::with(['serviceUnit', 'patient'])->where('service_unit_id', 1)->get();
+        $radiology = BillingLog::with(['serviceUnit', 'patient'])->where('service_unit_id', 1)->get();
+
+        $data = $this->billingService->radiology_list($validated);
+        if (!empty($validated['export'])) {
+            $export =  $validated['export'];
+            // $exportData = PharmacyResourceList::collection($pharm)->resolve();
+            $radiology = BillingLog::with(['serviceUnit', 'patient'])->where('service_unit_id', 1)->get();
+            $exportData = RadiologyResourceBilling::collection($radiology)->resolve();
+            if ($export === 'csv') {
+                return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
+            }
+
+            if ($export === 'pdf') {
+                return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+            }
+        }
 
         return JsonResponser::send(false, ' fetched successfully.',  $service);
     }
