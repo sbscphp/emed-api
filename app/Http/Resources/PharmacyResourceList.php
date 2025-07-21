@@ -15,7 +15,7 @@ class PharmacyResourceList extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $patient = optional($this->treatments_one?->patient);
+        $patient = optional($this->patient);
         return [
             "Patient Name" => $patient->firstname . " " . $patient->lastname,
             "Registration Number" => $patient->patientno ?? "",
