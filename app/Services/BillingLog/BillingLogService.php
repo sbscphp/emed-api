@@ -197,7 +197,9 @@ class BillingLogService
 
     public function pharmacy_list($validated)
     {
-        $pharm =  Pharmacy::with(["pharmacist", 'treatments_one.patient.visits_recent.billingLogsForPatient']);
+        $pharm =  Pharmacy::with(["pharmacist", 'treatments_one.patient.visits_recent.billingLogsForPatient', 'patient.billingLogsForPatient' => function ($query) {
+            $query->where('service_unit_id', 3);
+        }])->get();
 
         // $pharm->when(!empty($validated['search']), function ($query) use ($validated) {
         //     // $query->where('firstname', $validated['search'])

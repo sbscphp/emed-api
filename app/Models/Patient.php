@@ -120,6 +120,12 @@ class Patient extends Model
 
     public function laboratory()
     {
-        return $this->hasOne(Treatment::class, 'patient_id', 'id');
+        return $this->hasOne(Laboratory::class, 'patient_id', 'id');
+    }
+
+
+    public function pharmacy()
+    {
+        return $this->hasOne(Pharmacy::class, 'patient_id', 'id');
     }
 }

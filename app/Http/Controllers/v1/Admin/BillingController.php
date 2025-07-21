@@ -447,22 +447,25 @@ class BillingController extends Controller
         ]);
 
         $data = $this->billingService->pharmacy_list($validated);
-        $pharm =  Pharmacy::with(["pharmacist", 'treatments_one.patient.visits_recent.billingLogsForPatient', 'patient.billingLogsForPatient'])->get();
+        //$pharm =  BillingLog::with(['serviceUnit', 'patient.pharmacy'])->where('service_unit_id', 2)->get();
+        $pharm =  Pharmacy::with(["pharmacist", 'treatments_one.patient.visits_recent.billingLogsForPatient', 'patient.billingLogsForPatient' => function ($query) {
+            $query->where('service_unit_id', 3);
+        }])->get();
         if (count($pharm) == 0) {
             return JsonResponser::send(true, 'No Data.', [], 500);
         }
-        if (!empty($validated['export'])) {
-            $export =  $validated['export'];
-            $exportData = PharmacyResourceList::collection($pharm)->resolve();
+        // if (!empty($validated['export'])) {
+        //     $export =  $validated['export'];
+        $exportData = PharmacyResourceList::collection($pharm)->resolve();
 
-            if ($export === 'csv') {
-                return ExportHelper::streamCsv($exportData, null, 'pharmacy.csv');
-            }
+        //     if ($export === 'csv') {
+        //         return ExportHelper::streamCsv($exportData, null, 'pharmacy.csv');
+        //     }
 
-            if ($export === 'pdf') {
-                return ExportHelper::downloadPdf($exportData, 'pharmacy.pdf');
-            }
-        }
+        //     if ($export === 'pdf') {
+        //         return ExportHelper::downloadPdf($exportData, 'pharmacy.pdf');
+        //     }
+        // }
         return JsonResponser::send(false, 'Billing stats fetched successfully.', $data);
     }
 

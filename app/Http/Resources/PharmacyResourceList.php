@@ -21,7 +21,7 @@ class PharmacyResourceList extends JsonResource
             "Registration Number" => $patient->patientno ?? "",
             "Consulted by" => $this->pharmacist?->first_name . " " . $this->pharmacist?->last_name,
             "age" => Carbon::parse($patient->dob)->age,
-            "amount" => $patient?->visits_recent?->billingLogsForPatient?->payment_status ?? "",
+            "amount" => $this->payment_status ?? "",
             "Date Billed" => $patient?->visits_recent?->billingLogsForPatient?->created_at ? Carbon::parse($patient?->visits_recent?->billingLogsForPatient?->created_at)->format('Y-m-d') : "",
         ];
     }
