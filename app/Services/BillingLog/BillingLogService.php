@@ -178,7 +178,8 @@ class BillingLogService
         $patient->when(!empty($validated['search']), function ($query) use ($validated) {
             $query->where('firstname', $validated['search'])
                 ->orWhere('lastname', $validated['search'])
-                ->orWhere('patientno', $validated['search']);
+                ->orWhere('patientno', $validated['search'])
+                ->orWhere('gender', $validated['search']);
         });
 
         if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
