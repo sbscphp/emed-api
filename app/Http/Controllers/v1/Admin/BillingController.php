@@ -563,7 +563,6 @@ class BillingController extends Controller
         //     }
         // }
 
-        $radiology = BillingLog::with(['serviceUnit', 'patient'])->where('service_unit_id', 1)->get();
 
         $data = $this->billingService->radiology_list($validated);
         if (!empty($validated['export'])) {
@@ -580,7 +579,7 @@ class BillingController extends Controller
             }
         }
 
-        return JsonResponser::send(false, ' fetched successfully.',  $service);
+        return JsonResponser::send(false, ' fetched successfully.',  $data);
     }
 
     public function payment_daft(Request $request)
