@@ -20,6 +20,16 @@ class VendorRepository implements VendorInterface
     {
         $query = Vendor::query();
 
+        if (!empty($filters['search'])) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('vendor_name', 'like', "%{$filters['search']}%")
+                    ->orWhere('contact_person', 'like', "%{$filters['search']}%")
+                    ->orWhere('email', 'like', "%{$filters['search']}%")
+                    ->orWhere('phone_number', 'like', "%{$filters['search']}%")
+                    ->orWhere('status', 'like', "%{$filters['search']}%");
+            });
+        }
+
         if (!empty($filters['vendor_name'])) {
             $query->where(function ($q) use ($filters) {
                 $q->where('vendor_name', 'like', "%{$filters['vendor_name']}%");
