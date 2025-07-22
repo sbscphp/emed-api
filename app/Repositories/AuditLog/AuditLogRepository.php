@@ -98,6 +98,9 @@ class AuditLogRepository implements AuditLogInterface
             $query->where(function ($q) use ($search) {
                 $q->where('action_type', 'LIKE', '%' . $search . '%')
                     ->orWhere('log_name', 'LIKE', '%' . $search . '%')
+                    ->orWhere('action', 'LIKE', '%' . $search . '%')
+                    ->orWhere('module_accessed', 'LIKE', '%' . $search . '%')
+                    ->orWhere('action_module', 'LIKE', '%' . $search . '%')
                     ->orWhereHas('causer', function ($q2) use ($search) {
                         $q2->where('fullname', 'LIKE', '%' . $search . '%');
                     });

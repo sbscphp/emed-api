@@ -22,6 +22,7 @@ use App\Http\Controllers\v1\Admin\VendorController;
 use App\Http\Controllers\v1\Auth\ForgotPasswordController;
 use App\Http\Controllers\v1\Auth\LoginController;
 use Illuminate\Http\Request;
+use App\Http\Controllers\MainDashBoardStatsController;
 // use App\Http\Controllers\v1\Admin\ArtisanController;
 use App\Http\Controllers\v1\Admin\ArtisanController;
 use Illuminate\Support\Facades\Route;
@@ -270,6 +271,12 @@ Route::group(["prefix" => "v1"], function () {
                 Route::group(['prefix' => 'radiology'], function () {
                     Route::get('/', [RadiologyController::class, "index"]);
                     Route::get('/patient', [RadiologyController::class, "patient"]);
+                });
+
+                Route::group(['prefix' => 'main-stats'], function () {
+                    Route::controller(MainDashBoardStatsController::class)->group(function () {
+                        Route::get("/main-page", "index");
+                    });
                 });
             });
         });
