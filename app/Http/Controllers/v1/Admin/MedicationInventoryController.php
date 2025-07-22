@@ -61,7 +61,7 @@ class MedicationInventoryController extends Controller
     {
         // DB::connection('landlord')->beginTransaction();
         try {
-            $filters = $request->only(['shipment_status', 'search', 'from', 'to', 'brand_name', 'medicine_name', 'generic_name']);
+            $filters = $request->only(['shipment_status', 'search', 'from', 'to', 'brand_name', 'medicine_name', 'generic_name', 'medicine_type']);
             $export = $request->input('export');
 
             $data = $this->inventoryService->all($filters, $export);
