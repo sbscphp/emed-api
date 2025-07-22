@@ -4,6 +4,9 @@ namespace App\Services\ServiceDepartment;
 
 use App\Enums\ListModuleEnums;
 use App\Helpers\GeneralHelper;
+use App\Models\Consultation;
+use App\Models\Patient;
+use App\Models\PatientVisit;
 use App\Models\ServiceDepartment;
 use App\Models\ServiceUnit;
 use App\Models\User;
@@ -163,5 +166,21 @@ class ServiceDepartmentService
             ]);
             return $service;
         }
+    }
+
+    public function main_dashboard()
+    {
+
+
+        $data = [
+            "pateint" => [
+                "total" => Patient::count(),
+                "admitted_today" => Patient::where("created_at", Carbon::now())->count()
+            ],
+            "consultation" => [
+                "total" => Consultation::count(),
+                "missed" => PatientVisit::where('status', 'missed')->count(),
+            ]
+        ];
     }
 }
