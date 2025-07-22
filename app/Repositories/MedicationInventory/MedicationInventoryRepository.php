@@ -17,29 +17,12 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
 
     public function getAllWithFilters(array $filters = [], ?string $export = null)
     {
-        $query = MedicationInventory::with(['medication', 'pharmacy', 'vendor'])->orderBy('created_at', 'desc');
+        $query = MedicationInventory::with(['medication', 'pharmacy', 'vendor'])
+            ->orderBy('created_at', 'desc');
 
         if (!empty($filters['shipment_status'])) {
             $query->where('shipment_status', 'like', "%{$filters['shipment_status']}%");
         }
-
-        // if (!empty($filters['search'])) {
-        //     $search = $filters['search'];
-        //     $query->where(function ($q) use ($search) {
-        //         $q->where('batch_no', 'like', "%{$search}%")
-        //             ->orWhere('shipment_status', 'like', "%{$search}%")
-        //             ->orWhere('brand_name', 'like', "%{$search}%")
-        //             ->orWhereHas('pharmacy', function ($pq) use ($search) {
-        //                 $pq->where('name', 'like', "%{$search}%");
-        //             })
-        //             ->orWhereHas('medication', function ($mq) use ($search) {
-        //                 $mq->where('medicine_name', 'like', "%{$search}%")
-        //                     ->orWhere('generic_name', 'like', "%{$search}%");
-        //             });
-        //     });
-        // }
-
-        // medicine_type
 
         if (!empty($filters['search'])) {
             $search = $filters['search'];
@@ -58,9 +41,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
                                 ->orWhere('medicine_type', 'like', "%{$search}%");
                         });
                     })
-
                     ->orWhereHas('vendor', function ($qu2) use ($search) {
-                        // phone_number status
                         $qu2->where('vendor_name', 'like', "%{$search}%")
                             ->orWhere('contact_person', 'like', "%{$search}%")
                             ->orWhere('phone_number', 'like', "%{$search}%")
@@ -71,45 +52,31 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
 
         if (!empty($filters['medicine_type'])) {
             $query->whereHas('medication', function ($medicationQuery) use ($filters) {
-                // medicine_type
-                $medicationQuery->orWhere('medicine_type',  $filters['medicine_type']);
+                $medicationQuery->where('medicine_type', $filters['medicine_type']);
             });
         }
-
 
         if (!empty($filters['vendor_name'])) {
             $query->whereHas('vendor', function ($qu2) use ($filters) {
-                // medicine_type
-                $qu2->orWhere('vendor_name',  $filters['vendor_name']);
+                $qu2->where('vendor_name', $filters['vendor_name']);
             });
         }
-
-
 
         if (!empty($filters['medicine_name'])) {
-
             $query->whereHas('medication', function ($mq) use ($filters) {
-                if (!empty($filters['medicine_name'])) {
-                    $mq->where('medicine_name', 'like', "%{$filters['medicine_name']}%");
-                }
+                $mq->where('medicine_name', 'like', "%{$filters['medicine_name']}%");
             });
         }
-
-
 
         if (!empty($filters['brand_name'])) {
             $query->where('brand_name', 'like', "%{$filters['brand_name']}%");
         }
 
-
         if (!empty($filters['generic_name'])) {
             $query->whereHas('medication', function ($mq) use ($filters) {
-                if (!empty($filters['generic_name'])) {
-                    $mq->where('generic_name', 'like', "%{$filters['generic_name']}%");
-                }
+                $mq->where('generic_name', 'like', "%{$filters['generic_name']}%");
             });
         }
-
 
         if (!empty($filters['to']) && !empty($filters['from'])) {
             $from = Carbon::parse($filters['from'])->startOfDay();
