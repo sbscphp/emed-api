@@ -72,7 +72,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         if (!empty($filters['medicine_type'])) {
             $query->orWhereHas('medication', function ($medicationQuery) use ($filters) {
                 // medicine_type
-                $medicationQuery->orWhere('medicine_type', 'like', "%{$filters['medicine_type']}%");
+                $medicationQuery->orWhere('medicine_type',  $filters['medicine_type']);
             });
         }
 
