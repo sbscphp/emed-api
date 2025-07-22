@@ -391,7 +391,7 @@ class RegistrationController extends Controller
                 //     'created_at' => now(),
                 //     'updated_at' => now(),
                 // ]);
-                dd(json_encode($adminLandlord, "first"));
+                dd(json_encode($adminLandlord, JSON_PRETTY_PRINT));
                 DB::connection('tenant')->table('users')->insert([
                     'id' => $adminLandlord->id,
                     'uuid' => $adminLandlord->uuid,
@@ -404,7 +404,7 @@ class RegistrationController extends Controller
                     'remember_token' => $adminLandlord->remember_token,
                 ]);
             }
-            dd(json_encode($adminLandlord, "second"));
+            dd(json_encode($adminLandlord, JSON_PRETTY_PRINT));
             $adminTenant = User::on('tenant')->find($adminLandlord->id);
             $adminTenant->addRole($adminRole);
             $adminTenant->permissions()->sync($adminRole->permissions);
