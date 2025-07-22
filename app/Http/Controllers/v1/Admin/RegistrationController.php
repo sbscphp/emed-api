@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Http\Requests\ChangePasswordRequest;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
 
 class RegistrationController extends Controller
@@ -328,9 +329,11 @@ class RegistrationController extends Controller
                 }
             }
 
-            $tenant->makeCurrent();
-            config(['database.connections.tenant.database' => $tenantDatabase]);
+            // $tenant->makeCurrent();
+            // config(['database.connections.tenant.database' => $tenantDatabase]);
             DB::purge('tenant');
+            Config::set('database.connections.tenant.database',  $tenant?->database);
+
             DB::reconnect('tenant');
 
             if (!Schema::connection('tenant')->hasTable('tenants')) {
@@ -357,14 +360,14 @@ class RegistrationController extends Controller
                 ]);
             }
 
-            DB::connection('tenant')->table('tenants')->insert([
-                'id' => $tenant->id,
-                'name' => $tenant->name,
-                'domain' => $tenant->domain,
-                'database' => $tenantDatabase,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            // DB::connection('tenant')->table('tenants')->insert([
+            //     'id' => $tenant->id,
+            //     'name' => $tenant->name,
+            //     'domain' => $tenant->domain,
+            //     'database' => $tenantDatabase,
+            //     'created_at' => now(),
+            //     'updated_at' => now(),
+            // ]);
 
             $adminLandlord = User::on('landlord')->create([
                 'uuid' => Str::uuid(),
@@ -380,6 +383,14 @@ class RegistrationController extends Controller
             $existingTenantUser = DB::connection('tenant')->table('users')->where('id', $adminLandlord->id)->first();
 
             if (!$existingTenantUser) {
+                DB::connection('tenant')->table('tenants')->insert([
+                    'id' => $tenant->id,
+                    'name' => $tenant->name,
+                    'domain' => $tenant->domain,
+                    'database' => $tenantDatabase,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
                 DB::connection('tenant')->table('users')->insert([
                     'id' => $adminLandlord->id,
                     'uuid' => $adminLandlord->uuid,
