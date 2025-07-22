@@ -380,7 +380,7 @@ class RegistrationController extends Controller
                 'remember_token' => Str::random(60),
             ]);
 
-            $existingTenantUser = DB::connection('tenant')->table('users')->where('email', $adminLandlord->email)->first();
+            $existingTenantUser = DB::connection('tenant')->table('users')->where('id', $adminLandlord->id)->first();
 
             if (!$existingTenantUser) {
                 // DB::connection('tenant')->table('tenants')->insert([
@@ -406,7 +406,6 @@ class RegistrationController extends Controller
             }
             // dd(json_encode($adminLandlord, JSON_PRETTY_PRINT));
             $adminTenant = User::on('tenant')->find($adminLandlord->id);
-
             $adminTenant->addRole($adminRole);
             $adminTenant->permissions()->sync($adminRole->permissions);
 
