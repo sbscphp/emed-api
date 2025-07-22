@@ -122,6 +122,7 @@ class AuditLogService
                     ->orWhere('action', 'LIKE', '%' . $search . '%')
                     ->orWhereHas('causer', function ($q2) use ($search) {
                         $q2->where('fullname', 'LIKE', '%' . $search . '%');
+                        $q2->where('id', 'LIKE', '%' . intval($search) . '%');
                     });
             });
         }
