@@ -34,7 +34,7 @@ class InventoryRepository implements InventoryInterface
         }
 
         if (!empty($filters['type_name'])) {
-            $query->orWhereHas('medicineType', function ($qu) use ($filters) {
+            $query->whereHas('medicineType', function ($qu) use ($filters) {
                 $qu->where("type_name", $filters['type_name']);
             });
         }
