@@ -1007,6 +1007,32 @@ class RegistrationController extends Controller
         }
     }
 
+
+    public function user_information()
+    {
+        DB::connection('tenant')->beginTransaction();
+        DB::connection('landlord')->beginTransaction();
+        try {
+            $user = Auth::user();
+            $user_information =  $user->load('userInformation');
+            return JsonResponser::send(
+                true,
+                'Your email has been verified. You can now log in.',
+                $user_information,
+                200
+            );
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            DB::connection('landlord')->rollBack();
+            return JsonResponser::send(
+                false,
+                'An error occurred while retrieving user information: ' . $th->getMessage(),
+                null,
+                500
+            );
+        }
+    }
+
     public function change_password(ChangePasswordRequest $request)
     {
         DB::connection('tenant')->beginTransaction();

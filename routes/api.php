@@ -69,6 +69,7 @@ Route::group(["prefix" => "v1"], function () {
 
             Route::get('/me', [RegistrationController::class, 'me']);
             Route::get('/check_is_change_password', [RegistrationController::class, 'check_is_change_password']);
+            Route::get('/user_information', [RegistrationController::class, 'user_information']);
             Route::put('/change_password', [RegistrationController::class, 'change_password']);
             Route::get('/refreshToken', [RegistrationController::class, 'refreshToken']);
             Route::post('/logout', [RegistrationController::class, 'logout']);
