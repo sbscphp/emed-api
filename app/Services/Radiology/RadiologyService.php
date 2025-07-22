@@ -134,7 +134,7 @@ class RadiologyService
                 $q1->where("payment_status", $validated["payment_status"]);
             });
         }
-        $radiology->paginate(10);
+        return   $radiology->paginate(10);
     }
 
 
