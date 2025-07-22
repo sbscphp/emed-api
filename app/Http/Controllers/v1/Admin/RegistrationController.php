@@ -727,6 +727,28 @@ class RegistrationController extends Controller
             DB::purge('tenant');
             DB::reconnect('tenant');
 
+<<<<<<< HEAD
+=======
+            $user = User::on('tenant')->where('email', $credentials['email'])->first();
+            if (!$user) {
+                return JsonResponser::send(false, 'Invalid credentials', [], 401);
+            }
+            
+            if (!$user->is_verified) {
+                return JsonResponser::send(false, 'Your email has not been verified. Please check your email for verification.', [], 403);
+            }
+
+            if (!$token = JWTAuth::attempt($credentials)) {
+                return JsonResponser::send(false, 'Invalid credentials', [], 401);
+            }
+
+            $hospital = User::on('tenant')->where('tenant_id', $tenant->id)->first();
+            if (!$hospital) {
+                JWTAuth::setToken($token)->invalidate();
+                return JsonResponser::send(false, 'No hospital information found for this tenant', [], 404);
+            }
+
+>>>>>>> 37e1d33 (update)
             if (!$user->email_verified_at) {
                 $user->update([
                     'email_verified_at' => now(),
