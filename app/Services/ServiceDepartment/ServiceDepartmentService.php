@@ -182,7 +182,7 @@ class ServiceDepartmentService
         $validated['filter_calender'] ?? "daily";
 
         $revenue = BillingLog::whereIn('payment_status', ['paid', 'part_paid'])
-            ->when(empty($validated['filter_calender']), function ($query) use ($validated) {
+            ->when(!empty($validated['filter_calender']), function ($query) use ($validated) {
                 if ($validated['filter_calender'] == 'daily') {
                     $query->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->startOfWeek()]);
                 } elseif ($validated['filter_calender'] == 'monthly') {
