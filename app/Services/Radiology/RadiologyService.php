@@ -183,6 +183,6 @@ class RadiologyService
         }
 
 
-        $radiology->paginate(10);
+        return $radiology->paginate(10);
     }
 }
