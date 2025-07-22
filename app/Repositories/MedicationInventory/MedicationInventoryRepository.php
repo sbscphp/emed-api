@@ -70,9 +70,17 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         }
 
         if (!empty($filters['medicine_type'])) {
-            $query->orWhereHas('medication', function ($medicationQuery) use ($filters) {
+            $query->whereHas('medication', function ($medicationQuery) use ($filters) {
                 // medicine_type
                 $medicationQuery->orWhere('medicine_type',  $filters['medicine_type']);
+            });
+        }
+
+
+        if (!empty($filters['vendor_name'])) {
+            $query->whereHas('vendor', function ($qu2) use ($filters) {
+                // medicine_type
+                $qu2->orWhere('vendor_name',  $filters['vendor_name']);
             });
         }
 
