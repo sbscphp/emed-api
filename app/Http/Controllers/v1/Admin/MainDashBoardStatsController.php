@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\v1\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Services\ServiceDepartment\ServiceDepartmentService;
 use Illuminate\Http\Request;
 use App\Responser\JsonResponser;

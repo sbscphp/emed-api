@@ -22,7 +22,7 @@ use App\Http\Controllers\v1\Admin\VendorController;
 use App\Http\Controllers\v1\Auth\ForgotPasswordController;
 use App\Http\Controllers\v1\Auth\LoginController;
 use Illuminate\Http\Request;
-use App\Http\Controllers\MainDashBoardStatsController;
+use App\Http\Controllers\v1\Admin\MainDashBoardStatsController;
 // use App\Http\Controllers\v1\Admin\ArtisanController;
 use App\Http\Controllers\v1\Admin\ArtisanController;
 use Illuminate\Support\Facades\Route;
