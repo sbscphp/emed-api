@@ -406,16 +406,7 @@ class RegistrationController extends Controller
             }
             // dd(json_encode($adminLandlord, JSON_PRETTY_PRINT));
             $adminTenant = User::on('tenant')->find($adminLandlord->id);
-            $adminTenant?->update([
-                'uuid' => $adminLandlord->uuid,
-                'fullname' => $adminLandlord->fullname,
-                'role' => $adminLandlord->role,
-                'phone_number' => $adminLandlord->phone_number,
-                'email' => $adminLandlord->email,
-                'password' => $adminLandlord->password,
-                'tenant_id' => $tenant->id,
-                'remember_token' => $adminLandlord->remember_token,
-            ]);
+
             $adminTenant->addRole($adminRole);
             $adminTenant->permissions()->sync($adminRole->permissions);
 
