@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\ServiceDepartment\ServiceDepartmentService;
 use Illuminate\Http\Request;
+use App\Responser\JsonResponser;
 
 class MainDashBoardStatsController extends Controller
 {
@@ -15,8 +16,16 @@ class MainDashBoardStatsController extends Controller
     }
     public function index(Request $request)
     {
-        // $validated = $request->validate([]);
 
-        $data = $this->service_department_service->main_dashboard();
+        try {
+            $validated = $request->validate([
+                "filter_calender" => 'nullable|string|in:daily,monthly, yearly'
+            ]);
+
+            $data = $this->service_department_service->main_dashboard($validated);
+            return JsonResponser::send(false, 'Billing stats fetched successfully.', $data);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Error fetching billing stats.', [], 500, $e);
+        }
     }
 }
