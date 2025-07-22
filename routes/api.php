@@ -245,6 +245,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::put("user_update/{id}", [UserController::class, "user_update"]);
                     Route::put("account_deactive/{id}", [UserController::class, "account_deactive"]);
                     Route::delete("account_deletion/{id}", [UserController::class, "account_deletion"]);
+                    Route::put("hospital_information/update/{id}", [UserController::class, "hospital_information"]);
                     Route::put("user_upload_image", [UserController::class, "user_upload_image"]);
                 });
 

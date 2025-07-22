@@ -21,6 +21,7 @@ use Illuminate\Support\Str;
 use App\Events\CreateUserEvent;
 use App\Helpers\FileUploadHelper;
 use App\Http\Requests\UserUpdateRequest;
+use App\Models\Registration;
 use Throwable;
 use Illuminate\Support\Facades\Artisan;
 use App\Models\Tenant;
@@ -411,6 +412,28 @@ class UserController extends Controller
         }
         $user->delete();
         return JsonResponser::send(true, "User deleted successfully found", null, 404);
+    }
+
+    public function hospital_information(Request $request, $id)
+    {
+        $hospital = Registration::find($id);
+        if (!$hospital) {
+            return JsonResponser::send(false, 'Hospital record not found.');
+        }
+        $user = Auth::user();
+        $updates = [
+            "theme_color"    => $request->theme_color,
+            "updated_by"    => $user->id,
+        ];
+
+        // Only update profile_picture if a new one is provided
+        if (!empty($request->logo)) {
+            $updates['logo'] = FileUploadHelper::singleStringFileUpload($request->logo, 'logo');
+        }
+
+        $hospital->update($updates);
+
+        return JsonResponser::send(true, "Hospital record updated successfully", $hospital->refresh(), 404);
     }
 
 

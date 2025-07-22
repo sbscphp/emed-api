@@ -99,7 +99,7 @@ class User extends Authenticatable implements JWTSubject
 
     public function register()
     {
-        return $this->belongsTo(Registration::class);
+        return $this->belongsTo(Registration::class, 'domain', 'domain');
     }
 
     public function tenant()
