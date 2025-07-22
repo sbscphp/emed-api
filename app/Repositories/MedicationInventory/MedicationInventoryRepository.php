@@ -17,7 +17,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
 
     public function getAllWithFilters(array $filters = [], ?string $export = null)
     {
-        $query = MedicationInventory::with(['medication', 'pharmacy', 'vendor'])
+        $query = MedicationInventory::with(['medication', 'pharmacy',])
             ->orderBy('created_at', 'desc');
 
         if (!empty($filters['shipment_status'])) {
@@ -38,13 +38,13 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
                             ->orWhere('generic_name', 'like', "%{$search}%")
                             ->orWhere('brand_name', 'like', "%{$search}%")
                             ->orWhere('medicine_type', 'like', "%{$search}%");
-                    })
-                    ->orWhereHas('vendor', function ($qu2) use ($search) {
-                        $qu2->where('vendor_name', 'like', "%{$search}%")
-                            ->orWhere('contact_person', 'like', "%{$search}%")
-                            ->orWhere('phone_number', 'like', "%{$search}%")
-                            ->orWhere('status', 'like', "%{$search}%");
                     });
+                // ->orWhereHas('vendor', function ($qu2) use ($search) {
+                //     $qu2->where('vendor_name', 'like', "%{$search}%")
+                //         ->orWhere('contact_person', 'like', "%{$search}%")
+                //         ->orWhere('phone_number', 'like', "%{$search}%")
+                //         ->orWhere('status', 'like', "%{$search}%");
+                // });
             });
         }
 
@@ -54,11 +54,11 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
             });
         }
 
-        if (!empty($filters['vendor_name'])) {
-            $query->whereHas('vendor', function ($vendorQuery) use ($filters) {
-                $vendorQuery->where('vendor_name', $filters['vendor_name']);
-            });
-        }
+        // if (!empty($filters['vendor_name'])) {
+        //     $query->whereHas('vendor', function ($vendorQuery) use ($filters) {
+        //         $vendorQuery->where('vendor_name', $filters['vendor_name']);
+        //     });
+        // }
 
         if (!empty($filters['medicine_name'])) {
             $query->whereHas('medication', function ($medicationQuery) use ($filters) {
