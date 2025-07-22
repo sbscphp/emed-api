@@ -4,6 +4,7 @@ namespace App\Http\Requests\Auth;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
+
 class TenantOnboardingRequest extends FormRequest
 {
     /**
@@ -27,7 +28,7 @@ class TenantOnboardingRequest extends FormRequest
             // Hospital Details
             //'name'          => 'required|string',
 
-                'name'=> [
+            'name' => [
                 'required',
                 'string',
                 function ($attribute, $value, $fail) {
@@ -46,7 +47,7 @@ class TenantOnboardingRequest extends FormRequest
             //'email'         => 'required|email',
             //'phone_number'  => 'required|numeric',
 
-                'phone_number'=> [
+            'phone_number' => [
                 'required',
                 'numeric',
                 function ($attribute, $value, $fail) {
@@ -61,9 +62,9 @@ class TenantOnboardingRequest extends FormRequest
                 },
             ],
 
-             'email'=> [
+            'email' => [
                 'required',
-                'email',
+                'email:rfc,dns',
                 function ($attribute, $value, $fail) {
                     $exists = DB::connection('tenant')
                         ->table('registrations')
@@ -81,8 +82,8 @@ class TenantOnboardingRequest extends FormRequest
             // Admin Details
             'admin_fullname'         => 'required|string',
             'admin_role'             => 'required|string',
-           // 'admin_phone_number'     => 'required|numeric',
-            'admin_phone_number'=> [
+            // 'admin_phone_number'     => 'required|numeric',
+            'admin_phone_number' => [
                 'required',
                 'numeric',
                 function ($attribute, $value, $fail) {
@@ -96,10 +97,10 @@ class TenantOnboardingRequest extends FormRequest
                     }
                 },
             ],
-           // 'admin_email'            => 'required|email|unique:users,email',
-             'admin_email'=> [
+            // 'admin_email'            => 'required|email|unique:users,email',
+            'admin_email' => [
                 'required',
-                'email',
+                'email:rfc,dns',
                 function ($attribute, $value, $fail) {
                     $exists = DB::connection('tenant')
                         ->table('users')
