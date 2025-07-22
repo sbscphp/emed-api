@@ -383,14 +383,15 @@ class RegistrationController extends Controller
             $existingTenantUser = DB::connection('tenant')->table('users')->where('id', $adminLandlord->id)->first();
 
             if (!$existingTenantUser) {
-                DB::connection('tenant')->table('tenants')->insert([
-                    'id' => $tenant->id,
-                    'name' => $tenant->name,
-                    'domain' => $tenant->domain,
-                    'database' => $tenantDatabase,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+                // DB::connection('tenant')->table('tenants')->insert([
+                //     'id' => $tenant->id,
+                //     'name' => $tenant->name,
+                //     'domain' => $tenant->domain,
+                //     'database' => $tenantDatabase,
+                //     'created_at' => now(),
+                //     'updated_at' => now(),
+                // ]);
+                dd(json_encode($adminLandlord, "first"));
                 DB::connection('tenant')->table('users')->insert([
                     'id' => $adminLandlord->id,
                     'uuid' => $adminLandlord->uuid,
@@ -403,7 +404,7 @@ class RegistrationController extends Controller
                     'remember_token' => $adminLandlord->remember_token,
                 ]);
             }
-
+            dd(json_encode($adminLandlord, "second"));
             $adminTenant = User::on('tenant')->find($adminLandlord->id);
             $adminTenant->addRole($adminRole);
             $adminTenant->permissions()->sync($adminRole->permissions);
