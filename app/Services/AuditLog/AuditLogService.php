@@ -128,6 +128,14 @@ class AuditLogService
         }
 
 
+        if (!empty($validated['module_accessed'])) {
+            $query->where('module_accessed', $validated['module_accessed']);
+        }
+
+        if (!empty($validated['action'])) {
+            $query->where('action', $validated['action']);
+        }
+
 
         if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
             $startDate = $validated['start_date'];
