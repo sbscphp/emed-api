@@ -13,7 +13,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('patient_visits', function (Blueprint $table) {
-            DB::statement("ALTER TABLE patient_visits MODIFY status status ENUM('ongoing', 'waiting', 'completed', 'missed') NOT NULL");
+            DB::statement("ALTER TABLE patient_visits MODIFY  status ENUM('ongoing', 'waiting', 'completed', 'missed') NOT NULL");
         });
     }
 
@@ -23,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('patient_visits', function (Blueprint $table) {
-            DB::statement("ALTER TABLE patient_visits MODIFY status status ENUM('ongoing', 'waiting', 'completed', 'missed') NOT NULL");
+            DB::statement("ALTER TABLE patient_visits MODIFY status  ENUM('ongoing', 'waiting', 'completed', 'missed') NOT NULL");
         });
     }
 };
