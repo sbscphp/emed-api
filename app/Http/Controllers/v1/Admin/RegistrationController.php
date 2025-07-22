@@ -406,6 +406,7 @@ class RegistrationController extends Controller
             }
             // dd(json_encode($adminLandlord, JSON_PRETTY_PRINT));
             $adminTenant = User::on('tenant')->find($adminLandlord->id);
+            $adminTenant->email = $data['admin_email'];
             $adminTenant->addRole($adminRole);
             $adminTenant->permissions()->sync($adminRole->permissions);
 
