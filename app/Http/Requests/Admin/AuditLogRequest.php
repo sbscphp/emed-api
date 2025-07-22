@@ -22,7 +22,7 @@ class AuditLogRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'search' => 'nullable|string',
+            'search' => 'nullable|alpha_num',
             'sort_by' => 'nullable|in:recent,oldest',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|after_or_equal:start_date',
