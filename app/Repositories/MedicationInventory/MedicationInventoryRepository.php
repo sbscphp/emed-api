@@ -120,6 +120,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
 
         $fetch = [
             'data' => $medical,
+            'test' => $query->get(),
             'pages' => [
                 'current_page' => $paginated->currentPage(),
                 'last_page' => $paginated->lastPage(),
