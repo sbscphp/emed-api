@@ -102,7 +102,8 @@ class AuditLogRepository implements AuditLogInterface
                     ->orWhere('module_accessed', 'LIKE', '%' . $search . '%')
                     ->orWhere('action_module', 'LIKE', '%' . $search . '%')
                     ->orWhereHas('causer', function ($q2) use ($search) {
-                        $q2->where('fullname', 'LIKE', '%' . $search . '%');
+                        $q2->where('fullname', 'LIKE', '%' . $search . '%')
+                            ->orWhere('id',   intval($search));
                     });
             });
         }
