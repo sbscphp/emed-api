@@ -55,6 +55,14 @@ class VendorRepository implements VendorInterface
             });
         }
 
+
+        if (!empty($filters['category'])) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('category', 'like', "%{$filters['category']}%");
+            });
+        }
+
+
         // status
 
         if (!empty($filters['status'])) {

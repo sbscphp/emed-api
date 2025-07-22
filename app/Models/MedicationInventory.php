@@ -4,12 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\HasBootAttribute;
+
 class MedicationInventory extends Model
 {
     use HasBootAttribute;
     protected $table = 'medication_inventory';
-     protected $connection = 'tenant';
-      //protected $connection = 'landlord';
+    protected $connection = 'tenant';
+    //protected $connection = 'landlord';
     protected $identifierKeyPrefix = "sh_";
     protected $identifierKey = "shipment_no";
     protected $guarded = ['id'];
@@ -51,6 +52,6 @@ class MedicationInventory extends Model
 
     public function vendor()
     {
-        return $this->belongsTo(Vendor::class);
+        return $this->belongsTo(Vendor::class, 'vendor_id', 'id');
     }
 }
