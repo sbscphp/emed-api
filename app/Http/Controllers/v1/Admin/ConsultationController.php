@@ -398,7 +398,7 @@ class ConsultationController extends Controller
 
             //Check if investigation is radiology or both
             if (!in_array($consultation->investigation, ['radiology', 'both'])) {
-                return JsonResponser::send(true, 'Action forbidden.', null, 403);
+                return JsonResponser::send(true, 'patient is in laboratory.', null, 200);
             }
 
             $data = [
