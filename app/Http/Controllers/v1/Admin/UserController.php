@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Enums\GeneralEnums;
 use App\Enums\ListModuleEnums;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
@@ -18,7 +19,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use App\Events\CreateUserEvent;
+use App\Helpers\FileUploadHelper;
 use App\Http\Requests\UserUpdateRequest;
+use App\Models\Registration;
 use Throwable;
 use Illuminate\Support\Facades\Artisan;
 use App\Models\Tenant;
@@ -356,64 +359,81 @@ class UserController extends Controller
     }
 
 
-    public function user_update(UserUpdateRequest $request)
+    public function user_update(Request $request, $id)
     {
 
-        $validated = $request->validated();
-        // $user = User::find($validated['id']);
-        $user = Auth::user();
-        if ($user) {
-            $user->create([
-                'first_name' => $validated['first_name'],
-                'last_name' => $validated['last_name'],
-                'email' => $validated['email'],
-                'phone_number' => $validated['phone_number'],
-            ]);
-            return JsonResponser::send(false, 'User updated successfully.', $user, 200);
+        $user = User::find($id);
+        if (!$user) {
+            return JsonResponser::send(false, 'User profile not found.');
         }
+
+        $updates = [
+            "first_name"    => $request->first_name,
+            "last_name"     => $request->last_name,
+            "email"         => $request->email,
+            "phone_number"  => $request->phone_number,
+            "role"          => $request->role,
+        ];
+
+        // Only update profile_picture if a new one is provided
+        if (!empty($request->profile_picture)) {
+            $updates['profile_picture'] = FileUploadHelper::singleStringFileUpload($request->profile_picture, 'profile');
+        }
+
+        $user->update($updates);
+
+        return JsonResponser::send(false, 'User updated successfully.', $user->fresh(), 200);
     }
 
 
-    public function account_deactive(Request $request)
+    public function account_deactive($id)
     {
-        $validated =  $request->validate([
-            "deactivate" => "nullable|numeric|in:1,0",
-            "id" => "required|nullable",
-        ]);
-
-        // $user = User::find($validated['id']);
-        $user = Auth::user();
-        if ($user) {
-            $user->update([
-                "is_active" => $validated['deactivate'],
-            ]);
-            $status = $validated['deactivate'] == 1 ? 'deactivated' : 'activated';
-            return JsonResponser::send(false, "Account {$status}", $user, 200);
+        $user = User::find($id);
+        if (!$user) {
+            return JsonResponser::send(false, 'User profile not found.');
         }
+
+        $user->status = $user->status == GeneralEnums::ACTIVE->value
+            ? GeneralEnums::PENDING->value
+            : GeneralEnums::ACTIVE->value;
+
+        $user->save();
+
+        return JsonResponser::send(false, "Account status updated", $user, 200);
 
         return JsonResponser::send(true, "User not found", null, 404);
     }
 
-
-
-    public function account_deletion(Request $request)
+    public function account_deletion($id)
     {
-        $validated =  $request->validate([
-            "is_login" => "nullable|numeric|in:1,0",
-            "id" => "required|nullable",
-        ]);
-
-        // $user = User::find($validated['id']);
-        $user = Auth::user();
-        if ($user) {
-            $user->update([
-                "can_login" => $validated['is_login'],
-            ]);
-
-            $status = $validated['is_login'] == 1 ? 'deleted' : 'undeleted';
-            return JsonResponser::send(false, "Account {$status}", $user, 200);
+        $user = User::find($id);
+        if (!$user) {
+            return JsonResponser::send(false, 'User profile not found.');
         }
-        return JsonResponser::send(true, "User not found", null, 404);
+        $user->delete();
+        return JsonResponser::send(true, "User deleted successfully found", null, 404);
+    }
+
+    public function hospital_information(Request $request, $id)
+    {
+        $hospital = Registration::find($id);
+        if (!$hospital) {
+            return JsonResponser::send(false, 'Hospital record not found.');
+        }
+        $user = Auth::user();
+        $updates = [
+            "theme_color"    => $request->theme_color,
+            "updated_by"    => $user->id,
+        ];
+
+        // Only update profile_picture if a new one is provided
+        if (!empty($request->logo)) {
+            $updates['logo'] = FileUploadHelper::singleStringFileUpload($request->logo, 'logo');
+        }
+
+        $hospital->update($updates);
+
+        return JsonResponser::send(true, "Hospital record updated successfully", $hospital->refresh(), 404);
     }
 
 

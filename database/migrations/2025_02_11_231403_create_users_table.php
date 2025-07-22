@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('role');
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('profile_picture')->nullable();
             $table->boolean('can_login')->default(false);
             $table->boolean('is_active')->default(false);
             $table->boolean('is_verified')->default(false);

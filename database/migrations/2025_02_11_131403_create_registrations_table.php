@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('registrations', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->unsignedBigInteger('updated_by')->nullable();
             $table->string('domain')->unique();
             $table->string('database')->unique();
             $table->string('state_city');
@@ -21,6 +22,8 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('phone_number');
             $table->string('address');
+            $table->string('theme_color');
+            $table->string('logo');
             $table->string('license')->nullable();
             $table->timestamps();
         });

@@ -16,6 +16,9 @@ class Registration extends BaseTenant
         'phone_number',
         'address',
         'license',
+        'theme_color',
+        'logo',
+        'updated_by',
     ];
 
     public static function booted()
@@ -23,7 +26,8 @@ class Registration extends BaseTenant
         static::creating(function ($tenant) {
             $tenant->database = 'tenant_' . Str::slug($tenant->name, '_');
             if (empty($tenant->domain)) {
-                $tenant->domain = Str::slug($tenant->name, '-') . '.hospitalapp.com';
+                $tenant->domain = Str::slug($tenant->name, '-') . '.emed.com';
+                // $tenant->domain = Str::slug($tenant->name, '-') . '.hospitalapp.com';
             }
         });
 
@@ -34,7 +38,7 @@ class Registration extends BaseTenant
 
     public function tenant()
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Tenant::class, 'domain', 'domain');
     }
 
     public function users()

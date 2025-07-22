@@ -35,7 +35,12 @@ class Tenant extends BaseTenant
 
     public function register()
     {
-        return $this->hasMany(Registration::class);
+        return $this->hasMany(Registration::class, 'domain', 'domain');
+    }
+
+    public function registration()
+    {
+        return $this->belongsTo(Registration::class, 'domain', 'domain');
     }
 
     public function users()
