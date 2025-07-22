@@ -34,12 +34,10 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
                         $pharmacyQuery->where('name', 'like', "%{$search}%");
                     })
                     ->orWhereHas('medication', function ($medicationQuery) use ($search) {
-                        $medicationQuery->where(function ($medicationSubQuery) use ($search) {
-                            $medicationSubQuery->where('medicine_name', 'like', "%{$search}%")
-                                ->orWhere('generic_name', 'like', "%{$search}%")
-                                ->orWhere('brand_name', 'like', "%{$search}%")
-                                ->orWhere('medicine_type', 'like', "%{$search}%");
-                        });
+                        $medicationQuery->where('medicine_name', 'like', "%{$search}%")
+                            ->orWhere('generic_name', 'like', "%{$search}%")
+                            ->orWhere('brand_name', 'like', "%{$search}%")
+                            ->orWhere('medicine_type', 'like', "%{$search}%");
                     })
                     ->orWhereHas('vendor', function ($qu2) use ($search) {
                         $qu2->where('vendor_name', 'like', "%{$search}%")
@@ -57,14 +55,14 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         }
 
         if (!empty($filters['vendor_name'])) {
-            $query->whereHas('vendor', function ($qu2) use ($filters) {
-                $qu2->where('vendor_name', $filters['vendor_name']);
+            $query->whereHas('vendor', function ($vendorQuery) use ($filters) {
+                $vendorQuery->where('vendor_name', $filters['vendor_name']);
             });
         }
 
         if (!empty($filters['medicine_name'])) {
-            $query->whereHas('medication', function ($mq) use ($filters) {
-                $mq->where('medicine_name', 'like', "%{$filters['medicine_name']}%");
+            $query->whereHas('medication', function ($medicationQuery) use ($filters) {
+                $medicationQuery->where('medicine_name', 'like', "%{$filters['medicine_name']}%");
             });
         }
 
@@ -73,8 +71,8 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         }
 
         if (!empty($filters['generic_name'])) {
-            $query->whereHas('medication', function ($mq) use ($filters) {
-                $mq->where('generic_name', 'like', "%{$filters['generic_name']}%");
+            $query->whereHas('medication', function ($medicationQuery) use ($filters) {
+                $medicationQuery->where('generic_name', 'like', "%{$filters['generic_name']}%");
             });
         }
 
