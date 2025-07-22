@@ -17,7 +17,7 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
 
     public function getAllWithFilters(array $filters = [], ?string $export = null)
     {
-        $query = MedicationInventory::with(['medication', 'pharmacy'])->orderBy('created_at', 'desc');
+        $query = MedicationInventory::with(['medication', 'pharmacy', 'vendor'])->orderBy('created_at', 'desc');
 
         if (!empty($filters['shipment_status'])) {
             $query->where('shipment_status', 'like', "%{$filters['shipment_status']}%");
@@ -39,6 +39,8 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         //     });
         // }
 
+        // medicine_type
+
         if (!empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
@@ -52,8 +54,17 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
                         $medicationQuery->where(function ($medicationSubQuery) use ($search) {
                             $medicationSubQuery->where('medicine_name', 'like', "%{$search}%")
                                 ->orWhere('generic_name', 'like', "%{$search}%")
-                                ->orWhere('brand_name', 'like', "%{$search}%");
+                                ->orWhere('brand_name', 'like', "%{$search}%")
+                                ->orWhere('medicine_type', 'like', "%{$search}%");
                         });
+                    })
+
+                    ->orWhereHas('vendor', function ($qu2) use ($search) {
+                        // phone_number status
+                        $qu2->where('vendor_name', 'like', "%{$search}%")
+                            ->orWhere('contact_person', 'like', "%{$search}%")
+                            ->orWhere('phone_number', 'like', "%{$search}%")
+                            ->orWhere('status', 'like', "%{$search}%");
                     });
             });
         }
