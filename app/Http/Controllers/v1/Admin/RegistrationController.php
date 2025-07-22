@@ -380,7 +380,7 @@ class RegistrationController extends Controller
                 'remember_token' => Str::random(60),
             ]);
 
-            $existingTenantUser = DB::connection('tenant')->table('users')->where('id', $adminLandlord->id)->first();
+            $existingTenantUser = DB::connection('tenant')->table('users')->where('email', $adminLandlord->email)->first();
 
             if (!$existingTenantUser) {
                 // DB::connection('tenant')->table('tenants')->insert([
@@ -391,7 +391,7 @@ class RegistrationController extends Controller
                 //     'created_at' => now(),
                 //     'updated_at' => now(),
                 // ]);
-                dd(json_encode($adminLandlord, JSON_PRETTY_PRINT));
+                //dd(json_encode($adminLandlord, JSON_PRETTY_PRINT));
                 DB::connection('tenant')->table('users')->insert([
                     'id' => $adminLandlord->id,
                     'uuid' => $adminLandlord->uuid,
@@ -404,8 +404,18 @@ class RegistrationController extends Controller
                     'remember_token' => $adminLandlord->remember_token,
                 ]);
             }
-            dd(json_encode($adminLandlord, JSON_PRETTY_PRINT));
+            // dd(json_encode($adminLandlord, JSON_PRETTY_PRINT));
             $adminTenant = User::on('tenant')->find($adminLandlord->id);
+            $adminTenant?->update([
+                'uuid' => $adminLandlord->uuid,
+                'fullname' => $adminLandlord->fullname,
+                'role' => $adminLandlord->role,
+                'phone_number' => $adminLandlord->phone_number,
+                'email' => $adminLandlord->email,
+                'password' => $adminLandlord->password,
+                'tenant_id' => $tenant->id,
+                'remember_token' => $adminLandlord->remember_token,
+            ]);
             $adminTenant->addRole($adminRole);
             $adminTenant->permissions()->sync($adminRole->permissions);
 
