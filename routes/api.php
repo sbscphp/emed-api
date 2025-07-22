@@ -276,9 +276,7 @@ Route::group(["prefix" => "v1"], function () {
                 });
 
                 Route::group(['prefix' => 'main-stats'], function () {
-                    Route::controller(MainDashBoardStatsController::class)->group(function () {
-                        Route::get("/main-page", "index");
-                    });
+                    Route::get("/main-page", [MainDashBoardStatsController::class, "index"]);
                 });
             });
         });
