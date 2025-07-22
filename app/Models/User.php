@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laratrust\Traits\HasRolesAndPermissions;
@@ -18,7 +19,7 @@ class User extends Authenticatable implements JWTSubject
     /**
      * @method bool hasRole(string|array $roles)
      */
-    use  HasRolesAndPermissions, HasFactory, Notifiable, HasApiTokens;
+    use  HasRolesAndPermissions, HasFactory, Notifiable, HasApiTokens, SoftDeletes;
     protected $fillable = [
         'uuid',
         'fullname',
@@ -36,6 +37,7 @@ class User extends Authenticatable implements JWTSubject
         'can_login',
         'is_active',
         'remember_token',
+        'profile_picture',
     ];
     /**
      * The attributes that are mass assignable.
@@ -43,7 +45,7 @@ class User extends Authenticatable implements JWTSubject
      * @var array<int, string>
      */
     protected $guarded = ['id'];
-    protected $connection = 'tenant';
+    // protected $connection = 'tenant';
     protected $appends = ['role_names'];
 
 
