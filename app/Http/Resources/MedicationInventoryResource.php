@@ -28,7 +28,7 @@ class MedicationInventoryResource extends JsonResource
             'shipment_no' => $this->shipment_no,
             'shipment_status' => $this->shipment_status,
             'medicine_name' => $medication->medicine_name,
-            'vendor' => optional($this->vendor)->vendor_name ?? "",
+            'vendor' => $this->vendor->vendor_name ?? "",
             'manufacturer' => $medication->manufacturer,
             'brand_name' => $this->brand_name,
             'generic_name' => $medication->generic_name,
