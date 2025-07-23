@@ -17,7 +17,11 @@ return new class extends Migration
         //     'normal_values',
         Schema::create('radiology_lab_patient_examinations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('radiology_lab_patients_id')->nullable()->constrained('id')->on('radiology_lab_patients')->onDelete('cascade');
+            $table->foreignId('radiology_lab_patients_id')
+                ->constrained('radiology_lab_patients', 'id')
+                ->onDelete('cascade')
+                ->name('rlppe_patient_fk');
+            // $table->foreignId('radiology_lab_patients_id')->nullable()->constrained('id')->on('radiology_lab_patients')->onDelete('cascade');
             $table->string('examination')->nullable();
             $table->integer('result')->default(0)->nullable();
             $table->integer('unit')->default(0)->nullable();
