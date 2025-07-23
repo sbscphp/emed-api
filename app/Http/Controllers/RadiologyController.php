@@ -115,7 +115,7 @@ class RadiologyController extends Controller
 
 
         $all_exam = json_decode($validated['all_exam'], true);
-
+        dd(json_encode($all_exam));
         if (json_last_error() !== JSON_ERROR_NONE || !is_array($all_exam)) {
             return JsonResponser::send(false, 'Invalid JSON format for all_exam', 422);
         }
