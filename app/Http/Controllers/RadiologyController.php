@@ -33,7 +33,7 @@ class RadiologyController extends Controller
         ]);
 
 
-        $radiology =  Radiology::with(['patient.visits_recent.billingLogsForPatient', 'pharmacist'])->get();
+        $radiology =  Radiology::with(['patient.patient_visits.billingLogsForPatient', 'pharmacist'])->get();
         if (count($radiology) == 0) {
             return JsonResponser::send(false, 'No Data.', [], 200);
         }

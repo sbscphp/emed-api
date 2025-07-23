@@ -29,4 +29,9 @@ class Radiology extends Model
     {
         return $this->belongsTo(User::class, 'admin_id');
     }
+
+    public function consulted_by()
+    {
+        return $this->belongsTo(User::class, 'admin_id');
+    }
 }

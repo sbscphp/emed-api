@@ -99,7 +99,7 @@ class RadiologyService
     public function radiology_list($validated)
     {
 
-        $radiology = Radiology::with(['patient.visits_recent.billingLogsForPatient', 'pharmacist'])
+        $radiology = Radiology::with(['patient.patient_visits.billingLogsForPatient', 'consulted_by'])
             ->when(!empty($validated['search']), function ($query) use ($validated) {
                 $query->where("test_name", $validated['search'])
                     ->whereHas('patient', function ($q1) use ($validated) {
@@ -107,7 +107,7 @@ class RadiologyService
                             ->orWhere('lastname', $validated['search'])
                             ->orWhere('patientno', $validated['search']);
                     })
-                    ->orWhereHas('patient.visits_recent.billingLogsForPatient', function ($query) use ($validated) {
+                    ->orWhereHas('patient.patient_visits.billingLogsForPatient', function ($query) use ($validated) {
                         // payment_status
                         $query->where('payment_status', $validated['search']);
                     });
@@ -130,7 +130,7 @@ class RadiologyService
         }
 
         if (!empty($validated['payment_status'])) {
-            $radiology->whereHas('patient.visits_recent.billingLogsForPatient', function ($q1) use ($validated) {
+            $radiology->whereHas('patient.patient_visits.billingLogsForPatient', function ($q1) use ($validated) {
                 $q1->where("payment_status", $validated["payment_status"]);
             });
         }

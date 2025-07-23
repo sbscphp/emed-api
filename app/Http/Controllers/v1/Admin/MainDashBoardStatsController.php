@@ -24,9 +24,20 @@ class MainDashBoardStatsController extends Controller
             ]);
 
             $data = $this->service_department_service->main_dashboard($validated);
-            return JsonResponser::send(false, 'Billing stats fetched successfully.', $data);
+            return JsonResponser::send(false, ' fetched successfully.', $data);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Error fetching billing stats.', [], 500, $e);
+        }
+    }
+
+
+    public function top_drugs()
+    {
+        try {
+            $data = $this->service_department_service->top_drugs();
+            return JsonResponser::send(false, ' fetched successfully.', $data);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Error fetching  .', [], 500, $e);
         }
     }
 }

@@ -67,6 +67,10 @@ class Patient extends Model
         return $this->hasOne(PatientVisit::class, 'visitno', 'visitno')->latest();
     }
 
+    public function  patient_visits()
+    {
+        return $this->hasOne(PatientVisit::class, 'visitno', 'visitno');
+    }
     public function appointments()
     {
         return $this->hasMany(Appointment::class);

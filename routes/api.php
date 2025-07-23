@@ -277,6 +277,9 @@ Route::group(["prefix" => "v1"], function () {
 
                 Route::group(['prefix' => 'main-stats'], function () {
                     Route::get("/main-page", [MainDashBoardStatsController::class, "index"]);
+                    // top_drugs patient_diagnosis
+                    Route::get("/top_drugs", [MainDashBoardStatsController::class, "top_drugs"]);
+                    Route::get("/patient_diagnosis", [MainDashBoardStatsController::class, "patient_diagnosis"]);
                 });
             });
         });

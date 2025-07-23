@@ -6,14 +6,17 @@ use App\Enums\ListModuleEnums;
 use App\Helpers\GeneralHelper;
 use App\Models\BillingLog;
 use App\Models\Consultation;
+use App\Models\Medication;
 use App\Models\Patient;
 use App\Models\PatientVisit;
 use App\Models\ServiceDepartment;
 use App\Models\ServiceUnit;
+use App\Models\Treatment;
 use App\Models\User;
 use Carbon\Carbon;
 use App\Repositories\ServiceDepartment\ServiceDepartmentInterface;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class ServiceDepartmentService
@@ -281,5 +284,40 @@ class ServiceDepartmentService
         ];
 
         return $data;
+    }
+
+
+    public function top_drugs()
+    {
+        $medications = Medication::all();
+        $arr = [];
+        foreach ($medications as  $medication) {
+            $medication->medicine_name;
+            $medication->cost_price;
+            $count = Treatment::where("drug_id", $medication->id)->count();
+            $ans = intval($medication->cost_price) * $count;
+
+            $arr[] = [
+                "name" => $medication->medicine_name,
+                'total' => $ans
+            ];
+        }
+
+        rsort($arr);
+        $max = array_slice($arr, 0, 5);
+
+        return $max;
+    }
+
+    public function patient_diagnosis()
+    {
+        // 	diagnosis
+        $topDiagnosis = Consultation::select('diagnosis', DB::raw('count(*) as count'))
+            ->groupBy('diagnosis')
+            ->orderByDesc('count')
+            ->take(5)
+            ->get();
+
+        return  $topDiagnosis;
     }
 }
