@@ -487,6 +487,19 @@ class ConsultationController extends Controller
                         'status' => 'Fulfilled',
                         'action' => null
                     ]);
+                } else {
+
+                    Medicine_Log::create([
+                        'patient_id' => $consultation->patient_id,
+                        'medication_id' => $med['drug_id'],
+                        'pharmacy_id' => $med['pharmacy_id'] ?? null,
+                        'presscribed_drug' => $med['drug'],
+                        'patient_status' => PatientVisitStageEnums::TREATMENT,
+                        'status' => 'Fulfilled',
+                        'action' => null,
+                        'visitno' => $consultation->visitno,
+                        'arrival_date' => now()
+                    ]);
                 }
             }
 
