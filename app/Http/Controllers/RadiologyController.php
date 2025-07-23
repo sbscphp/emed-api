@@ -115,7 +115,7 @@ class RadiologyController extends Controller
 
 
         $all_exam = json_decode($validated['all_exam'], true);
-        dd(json_encode($all_exam));
+
         if (json_last_error() !== JSON_ERROR_NONE || !is_array($all_exam)) {
             return JsonResponser::send(false, 'Invalid JSON format for all_exam', 422);
         }
@@ -133,13 +133,14 @@ class RadiologyController extends Controller
                 return JsonResponser::send(false, $examValidator->errors(), 200);
             }
 
-            Radiology_lab_patient_examination::create([
-                'radiology_lab_patients_id' => $radiology->id,
-                'examination' => $exam['examination'],
-                'result' => $exam['result'],
-                'unit' => $exam['unit'],
-                'normal_values' => $exam['normal_values'],
-            ]);
+            $Radiology_lab_patient_examination = new Radiology_lab_patient_examination();
+
+            $Radiology_lab_patient_examination->radiology_lab_patients_id = $radiology->id;
+            $Radiology_lab_patient_examination->examination = $exam['examination'];
+            $Radiology_lab_patient_examination->result = $exam['result'];
+            $Radiology_lab_patient_examination->unit = $exam['unit'];
+            $Radiology_lab_patient_examination->normal_values = $exam['normal_values'];
+            $Radiology_lab_patient_examination->save();
         }
         return JsonResponser::send(false, 'successfully created.',  200);
     }
