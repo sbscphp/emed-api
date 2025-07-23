@@ -41,6 +41,8 @@ class Patient extends Model
         'patientno'
     ];
 
+
+
     public function service()
     {
         return $this->belongsTo(ServiceDepartment::class, 'service_id');
