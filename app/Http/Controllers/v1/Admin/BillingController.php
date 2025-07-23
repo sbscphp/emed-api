@@ -855,6 +855,7 @@ class BillingController extends Controller
         $validated =  $request->validate([
             'patient_visits_id' => "nullable|numeric"
         ]);
+        dd($validated);
         $data = PatientVisit::with([
             'patient.laboratory',
             'patient.pharmacy',
