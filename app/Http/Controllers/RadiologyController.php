@@ -148,6 +148,6 @@ class RadiologyController extends Controller
     {
 
         $radiology  =  Radiology_lab_patient::with('Radiology_lab_patient_examination')->latest();
-        return JsonResponser::send(false, 'Billing records retrieved successfully.', $radiology, 200);
+        return JsonResponser::send(false, 'retrieved successfully.', $radiology, 200);
     }
 }

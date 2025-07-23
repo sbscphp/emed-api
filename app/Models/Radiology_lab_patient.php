@@ -28,6 +28,6 @@ class Radiology_lab_patient extends Model
 
     public function Radiology_lab_patient_examination()
     {
-        return $this->hasMany(Radiology_lab_patient_examination::class);
+        return $this->hasMany(Radiology_lab_patient_examination::class, 'radiology_lab_patients_id', 'id');
     }
 }
