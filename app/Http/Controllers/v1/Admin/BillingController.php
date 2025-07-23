@@ -857,7 +857,7 @@ class BillingController extends Controller
         ]);
         $data = PatientVisit::with([
             'patient.laboratory',
-            'patient.pharmacy',
+            // 'patient.pharmacy',
             'patient.radiology',
             'patient.consultations',
             'patient.billingLogsForPatient'
