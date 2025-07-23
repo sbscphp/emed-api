@@ -13,7 +13,7 @@ class Treatment extends Model
         'patient_id',
         'admin_id',
         'consultation_id',
-        'pharmacy_id',
+        // 'pharmacy_id',
         'visitno',
         'drug',
         'qualifier',

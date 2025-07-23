@@ -468,7 +468,7 @@ class ConsultationController extends Controller
                     'duration' => $med['duration'],
                     'route' => $med['route'],
                     'remark' => $med['remark'],
-                    'pharmacy_id' => $med['pharmacy_id'] ?? null,
+                    //'pharmacy_id' => $med['pharmacy_id'] ?? null,
                 ];
                 $treatment = $this->treatmentService->create($data);
 
