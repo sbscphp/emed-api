@@ -132,7 +132,7 @@ class RadiologyController extends Controller
 
                 return JsonResponser::send(false, $examValidator->errors(), 200);
             }
-
+            dd($exam);
             $Radiology_lab_patient_examination = new Radiology_lab_patient_examination();
 
             $Radiology_lab_patient_examination->radiology_lab_patients_id = $radiology->id;
