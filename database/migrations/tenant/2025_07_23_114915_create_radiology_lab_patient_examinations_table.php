@@ -21,7 +21,6 @@ return new class extends Migration
             $table->string('examination')->nullable();
             $table->integer('result')->default(0)->nullable();
             $table->integer('unit')->default(0)->nullable();
-            $table->integer('result')->default(0)->nullable();
             $table->integer('normal_values')->default(0)->nullable();
 
             $table->timestamps();
