@@ -69,7 +69,7 @@ class Patient extends Model
 
     public function  patient_visits()
     {
-        return $this->hasOne(PatientVisit::class, 'visitno', 'visitno');
+        return $this->hasOne(PatientVisit::class, 'patient_id', 'id');
     }
     public function appointments()
     {
