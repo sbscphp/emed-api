@@ -200,7 +200,6 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/service-type/all', [BillingController::class, 'getBillingByServiceType']);
                     Route::post('/createservice', [BillingController::class, 'createservice']);
                     Route::post('/editservice', [BillingController::class, 'editservice']);
-                    Route::get("/payment_daft", [BillingController::class, 'payment_billing_daft']);
                 });
 
                 Route::group(['prefix' => 'report', 'middleware' => 'admin.superadmin'], function () {
@@ -258,6 +257,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get("laboratory_list", [BillingController::class, "laboratory_list"]);
                     Route::get("radiology_list", [BillingController::class, "radiology_list"]);
                     Route::get("payment_daft", [BillingController::class, "payment_daft"]);
+                    Route::get("/payment_daft", [BillingController::class, 'payment_billing_daft']);
                 });
 
                 Route::group(['prefix' => 'billingmgt'], function () {
