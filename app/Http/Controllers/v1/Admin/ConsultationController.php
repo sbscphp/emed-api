@@ -481,7 +481,7 @@ class ConsultationController extends Controller
                 if ($medicine_Log) {
                     $medicine_Log->update([
                         'medication_id' => $med['drug_id'],
-                        'pharmacy_id' => $med['pharmacy_id'],
+                        'pharmacy_id' => $med['pharmacy_id'] ?? null,
                         'presscribed_drug' => $med['drug'],
                         'patient_status' => PatientVisitStageEnums::TREATMENT,
                         'status' => 'Fulfilled',
