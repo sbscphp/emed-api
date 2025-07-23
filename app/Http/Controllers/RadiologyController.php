@@ -135,6 +135,10 @@ class RadiologyController extends Controller
             dd($exam);
             $Radiology_lab_patient_examination = new Radiology_lab_patient_examination();
 
+            //      'examination',
+            // 'result',
+            // 'unit',
+            // 'normal_values',
             $Radiology_lab_patient_examination->radiology_lab_patients_id = $radiology->id;
             $Radiology_lab_patient_examination->examination = $exam['examination'];
             $Radiology_lab_patient_examination->result = $exam['result'];
