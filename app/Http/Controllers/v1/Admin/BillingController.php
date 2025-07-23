@@ -874,6 +874,7 @@ class BillingController extends Controller
                 $billingLogsForPatient = BillingLog::where('visit_id', $data->id)->first();
 
                 $arr[] = [
+                    'Patientvisit' => $data,
                     'consultation' => $consultation,
                     'radiology' => $radiology,
                     'treatment' => $treatment,
