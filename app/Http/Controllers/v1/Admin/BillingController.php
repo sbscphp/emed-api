@@ -613,6 +613,7 @@ class BillingController extends Controller
                 'search' => 'nullable|string',
                 'start_date' => "nullable|string",
                 'end_date' => "nullable|string",
+                'service_type' => "nullable|string",
                 'paid_type' => 'nullable|string|in:paid,part_paid,pending'
             ]);
 

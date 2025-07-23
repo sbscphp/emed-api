@@ -382,6 +382,11 @@ class BillingLogService
             $billingLog->where("payment_status", $validated['paid_type']);
         }
 
+        if (!empty($validated['service_type'])) {
+            $billingLog->whereHas('serviceType', function ($q) use ($validated) {
+                $q->where('name', $validated['service_type']);
+            });
+        }
 
         if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
             $startDate = $validated['start_date'];
