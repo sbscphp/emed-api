@@ -13,6 +13,7 @@ use App\Models\PatientVisit;
 use App\Models\Pharmacy;
 use App\Models\Radiology;
 use App\Models\ServiceDepartment;
+use App\Models\ServiceUnit;
 use App\Models\User;
 use App\Repositories\BillingLog\BillingLogRepositoryInterface;
 use Carbon\Carbon;
@@ -589,11 +590,23 @@ class BillingLogService
         }
 
 
+        $services = ServiceUnit::all();
+        $depart = [];
+        foreach ($services as $service) {
+            $count = BillingLog::where('service_unit_id', intval($service->id))->count();
+            $depart[] = [
+                'name' => $service->name,
+                'count' => $count
+            ];
+        }
+
+
         return [
             'total_revenue' => (clone $query)->sum('grand_total'),
             'pending_payment' => (clone $query)->where('payment_status', 'pending')->sum('grand_total'),
             'completed_payment' => (clone $query)->where('payment_status', 'paid')->sum('grand_total'),
             'insurance_claimed' => (clone $query)->where('payment_method', 'insurance')->count(),
+            "dynamic" => $depart,
             "registration" => [
                 'total' => BillingLog::where('service_unit_id', 1)->count(),
                 "amount" => BillingLog::where('service_unit_id', 1)->pluck('grand_total')->sum()

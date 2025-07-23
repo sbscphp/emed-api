@@ -204,6 +204,17 @@ class ServiceDepartmentService
         $existing = Patient::where('patient_type', 'existing')->count();
         $referal = Patient::where('patient_type', 'referal')->count();
 
+        $services = ServiceUnit::all();
+        $depart = [];
+        foreach ($services as $service) {
+            $count = BillingLog::where('service_unit_id', intval($service->id))->count();
+            $depart[] = [
+                'name' => $service->name,
+                'count' => $count
+            ];
+        }
+
+
         $department_revenue =  [
             [
                 "name" => "registration",
@@ -280,7 +291,8 @@ class ServiceDepartmentService
                 'new' => $new,
                 'existing' => $existing,
                 "referal" => $referal
-            ]
+            ],
+            'staff_log' => $depart
         ];
 
         return $data;
@@ -319,5 +331,57 @@ class ServiceDepartmentService
             ->get();
 
         return  $topDiagnosis;
+    }
+
+    public function recent_patient($validated)
+    {
+
+        $patient = Patient::with('patient_visits_latest');
+        // ->where(!empty($validated['search']), function ($query) use ($validated) {
+        //     $query->where('firstname', $validated['search'])
+        //         ->orWhere('lastname', $validated['search'])
+        //         ->orWhere('patientno', $validated['search'])
+        //         ->orWhere('status', $validated['search'])
+        //         ->orWhere('patient_type', $validated['search'])
+        //         ->orWhere('gender', $validated['search'])
+        //         ->orWhere('marital_status', $validated['search'])
+        //         ->orWhereHas('patient_visits_latest', function ($qu) use ($validated) {
+        //             $qu->where('status', $validated['search']);
+        //         });
+        // });
+        if (!empty($validated['search'])) {
+            $patient->where(function ($query) use ($validated) {
+                $query->where('firstname', 'like', '%' . $validated['search'] . '%')
+                    ->orWhere('lastname', 'like', '%' . $validated['search'] . '%')
+                    ->orWhere('patientno', 'like', '%' . $validated['search'] . '%')
+                    ->orWhere('status', 'like', '%' . $validated['search'] . '%')
+                    ->orWhere('patient_type', 'like', '%' . $validated['search'] . '%')
+                    ->orWhere('gender', 'like', '%' . $validated['search'] . '%')
+                    ->orWhere('marital_status', 'like', '%' . $validated['search'] . '%')
+                    ->orWhereHas('patient_visits_latest', function ($qu) use ($validated) {
+                        $qu->where('status', 'like', '%' . $validated['search'] . '%');
+                    });
+            });
+        }
+
+
+        if (!empty($validated['status'])) {
+            $patient->orWhereHas('patient_visits_latest', function ($qu) use ($validated) {
+                $qu->where('status', $validated['search']);
+            });
+        }
+
+
+        if (!empty($validated['patient_type'])) {
+            $patient->where('patient_type', $validated['patient_type']);
+        }
+
+        if (!empty($validated['gender'])) {
+            $patient->where('patient_type', $validated['gender']);
+        }
+
+        return $patient->paginate(10);
+        // where('firstname', $firstname)->where('lastname', $lastname)
+
     }
 }

@@ -856,13 +856,7 @@ class BillingController extends Controller
             $validated =  $request->validate([
                 'patient_visits_id' => "nullable|numeric"
             ]);
-            // $data = PatientVisit::with([
-            //     'patient.laboratory',
-            //     // 'patient.pharmacy',
-            //     'patient.radiology',
-            //     'patient.consultations',
-            //     'patient.billingLogsForPatient'
-            // ])->find(intval($validated['patient_visits_id']));
+
             $arr = [];
 
             $data = PatientVisit::find(intval($validated['patient_visits_id']));
