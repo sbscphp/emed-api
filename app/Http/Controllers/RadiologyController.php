@@ -147,7 +147,7 @@ class RadiologyController extends Controller
     public function radiology_examination_get()
     {
 
-        $radiology  =  Radiology_lab_patient::where('Radiology_lab_patient_examination')->latest();
+        $radiology  =  Radiology_lab_patient::with('Radiology_lab_patient_examination')->latest();
         return JsonResponser::send(false, 'Billing records retrieved successfully.', $radiology, 200);
     }
 }
