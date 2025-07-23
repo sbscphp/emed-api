@@ -123,9 +123,9 @@ class RadiologyController extends Controller
         foreach ($all_exam as $index => $exam) {
             $examValidator = Validator::make($exam, [
                 'examination' => 'required|string|max:255',
-                'result' => 'required|string|max:255',
-                'unit' => 'required|string|max:50',
-                'normal_values' => 'required|string|max:100',
+                'result' => 'required|numeric|max:255',
+                'unit' => 'required|numeric|max:50',
+                'normal_values' => 'required|numeric|max:100',
             ]);
 
             if ($examValidator->fails()) {
