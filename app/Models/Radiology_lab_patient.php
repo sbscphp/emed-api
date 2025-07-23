@@ -11,6 +11,7 @@ class Radiology_lab_patient extends Model
 
     protected $fillable = [
         'patient_id',
+        'patient_visits_id',
         'test_name',
         'user_id'
     ];

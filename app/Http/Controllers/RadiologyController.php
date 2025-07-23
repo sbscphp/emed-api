@@ -109,6 +109,7 @@ class RadiologyController extends Controller
 
         $radiology = Radiology_lab_patient::create([
             'patient_id' =>  $validated['patient_id'],
+            'patient_visits_id' => $validated['patient_visits_id'],
             'test_name' => $validated['test_name'],
             'user_id' => $validated['doctor_id']
         ]);

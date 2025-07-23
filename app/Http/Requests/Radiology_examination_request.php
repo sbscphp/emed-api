@@ -23,6 +23,7 @@ class Radiology_examination_request extends FormRequest
     {
         return [
             'patient_id' => "nullable|numeric|exists:tenant.patients,id",
+            'patient_visits_id' => "nullable|numeric|exists:tenant.patient_visits,id",
             'test_name' => "nullable|string",
             'doctor_id' => 'required|integer|exists:tenant.users,id',
             "all_exam" => "required|json"
