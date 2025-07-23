@@ -25,4 +25,9 @@ class Radiology_lab_patient extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+
+    public function Radiology_lab_patient_examination()
+    {
+        return $this->hasMany(Radiology_lab_patient_examination::class);
+    }
 }
