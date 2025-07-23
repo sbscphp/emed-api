@@ -197,6 +197,10 @@ class ServiceDepartmentService
             $revenue_outcome = $outstanding + $ans;
         }
 
+        $new = Patient::where('patient_type', 'new')->count();
+        $existing = Patient::where('patient_type', 'existing')->count();
+        $referal = Patient::where('patient_type', 'referal')->count();
+
         $department_revenue =  [
             [
                 "name" => "registration",
@@ -267,7 +271,13 @@ class ServiceDepartmentService
             ],
 
             "revenue_stat" => $revenue_outcome,
-            "department_revenue" => $department_revenue
+            "department_revenue" => $department_revenue,
+
+            "patint_type" => [
+                'new' => $new,
+                'existing' => $existing,
+                "referal" => $referal
+            ]
         ];
 
         return $data;
