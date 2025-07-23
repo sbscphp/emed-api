@@ -855,7 +855,13 @@ class BillingController extends Controller
         $validated =  $request->validate([
             'patient_visits_id' => "nullable|numeric"
         ]);
-        $data = PatientVisit::with(['patient.laboratory', 'patient.pharmacy', 'patient.radiology', 'patient.consultations', 'patient.billingLogsForPatient'])->where('patient_visits_id', intval($validated['patient_visits_id']))->first();
+        $data = PatientVisit::with([
+            'patient.laboratory',
+            'patient.pharmacy',
+            'patient.radiology',
+            'patient.consultations',
+            'patient.billingLogsForPatient'
+        ])->find(intval($validated['patient_visits_id']));
         return JsonResponser::send(false, 'Billing stats fetched successfully.', $data);
         // } catch (\Exception $e) {
         //     return JsonResponser::send(true, 'Error fetching billing stats.', [], 500, $e);
