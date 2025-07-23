@@ -2,6 +2,7 @@
 
 namespace App\Services\Radiology;
 
+use App\Models\BillingLog;
 use App\Models\Radiology;
 use App\Repositories\Radiology\RadiologyInterface;
 use Carbon\Carbon;
@@ -134,7 +135,20 @@ class RadiologyService
                 $q1->where("payment_status", $validated["payment_status"]);
             });
         }
-        return   $radiology->paginate(10);
+
+        $today = Radiology::whereDate('created_at', Carbon::today())
+            ->distinct('patient_id')
+            ->count('patient_id');
+        $tested_today = Radiology::whereDate('created_at', Carbon::today())
+            ->count();
+        return [
+            "today" => $today,
+            'data' => $radiology->paginate(10),
+            'tested_today' => $tested_today,
+            'payment_confirm' => BillingLog::where('service_unit_id', 5)->count()
+
+        ];
+        // return   $radiology->paginate(10);
     }
 
 

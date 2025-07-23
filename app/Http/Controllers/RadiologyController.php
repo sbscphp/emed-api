@@ -9,6 +9,10 @@ use App\Responser\JsonResponser;
 use App\Helpers\ExportHelper;
 use App\Http\Resources\RadiologyResourceAll;
 use App\Models\Patient;
+use App\Models\Radiology_lab_patient;
+use App\Http\Requests\Radiology_examination_request;
+use App\Models\Radiology_lab_patient_examination;
+use Illuminate\Support\Facades\Validator;
 
 class RadiologyController extends Controller
 {
@@ -96,5 +100,47 @@ class RadiologyController extends Controller
         ];
 
         return JsonResponser::send(false, 'Billing records retrieved successfully.', $data, 200);
+    }
+
+    public function radiology_examination(Radiology_examination_request $request)
+    {
+        // Radiology_lab_patient
+        $validated  = $request->validated();
+
+        $radiology = Radiology_lab_patient::create([
+            'patient_id' =>  $validated['patient_id'],
+            'test_name' => $validated['test_name'],
+            'user_id' => $validated['doctor_id']
+        ]);
+
+
+        $all_exam = json_decode($validated['all_exam'], true);
+
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($all_exam)) {
+            return JsonResponser::send(false, 'Invalid JSON format for all_exam', 422);
+        }
+
+        foreach ($all_exam as $index => $exam) {
+            $examValidator = Validator::make($exam, [
+                'examination' => 'required|string|max:255',
+                'result' => 'required|string|max:255',
+                'unit' => 'required|string|max:50',
+                'normal_values' => 'required|string|max:100',
+            ]);
+
+            if ($examValidator->fails()) {
+
+                return JsonResponser::send(false, $examValidator->errors(), 200);
+            }
+
+            Radiology_lab_patient_examination::create([
+                'radiology_lab_patients_id' => $radiology->id,
+                'examination' => $exam['examination'],
+                'result' => $exam['result'],
+                'unit' => $exam['unit'],
+                'normal_values' => $exam['normal_values'],
+            ]);
+        }
+        return JsonResponser::send(false, 'successfully created.',  200);
     }
 }
