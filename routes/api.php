@@ -280,10 +280,13 @@ Route::group(["prefix" => "v1"], function () {
 
                 Route::group(['prefix' => 'main-stats'], function () {
                     Route::get("/main-page", [MainDashBoardStatsController::class, "index"]);
-                    // top_drugs patient_diagnosis
                     Route::get("/top_drugs", [MainDashBoardStatsController::class, "top_drugs"]);
                     Route::get("/patient_diagnosis", [MainDashBoardStatsController::class, "patient_diagnosis"]);
                     Route::get("/recent_patient",   [MainDashBoardStatsController::class, "recent_patient"]);
+                    Route::get("/yearly_patient",   [MainDashBoardStatsController::class, "yearly_patient"]);
+                    Route::get("/patient_age_gender", [MainDashBoardStatsController::class, "patient_age_gender"]);
+                    Route::get('appointment', [MainDashBoardStatsController::class, "appointment"]);
+                    Route::get('lab_test_year', [MainDashBoardStatsController::class, "lab_test_year"]);
                 });
             });
         });

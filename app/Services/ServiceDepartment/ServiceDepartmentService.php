@@ -380,6 +380,13 @@ class ServiceDepartmentService
             $patient->where('patient_type', $validated['gender']);
         }
 
+        if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
+            $patient->whereHas('patient_visits_latest', function ($qu) use ($validated) {
+                $startDate = $validated['start_date'];
+                $endDate = $validated['end_date'];
+                $qu->where('created_at', [Carbon::parse($startDate), Carbon::parse($endDate)]);
+            });
+        }
         return $patient->paginate(10);
         // where('firstname', $firstname)->where('lastname', $lastname)
 

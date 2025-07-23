@@ -25,8 +25,8 @@ class LabRequest extends FormRequest
             'lab_dept' => 'nullable|string',
             'test_name' => 'required|string',
             'ordered_test' => 'required|array',
-            'others' => 'string|nullable'
-
+            'others' => 'string|nullable',
+            'status' => 'nullable|string|in:complete, in progress, pending'
         ];
     }
 }
