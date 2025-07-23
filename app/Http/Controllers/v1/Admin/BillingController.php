@@ -35,6 +35,7 @@ use App\Models\Consultation;
 use App\Models\Laboratory;
 use App\Models\Medication;
 use App\Models\Patient;
+use App\Models\PatientVisit;
 use App\Models\Pharmacy;
 use App\Models\Radiology;
 use App\Models\ServiceDepartment;
@@ -843,6 +844,19 @@ class BillingController extends Controller
             $stats = $this->billingService->getStatistics();
 
             return JsonResponser::send(false, 'Billing stats fetched successfully.', $stats);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Error fetching billing stats.', [], 500, $e);
+        }
+    }
+
+    public function payment_billing_daft(Request $request)
+    {
+        try {
+            $validated =  $request->validate([
+                'patient_visits_id' => "nullable|numeric"
+            ]);
+            $data = PatientVisit::with(['patient.laboratory', 'patient.pharmacy', 'patient.radiology', 'patient.consultations', 'patient.billingLogsForPatient'])->where('patient_visits_id', intval($validated['patient_visits_id']))->first();
+            return JsonResponser::send(false, 'Billing stats fetched successfully.', $data);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Error fetching billing stats.', [], 500, $e);
         }

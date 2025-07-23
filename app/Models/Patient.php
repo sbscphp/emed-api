@@ -132,4 +132,9 @@ class Patient extends Model
     {
         return $this->hasOne(Pharmacy::class, 'patient_id', 'id');
     }
+
+    public function radiology()
+    {
+        return $this->hasOne(Radiology::class, 'patient_id', 'id');
+    }
 }
