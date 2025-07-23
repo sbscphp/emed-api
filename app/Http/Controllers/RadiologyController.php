@@ -150,10 +150,13 @@ class RadiologyController extends Controller
         return JsonResponser::send(false, 'successfully created.',  200);
     }
 
-    public function radiology_examination_get()
+    public function radiology_examination_get(Request $request)
     {
+        $validated =  $request->validate([
+            'id' => "nullable|numeric"
+        ]);
 
-        $radiology  =  Radiology_lab_patient::with('examinations')->latest()->first();
+        $radiology  =  Radiology_lab_patient::with('examinations')->find(intval($validated['id']));
 
         return JsonResponser::send(false, 'retrieved successfully.', $radiology, 200);
     }
