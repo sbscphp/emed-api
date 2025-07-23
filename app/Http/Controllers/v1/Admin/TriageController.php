@@ -110,11 +110,25 @@ class TriageController extends Controller
             $status = $request->status;
             $type =  $request->type;
             $phone_number =  $request->phone_number;
+            $payment_status = $request->payment_status;
+            $patient_status = $request->patient_status;
+            $patient_type = $request->patient_type;
             if (!$serviceId) {
                 return JsonResponser::send(true, 'Service ID is required.', null, 400);
             }
 
-            $result = $this->triageService->getPatientsAndStatsByService($serviceId, $search, $from, $to, $status, $type, $phone_number);
+            $result = $this->triageService->getPatientsAndStatsByService(
+                $serviceId,
+                $search,
+                $from,
+                $to,
+                $status,
+                $type,
+                $phone_number,
+                $payment_status,
+                $patient_status,
+                $patient_type
+            );
 
             return JsonResponser::send(false, 'Patients fetched successfully', [
                 'service_id' => $serviceId,

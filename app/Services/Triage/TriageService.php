@@ -110,8 +110,18 @@ class TriageService
         return $this->TriageInterface->getByPatientId($patientId);
     }
 
-    public function getPatientsAndStatsByService($serviceId, $search = null, $from, $to, $status, $type, $phone_number)
-    {
+    public function getPatientsAndStatsByService(
+        $serviceId,
+        $search = null,
+        $from,
+        $to,
+        $status,
+        $type,
+        $phone_number,
+        $payment_status,
+        $patient_status,
+        $patient_type
+    ) {
 
 
         $today = now()->toDateString();
@@ -119,6 +129,7 @@ class TriageService
         $query = PatientVisit::join('patients', 'patient_visits.patient_id', '=', 'patients.id')
             ->join('services', 'patients.service_id', '=', 'services.id')
             ->leftJoin('triages', 'patient_visits.patient_id', '=', 'triages.patient_id')
+            ->leftJoin('billing_logs', 'patient_visits.id', '=', 'billing_logs.visit_id')
             ->where('services.id', $serviceId)
             ->select(
                 'patient_visits.id as id',
@@ -134,7 +145,10 @@ class TriageService
                 'services.name as service_name',
                 'patient_visits.created_at as visit_date',
                 DB::raw('COALESCE(triages.severity, 0) as acuity'),
-                'patient_visits.stage as patient_status'
+                'patient_visits.stage as patient_status',
+                'billing_logs.payment_status',
+                'billing_logs.payment_method',
+                'patients.status',
             );
 
         if ($search) {
@@ -157,6 +171,16 @@ class TriageService
 
         if (!empty($type)) {
             $query->where('patients.patient_type', 'like', "%$type%");
+            // patient_type
+        }
+
+        if (!empty($payment_status)) {
+            $query->where('billing_logs.payment_status', 'like', "%$payment_status%");
+            // patient_type
+        }
+
+        if (!empty($patient_status)) {
+            $query->where('patients.status', 'like', "%$patient_status%");
             // patient_type
         }
 
