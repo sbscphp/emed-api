@@ -172,7 +172,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/lists', [InventoryController::class, 'index']);
                     Route::get('/{id}', [InventoryController::class, 'show']);
                     Route::post('/', [InventoryController::class, 'store']);
-                    Route::delete('/delete/{id}', [InventoryController::class, 'delete']);
+                    Route::delete('/delete/{id}', [InventoryController::class, 'destroy']);
                     Route::put('/update/{id}', [InventoryController::class, 'update']);
                     Route::get('/dashboard/stats', [InventoryController::class, 'getInventoryStats']);
                 });
