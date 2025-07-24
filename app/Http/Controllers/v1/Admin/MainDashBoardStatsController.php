@@ -34,7 +34,7 @@ class MainDashBoardStatsController extends Controller
 
         try {
             $validated = $request->validate([
-                "filter_calender" => 'nullable|string|in:daily,monthly,yearly'
+                "filter_calender" => 'nullable|string'
             ]);
 
             $validated['filter_calender'] ?? "daily";
