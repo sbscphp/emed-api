@@ -182,7 +182,7 @@ class ServiceDepartmentService
             $outstanding = $outstanding + $ans;
         }
 
-        $validated['filter_calender'] ?? "daily";
+        $validated['filter_calender'] = $validated['filter_calender'] ?? "daily";
 
         $revenue = BillingLog::whereIn('payment_status', ['paid', 'part_paid'])
             ->when(!empty($validated['filter_calender']), function ($query) use ($validated) {

@@ -34,10 +34,10 @@ class MainDashBoardStatsController extends Controller
 
         // try {
         $validated = $request->validate([
-            "filter_calender" => 'nullable|string'
+            "filter_calender" => 'nullable|string|in:daily,monthly,yearly'
         ]);
 
-        $validated['filter_calender'] ?? "daily";
+        $validated['filter_calender'] = $validated['filter_calender'] ?? "daily";
         $data = $this->service_department_service->main_dashboard($validated);
         return JsonResponser::send(false, ' fetched successfully.', $data);
         // } catch (\Exception $e) {
