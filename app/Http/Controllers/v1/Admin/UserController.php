@@ -400,8 +400,6 @@ class UserController extends Controller
         $user->save();
 
         return JsonResponser::send(false, "Account status updated", $user, 200);
-
-        return JsonResponser::send(true, "User not found", null, 404);
     }
 
     public function account_deletion($id)
@@ -411,7 +409,7 @@ class UserController extends Controller
             return JsonResponser::send(false, 'User profile not found.');
         }
         $user->delete();
-        return JsonResponser::send(true, "User deleted successfully found", null, 404);
+        return JsonResponser::send(true, "User deleted successfully found", null, 200);
     }
 
     public function hospital_information(Request $request, $id)
@@ -433,7 +431,7 @@ class UserController extends Controller
 
         $hospital->update($updates);
 
-        return JsonResponser::send(true, "Hospital record updated successfully", $hospital->refresh(), 404);
+        return JsonResponser::send(true, "Record updated successfully", $hospital->refresh(), 200);
     }
 
 
