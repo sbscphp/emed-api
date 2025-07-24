@@ -6,8 +6,15 @@ use App\Helpers\ExportHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PatientResourceRecent;
 use App\Models\Appointment;
+use App\Models\BillingLog;
+use App\Models\Consultation;
+use App\Models\DrugHistory;
+use App\Models\FamilyHistory;
 use App\Models\Laboratory;
 use App\Models\Patient;
+use App\Models\PatientVisit;
+use App\Models\Radiology;
+use App\Models\Treatment;
 use App\Services\ServiceDepartment\ServiceDepartmentService;
 use Illuminate\Http\Request;
 use App\Responser\JsonResponser;
@@ -179,6 +186,48 @@ class MainDashBoardStatsController extends Controller
                 'pending' => $pending
             ];
             return JsonResponser::send(false, ' fetched successfully.', $data);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Error fetching  .', [], 500, $e);
+        }
+    }
+
+
+
+    public function patient_consultation_summary_data(Request $request)
+    {
+
+        try {
+            $validated =  $request->validate([
+                'patient_visits_id' => "nullable|numeric"
+            ]);
+
+            $arr = [];
+
+            $data = PatientVisit::find(intval($validated['patient_visits_id']));
+
+            if ($data) {
+                $consultation = Consultation::where('visitno', $data->visitno)->first();
+                $radiology = Radiology::where('visitno', $data->visitno)->first();
+                $treatment = $consultation ? Treatment::where('consultation_id', $consultation->id)->first() : null;
+                $billingLogsForPatient = BillingLog::where('visit_id', $data->id)->first();
+                $patient = Patient::find(intval($data->patient_id));
+                $family_history = $consultation ? FamilyHistory::where('consultation_id',  $consultation->id)->first() : null;
+                $drug_history = $consultation ? DrugHistory::where('consultation_id',  $consultation->id)->first() : null;
+
+
+                $arr[] = [
+                    'Patientvisit' => $data,
+                    'consultation' => $consultation,
+                    'radiology' => $radiology,
+                    'treatment' => $treatment,
+                    'billing' => $billingLogsForPatient,
+                    "patient" => $patient,
+                    'family_history' => $family_history,
+                    "drug_history" => $drug_history
+                ];
+            }
+
+            return JsonResponser::send(false, 'Billing stats fetched successfully.', $arr);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Error fetching  .', [], 500, $e);
         }

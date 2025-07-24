@@ -288,6 +288,11 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('appointment', [MainDashBoardStatsController::class, "appointment"]);
                     Route::get('lab_test_year', [MainDashBoardStatsController::class, "lab_test_year"]);
                 });
+
+
+                Route::group(['prefix' => 'patient_consultation_summary'], function () {
+                    Route::get('/', [MainDashBoardStatsController::class, "patient_consultation_summary_data"]);
+                });
             });
         });
     });
