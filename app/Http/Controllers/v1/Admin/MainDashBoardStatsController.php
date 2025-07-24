@@ -32,17 +32,17 @@ class MainDashBoardStatsController extends Controller
     public function index(Request $request)
     {
 
-        try {
-            $validated = $request->validate([
-                "filter_calender" => 'nullable|string'
-            ]);
+        // try {
+        $validated = $request->validate([
+            "filter_calender" => 'nullable|string'
+        ]);
 
-            $validated['filter_calender'] ?? "daily";
-            $data = $this->service_department_service->main_dashboard($validated);
-            return JsonResponser::send(false, ' fetched successfully.', $data);
-        } catch (\Exception $e) {
-            return JsonResponser::send(true, 'Error fetching billing stats.', [], 500, $e);
-        }
+        $validated['filter_calender'] ?? "daily";
+        $data = $this->service_department_service->main_dashboard($validated);
+        return JsonResponser::send(false, ' fetched successfully.', $data);
+        // } catch (\Exception $e) {
+        //     return JsonResponser::send(true, 'Error fetching billing stats.', [], 500, $e);
+        // }
     }
 
 
