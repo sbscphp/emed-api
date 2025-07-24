@@ -45,14 +45,14 @@ class MainDashBoardStatsController extends Controller
         ]);
 
         dd($validated);
-        $validated['filter_calender'] = $validated['filter_calender'] ?? "daily";
+
         if (!in_array($validated['filter_calender'], ['daily', 'monthly', 'yearly'])) {
             throw new \Exception("The selected filter calender is invalid.", 404);
         }
 
-        $data = $this->service_department_service->main_dashboard($validated);
+        // $data = $this->service_department_service->main_dashboard($validated);
 
-        return JsonResponser::send(false, 'Fetched successfully.', $data);
+        // return JsonResponser::send(false, 'Fetched successfully.', $data);
 
         // } catch (\Exception $e) {
         //     return JsonResponser::send(true, 'Error fetching billing stats.', [], 500, $e);
