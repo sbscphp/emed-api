@@ -279,7 +279,7 @@ Route::group(["prefix" => "v1"], function () {
                 });
 
                 Route::group(['prefix' => 'main-stats'], function () {
-                    // Route::get("/main-page", [MainDashBoardStatsController::class, "index"]);
+                    Route::get("/main-page", [MainDashBoardStatsController::class, "index"]);
                     Route::get("/top_drugs", [MainDashBoardStatsController::class, "top_drugs"]);
                     Route::get("/patient_diagnosis", [MainDashBoardStatsController::class, "patient_diagnosis"]);
                     Route::get("/recent_patient",   [MainDashBoardStatsController::class, "recent_patient"]);

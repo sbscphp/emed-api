@@ -41,10 +41,9 @@ return new class extends Migration
             $table->string('route_of_adminstration')->nullable();
             $table->string('injection_site')->nullable();
             $table->string('manufacturer')->nullable();
-            $table->date('expiration_date')->nullable();
             $table->enum('route_of_administration', ['oral', 'intramuscular', 'subcutaneous', 'intradermal'])->nullable();
             $table->enum('injection_site', ['left arm', 'right arm', 'left thigh', 'right thigh'])->nullable();
-            $table->string('manufacturer')->nullable();
+            $table->string('administering_health_professional')->nullable();
             $table->timestamps();
         });
     }
