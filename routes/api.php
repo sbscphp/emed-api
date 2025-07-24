@@ -25,6 +25,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\v1\Admin\MainDashBoardStatsController;
 // use App\Http\Controllers\v1\Admin\ArtisanController;
 use App\Http\Controllers\v1\Admin\ArtisanController;
+use App\Http\Controllers\v1\Admin\ImmunizationController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 
@@ -279,7 +280,7 @@ Route::group(["prefix" => "v1"], function () {
                 });
 
                 Route::group(['prefix' => 'main-stats'], function () {
-                    // Route::get("/main-page", [MainDashBoardStatsController::class, "index"]);
+                    Route::get("/main-page", [MainDashBoardStatsController::class, "index"]);
                     Route::get("/top_drugs", [MainDashBoardStatsController::class, "top_drugs"]);
                     Route::get("/patient_diagnosis", [MainDashBoardStatsController::class, "patient_diagnosis"]);
                     Route::get("/recent_patient",   [MainDashBoardStatsController::class, "recent_patient"]);
@@ -292,6 +293,11 @@ Route::group(["prefix" => "v1"], function () {
 
                 Route::group(['prefix' => 'patient_consultation_summary'], function () {
                     Route::get('/', [MainDashBoardStatsController::class, "patient_consultation_summary_data"]);
+                });
+
+                Route::group(['prefix' => 'immunization'], function () {
+                    Route::post("/create_immunization",  [ImmunizationController::class, "create_immunization"]);
+                    Route::post("/dosage_admin", [ImmunizationController::class, "dosage_admin"]);
                 });
             });
         });

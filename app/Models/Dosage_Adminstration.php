@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Dosage_Adminstration extends Model
 {
     protected $connection = 'tenant';
+
     protected $fillable = [
         "vaccine_name",
         "vaccine_code",
@@ -17,12 +18,9 @@ class Dosage_Adminstration extends Model
         "manufacturer",
         "expiration_date",
         "route_of_adminstration",
-        "injection_site",
-        "administration_date",
         "manufacturer",
-        "expiration_date",
         "route_of_administration",
         "injection_site",
-        "administering_health_professional"
+        "administering_healthcare_professional"
     ];
 }
