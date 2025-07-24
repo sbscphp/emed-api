@@ -40,15 +40,15 @@ class MainDashBoardStatsController extends Controller
         // $validated['filter_calender'] = $validated['filter_calender'] ?? "daily";
         // $data = $this->service_department_service->main_dashboard($validated);
         // return JsonResponser::send(false, ' fetched successfully.', $data);
-        $validated = $request->validate([
-            "filter_calender" => 'nullable|string'
-        ]);
+        // $validated = $request->validate([
+        //     "filter_calender" => 'nullable|string'
+        // ]);
 
-        dd($validated);
+        // dd($validated);
 
-        if (!in_array($validated['filter_calender'], ['daily', 'monthly', 'yearly'])) {
-            throw new \Exception("The selected filter calender is invalid.", 404);
-        }
+        // if (!in_array($validated['filter_calender'], ['daily', 'monthly', 'yearly'])) {
+        //     throw new \Exception("The selected filter calender is invalid.", 404);
+        // }
 
         // $data = $this->service_department_service->main_dashboard($validated);
 
