@@ -182,18 +182,30 @@ class ServiceDepartmentService
             $outstanding = $outstanding + $ans;
         }
 
-        $validated['filter_calender'] = $validated['filter_calender'] ?? "daily";
+
+
+        // $revenue = BillingLog::whereIn('payment_status', ['paid', 'part_paid'])
+        //     ->when(!empty($validated['filter_calender']), function ($query) use ($validated) {
+        //         if ($validated['filter_calender'] == 'daily') {
+        //             $query->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->startOfWeek()]);
+        //         } elseif ($validated['filter_calender'] == 'monthly') {
+        //             $query->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->startOfMonth()]);
+        //         } elseif ($validated['filter_calender'] == 'yearly') {
+        //             $query->whereBetween('created_at', [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()]);
+        //         }
+        //     })->get();
 
         $revenue = BillingLog::whereIn('payment_status', ['paid', 'part_paid'])
-            ->when(!empty($validated['filter_calender']), function ($query) use ($validated) {
-                if ($validated['filter_calender'] == 'daily') {
-                    $query->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->startOfWeek()]);
-                } elseif ($validated['filter_calender'] == 'monthly') {
-                    $query->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->startOfMonth()]);
-                } elseif ($validated['filter_calender'] == 'yearly') {
-                    $query->whereBetween('created_at', [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()]);
-                }
-            })->get();
+            ->when($validated['filter_calender'] === 'daily', function ($query) {
+                $query->whereBetween('created_at', [Carbon::now()->startOfDay(), Carbon::now()->endOfDay()]);
+            })
+            ->when($validated['filter_calender'] === 'monthly', function ($query) {
+                $query->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()]);
+            })
+            ->when($validated['filter_calender'] === 'yearly', function ($query) {
+                $query->whereBetween('created_at', [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()]);
+            })
+            ->get();
         $revenue_outcome = 0;
         foreach ($revenue as $revenue) {
             $ans =  $bill->grand_total - $bill->deposit_amount ?? 0;
