@@ -172,28 +172,154 @@ class ServiceDepartmentService
         }
     }
 
+    // public function main_dashboard($validated)
+    // {
+
+    //     $bills = BillingLog::whereIn('payment_status', ['pending', 'part_paid'])->get();
+    //     $outstanding = 0;
+    //     foreach ($bills as $bill) {
+    //         $ans =  $bill->grand_total - $bill->deposit_amount ?? 0;
+    //         $outstanding = $outstanding + $ans;
+    //     }
+
+
+
+    //     // $revenue = BillingLog::whereIn('payment_status', ['paid', 'part_paid'])
+    //     //     ->when(!empty($validated['filter_calender']), function ($query) use ($validated) {
+    //     //         if ($validated['filter_calender'] == 'daily') {
+    //     //             $query->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->startOfWeek()]);
+    //     //         } elseif ($validated['filter_calender'] == 'monthly') {
+    //     //             $query->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->startOfMonth()]);
+    //     //         } elseif ($validated['filter_calender'] == 'yearly') {
+    //     //             $query->whereBetween('created_at', [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()]);
+    //     //         }
+    //     //     })->get();
+
+    //     $revenue = BillingLog::whereIn('payment_status', ['paid', 'part_paid'])
+    //         ->when($validated['filter_calender'] === 'daily', function ($query) {
+    //             $query->whereBetween('created_at', [Carbon::now()->startOfDay(), Carbon::now()->endOfDay()]);
+    //         })
+    //         ->when($validated['filter_calender'] === 'monthly', function ($query) {
+    //             $query->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()]);
+    //         })
+    //         ->when($validated['filter_calender'] === 'yearly', function ($query) {
+    //             $query->whereBetween('created_at', [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()]);
+    //         })
+    //         ->get();
+    //     $revenue_outcome = 0;
+    //     foreach ($revenue as $revenue) {
+    //         $ans =  $bill->grand_total - $bill->deposit_amount ?? 0;
+    //         $revenue_outcome = $outstanding + $ans;
+    //     }
+
+    //     $new = Patient::where('patient_type', 'new')->count();
+    //     $existing = Patient::where('patient_type', 'existing')->count();
+    //     $referal = Patient::where('patient_type', 'referal')->count();
+
+    //     $services = ServiceUnit::all();
+    //     $depart = [];
+    //     foreach ($services as $service) {
+    //         $count = BillingLog::where('service_unit_id', intval($service->id))->count();
+    //         $depart[] = [
+    //             'name' => $service->name,
+    //             'count' => $count
+    //         ];
+    //     }
+
+
+    //     $department_revenue =  [
+    //         [
+    //             "name" => "registration",
+    //             'calender' => [
+    //                 'daily' => BillingLog::where('service_unit_id', 1)->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->startOfWeek()])->count(),
+    //                 'monthly' => BillingLog::where('service_unit_id', 1)->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->startOfMonth()])->count(),
+    //                 'yearly' => BillingLog::where('service_unit_id', 1)->whereBetween('created_at', [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()])->count(),
+
+    //             ]
+    //         ],
+    //         [
+    //             "name" => 'pharmacy',
+    //             'calender' => [
+    //                 'daily' => BillingLog::where('service_unit_id', 2)->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->startOfWeek()])->count(),
+    //                 'monthly' => BillingLog::where('service_unit_id', 2)->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->startOfMonth()])->count(),
+    //                 'yearly' => BillingLog::where('service_unit_id', 2)->whereBetween('created_at', [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()])->count(),
+
+    //             ]
+    //         ],
+    //         [
+    //             "name" => "laboratory",
+    //             'calender' => [
+    //                 'daily' => BillingLog::where('service_unit_id', 4)->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->startOfWeek()])->count(),
+    //                 'monthly' => BillingLog::where('service_unit_id', 4)->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->startOfMonth()])->count(),
+    //                 'yearly' => BillingLog::where('service_unit_id', 4)->whereBetween('created_at', [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()])->count(),
+
+    //             ]
+    //         ],
+
+    //         [
+    //             "name" => "radiology",
+    //             'calender' => [
+    //                 'daily' => BillingLog::where('service_unit_id', 5)->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->startOfWeek()])->count(),
+    //                 'monthly' => BillingLog::where('service_unit_id', 5)->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->startOfMonth()])->count(),
+    //                 'yearly' => BillingLog::where('service_unit_id', 5)->whereBetween('created_at', [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()])->count(),
+
+    //             ]
+    //         ],
+    //         [
+    //             "name" => "consultation",
+    //             'calender' => [
+    //                 'daily' => BillingLog::where('service_unit_id', 3)->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->startOfWeek()])->count(),
+    //                 'monthly' => BillingLog::where('service_unit_id', 3)->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->startOfMonth()])->count(),
+    //                 'yearly' => BillingLog::where('service_unit_id', 3)->whereBetween('created_at', [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()])->count(),
+
+    //             ]
+    //         ],
+
+    //     ];
+
+
+    //     // if($validated['filter_calender'] == 'daily' && ){
+
+    //     // }
+    //     $data = [
+    //         "pateint" => [
+    //             "total" => Patient::count(),
+    //             "admitted_today" => Patient::where("created_at", Carbon::now())->count()
+    //         ],
+    //         "consultation" => [
+    //             "total" => Consultation::count(),
+    //             "missed" => PatientVisit::where('status', 'missed')->count(),
+    //         ],
+
+    //         "finance" => [
+    //             "total" => BillingLog::where('payment_status', 'paid')->sum('grand_total'),
+    //             'outstanding' => $outstanding
+    //         ],
+
+    //         "revenue_stat" => $revenue_outcome,
+    //         "department_revenue" => $department_revenue,
+
+    //         "patint_type" => [
+    //             'new' => $new,
+    //             'existing' => $existing,
+    //             "referal" => $referal
+    //         ],
+    //         'staff_log' => $depart
+    //     ];
+
+    //     return $data;
+    // }
+
+
     public function main_dashboard($validated)
     {
-
+        // Calculate outstanding
         $bills = BillingLog::whereIn('payment_status', ['pending', 'part_paid'])->get();
         $outstanding = 0;
         foreach ($bills as $bill) {
-            $ans =  $bill->grand_total - $bill->deposit_amount ?? 0;
-            $outstanding = $outstanding + $ans;
+            $ans = ($bill->grand_total ?? 0) - ($bill->deposit_amount ?? 0);
+            $outstanding += $ans;
         }
-
-
-
-        // $revenue = BillingLog::whereIn('payment_status', ['paid', 'part_paid'])
-        //     ->when(!empty($validated['filter_calender']), function ($query) use ($validated) {
-        //         if ($validated['filter_calender'] == 'daily') {
-        //             $query->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->startOfWeek()]);
-        //         } elseif ($validated['filter_calender'] == 'monthly') {
-        //             $query->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->startOfMonth()]);
-        //         } elseif ($validated['filter_calender'] == 'yearly') {
-        //             $query->whereBetween('created_at', [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()]);
-        //         }
-        //     })->get();
 
         $revenue = BillingLog::whereIn('payment_status', ['paid', 'part_paid'])
             ->when($validated['filter_calender'] === 'daily', function ($query) {
@@ -206,10 +332,11 @@ class ServiceDepartmentService
                 $query->whereBetween('created_at', [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()]);
             })
             ->get();
+
         $revenue_outcome = 0;
-        foreach ($revenue as $revenue) {
-            $ans =  $bill->grand_total - $bill->deposit_amount ?? 0;
-            $revenue_outcome = $outstanding + $ans;
+        foreach ($revenue as $rev) {
+            $ans = ($rev->grand_total ?? 0) - ($rev->deposit_amount ?? 0);
+            $revenue_outcome += $ans;
         }
 
         $new = Patient::where('patient_type', 'new')->count();
@@ -226,79 +353,42 @@ class ServiceDepartmentService
             ];
         }
 
-
-        $department_revenue =  [
-            [
-                "name" => "registration",
+        $department_revenue = collect([
+            1 => 'registration',
+            2 => 'pharmacy',
+            4 => 'laboratory',
+            5 => 'radiology',
+            3 => 'consultation',
+        ])->map(function ($name, $unitId) {
+            return [
+                'name' => $name,
                 'calender' => [
-                    'daily' => BillingLog::where('service_unit_id', 1)->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->startOfWeek()])->count(),
-                    'monthly' => BillingLog::where('service_unit_id', 1)->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->startOfMonth()])->count(),
-                    'yearly' => BillingLog::where('service_unit_id', 1)->whereBetween('created_at', [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()])->count(),
-
+                    'daily' => BillingLog::where('service_unit_id', $unitId)
+                        ->whereBetween('created_at', [Carbon::now()->startOfDay(), Carbon::now()->endOfDay()])->count(),
+                    'monthly' => BillingLog::where('service_unit_id', $unitId)
+                        ->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])->count(),
+                    'yearly' => BillingLog::where('service_unit_id', $unitId)
+                        ->whereBetween('created_at', [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()])->count(),
                 ]
-            ],
-            [
-                "name" => 'pharmacy',
-                'calender' => [
-                    'daily' => BillingLog::where('service_unit_id', 2)->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->startOfWeek()])->count(),
-                    'monthly' => BillingLog::where('service_unit_id', 2)->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->startOfMonth()])->count(),
-                    'yearly' => BillingLog::where('service_unit_id', 2)->whereBetween('created_at', [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()])->count(),
+            ];
+        })->values()->all();
 
-                ]
-            ],
-            [
-                "name" => "laboratory",
-                'calender' => [
-                    'daily' => BillingLog::where('service_unit_id', 4)->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->startOfWeek()])->count(),
-                    'monthly' => BillingLog::where('service_unit_id', 4)->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->startOfMonth()])->count(),
-                    'yearly' => BillingLog::where('service_unit_id', 4)->whereBetween('created_at', [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()])->count(),
-
-                ]
-            ],
-
-            [
-                "name" => "radiology",
-                'calender' => [
-                    'daily' => BillingLog::where('service_unit_id', 5)->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->startOfWeek()])->count(),
-                    'monthly' => BillingLog::where('service_unit_id', 5)->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->startOfMonth()])->count(),
-                    'yearly' => BillingLog::where('service_unit_id', 5)->whereBetween('created_at', [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()])->count(),
-
-                ]
-            ],
-            [
-                "name" => "consultation",
-                'calender' => [
-                    'daily' => BillingLog::where('service_unit_id', 3)->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->startOfWeek()])->count(),
-                    'monthly' => BillingLog::where('service_unit_id', 3)->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->startOfMonth()])->count(),
-                    'yearly' => BillingLog::where('service_unit_id', 3)->whereBetween('created_at', [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()])->count(),
-
-                ]
-            ],
-
-        ];
-
-
-        // if($validated['filter_calender'] == 'daily' && ){
-
-        // }
-        $data = [
+        // Final data
+        return [
             "pateint" => [
                 "total" => Patient::count(),
-                "admitted_today" => Patient::where("created_at", Carbon::now())->count()
+                "admitted_today" => Patient::whereDate("created_at", Carbon::now()->toDateString())->count()
             ],
             "consultation" => [
                 "total" => Consultation::count(),
                 "missed" => PatientVisit::where('status', 'missed')->count(),
             ],
-
             "finance" => [
                 "total" => BillingLog::where('payment_status', 'paid')->sum('grand_total'),
                 'outstanding' => $outstanding
             ],
-
             "revenue_stat" => $revenue_outcome,
             "department_revenue" => $department_revenue,
-
             "patint_type" => [
                 'new' => $new,
                 'existing' => $existing,
@@ -306,9 +396,8 @@ class ServiceDepartmentService
             ],
             'staff_log' => $depart
         ];
-
-        return $data;
     }
+
 
 
     public function top_drugs()
