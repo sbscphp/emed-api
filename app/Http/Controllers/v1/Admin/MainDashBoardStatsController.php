@@ -45,6 +45,9 @@ class MainDashBoardStatsController extends Controller
         ]);
 
         $validated['filter_calender'] = $validated['filter_calender'] ?? "daily";
+        if (!in_array($validated['filter_calender'], ['daily', 'monthly', 'yearly'])) {
+            throw new \Exception("The selected filter calender is invalid.", 404);
+        }
 
         $data = $this->service_department_service->main_dashboard($validated);
 

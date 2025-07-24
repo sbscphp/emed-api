@@ -321,9 +321,7 @@ class ServiceDepartmentService
             $outstanding += $ans;
         }
 
-        if (!in_array($validated['filter_calender'], ['daily', 'monthly', 'yearly'])) {
-            throw new \Exception("The selected filter calender is invalid.", 404);
-        }
+
 
         $revenue = BillingLog::whereIn('payment_status', ['paid', 'part_paid'])
             ->when($validated['filter_calender'] === 'daily', function ($query) {
