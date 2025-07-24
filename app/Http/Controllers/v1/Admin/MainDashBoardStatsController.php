@@ -44,6 +44,7 @@ class MainDashBoardStatsController extends Controller
             "filter_calender" => 'nullable|string'
         ]);
 
+        dd($validated);
         $validated['filter_calender'] = $validated['filter_calender'] ?? "daily";
         if (!in_array($validated['filter_calender'], ['daily', 'monthly', 'yearly'])) {
             throw new \Exception("The selected filter calender is invalid.", 404);
