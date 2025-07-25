@@ -15,9 +15,11 @@ return new class extends Migration
             $table->decimal('price', 8, 2)->nullable();
         });
 
-        Schema::table('service_unit', function (Blueprint $table) {
-            $table->decimal('price', 8, 2)->nullable();
-        });
+        if (Schema::hasTable('service_units')) {
+            Schema::table('service_units', function (Blueprint $table) {
+                $table->decimal('price', 8, 2)->nullable();
+            });
+        }
     }
 
     /**
@@ -29,8 +31,10 @@ return new class extends Migration
             $table->decimal('price', 8, 2)->nullable();
         });
 
-        Schema::table('service_unit', function (Blueprint $table) {
-            $table->decimal('price', 8, 2)->nullable();
-        });
+        if (Schema::hasTable('service_units')) {
+            Schema::table('service_units', function (Blueprint $table) {
+                $table->dropColumn('price');
+            });
+        }
     }
 };
