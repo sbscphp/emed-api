@@ -11,7 +11,7 @@ class Radiology__Editservice_Request extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
