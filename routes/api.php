@@ -28,8 +28,8 @@ use App\Http\Controllers\v1\Admin\ArtisanController;
 use App\Http\Controllers\v1\Admin\Consultation_Service_Controller;
 use App\Http\Controllers\v1\Admin\ImmunizationController;
 use App\Http\Controllers\v1\Admin\PharmacyServiceController;
-use App\Models\Immunization;
-use App\Http\Controllers\v1\Admin\ConsultationService;
+// use App\Models\Immunization;
+// use App\Http\Controllers\v1\Admin\ConsultationService;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 
