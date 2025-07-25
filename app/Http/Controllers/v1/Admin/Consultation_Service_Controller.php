@@ -14,7 +14,7 @@ use App\Responser\JsonResponser;
 class Consultation_Service_Controller extends Controller
 {
 
-    public function create_service(Consultation_service_request $request)
+    public function create_consultation_service(Consultation_service_request $request)
     {
         try {
             $validated = $request->validated();
@@ -30,7 +30,7 @@ class Consultation_Service_Controller extends Controller
         }
     }
 
-    public function edit_service(Consultation_service_Edit_request $request)
+    public function edit_consultation_service(Consultation_service_Edit_request $request)
     {
         try {
             $validated = $request->validated();
@@ -44,7 +44,7 @@ class Consultation_Service_Controller extends Controller
         }
     }
 
-    public function service(Request $request)
+    public function all_consultation_service(Request $request)
     {
         try {
             $validated = $request->validate([

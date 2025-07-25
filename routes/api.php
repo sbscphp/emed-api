@@ -317,9 +317,9 @@ Route::group(["prefix" => "v1"], function () {
                     Route::put('/editpharmacyservice', [PharmacyServiceController::class, 'editpharmacyservice']);
                     Route::get('/pharmacyService_all', [PharmacyServiceController::class, 'pharmacyService_all']);
 
-                    Route::post('/create_consultation_service', Consultation_Service_Controller::class, "create_service");
-                    Route::put('/edit_consultation_service', Consultation_Service_Controller::class, "edit_service");
-                    Route::get('/all_consultation_service', Consultation_Service_Controller::class, "service");
+                    Route::post('/create_consultation_service', Consultation_Service_Controller::class, "create_consultation_service");
+                    Route::put('/edit_consultation_service', Consultation_Service_Controller::class, "edit_consultation_service");
+                    Route::get('/all_consultation_service', Consultation_Service_Controller::class, "all_consultation_service");
                 });
             });
         });
