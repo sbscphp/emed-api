@@ -11,6 +11,7 @@ class ServiceDepartment extends Model
     protected $table = 'services';
     protected $fillable = [
         'name',
+        'price'
     ];
 
     public function patients()
