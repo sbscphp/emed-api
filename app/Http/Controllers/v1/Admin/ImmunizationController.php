@@ -19,7 +19,9 @@ use App\Models\Consultation_Details_Radiology;
 use App\Models\Consultation_Details_Treatment;
 use App\Models\Dosage_Adminstration;
 use App\Models\Immunization;
+use App\Models\Registartion_Service;
 use App\Models\ServiceDepartment;
+use App\Models\ServiceUnit;
 use App\Responser\JsonResponser;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -100,7 +102,12 @@ class ImmunizationController extends Controller
     {
         try {
             $validated = $request->validated();
-            $data = ServiceDepartment::create($validated);
+            $serviceunit = ServiceUnit::where("name", "Radiology")->first() ?? null;
+            $data = Registartion_Service::create([
+                "service_unit_id" => $serviceunit->id,
+                "name" => $validated['name'],
+                "price" => $validated['price']
+            ]);
             return JsonResponser::send(false, ' created successfully.', $data);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'Error  .', [], 500, $th);
@@ -111,7 +118,7 @@ class ImmunizationController extends Controller
     {
         try {
             $validated = $request->validated();
-            $service = ServiceDepartment::find($validated['id']);
+            $service = Registartion_Service::find($validated['id']);
             if ($service) {
                 $service->update($validated);
                 return JsonResponser::send(false, 'edit successfully.', $service);
@@ -130,7 +137,7 @@ class ImmunizationController extends Controller
             ]);
 
             if (!empty($validated['export'])) {
-                $exportData = ServiceDepartment::all()->toArray();
+                $exportData = Registartion_Service::all()->toArray();
 
                 if ($validated['export'] === 'csv') {
                     return ExportHelper::streamCsv($exportData, null, 'service.csv');
@@ -141,7 +148,7 @@ class ImmunizationController extends Controller
                 }
             }
 
-            $services = ServiceDepartment::when(!empty($validated['search']), function ($query) use ($validated) {
+            $services = Registartion_Service::when(!empty($validated['search']), function ($query) use ($validated) {
                 $search = $validated['search'];
 
                 $query->where(function ($q) use ($search) {
