@@ -1,9 +1,11 @@
 <?php
 
+
+
 namespace App\Http\Controllers\v1\Admin;
 
-use App\Helpers\ExportHelper;
 use App\Http\Controllers\Controller;
+use App\Helpers\ExportHelper;
 use App\Http\Requests\Consultation_service_Edit_request;
 use App\Http\Requests\Consultation_service_request;
 use App\Models\Consultation_service as ModelsConsultation_service;
@@ -11,9 +13,8 @@ use App\Models\ServiceUnit;
 use Illuminate\Http\Request;
 use App\Responser\JsonResponser;
 
-class Consultation_Service_Controller extends Controller
+class Consultation_Service_Bill extends Controller
 {
-
     public function create_consultation_service(Consultation_service_request $request)
     {
         try {

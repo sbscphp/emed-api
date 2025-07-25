@@ -25,11 +25,10 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\v1\Admin\MainDashBoardStatsController;
 // use App\Http\Controllers\v1\Admin\ArtisanController;
 use App\Http\Controllers\v1\Admin\ArtisanController;
-// use App\Http\Controllers\v1\Admin\Consultation_Service_Controller;
+use App\Http\Controllers\v1\Admin\Consultation_Service_Bill;
 use App\Http\Controllers\v1\Admin\ImmunizationController;
 use App\Http\Controllers\v1\Admin\PharmacyServiceController;
 // use App\Models\Immunization;
-// use App\Http\Controllers\v1\Admin\ConsultationService;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 
@@ -317,9 +316,9 @@ Route::group(["prefix" => "v1"], function () {
                     Route::put('/editpharmacyservice', [PharmacyServiceController::class, 'editpharmacyservice']);
                     Route::get('/pharmacyService_all', [PharmacyServiceController::class, 'pharmacyService_all']);
 
-                    // Route::post('/create_consultation_service', Consultation_Service_Controller::class, "create_consultation_service");
-                    // Route::put('/edit_consultation_service', Consultation_Service_Controller::class, "edit_consultation_service");
-                    // Route::get('/all_consultation_service', Consultation_Service_Controller::class, "all_consultation_service");
+                    Route::post('/create_consultation_service', Consultation_Service_Bill::class, "create_consultation_service");
+                    Route::put('/edit_consultation_service', Consultation_Service_Bill::class, "edit_consultation_service");
+                    Route::get('/all_consultation_service', Consultation_Service_Bill::class, "all_consultation_service");
                 });
             });
         });
