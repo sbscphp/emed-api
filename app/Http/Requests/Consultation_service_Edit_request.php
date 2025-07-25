@@ -23,7 +23,7 @@ class Consultation_service_Edit_request extends FormRequest
     {
         return [
             //consultation_services
-            "id" => "required|exists:consultation_services,id",
+            "id" => "required|exists:tenant.consultation_services,id",
             "name" => "required|string",
             "price" => "required|integer"
         ];
