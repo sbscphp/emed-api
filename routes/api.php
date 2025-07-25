@@ -312,8 +312,10 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get("/all_service", [ImmunizationController::class, "service"]);
 
                     Route::post('/createpharmacyservice', [PharmacyServiceController::class, 'createpharmacyservice']);
-                    Route::post('/editpharmacyservice', [PharmacyServiceController::class, 'editpharmacyservice']);
-                    Route::post('/pharmacyService_all', [PharmacyServiceController::class, 'pharmacyService_all']);
+                    Route::put('/editpharmacyservice', [PharmacyServiceController::class, 'editpharmacyservice']);
+                    Route::get('/pharmacyService_all', [PharmacyServiceController::class, 'pharmacyService_all']);
+
+                    // Route::post('/create_consultation_service', PharmacyServiceController::class, "create_consultation_service");
                 });
             });
         });

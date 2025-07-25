@@ -89,7 +89,12 @@ class PharmacyServiceController extends Controller
                         ->orWhere('registration_number', 'LIKE', "%{$search}%");
                 });
             })->paginate(10);
-            return JsonResponser::send(false, 'featch successfully.', $services);
+
+
+            return JsonResponser::send(false, 'featch successfully.', [
+                "data" => $services,
+                "total" => PharmacyService::sum('price')
+            ]);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'Error  .', [], 500, $th);
         }
