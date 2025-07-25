@@ -15,7 +15,7 @@ use App\Helpers\ExportHelper;
 class PharmacyServiceController extends Controller
 {
 
-    function generateUniquePharmacyCode()
+    private  function generateUniquePharmacyCode()
     {
         do {
             $code = rand(10000, 99999);
