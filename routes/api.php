@@ -293,6 +293,10 @@ Route::group(["prefix" => "v1"], function () {
 
                 Route::group(['prefix' => 'patient_consultation_summary'], function () {
                     Route::get('/', [MainDashBoardStatsController::class, "patient_consultation_summary_data"]);
+                    Route::post("/consultation_details", [ImmunizationController::class, "consultation_details"]);
+                    Route::post("/consultation_details_laborartory", [ImmunizationController::class, "consultation_details_laborartory"]);
+                    Route::post("/consultation_detail_radiology", [ImmunizationController::class, "consultation_detail_radiology"]);
+                    Route::post("/consultation_detail_treatment", [ImmunizationController::class, "consultation_detail_treatment"]);
                 });
 
                 Route::group(['prefix' => 'immunization'], function () {
