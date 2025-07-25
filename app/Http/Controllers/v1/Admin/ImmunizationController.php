@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Helpers\ExportHelper;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Consultation__Details__Laborartories_Request;
@@ -125,7 +126,22 @@ class ImmunizationController extends Controller
         try {
             $validated = $request->validate([
                 "search" => "nullable|string",
+                "export" => "nullable|string|in:pdf,csv"
             ]);
+
+            if (!empty($validated['export'])) {
+                $exportData = ServiceDepartment::all()->toArray();
+
+                if ($validated['export'] === 'csv') {
+                    return ExportHelper::streamCsv($exportData, null, 'service.csv');
+                }
+
+                if ($validated['export'] === 'pdf') {
+                    return ExportHelper::downloadPdf($exportData, 'service.pdf');
+                }
+            }
+
+
 
             $services = ServiceDepartment::when(!empty($validated['search']), function ($query) use ($validated) {
                 $search = $validated['search'];
