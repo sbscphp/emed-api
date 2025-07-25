@@ -6,6 +6,7 @@ use App\Enums\ListModuleEnums;
 use App\Helpers\GeneralHelper;
 use App\Models\BillingLog;
 use App\Models\Consultation;
+use App\Models\Laboratory;
 use App\Models\Medication;
 use App\Models\Patient;
 use App\Models\PatientVisit;
@@ -388,6 +389,10 @@ class ServiceDepartmentService
             "finance" => [
                 "total" => BillingLog::where('payment_status', 'paid')->sum('grand_total'),
                 'outstanding' => $outstanding
+            ],
+            "lab" => [
+                "pending" => Laboratory::where('test_status', 'pending')->count(),
+                'completed' => Laboratory::where('test_status', 'completed')->count()
             ],
             "revenue_stat" => $revenue_outcome,
             "department_revenue" => $department_revenue,
