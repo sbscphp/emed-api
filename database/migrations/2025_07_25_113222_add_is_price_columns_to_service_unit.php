@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::table('services', function (Blueprint $table) {
+            $table->decimal('price', 8, 2)->nullable();
+        });
+
         Schema::table('service_unit', function (Blueprint $table) {
-            $table->decimal('price')->nullable();
+            $table->decimal('price', 8, 2)->nullable();
         });
     }
 
@@ -21,8 +25,12 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('services', function (Blueprint $table) {
+            $table->decimal('price', 8, 2)->nullable();
+        });
+
         Schema::table('service_unit', function (Blueprint $table) {
-            $table->decimal('price')->nullable();
+            $table->decimal('price', 8, 2)->nullable();
         });
     }
 };
