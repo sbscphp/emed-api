@@ -11,7 +11,7 @@ use App\Models\ServiceUnit;
 use Illuminate\Http\Request;
 use App\Responser\JsonResponser;
 
-class Consultation_Service extends Controller
+class Consultation_Service_Controller extends Controller
 {
 
     public function create_service(Consultation_service_request $request)
