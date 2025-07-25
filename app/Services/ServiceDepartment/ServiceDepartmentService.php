@@ -324,13 +324,13 @@ class ServiceDepartmentService
 
 
         $revenue = BillingLog::whereIn('payment_status', ['paid', 'part_paid'])
-            ->when($validated['filter_calender'] === 'daily', function ($query) {
+            ->when(!empty($validated['filter_calender'])  && $validated['filter_calender'] === 'daily', function ($query) {
                 $query->whereBetween('created_at', [Carbon::now()->startOfDay(), Carbon::now()->endOfDay()]);
             })
-            ->when($validated['filter_calender'] === 'monthly', function ($query) {
+            ->when(!empty($validated['filter_calender']) && $validated['filter_calender'] === 'monthly', function ($query) {
                 $query->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()]);
             })
-            ->when($validated['filter_calender'] === 'yearly', function ($query) {
+            ->when(!empty($validated['filter_calender']) && $validated['filter_calender'] === 'yearly', function ($query) {
                 $query->whereBetween('created_at', [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()]);
             })
             ->get();
@@ -480,7 +480,7 @@ class ServiceDepartmentService
         }
 
         if (!empty($validated['gender'])) {
-            $patient->where('patient_type', $validated['gender']);
+            $patient->where('gender', $validated['gender']);
         }
 
         if (!empty($validated['start_date']) && !empty($validated['end_date'])) {

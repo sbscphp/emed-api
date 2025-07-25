@@ -34,13 +34,8 @@ class MainDashBoardStatsController extends Controller
 
         try {
             $validated = $request->validate([
-                "filter_calender" => 'nullable|string'
+                "filter_calender" => 'nullable|string|in:daily,monthly,yearly'
             ]);
-
-
-            if (!in_array($validated['filter_calender'], ['daily', 'monthly', 'yearly'])) {
-                throw new \Exception("The selected filter calender is invalid.", 404);
-            }
 
             $data = $this->service_department_service->main_dashboard($validated);
 

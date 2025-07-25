@@ -26,6 +26,7 @@ use App\Http\Controllers\v1\Admin\MainDashBoardStatsController;
 // use App\Http\Controllers\v1\Admin\ArtisanController;
 use App\Http\Controllers\v1\Admin\ArtisanController;
 use App\Http\Controllers\v1\Admin\ImmunizationController;
+use App\Http\Controllers\v1\Admin\PharmacyServiceController;
 use App\Models\Immunization;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
@@ -309,6 +310,10 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post("/create_service",  [ImmunizationController::class, "create_service"]);
                     Route::put("/edit_service",  [ImmunizationController::class, "edit_service"]);
                     Route::get("/all_service", [ImmunizationController::class, "service"]);
+
+                    Route::post('/createpharmacyservice', [PharmacyServiceController::class, 'createpharmacyservice']);
+                    Route::post('/editpharmacyservice', [PharmacyServiceController::class, 'editpharmacyservice']);
+                    Route::post('/pharmacyService_all', [PharmacyServiceController::class, 'pharmacyService_all']);
                 });
             });
         });
