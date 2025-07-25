@@ -308,7 +308,7 @@ Route::group(["prefix" => "v1"], function () {
                 Route::group(['prefix' => 'service'], function () {
                     Route::post("/create_service",  [ImmunizationController::class, "create_service"]);
                     Route::put("/edit_service",  [ImmunizationController::class, "edit_service"]);
-                    Route::get("/all_service", [Immunization::class, "all_service"]);
+                    Route::get("/all_service", [ImmunizationController::class, "service"]);
                 });
             });
         });

@@ -121,7 +121,7 @@ class ImmunizationController extends Controller
         }
     }
 
-    public function all_service(Request $request)
+    public function service(Request $request)
     {
         try {
             $validated = $request->validate([
@@ -140,8 +140,6 @@ class ImmunizationController extends Controller
                     return ExportHelper::downloadPdf($exportData, 'service.pdf');
                 }
             }
-
-
 
             $services = ServiceDepartment::when(!empty($validated['search']), function ($query) use ($validated) {
                 $search = $validated['search'];
