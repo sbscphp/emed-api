@@ -27,6 +27,7 @@ use App\Http\Controllers\v1\Admin\MainDashBoardStatsController;
 use App\Http\Controllers\v1\Admin\ArtisanController;
 use App\Http\Controllers\v1\Admin\Consultation_Service_Bill;
 use App\Http\Controllers\v1\Admin\ImmunizationController;
+use App\Http\Controllers\v1\Admin\Lab_Service_Controller;
 use App\Http\Controllers\v1\Admin\PharmacyServiceController;
 // use App\Models\Immunization;
 use Illuminate\Support\Facades\Route;
@@ -319,6 +320,10 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/create_consultation_service', [Consultation_Service_Bill::class, "create_consultation_service"]);
                     Route::put('/edit_consultation_service', [Consultation_Service_Bill::class, "edit_consultation_service"]);
                     Route::get('/all_consultation_service', [Consultation_Service_Bill::class, "all_consultation_service"]);
+
+                    Route::post('/create_lab_service', [Lab_Service_Controller::class, "create_lab_service"]);
+                    Route::put('/edit_lab_service', [Lab_Service_Controller::class, "edit_lab_service"]);
+                    Route::get('/lab_Service_all', [Lab_Service_Controller::class, "labService_all"]);
                 });
             });
         });
