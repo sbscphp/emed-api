@@ -25,6 +25,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\v1\Admin\MainDashBoardStatsController;
 // use App\Http\Controllers\v1\Admin\ArtisanController;
 use App\Http\Controllers\v1\Admin\ArtisanController;
+use App\Http\Controllers\v1\Notification\NotificationController;
 use App\Http\Controllers\v1\Admin\Consultation_Service_Bill;
 use App\Http\Controllers\v1\Admin\ImmunizationController;
 use App\Http\Controllers\v1\Admin\Lab_Service_Controller;
@@ -330,6 +331,12 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/create_radiology_service', [Radiology_service_Controller::class, "create_radiology_service"]);
                     Route::put('/edit_radiology_service', [Radiology_service_Controller::class, "edit_radiology_service"]);
                     Route::get('/all_radiology_service', [Radiology_service_Controller::class, "all_radiology_service"]);
+                });
+
+                Route::group(['prefix' => 'notifications'], function () {
+                    Route::get('/', [NotificationController::class, "index"]);
+                    Route::put('/mark_read/{id}', [NotificationController::class, 'markAsRead']);
+                    Route::post('/all/mark_read', [NotificationController::class, 'markAllAsRead']);
                 });
             });
         });

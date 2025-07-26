@@ -104,7 +104,7 @@ class User extends Authenticatable implements JWTSubject
 
     public function tenant()
     {
-        return $this->belongsTo(Tenant::class);
+        return $this->belongsTo(Tenant::class, 'tenant_id', 'id');
     }
 
     public function roles(): BelongsToMany

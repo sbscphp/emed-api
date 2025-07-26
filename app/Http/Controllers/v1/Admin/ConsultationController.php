@@ -14,6 +14,7 @@ use App\Models\DrugHistory;
 use App\Models\FamilyHistory;
 use App\Models\MedicalHistory;
 use App\Models\Medicine_Log;
+use App\Models\Notification;
 use App\Models\PatientVisit;
 use App\Models\SocialHistory;
 use App\Models\User;
@@ -315,6 +316,23 @@ class ConsultationController extends Controller
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
+
+            // Create notification
+            $tenant = $currentUser->tenant;
+            $notificationData = [
+                'user_id' => $currentUser->id,
+                'tenant_domain' => $tenant->domain,
+                'title' => 'Medication Order Received',
+                'message' => "A new medication order has been submitted by the doctor following a completed consultation.
+                            Please proceed with the following actions:
+                            Review the prescribed medication(s) and treatment instructions.
+                            Verify correct dosage, check for potential drug interactions, and assess any documented allergies.
+                            Dispense or prepare the medication accordingly for patient administration or pickup.
+                            Your prompt response ensures safe and efficient delivery of care.",
+                'role' => 'Pharmacy',
+            ];
+            Notification::create($notificationData);
+
             DB::connection('tenant')->commit();
             return JsonResponser::send(false, 'Consultation created successfully', ['consultation' => $consultation], 201);
         } catch (\Throwable $th) {

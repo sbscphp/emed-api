@@ -29,6 +29,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\PatientVisitExport;
 use App\Http\Resources\PatientDetailResoures;
 use App\Models\Medicine_Log;
+use App\Models\Notification;
 use App\Models\Patient;
 use App\Models\PatientVisit;
 use App\Models\User;
@@ -142,6 +143,20 @@ class RecordManagementController extends Controller
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
+
+            // Create notification
+            $tenant = $currentUser->tenant;
+            $notificationData = [
+                'user_id' => $currentUser->id,
+                'tenant_domain' => $tenant->domain,
+                'title' => 'Triage Required',
+                'message' => "A newly onboarded patient has been added to the queue and is awaiting immediate clinical attention.
+                                As the assigned nurse, it is your responsibility to initiate the Triage Assessment Workflow without delay to ensure timely and accurate care delivery.
+                                Please proceed to begin the triage process now.",
+                'role' => 'Nurse',
+            ];
+            Notification::create($notificationData);
+
             DB::connection('tenant')->commit();
             return JsonResponser::send(false, 'Patient details created successfully', ['patient' => $patient], 201);
         } catch (\Throwable $th) {
