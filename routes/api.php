@@ -25,6 +25,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\MainDashBoardStatsController;
 // use App\Http\Controllers\v1\Admin\ArtisanController;
 use App\Http\Controllers\v1\Admin\ArtisanController;
+use App\Http\Controllers\v1\Notification\NotificationController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 
@@ -279,6 +280,12 @@ Route::group(["prefix" => "v1"], function () {
                     Route::controller(MainDashBoardStatsController::class)->group(function () {
                         Route::get("/main-page", "index");
                     });
+                });
+
+                Route::group(['prefix' => 'notifications'], function () {
+                    Route::get('/', [NotificationController::class, "index"]);
+                    Route::put('/mark_read/{id}', [NotificationController::class, 'markAsRead']);
+                    Route::post('/all/mark_read', [NotificationController::class, 'markAllAsRead']);
                 });
             });
         });
