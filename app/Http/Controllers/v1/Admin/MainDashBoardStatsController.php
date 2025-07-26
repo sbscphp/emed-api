@@ -57,6 +57,17 @@ class MainDashBoardStatsController extends Controller
     }
 
 
+    public function patient_diagnosis()
+    {
+        try {
+            $data = $this->service_department_service->patient_diagnosis();
+            return JsonResponser::send(false, ' fetched successfully.', $data);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Error fetching  .', [], 500, $e);
+        }
+    }
+
+
     public function recent_patient(Request $request)
     {
         try {
