@@ -120,12 +120,22 @@ class AuditLogService
                     ->orWhere('log_name', 'LIKE', '%' . $search . '%')
                     ->orWhere('module_accessed', 'LIKE', '%' . $search . '%')
                     ->orWhere('action', 'LIKE', '%' . $search . '%')
+
                     ->orWhereHas('causer', function ($q2) use ($search) {
-                        $q2->where('fullname', 'LIKE', '%' . $search . '%');
+                        $q2->where('fullname', 'LIKE', '%' . $search . '%')
+                            ->orWhere('id',  intval($search));
                     });
             });
         }
 
+
+        if (!empty($validated['module_accessed'])) {
+            $query->where('module_accessed', $validated['module_accessed']);
+        }
+
+        if (!empty($validated['action'])) {
+            $query->where('action', $validated['action']);
+        }
 
 
         if (!empty($validated['start_date']) && !empty($validated['end_date'])) {

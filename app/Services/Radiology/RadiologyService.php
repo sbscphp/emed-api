@@ -2,6 +2,7 @@
 
 namespace App\Services\Radiology;
 
+use App\Models\BillingLog;
 use App\Models\Radiology;
 use App\Repositories\Radiology\RadiologyInterface;
 use Carbon\Carbon;
@@ -99,7 +100,7 @@ class RadiologyService
     public function radiology_list($validated)
     {
 
-        $radiology = Radiology::with(['patient.visits_recent.billingLogsForPatient', 'pharmacist'])
+        $radiology = Radiology::with(['patient.patient_visits.billingLogsForPatient', 'consulted_by'])
             ->when(!empty($validated['search']), function ($query) use ($validated) {
                 $query->where("test_name", $validated['search'])
                     ->whereHas('patient', function ($q1) use ($validated) {
@@ -107,7 +108,7 @@ class RadiologyService
                             ->orWhere('lastname', $validated['search'])
                             ->orWhere('patientno', $validated['search']);
                     })
-                    ->orWhereHas('patient.visits_recent.billingLogsForPatient', function ($query) use ($validated) {
+                    ->orWhereHas('patient.patient_visits.billingLogsForPatient', function ($query) use ($validated) {
                         // payment_status
                         $query->where('payment_status', $validated['search']);
                     });
@@ -130,11 +131,24 @@ class RadiologyService
         }
 
         if (!empty($validated['payment_status'])) {
-            $radiology->whereHas('patient.visits_recent.billingLogsForPatient', function ($q1) use ($validated) {
+            $radiology->whereHas('patient.patient_visits.billingLogsForPatient', function ($q1) use ($validated) {
                 $q1->where("payment_status", $validated["payment_status"]);
             });
         }
-        $radiology->paginate(10);
+
+        $today = Radiology::whereDate('created_at', Carbon::today())
+            ->distinct('patient_id')
+            ->count('patient_id');
+        $tested_today = Radiology::whereDate('created_at', Carbon::today())
+            ->count();
+        return [
+            "today" => $today,
+            'data' => $radiology->paginate(10),
+            'tested_today' => $tested_today,
+            'payment_confirm' => BillingLog::where('service_unit_id', 5)->count()
+
+        ];
+        // return   $radiology->paginate(10);
     }
 
 
@@ -183,6 +197,6 @@ class RadiologyService
         }
 
 
-        $radiology->paginate(10);
+        return   $radiology->paginate(10);
     }
 }

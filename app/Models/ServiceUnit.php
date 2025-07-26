@@ -11,7 +11,7 @@ class ServiceUnit extends Model
     protected $connection = 'tenant';
     protected $guarded = ['id'];
 
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'price'];
 
     public function billingLogs()
     {

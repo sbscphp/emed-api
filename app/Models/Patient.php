@@ -41,6 +41,8 @@ class Patient extends Model
         'patientno'
     ];
 
+
+
     public function service()
     {
         return $this->belongsTo(ServiceDepartment::class, 'service_id');
@@ -67,6 +69,15 @@ class Patient extends Model
         return $this->hasOne(PatientVisit::class, 'visitno', 'visitno')->latest();
     }
 
+    public function  patient_visits()
+    {
+        return $this->hasOne(PatientVisit::class, 'patient_id', 'id');
+    }
+
+    public function  patient_visits_latest()
+    {
+        return $this->hasOne(PatientVisit::class, 'patient_id', 'id')->latest();
+    }
     public function appointments()
     {
         return $this->hasMany(Appointment::class);
@@ -127,5 +138,10 @@ class Patient extends Model
     public function pharmacy()
     {
         return $this->hasOne(Pharmacy::class, 'patient_id', 'id');
+    }
+
+    public function radiology()
+    {
+        return $this->hasOne(Radiology::class, 'patient_id', 'id');
     }
 }

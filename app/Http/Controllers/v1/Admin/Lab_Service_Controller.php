@@ -1,0 +1,91 @@
+<?php
+
+namespace App\Http\Controllers\v1\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Lab_Edit_Service_Request;
+use App\Http\Requests\Lab_Service_Request;
+use App\Models\Lab_service;
+use App\Models\ServiceUnit;
+use Illuminate\Http\Request;
+use App\Responser\JsonResponser;
+use App\Helpers\ExportHelper;
+
+class Lab_Service_Controller extends Controller
+{
+
+    public function create_lab_service(Lab_Service_Request $request)
+    {
+        try {
+            $validated = $request->validated();
+            $serviceunit = ServiceUnit::where("name", "Laboratory")->first() ?? null;
+            $data = Lab_service::create([
+                "service_unit_id" => $serviceunit->id,
+                "name" => $validated['name'],
+                "price" => $validated['price'],
+                "class" => $validated['class']
+            ]);
+            return JsonResponser::send(false, ' created successfully.', $data);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'Error  .', [], 500, $th);
+        }
+    }
+
+
+
+    public function edit_lab_service(Lab_Edit_Service_Request $request)
+    {
+        try {
+            $validated = $request->validated();
+            $service = Lab_service::find($validated['id']);
+            if ($service) {
+                $service->update($validated);
+                return JsonResponser::send(false, 'edit successfully.', $service);
+            }
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'Error  .', [], 500, $th);
+        }
+    }
+
+
+
+    public function labService_all(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                "search" => "nullable|string",
+                "export" => "nullable|string|in:pdf,csv"
+            ]);
+
+            if (!empty($validated['export'])) {
+                $exportData = Lab_service::all()->toArray();
+
+                if ($validated['export'] === 'csv') {
+                    return ExportHelper::streamCsv($exportData, null, 'service.csv');
+                }
+
+                if ($validated['export'] === 'pdf') {
+                    return ExportHelper::downloadPdf($exportData, 'service.pdf');
+                }
+            }
+
+            $services = Lab_service::when(!empty($validated['search']), function ($query) use ($validated) {
+                $search = $validated['search'];
+
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%{$search}%")
+                        ->orWhere('class', 'LIKE', "%{$search}%")
+                        ->orWhere('price', 'LIKE', "%{$search}%");
+                });
+            })->paginate(10);
+
+
+            return JsonResponser::send(false, 'featch successfully.', [
+                "data" => $services,
+                "total" => Lab_service::sum('price')
+            ]);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'Error  .', [], 500, $th);
+        }
+    }
+}

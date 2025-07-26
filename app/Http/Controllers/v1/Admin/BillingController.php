@@ -35,10 +35,12 @@ use App\Models\Consultation;
 use App\Models\Laboratory;
 use App\Models\Medication;
 use App\Models\Patient;
+use App\Models\PatientVisit;
 use App\Models\Pharmacy;
 use App\Models\Radiology;
 use App\Models\ServiceDepartment;
 use App\Models\ServiceUnit;
+use App\Models\Treatment;
 
 class BillingController extends Controller
 {
@@ -613,6 +615,7 @@ class BillingController extends Controller
                 'search' => 'nullable|string',
                 'start_date' => "nullable|string",
                 'end_date' => "nullable|string",
+                'service_type' => "nullable|string",
                 'paid_type' => 'nullable|string|in:paid,part_paid,pending'
             ]);
 
@@ -842,6 +845,38 @@ class BillingController extends Controller
             $stats = $this->billingService->getStatistics();
 
             return JsonResponser::send(false, 'Billing stats fetched successfully.', $stats);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Error fetching billing stats.', [], 500, $e);
+        }
+    }
+
+    public function payment_billing_daft(Request $request)
+    {
+        try {
+            $validated =  $request->validate([
+                'patient_visits_id' => "nullable|numeric"
+            ]);
+
+            $arr = [];
+
+            $data = PatientVisit::find(intval($validated['patient_visits_id']));
+
+            if ($data) {
+                $consultation = Consultation::where('visitno', $data->visitno)->first();
+                $radiology = Radiology::where('visitno', $data->visitno)->first();
+                $treatment = $consultation ? Treatment::where('consultation_id', $consultation->id)->first() : null;
+                $billingLogsForPatient = BillingLog::where('visit_id', $data->id)->first();
+
+                $arr[] = [
+                    'Patientvisit' => $data,
+                    'consultation' => $consultation,
+                    'radiology' => $radiology,
+                    'treatment' => $treatment,
+                    'billing' => $billingLogsForPatient,
+                ];
+            }
+
+            return JsonResponser::send(false, 'Billing stats fetched successfully.', $arr);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Error fetching billing stats.', [], 500, $e);
         }

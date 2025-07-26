@@ -328,6 +328,7 @@ class UserController extends Controller
                 '--path' => $validated['path'],
                 '--force' => true,
             ]);
+            return response()->json(['success' => 'successful migrations']);
         } else if ($validated['type'] == 'tenant') {
             foreach ($tenants as  $tenant) {
                 $tenantDb = $tenant->database;

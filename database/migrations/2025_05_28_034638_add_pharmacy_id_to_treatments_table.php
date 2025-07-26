@@ -9,20 +9,20 @@ return new class extends Migration
     public function up()
     {
         Schema::connection('tenant')->table('patient_visit_treatment', function (Blueprint $table) {
-            $table->unsignedBigInteger('pharmacy_id')->nullable()->after('consultation_id');
+            // $table->unsignedBigInteger('pharmacy_id')->nullable()->after('consultation_id');
 
-            $table->foreign('pharmacy_id')
-                ->references('id')
-                ->on('pharmacies')
-                ->onDelete('set null');
+            // $table->foreign('pharmacy_id')
+            //     ->references('id')
+            //     ->on('pharmacies')
+            //     ->onDelete('set null');
         });
     }
 
     public function down()
     {
         Schema::connection('tenant')->table('patient_visit_treatment', function (Blueprint $table) {
-            $table->dropForeign(['pharmacy_id']);
-            $table->dropColumn('pharmacy_id');
+            // $table->dropForeign(['pharmacy_id']);
+            // $table->dropColumn('pharmacy_id');
         });
     }
 };

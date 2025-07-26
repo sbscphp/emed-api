@@ -5,14 +5,20 @@ namespace App\Services\BillingLog;
 use App\Enums\PatientVisitStageEnums;
 use App\Models\BillingLog;
 use App\Models\Consultation;
+use App\Models\Consultation_service;
+use App\Models\Lab_service;
 use App\Models\Laboratory;
 use App\Models\Medication;
 use App\Models\Medicine_Log;
 use App\Models\Patient;
 use App\Models\PatientVisit;
 use App\Models\Pharmacy;
+use App\Models\PharmacyService;
 use App\Models\Radiology;
+use App\Models\Radiology_Service;
+use App\Models\Registartion_Service;
 use App\Models\ServiceDepartment;
+use App\Models\ServiceUnit;
 use App\Models\User;
 use App\Repositories\BillingLog\BillingLogRepositoryInterface;
 use Carbon\Carbon;
@@ -382,6 +388,11 @@ class BillingLogService
             $billingLog->where("payment_status", $validated['paid_type']);
         }
 
+        if (!empty($validated['service_type'])) {
+            $billingLog->whereHas('serviceType', function ($q) use ($validated) {
+                $q->where('name', $validated['service_type']);
+            });
+        }
 
         if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
             $startDate = $validated['start_date'];
@@ -397,11 +408,11 @@ class BillingLogService
     {
 
         $data = [
-            ["name" => "registration", "total" => Patient::count()],
-            ["name" => "pharmacy", "total" => Pharmacy::count()],
-            ["name" => "laboratory", "total" => Laboratory::count()],
-            ["name" => "Radiology", "total" => Radiology::count()],
-            ["name" => "Consultation", "total" => Consultation::count()]
+            ["name" => "registration", "total" => Registartion_Service::count()],
+            ["name" => "pharmacy", "total" => PharmacyService::count()],
+            ["name" => "laboratory", "total" => Lab_service::count()],
+            ["name" => "Radiology", "total" => Radiology_Service::count()],
+            ["name" => "Consultation", "total" => Consultation_service::count()]
         ];
 
         return $data;
@@ -584,11 +595,23 @@ class BillingLogService
         }
 
 
+        $services = ServiceUnit::all();
+        $depart = [];
+        foreach ($services as $service) {
+            $count = BillingLog::where('service_unit_id', intval($service->id))->count();
+            $depart[] = [
+                'name' => $service->name,
+                'count' => $count
+            ];
+        }
+
+
         return [
             'total_revenue' => (clone $query)->sum('grand_total'),
             'pending_payment' => (clone $query)->where('payment_status', 'pending')->sum('grand_total'),
             'completed_payment' => (clone $query)->where('payment_status', 'paid')->sum('grand_total'),
             'insurance_claimed' => (clone $query)->where('payment_method', 'insurance')->count(),
+            "dynamic" => $depart,
             "registration" => [
                 'total' => BillingLog::where('service_unit_id', 1)->count(),
                 "amount" => BillingLog::where('service_unit_id', 1)->pluck('grand_total')->sum()

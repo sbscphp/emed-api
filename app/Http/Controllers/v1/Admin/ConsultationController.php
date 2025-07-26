@@ -416,7 +416,7 @@ class ConsultationController extends Controller
 
             //Check if investigation is radiology or both
             if (!in_array($consultation->investigation, ['radiology', 'both'])) {
-                return JsonResponser::send(true, 'Action forbidden.', null, 403);
+                return JsonResponser::send(true, 'patient is in laboratory.', null, 200);
             }
 
             $data = [
@@ -486,7 +486,7 @@ class ConsultationController extends Controller
                     'duration' => $med['duration'],
                     'route' => $med['route'],
                     'remark' => $med['remark'],
-                    'pharmacy_id' => $med['pharmacy_id'] ?? null,
+                    //'pharmacy_id' => $med['pharmacy_id'] ?? null,
                 ];
                 $treatment = $this->treatmentService->create($data);
 
@@ -499,11 +499,24 @@ class ConsultationController extends Controller
                 if ($medicine_Log) {
                     $medicine_Log->update([
                         'medication_id' => $med['drug_id'],
-                        'pharmacy_id' => $med['pharmacy_id'],
+                        'pharmacy_id' => $med['pharmacy_id'] ?? null,
                         'presscribed_drug' => $med['drug'],
                         'patient_status' => PatientVisitStageEnums::TREATMENT,
                         'status' => 'Fulfilled',
                         'action' => null
+                    ]);
+                } else {
+
+                    Medicine_Log::create([
+                        'patient_id' => $consultation->patient_id,
+                        'medication_id' => $med['drug_id'],
+                        'pharmacy_id' => $med['pharmacy_id'] ?? null,
+                        'presscribed_drug' => $med['drug'],
+                        'patient_status' => PatientVisitStageEnums::TREATMENT,
+                        'status' => 'Fulfilled',
+                        'action' => null,
+                        'visitno' => $consultation->visitno,
+                        'arrival_date' => now()
                     ]);
                 }
             }

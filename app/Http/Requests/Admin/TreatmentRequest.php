@@ -34,11 +34,11 @@ class TreatmentRequest extends FormRequest
             'medications.*.duration' => 'required|string',
             'medications.*.route' => 'nullable|string',
             'medications.*.remark' => 'nullable|string',
-            'medications.*.pharmacy_id' => [
-                'required',
-                'integer',
-                Rule::exists('tenant.pharmacies', 'id'),
-            ],
+            // 'medications.*.pharmacy_id' => [
+            //     'required',
+            //     'integer',
+            //     Rule::exists('tenant.pharmacies', 'id'),
+            // ],
         ];
     }
 

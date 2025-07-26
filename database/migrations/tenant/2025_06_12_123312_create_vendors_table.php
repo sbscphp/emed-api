@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('address')->nullable();
             $table->string('registration_no')->nullable();
             $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->enum('category', ['Equipment', 'Pharmacy Supply', 'Consumables', 'Stationary'])->nullable();
             $table->timestamps();
         });
     }

@@ -22,10 +22,16 @@ use App\Http\Controllers\v1\Admin\VendorController;
 use App\Http\Controllers\v1\Auth\ForgotPasswordController;
 use App\Http\Controllers\v1\Auth\LoginController;
 use Illuminate\Http\Request;
-use App\Http\Controllers\MainDashBoardStatsController;
+use App\Http\Controllers\v1\Admin\MainDashBoardStatsController;
 // use App\Http\Controllers\v1\Admin\ArtisanController;
 use App\Http\Controllers\v1\Admin\ArtisanController;
 use App\Http\Controllers\v1\Notification\NotificationController;
+use App\Http\Controllers\v1\Admin\Consultation_Service_Bill;
+use App\Http\Controllers\v1\Admin\ImmunizationController;
+use App\Http\Controllers\v1\Admin\Lab_Service_Controller;
+use App\Http\Controllers\v1\Admin\PharmacyServiceController;
+use App\Http\Controllers\v1\Admin\Radiology_service_Controller;
+// use App\Models\Immunization;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 
@@ -173,7 +179,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/lists', [InventoryController::class, 'index']);
                     Route::get('/{id}', [InventoryController::class, 'show']);
                     Route::post('/', [InventoryController::class, 'store']);
-                    Route::delete('/delete/{id}', [InventoryController::class, 'delete']);
+                    Route::delete('/delete/{id}', [InventoryController::class, 'destroy']);
                     Route::put('/update/{id}', [InventoryController::class, 'update']);
                     Route::get('/dashboard/stats', [InventoryController::class, 'getInventoryStats']);
                 });
@@ -258,6 +264,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get("laboratory_list", [BillingController::class, "laboratory_list"]);
                     Route::get("radiology_list", [BillingController::class, "radiology_list"]);
                     Route::get("payment_daft", [BillingController::class, "payment_daft"]);
+                    Route::get("/payment_daft", [BillingController::class, 'payment_billing_daft']);
                 });
 
                 Route::group(['prefix' => 'billingmgt'], function () {
@@ -274,12 +281,56 @@ Route::group(["prefix" => "v1"], function () {
                 Route::group(['prefix' => 'radiology'], function () {
                     Route::get('/', [RadiologyController::class, "index"]);
                     Route::get('/patient', [RadiologyController::class, "patient"]);
+                    Route::post('/radiology_examination', [RadiologyController::class, 'radiology_examination']);
+                    Route::get('/radiology_examination', [RadiologyController::class, 'radiology_examination_get']);
                 });
 
                 Route::group(['prefix' => 'main-stats'], function () {
-                    Route::controller(MainDashBoardStatsController::class)->group(function () {
-                        Route::get("/main-page", "index");
-                    });
+                    Route::get("/main-page", [MainDashBoardStatsController::class, "index"]);
+                    Route::get("/top_drugs", [MainDashBoardStatsController::class, "top_drugs"]);
+                    Route::get("/patient_diagnosis", [MainDashBoardStatsController::class, "patient_diagnosis"]);
+                    Route::get("/recent_patient",   [MainDashBoardStatsController::class, "recent_patient"]);
+                    Route::get("/yearly_patient",   [MainDashBoardStatsController::class, "yearly_patient"]);
+                    Route::get("/patient_age_gender", [MainDashBoardStatsController::class, "patient_age_gender"]);
+                    Route::get('appointment', [MainDashBoardStatsController::class, "appointment"]);
+                    Route::get('lab_test_year', [MainDashBoardStatsController::class, "lab_test_year"]);
+                });
+
+
+                Route::group(['prefix' => 'patient_consultation_summary'], function () {
+                    Route::get('/', [MainDashBoardStatsController::class, "patient_consultation_summary_data"]);
+                    Route::post("/consultation_details", [ImmunizationController::class, "consultation_details"]);
+                    Route::post("/consultation_details_laborartory", [ImmunizationController::class, "consultation_details_laborartory"]);
+                    Route::post("/consultation_detail_radiology", [ImmunizationController::class, "consultation_detail_radiology"]);
+                    Route::post("/consultation_detail_treatment", [ImmunizationController::class, "consultation_detail_treatment"]);
+                });
+
+                Route::group(['prefix' => 'immunization'], function () {
+                    Route::post("/create_immunization",  [ImmunizationController::class, "create_immunization"]);
+                    Route::post("/dosage_admin", [ImmunizationController::class, "dosage_admin"]);
+                });
+
+                Route::group(['prefix' => 'service'], function () {
+                    Route::post("/create_service",  [ImmunizationController::class, "create_service"]);
+                    Route::put("/edit_service",  [ImmunizationController::class, "edit_service"]);
+                    Route::get("/all_service", [ImmunizationController::class, "service"]);
+
+                    Route::post('/createpharmacyservice', [PharmacyServiceController::class, 'createpharmacyservice']);
+                    Route::put('/editpharmacyservice', [PharmacyServiceController::class, 'editpharmacyservice']);
+                    Route::get('/pharmacyService_all', [PharmacyServiceController::class, 'pharmacyService_all']);
+
+                    Route::post('/create_consultation_service', [Consultation_Service_Bill::class, "create_consultation_service"]);
+                    Route::put('/edit_consultation_service', [Consultation_Service_Bill::class, "edit_consultation_service"]);
+                    Route::get('/all_consultation_service', [Consultation_Service_Bill::class, "all_consultation_service"]);
+
+                    Route::post('/create_lab_service', [Lab_Service_Controller::class, "create_lab_service"]);
+                    Route::put('/edit_lab_service', [Lab_Service_Controller::class, "edit_lab_service"]);
+                    Route::get('/lab_Service_all', [Lab_Service_Controller::class, "labService_all"]);
+
+
+                    Route::post('/create_radiology_service', [Radiology_service_Controller::class, "create_radiology_service"]);
+                    Route::put('/edit_radiology_service', [Radiology_service_Controller::class, "edit_radiology_service"]);
+                    Route::get('/all_radiology_service', [Radiology_service_Controller::class, "all_radiology_service"]);
                 });
 
                 Route::group(['prefix' => 'notifications'], function () {

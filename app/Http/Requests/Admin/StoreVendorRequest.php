@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
+
 class StoreVendorRequest extends FormRequest
 {
     /**
@@ -29,6 +30,7 @@ class StoreVendorRequest extends FormRequest
             'address'          => 'nullable|string|max:500',
             'registration_no'  => 'nullable|string|max:100',
             'status'           => 'required|in:Active,Inactive',
+            'category'          => 'required|in:Equipment, Pharmacy Supply, Consumables, Stationary'
         ];
     }
 }

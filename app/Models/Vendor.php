@@ -17,5 +17,6 @@ class Vendor extends Model
         'address',
         'registration_no',
         'status',
+        'category'
     ];
 }
