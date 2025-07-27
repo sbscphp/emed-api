@@ -43,6 +43,7 @@ use App\Models\ServiceDepartment;
 use App\Models\ServiceUnit;
 use App\Models\Treatment;
 use PhpOffice\PhpSpreadsheet\Calculation\Web\Service;
+use App\Repositories\BillingLog\BillingLogRepositoryInterface;
 
 class BillingController extends Controller
 {
