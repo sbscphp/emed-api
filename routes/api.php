@@ -263,7 +263,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get("consultation_list", [BillingController::class, "consultation_list"]);
                     Route::get("laboratory_list", [BillingController::class, "laboratory_list"]);
                     Route::get("radiology_list", [BillingController::class, "radiology_list"]);
-                    Route::get("payment_daft", [BillingController::class, "payment_daft"]);
+                    // Route::get("payment_daft", [BillingController::class, "payment_daft"]);
                     Route::get("/payment_daft", [BillingController::class, 'payment_billing_daft']);
                 });
 
