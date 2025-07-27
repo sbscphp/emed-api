@@ -884,7 +884,7 @@ class BillingController extends Controller
 
             return JsonResponser::send(false, 'Billing stats fetched successfully.', $arr);
         } catch (\Exception $e) {
-            return JsonResponser::send(true, 'Error fetching billing stats.', [], 500, $e);
+            return JsonResponser::send(true, 'Error fetching .', [], 500, $e);
         }
     }
 }
