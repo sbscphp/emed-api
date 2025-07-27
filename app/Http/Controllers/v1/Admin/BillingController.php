@@ -860,10 +860,10 @@ class BillingController extends Controller
 
             $arr = [];
 
-            $data = PatientVisit::where('visitno', $validated['visitno']);
+            $data = PatientVisit::where('visitno', $validated['visitno'])->first();
 
             if ($data) {
-                $consultation = Consultation::where('visitno', $data->visitno)->first();
+                $consultation = $data ? Consultation::where('visitno', $data->visitno)->first() : null;
                 $radiology = Radiology::where('visitno', $data->visitno)->first();
                 $treatment = $consultation ? Treatment::where('consultation_id', $consultation->id)->first() : null;
                 $billingLogsForPatient = BillingLog::where('visit_id', $data->id)->first();
