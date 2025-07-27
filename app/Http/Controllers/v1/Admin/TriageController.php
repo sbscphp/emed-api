@@ -8,6 +8,7 @@ use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\TriageRequest;
 use App\Models\Medicine_Log;
+use App\Models\Notification;
 use App\Responser\JsonResponser;
 use App\Services\Patient\PatientService;
 use App\Services\PatientVisit\PatientVisitService;
@@ -84,6 +85,22 @@ class TriageController extends Controller
                 'module_accessed' => ListModuleEnums::Records
 
             ]);
+
+            // Create notification
+            $tenant = $currentUser->tenant;
+            $notificationData = [
+                'user_id' => $currentUser->id,
+                'tenant_domain' => $tenant->domain,
+                'title' => 'New Patient Case Assigned',
+                'message' => "Triage for the assigned patient has been successfully completed.
+                            You are now expected to proceed with the next clinical step. The following information is available for your review:
+                            Recorded vital signs
+                            Reported symptoms
+                            Triage clinical notes
+                            Kindly access the patient’s file to begin consultation.",
+                'role' => 'Consultant',
+            ];
+            Notification::create($notificationData);
 
             DB::connection('tenant')->commit();
             return JsonResponser::send(false, 'Triage recorded successfully', $triage, 201);
