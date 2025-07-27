@@ -34,7 +34,10 @@ class MainDashBoardStatsController extends Controller
 
         try {
             $validated = $request->validate([
-                "filter_calender" => 'nullable|string|in:daily,monthly,yearly'
+                "filter_calender" => 'nullable|string|in:daily,monthly,yearly',
+                // state_date, end_date
+                "state_date" => "nullable|date",
+                "end_date" => "nullable|date",
             ]);
 
             $data = $this->service_department_service->main_dashboard($validated);

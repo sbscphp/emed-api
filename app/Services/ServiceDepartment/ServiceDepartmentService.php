@@ -333,6 +333,9 @@ class ServiceDepartmentService
             })
             ->when(!empty($validated['filter_calender']) && $validated['filter_calender'] === 'yearly', function ($query) {
                 $query->whereBetween('created_at', [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()]);
+            })->when(!empty($validated['state_date']) && !empty($validated['end_date']), function ($query) use ($validated) {
+                // state_date, end_date
+                $query->whereBetween('created_at', [Carbon::parse($validated['state_data']), Carbon::parse($validated['end_data'])]);
             })
             ->get();
 

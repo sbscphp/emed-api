@@ -178,6 +178,7 @@ class RecordManagementController extends Controller
                 'patient_type' => $request->patient_type ?? $patientInfo->patient_type,
                 'marital_status' => $request->marital_status ?? $patientInfo->marital_status,
                 'phoneno' => $request->phoneno ?? $patientInfo->phoneno,
+                'dob' => $request->dob ?? $patientInfo->dob,
                 'occupation' => $request->occupation ?? $patientInfo->occupation,
                 'homeaddress' => $request->homeaddress ?? $patientInfo->homeaddress,
                 'stateoforigin' => $request->stateoforigin ?? $patientInfo->stateoforigin,
