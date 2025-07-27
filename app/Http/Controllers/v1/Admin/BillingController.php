@@ -49,12 +49,13 @@ class BillingController extends Controller
     protected $billingService;
     protected $userService;
     protected $serviceFetch;
-
-    public function __construct(BillingLogService $billingService, UserService $userService,  ServiceDepartmentService $serviceFetch)
+    protected $repo;
+    public function __construct(BillingLogService $billingService, UserService $userService,  ServiceDepartmentService $serviceFetch, BillingLogRepositoryInterface $repo)
     {
         $this->billingService = $billingService;
         $this->userService = $userService;
         $this->serviceFetch = $serviceFetch;
+        $this->repo = $repo;
     }
 
     public function index(Request $request)
@@ -191,13 +192,26 @@ class BillingController extends Controller
         }
     }
 
+    private function generateInvoiceNumber()
+    {
+        $lastBilling = $this->repo->getLatest();
 
+        if ($lastBilling && $lastBilling->invoice_number) {
+            $lastNumber = (int) str_replace('INV-', '', $lastBilling->invoice_number);
+            $nextNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+        } else {
+            $nextNumber = '0001';
+        }
+
+        return 'INV-' . $nextNumber;
+    }
     public function save_as_daft(BillingDaftRequest $request)
     {
         try {
             DB::connection('tenant')->beginTransaction();
             $validated = $request->validated();
             $validated['payment_status'] = 'pending';
+            $validated['invoice_number'] = $this->generateInvoiceNumber();
             $billing = BillingLog::create($validated);
             DB::connection('tenant')->commit();
             return JsonResponser::send(false, 'Billing record created successfully', $billing, 201);
