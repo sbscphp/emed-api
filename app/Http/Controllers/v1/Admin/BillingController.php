@@ -41,6 +41,7 @@ use App\Models\Radiology;
 use App\Models\ServiceDepartment;
 use App\Models\ServiceUnit;
 use App\Models\Treatment;
+use PhpOffice\PhpSpreadsheet\Calculation\Web\Service;
 
 class BillingController extends Controller
 {
@@ -854,25 +855,30 @@ class BillingController extends Controller
     {
         try {
             $validated =  $request->validate([
-                'patient_visits_id' => "nullable|numeric"
+                'visitno' => "nullable|string"
             ]);
 
             $arr = [];
 
-            $data = PatientVisit::find(intval($validated['patient_visits_id']));
+            $data = PatientVisit::where('visitno', $validated['visitno']);
 
             if ($data) {
                 $consultation = Consultation::where('visitno', $data->visitno)->first();
                 $radiology = Radiology::where('visitno', $data->visitno)->first();
                 $treatment = $consultation ? Treatment::where('consultation_id', $consultation->id)->first() : null;
                 $billingLogsForPatient = BillingLog::where('visit_id', $data->id)->first();
-
+                $patient = $data ? Patient::find($data->patient_id) : null;
+                $service =  $billingLogsForPatient ? ServiceDepartment::find($billingLogsForPatient->service_type_id) : null;
+                $serviceunit  = $billingLogsForPatient ? ServiceUnit::find($billingLogsForPatient->service_unit_id) : null;
                 $arr[] = [
+                    "patient" => $patient,
                     'Patientvisit' => $data,
                     'consultation' => $consultation,
                     'radiology' => $radiology,
                     'treatment' => $treatment,
                     'billing' => $billingLogsForPatient,
+                    'service' => $service,
+                    'serviceunit' => $serviceunit
                 ];
             }
 
