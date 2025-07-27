@@ -22,7 +22,8 @@ class BillingDaftRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'visit_id'         => 'required|exists:tenant.patient_visits,id|unique:tenant.billing_logs,visit_id',
+            'id' => "required|exist:tenant.billing_logs,id",
+            'visit_id'         => 'required|exists:tenant.patient_visits,id|exist:tenant.billing_logs,visit_id',
             'patient_id'       => 'required|exists:tenant.patients,id',
             'patient_name' => 'required|string',
             'billing_date' => 'required|date',
@@ -31,7 +32,7 @@ class BillingDaftRequest extends FormRequest
             'item_name' => 'required|string',
             'unit_price' => 'required|numeric',
             'quantity' => 'required|integer|min:1',
-            // 'payment_status' => 'required|in:paid,part_paid,pending',
+            'payment_status' => 'required|in:paid,part_paid,pending',
             'deposit_amount' => 'nullable|numeric',
             'payment_method' => 'nullable|in:bank_transfer,credit_card,cash,pos,insurance',
             'sub_total' => 'required|numeric',

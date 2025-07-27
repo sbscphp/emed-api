@@ -212,10 +212,14 @@ class BillingController extends Controller
             DB::connection('tenant')->beginTransaction();
             $validated = $request->validated();
             $validated['payment_status'] = 'pending';
-            $validated['invoice_number'] = $this->generateInvoiceNumber();
-            $billing = BillingLog::create($validated);
+            // $validated['invoice_number'] = $this->generateInvoiceNumber();
+            $bill =   BillingLog::find(intval($validated['id']));
+            if ($bill) {
+                $bill->update($validated);
+            }
+            //$billing = BillingLog::create($validated);
             DB::connection('tenant')->commit();
-            return JsonResponser::send(false, 'Billing record created successfully', $billing, 201);
+            return JsonResponser::send(false, 'Billing record created successfully', $bill, 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Internal server error', [], 500, $th);

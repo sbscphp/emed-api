@@ -194,7 +194,7 @@ class RecordManagementController extends Controller
                 'marital_status' => $request->marital_status ?? $patientInfo->marital_status,
                 'phoneno' => $request->phoneno ?? $patientInfo->phoneno,
                 'dob' => $request->dob ?? $patientInfo->dob,
-                "age" =>  Carbon::parse($request->dob)->year ?? $patientInfo->age,
+                "age" =>  $request->dob ? Carbon::parse($request->dob)->age : $patientInfo->age,
                 'occupation' => $request->occupation ?? $patientInfo->occupation,
                 'homeaddress' => $request->homeaddress ?? $patientInfo->homeaddress,
                 'stateoforigin' => $request->stateoforigin ?? $patientInfo->stateoforigin,
