@@ -887,7 +887,7 @@ class BillingController extends Controller
                 $patient = $data ? Patient::find($data->patient_id) : null;
                 $service =  $billingLogsForPatient ? ServiceDepartment::find($billingLogsForPatient->service_type_id) : null;
                 $serviceunit  = $billingLogsForPatient ? ServiceUnit::find($billingLogsForPatient->service_unit_id) : null;
-                $arr[] = [
+                $arr = [
                     "patient" => $patient,
                     'Patientvisit' => $data,
                     'consultation' => $consultation,
