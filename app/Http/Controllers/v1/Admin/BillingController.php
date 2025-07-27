@@ -7,6 +7,7 @@ use App\Helpers\ExportHelper;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\BillingLogRequest;
+use App\Http\Requests\BillingDaftRequest;
 use App\Responser\JsonResponser;
 use App\Services\BillingLog\BillingLogService;
 use App\Services\ServiceDepartment\ServiceDepartmentService;
@@ -187,6 +188,22 @@ class BillingController extends Controller
         } catch (\Exception $e) {
             DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+        }
+    }
+
+
+    public function save_as_daft(BillingDaftRequest $request)
+    {
+        try {
+            DB::connection('tenant')->beginTransaction();
+            $validated = $request->validated();
+            $validated['payment_status'] = 'pending';
+            $billing = BillingLog::create($validated);
+            DB::connection('tenant')->commit();
+            return JsonResponser::send(false, 'Billing record created successfully', $billing, 201);
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
         }
     }
 
