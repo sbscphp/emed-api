@@ -210,21 +210,27 @@ class MainDashBoardStatsController extends Controller
             $avarge_complete =  Laboratory::where('status', 'complete')->count();
 
             $total =  Laboratory::where('created_at', $validated['yearly'] ?? Carbon::now()->year())->count();
-            $complete = Laboratory::whereYear('created_at', $year)
+            $complete = Laboratory::when(!empty($year), function ($query) use ($year) {
+                $query->whereYear('created_at', $year);
+            })
                 ->where('status', 'complete')
                 ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
                     $query->whereBetween('created_at', [$startDate, $endDate]);
                 })
                 ->count();
 
-            $progress = Laboratory::whereYear('created_at', $year)
+            $progress = Laboratory::when(!empty($year), function ($query) use ($year) {
+                $query->whereYear('created_at', $year);
+            })
                 ->where('status', 'in progress')
                 ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
                     $query->whereBetween('created_at', [$startDate, $endDate]);
                 })
                 ->count();
 
-            $pending = Laboratory::whereYear('created_at', $year)
+            $pending = Laboratory::when(!empty($year), function ($query) use ($year) {
+                $query->whereYear('created_at', $year);
+            })
                 ->where('status', 'pending')
                 ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
                     $query->whereBetween('created_at', [$startDate, $endDate]);
