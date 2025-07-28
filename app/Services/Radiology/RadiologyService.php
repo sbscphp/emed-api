@@ -6,6 +6,7 @@ use App\Models\BillingLog;
 use App\Models\Radiology;
 use App\Repositories\Radiology\RadiologyInterface;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Class RadiologyService
@@ -162,13 +163,17 @@ class RadiologyService
         $tested_today = Radiology::whereDate('created_at', Carbon::today())
             ->count();
 
-        $payment_confirm = Radiology::with([
-            'consultation.patientVisit.billingLogsForPatient' => function ($query) {
-                $query->where('payment_status', 'confirmed');
-            },
+        $payment_confirm =  Radiology::with([
+            'consultation.patientVisit.billingLogsForPatient',
             'consulted_by',
-            'consultation.patient'
-        ])->count();
+            'consultation.patient',
+        ])
+            ->withCount([
+                'consultation.patientVisit.billingLogsForPatient as confirmed_billing_logs_count' => function (Builder $query) {
+                    $query->where('payment_status', 'confirmed');
+                }
+            ])
+            ->get();
 
         return [
             "today" => $today,
