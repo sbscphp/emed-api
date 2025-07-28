@@ -115,7 +115,7 @@ class RadiologyService
         //     });
 
         $radiology = Radiology::with([
-            'consultation.patient_visits.billingLogsForPatient',
+            'consultation.patientVisit.billingLogsForPatient',
             'consulted_by',
             'consultation.patient'
         ])
@@ -127,7 +127,7 @@ class RadiologyService
                                 ->orWhere('lastname', 'like', "%{$validated['search']}%")
                                 ->orWhere('patientno', 'like', "%{$validated['search']}%");
                         })
-                        ->orWhereHas('consultation.patient_visits.billingLogsForPatient', function ($q2) use ($validated) {
+                        ->orWhereHas('consultation.patientVisit.billingLogsForPatient', function ($q2) use ($validated) {
                             $q2->where('payment_status', 'like', "%{$validated['search']}%");
                         });
                 });
