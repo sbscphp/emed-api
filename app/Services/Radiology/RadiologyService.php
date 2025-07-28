@@ -161,11 +161,20 @@ class RadiologyService
             ->count('patient_id');
         $tested_today = Radiology::whereDate('created_at', Carbon::today())
             ->count();
+
+        $payment_confirm = Radiology::with([
+            'consultation.patientVisit.billingLogsForPatient' => function ($query) {
+                $query->where('payment_status', 'confirmed');
+            },
+            'consulted_by',
+            'consultation.patient'
+        ])->count();
+
         return [
             "today" => $today,
             'data' => $radiology->paginate(10),
             'tested_today' => $tested_today,
-            'payment_confirm' => BillingLog::where('service_unit_id', 5)->count()
+            'payment_confirm' => $payment_confirm
 
         ];
         // return   $radiology->paginate(10);
