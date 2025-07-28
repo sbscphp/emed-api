@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('lab_test_results', function (Blueprint $table) {
+        Schema::table('patient_visit_lab', function (Blueprint $table) {
             $table->enum('status', ['complete', 'in progress', 'pending'])->nullable();
         });
     }
