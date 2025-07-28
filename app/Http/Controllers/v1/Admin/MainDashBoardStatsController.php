@@ -201,13 +201,30 @@ class MainDashBoardStatsController extends Controller
         try {
             $validated = $request->validate([
                 'yearly' => "nullable|numeric",
+                'state_date' => "nullable|date",
+                'end_date' => "nullable|date"
             ]);
             $avarge_all =  Laboratory::count();
             $avarge_complete =  Laboratory::where('status', 'complete')->count();
             $total =  Laboratory::where('created_at', $validated['yearly'] ?? Carbon::now()->year())->count();
-            $complete = Laboratory::where('created_at', $validated['yearly'] ?? Carbon::now()->year())->where('status', 'complete')->count();
-            $progress = Laboratory::where('created_at', $validated['yearly'] ?? Carbon::now()->year())->where('status', 'in progress')->count();
-            $pending = Laboratory::where('created_at', $validated['yearly'] ?? Carbon::now()->year())->where('status', 'pending')->count();
+            $complete = Laboratory::where('created_at', $validated['yearly'] ?? Carbon::now()->year())->where('status', 'complete')
+                ->when(!empty($validated['state_date']) && !empty($validated['end_date']), function ($query) use ($validated) {
+                    // state_date, end_date
+                    $query->whereBetween('created_at', [Carbon::parse($validated['state_data']), Carbon::parse($validated['end_data'])]);
+                })
+                ->count();
+            $progress = Laboratory::where('created_at', $validated['yearly'] ?? Carbon::now()->year())->where('status', 'in progress')
+                ->when(!empty($validated['state_date']) && !empty($validated['end_date']), function ($query) use ($validated) {
+                    // state_date, end_date
+                    $query->whereBetween('created_at', [Carbon::parse($validated['state_data']), Carbon::parse($validated['end_data'])]);
+                })
+                ->count();
+            $pending = Laboratory::where('created_at', $validated['yearly'] ?? Carbon::now()->year())->where('status', 'pending')
+                ->when(!empty($validated['state_date']) && !empty($validated['end_date']), function ($query) use ($validated) {
+                    // state_date, end_date
+                    $query->whereBetween('created_at', [Carbon::parse($validated['state_data']), Carbon::parse($validated['end_data'])]);
+                })
+                ->count();
             // $total ? round(($age_0_18 / $total) * 100, 2) : 0
             $average_completion_rate = $avarge_all ? round(($avarge_complete / $avarge_all) * 100) : 0;
             $data = [
