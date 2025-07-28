@@ -15,13 +15,15 @@ class RadiologyResourceAll extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // consultation.patient
+        // consultation.patientVisit.billingLogsForPatient
         return [
-            'Patient Name' => $this->patient?->firstname . " " . $this->patient?->lastname,
-            'Consulted By' => $this->pharmacist?->first_name . " " . $this->pharmacist?->last_name,
-            "Patient No" => $this->patientno ?? "",
+            'Patient Name' => $this->consultation?->patient?->firstname . " " . $this->consultation?->patient?->lastname,
+            'Consulted By' => $this->consulted_by?->first_name . " " . $this->consulted_by?->last_name,
+            "Patient No" => $this->consultation?->patient?->patientno ?? "",
             "Date" => $this->created_at ? Carbon::parse($this->created_at)->format('Y-m-d') : "",
             "Test Status" => $this->test_name ?? "",
-            "Payment Status" => $this->patient?->visits_recent?->billingLogsForPatient?->payment_status ?? ""
+            "Payment Status" => $this->consultation?->patientVisit?->billingLogsForPatient?->payment_status ?? ""
         ];
     }
 }
