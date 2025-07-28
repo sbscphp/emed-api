@@ -203,39 +203,43 @@ class MainDashBoardStatsController extends Controller
                 'start_date' => "nullable|date",
                 'end_date' => "nullable|date"
             ]);
-            $year = $validated['yearly'] ? $validated['yearly'] : Carbon::now()->year();
+            $year = $validated['yearly'] ?? Carbon::now()->year;
+
             $startDate = !empty($validated['start_date']) ? Carbon::parse($validated['start_date']) : null;
             $endDate = !empty($validated['end_date']) ? Carbon::parse($validated['end_date']) : null;
-            $avarge_all =  Laboratory::count();
-            $avarge_complete =  Laboratory::where('status', 'complete')->count();
 
-            $total =  Laboratory::where('created_at', $validated['yearly'] ?? Carbon::now()->year())->count();
-            $complete = Laboratory::when(!empty($year), function ($query) use ($year) {
-                $query->whereYear('created_at', $year);
-            })
+            // Total lab records
+            $avarge_all = Laboratory::count();
+
+            // Lab records with 'complete' status
+            $avarge_complete = Laboratory::where('status', 'complete')->count();
+
+            // Total for the selected year
+            $total = Laboratory::whereYear('created_at', $year)->count();
+
+            // 'complete' records filtered by year and optional date range
+            $complete = Laboratory::whereYear('created_at', $year)
                 ->where('status', 'complete')
                 ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
                     $query->whereBetween('created_at', [$startDate, $endDate]);
                 })
                 ->count();
 
-            $progress = Laboratory::when(!empty($year), function ($query) use ($year) {
-                $query->whereYear('created_at', $year);
-            })
+            // 'in progress' records filtered by year and optional date range
+            $progress = Laboratory::whereYear('created_at', $year)
                 ->where('status', 'in progress')
                 ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
                     $query->whereBetween('created_at', [$startDate, $endDate]);
                 })
                 ->count();
 
-            $pending = Laboratory::when(!empty($year), function ($query) use ($year) {
-                $query->whereYear('created_at', $year);
-            })
+            // 'pending' records filtered by year and optional date range
+            $pending = Laboratory::whereYear('created_at', $year)
                 ->where('status', 'pending')
                 ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
                     $query->whereBetween('created_at', [$startDate, $endDate]);
                 })
-                ->count();            // $total ? round(($age_0_18 / $total) * 100, 2) : 0
+                ->count();
             $average_completion_rate = $avarge_all ? round(($avarge_complete / $avarge_all) * 100) : 0;
             $data = [
                 "average_completion_rate" => $average_completion_rate,
