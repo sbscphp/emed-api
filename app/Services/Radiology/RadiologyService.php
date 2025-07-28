@@ -100,22 +100,42 @@ class RadiologyService
     public function radiology_list($validated)
     {
 
-        $radiology = Radiology::with(['patient.patient_visits.billingLogsForPatient', 'consulted_by'])
+        // $radiology = Radiology::with(['consultation.patient_visits.billingLogsForPatient', 'consulted_by', 'consultation.patient'])
+        //     ->when(!empty($validated['search']), function ($query) use ($validated) {
+        //         $query->where("test_name", $validated['search'])
+        //             ->whereHas('consultation.patient', function ($q1) use ($validated) {
+        //                 $q1->where('firstname', 'like', "%{$validated['search']}%")
+        //                     ->orWhere('lastname', 'like', "%{$validated['search']}%")
+        //                     ->orWhere('patientno', 'like', "%{$validated['search']}%");
+        //             })
+        //             ->orWhereHas('consultation.patient_visits.billingLogsForPatient', function ($query) use ($validated) {
+        //                 // payment_status
+        //                 $query->where('payment_status', $validated['search']);
+        //             });
+        //     });
+
+        $radiology = Radiology::with([
+            'consultation.patient_visits.billingLogsForPatient',
+            'consulted_by',
+            'consultation.patient'
+        ])
             ->when(!empty($validated['search']), function ($query) use ($validated) {
-                $query->where("test_name", $validated['search'])
-                    ->whereHas('patient', function ($q1) use ($validated) {
-                        $q1->where('firstname', $validated['search'])
-                            ->orWhere('lastname', $validated['search'])
-                            ->orWhere('patientno', $validated['search']);
-                    })
-                    ->orWhereHas('patient.patient_visits.billingLogsForPatient', function ($query) use ($validated) {
-                        // payment_status
-                        $query->where('payment_status', $validated['search']);
-                    });
+                $query->where(function ($q) use ($validated) {
+                    $q->where("test_name", 'like', "%{$validated['search']}%")
+                        ->orWhereHas('consultation.patient', function ($q1) use ($validated) {
+                            $q1->where('firstname', 'like', "%{$validated['search']}%")
+                                ->orWhere('lastname', 'like', "%{$validated['search']}%")
+                                ->orWhere('patientno', 'like', "%{$validated['search']}%");
+                        })
+                        ->orWhereHas('consultation.patient_visits.billingLogsForPatient', function ($q2) use ($validated) {
+                            $q2->where('payment_status', 'like', "%{$validated['search']}%");
+                        });
+                });
             });
 
+
         if (!empty($validated['phone_number'])) {
-            $radiology->whereHas('patient', function ($q1) use ($validated) {
+            $radiology->whereHas('consultation.patient', function ($q1) use ($validated) {
                 $q1->where("phoneno", $validated["phone_number"]);
             });
         }
@@ -131,7 +151,7 @@ class RadiologyService
         }
 
         if (!empty($validated['payment_status'])) {
-            $radiology->whereHas('patient.patient_visits.billingLogsForPatient', function ($q1) use ($validated) {
+            $radiology->whereHas('consultation.patient_visits.billingLogsForPatient', function ($q1) use ($validated) {
                 $q1->where("payment_status", $validated["payment_status"]);
             });
         }

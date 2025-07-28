@@ -45,7 +45,7 @@ class Consultation extends Model
 
     public function patientVisit()
     {
-        return $this->belongsTo(PatientVisit::class, 'visitno');
+        return $this->belongsTo(PatientVisit::class, 'visitno', 'visitno');
     }
 
     public function pharmacist()
