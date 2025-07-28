@@ -111,18 +111,35 @@ class MainDashBoardStatsController extends Controller
         try {
             $validated = $request->validate([
                 'yearly' => "nullable|numeric",
+                'start_date' => "nullable|date",
+                "end_date" => "nullable|date",
             ]);
 
             $data =  Patient::selectRaw('MONTH(created_at) as month, COUNT(*) as total')->where('created_at', $validated['yearly'] ?? Carbon::now()->year())
                 ->groupBy(DB::raw('MONTH(created_at)'))
                 ->orderBy('month')
+                ->when(!empty($validated['state_date']) && !empty($validated['end_date']), function ($query) use ($validated) {
+                    // state_date, end_date
+                    $query->whereBetween('created_at', [Carbon::parse($validated['state_data']), Carbon::parse($validated['end_data'])]);
+                })
                 ->get()->map(function ($item) {
                     $item->month = Carbon::create()->month($item->month)->format('M');
                     return $item;
                 });
 
-            $patientin =  Patient::where('stage', 'triage')->count();
-            $patientout = Patient::where('stage', 'discharged')->count();
+            $patientin =  Patient::where('stage', 'triage')
+                ->when(!empty($validated['state_date']) && !empty($validated['end_date']), function ($query) use ($validated) {
+                    // state_date, end_date
+                    $query->whereBetween('created_at', [Carbon::parse($validated['state_data']), Carbon::parse($validated['end_data'])]);
+                })
+                ->count();
+
+            $patientout = Patient::where('stage', 'discharged')
+                ->when(!empty($validated['state_date']) && !empty($validated['end_date']), function ($query) use ($validated) {
+                    // state_date, end_date
+                    $query->whereBetween('created_at', [Carbon::parse($validated['state_data']), Carbon::parse($validated['end_data'])]);
+                })
+                ->count();
 
             $output = [
                 'patientin' => $patientin,
