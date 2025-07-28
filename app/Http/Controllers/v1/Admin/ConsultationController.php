@@ -372,7 +372,8 @@ class ConsultationController extends Controller
                 'ordered_test' => implode(',', $request->ordered_test),
                 'others' => $request->others,
                 'test_status' => 'pending',
-                'payment_status' => 'pending'
+                'payment_status' => 'pending',
+                'status' => $request->status
             ];
 
             $lab = $this->laboratoryService->create($data);

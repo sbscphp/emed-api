@@ -19,7 +19,8 @@ class Laboratory extends Model
         'ordered_test',
         'others',
         'test_status',
-        'payment_status'
+        'payment_status',
+        'status'
     ];
 
     public function patient()
