@@ -133,7 +133,6 @@ class MainDashBoardStatsController extends Controller
                     $query->whereBetween('created_at', [Carbon::parse($validated['state_data']), Carbon::parse($validated['end_data'])]);
                 })
                 ->count();
-
             $patientout = Patient::where('stage', 'discharged')
                 ->when(!empty($validated['state_date']) && !empty($validated['end_date']), function ($query) use ($validated) {
                     // state_date, end_date
@@ -198,29 +197,50 @@ class MainDashBoardStatsController extends Controller
 
     public function lab_test_year(Request $request)
     {
-        // try {
-        $validated = $request->validate([
-            'yearly' => "nullable|numeric",
-        ]);
-        $avarge_all =  Laboratory::count();
-        $avarge_complete =  Laboratory::where('status', 'complete')->count();
-        $total =  Laboratory::where('created_at', $validated['yearly'] ?? Carbon::now()->year())->count();
-        $complete = Laboratory::where('created_at', $validated['yearly'] ?? Carbon::now()->year())->where('status', 'complete')->count();
-        $progress = Laboratory::where('created_at', $validated['yearly'] ?? Carbon::now()->year())->where('status', 'in progress')->count();
-        $pending = Laboratory::where('created_at', $validated['yearly'] ?? Carbon::now()->year())->where('status', 'pending')->count();
-        // $total ? round(($age_0_18 / $total) * 100, 2) : 0
-        $average_completion_rate = $avarge_all ? round(($avarge_complete / $avarge_all) * 100) : 0;
-        $data = [
-            "average_completion_rate" => $average_completion_rate,
-            "total_completion" => $avarge_complete,
-            "complete" => $complete,
-            "progress" => $progress,
-            'pending' => $pending
-        ];
-        return JsonResponser::send(false, ' fetched successfully.', $data);
-        // } catch (\Exception $e) {
-        //     return JsonResponser::send(true, 'Error fetching  .', [], 500, $e);
-        // }
+        try {
+            $validated = $request->validate([
+                'yearly' => "nullable|numeric",
+                'start_date' => "nullable|date",
+                'end_date' => "nullable|date"
+            ]);
+            $year = $validated['yearly'] ?? Carbon::now()->year();
+            $startDate = !empty($validated['start_date']) ? Carbon::parse($validated['start_date']) : null;
+            $endDate = !empty($validated['end_date']) ? Carbon::parse($validated['end_date']) : null;
+            $avarge_all =  Laboratory::count();
+            $avarge_complete =  Laboratory::where('status', 'complete')->count();
+            $total =  Laboratory::where('created_at', $validated['yearly'] ?? Carbon::now()->year())->count();
+            $complete = Laboratory::whereYear('created_at', $year)
+                ->where('status', 'complete')
+                ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
+                    $query->whereBetween('created_at', [$startDate, $endDate]);
+                })
+                ->count();
+
+            $progress = Laboratory::whereYear('created_at', $year)
+                ->where('status', 'in progress')
+                ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
+                    $query->whereBetween('created_at', [$startDate, $endDate]);
+                })
+                ->count();
+
+            $pending = Laboratory::whereYear('created_at', $year)
+                ->where('status', 'pending')
+                ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
+                    $query->whereBetween('created_at', [$startDate, $endDate]);
+                })
+                ->count();            // $total ? round(($age_0_18 / $total) * 100, 2) : 0
+            $average_completion_rate = $avarge_all ? round(($avarge_complete / $avarge_all) * 100) : 0;
+            $data = [
+                "average_completion_rate" => $average_completion_rate,
+                "total_completion" => $avarge_complete,
+                "complete" => $complete,
+                "progress" => $progress,
+                'pending' => $pending
+            ];
+            return JsonResponser::send(false, ' fetched successfully.', $data);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Error fetching  .', [], 500, $e);
+        }
     }
 
 
