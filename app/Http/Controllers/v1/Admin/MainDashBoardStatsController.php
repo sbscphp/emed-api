@@ -203,11 +203,12 @@ class MainDashBoardStatsController extends Controller
                 'start_date' => "nullable|date",
                 'end_date' => "nullable|date"
             ]);
-            $year = $validated['yearly'] ?? Carbon::now()->year();
+            $year = $validated['yearly'] ? $validated['yearly'] : Carbon::now()->year();
             $startDate = !empty($validated['start_date']) ? Carbon::parse($validated['start_date']) : null;
             $endDate = !empty($validated['end_date']) ? Carbon::parse($validated['end_date']) : null;
             $avarge_all =  Laboratory::count();
             $avarge_complete =  Laboratory::where('status', 'complete')->count();
+
             $total =  Laboratory::where('created_at', $validated['yearly'] ?? Carbon::now()->year())->count();
             $complete = Laboratory::whereYear('created_at', $year)
                 ->where('status', 'complete')
