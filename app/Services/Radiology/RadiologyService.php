@@ -163,23 +163,29 @@ class RadiologyService
         $tested_today = Radiology::whereDate('created_at', Carbon::today())
             ->count();
 
-        $payment_confirm =  Radiology::with([
-            'consultation.patientVisit.billingLogsForPatient',
-            'consulted_by',
-            'consultation.patient',
-        ])
-            ->withCount([
-                'consultation.patientVisit.billingLogsForPatient as confirmed_billing_logs_count' => function (Builder $query) {
-                    $query->where('payment_status', 'confirmed');
+        $payments =  Radiology::with([
+            'consultation.patientVisit',
+        ])->get();
+
+        $arr = [];
+        foreach ($payments as $payment) {
+            $payment->consultation?->patientVisit?->id;
+
+            if ($payment->consultation?->patientVisit?->id) {
+                $bill = BillingLog::where("visit_id", $payment->consultation?->patientVisit?->id)->first();
+                if ($bill) {
+                    $arr[] =  [
+                        $bill
+                    ];
                 }
-            ])
-            ->get();
+            }
+        }
 
         return [
             "today" => $today,
             'data' => $radiology->paginate(10),
             'tested_today' => $tested_today,
-            'payment_confirm' => $payment_confirm
+            'payment_confirm' => count($arr)
 
         ];
         // return   $radiology->paginate(10);
