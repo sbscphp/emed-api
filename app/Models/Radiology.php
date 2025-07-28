@@ -37,6 +37,6 @@ class Radiology extends Model
 
     public function consultation()
     {
-        return $this->hasOne(Consultation::class, 'consultation_id');
+        return $this->belongsTo(Consultation::class, 'consultation_id');
     }
 }
