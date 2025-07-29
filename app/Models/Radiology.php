@@ -39,4 +39,9 @@ class Radiology extends Model
     {
         return $this->belongsTo(Consultation::class, 'consultation_id');
     }
+
+    public function result()
+    {
+        return $this->belongsTo(RadiologyResult::class, 'id', 'radiology_id');
+    }
 }

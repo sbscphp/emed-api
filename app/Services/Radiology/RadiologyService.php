@@ -197,7 +197,7 @@ class RadiologyService
 
     public function radiology_patient($validated)
     {
-        $radiology =  Radiology::with(['patient.visits_recent.billingLogsForPatient', 'pharmacist'])
+        $radiology =  Radiology::with(['patient.visits_recent.billingLogsForPatient', 'pharmacist', 'result'])
             ->whereHas('patient', function ($q) use ($validated) {
                 $q->where('id', $validated['patient_id']);
             })
@@ -214,7 +214,6 @@ class RadiologyService
                             ->orWhere('payment_method', $validated['search']);
                     });
             });
-
 
 
         if (!empty($validated['phone_number'])) {
@@ -282,8 +281,8 @@ class RadiologyService
         // Update radiology result
         $record = RadiologyResult::where('id', $id)->update([
             'updated_by' => $userId,
-            'radiology_id' => $data->radiology_id,
-            'patient_id' => $data->patient_id,
+            // 'radiology_id' => $data->radiology_id,
+            // 'patient_id' => $data->patient_id,
             'examination_type' => $data->examination_type,
             'clinical_indication' => $data->clinical_indication,
             'technique' => $data->technique,
