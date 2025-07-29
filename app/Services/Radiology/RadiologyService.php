@@ -2,8 +2,11 @@
 
 namespace App\Services\Radiology;
 
+use App\Helpers\FileUploadHelper;
+use App\Helpers\UserMgtHelper;
 use App\Models\BillingLog;
 use App\Models\Radiology;
+use App\Models\RadiologyResult;
 use App\Repositories\Radiology\RadiologyInterface;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -238,5 +241,56 @@ class RadiologyService
 
 
         return   $radiology->paginate(10);
+    }
+
+    public function result ($data) {
+
+        $currentUserInstance = UserMgtHelper::userInstance();
+        $userId = $currentUserInstance->id;
+        $tenant = $currentUserInstance->tenant->domain;
+
+        $resultImage = isset($data->result_img) && !empty($data->result_img)
+            ? FileUploadHelper::singleStringFileUpload($data->result_img, "radiology_results")
+            : null;
+
+        // Create radiology result
+        $record = RadiologyResult::create([
+            'tenant_domain' => $tenant,
+            'user_id' => $userId,
+            'radiology_id' => $data->radiology_id,
+            'patient_id' => $data->patient_id,
+            'examination_type' => $data->examination_type,
+            'clinical_indication' => $data->clinical_indication,
+            'technique' => $data->technique,
+            'findings' => $data->findings,
+            'result_img' => $resultImage,
+        ]);
+
+        return $record;
+
+    }
+
+    public function updateResult($data, $id)
+    {
+        $currentUserInstance = UserMgtHelper::userInstance();
+        $userId = $currentUserInstance->id;
+
+        $resultImage = isset($data->result_img) && !empty($data->result_img)
+            ? FileUploadHelper::singleStringFileUpload($data->result_img, "radiology_results")
+            : null;
+
+        // Update radiology result
+        $record = RadiologyResult::where('id', $id)->update([
+            'updated_by' => $userId,
+            'radiology_id' => $data->radiology_id,
+            'patient_id' => $data->patient_id,
+            'examination_type' => $data->examination_type,
+            'clinical_indication' => $data->clinical_indication,
+            'technique' => $data->technique,
+            'findings' => $data->findings,
+            'result_img' => $resultImage,
+        ]);
+
+        return RadiologyResult::find($id);
     }
 }

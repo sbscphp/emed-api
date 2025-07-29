@@ -11,7 +11,10 @@ use App\Http\Resources\RadiologyResourceAll;
 use App\Models\Patient;
 use App\Models\Radiology_lab_patient;
 use App\Http\Requests\Radiology_examination_request;
+use App\Http\Requests\RadiologyResultRequest;
 use App\Models\Radiology_lab_patient_examination;
+use App\Models\RadiologyResult;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class RadiologyController extends Controller
@@ -106,6 +109,38 @@ class RadiologyController extends Controller
         return JsonResponser::send(false, 'Billing records retrieved successfully.', $data, 200);
     }
 
+    public function result(RadiologyResultRequest $request)
+    {
+        try {
+            DB::beginTransaction();
+            $record = $this->radiologyService->result($request);
+
+            DB::commit();
+            return JsonResponser::send(false, 'Result update successfully', $record);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
+    public function updateResult($id, RadiologyResultRequest $request)
+    {
+        try {
+            DB::beginTransaction();
+            $result = RadiologyResult::find($id);
+            if (!$result) {
+                return JsonResponser::send(true, 'Radiology result not found.', [], 404);
+            }
+            $record = $this->radiologyService->updateResult($request, $id);
+
+            DB::commit();
+            return JsonResponser::send(false, 'Result updated successfully', $record);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
     public function radiology_examination(Radiology_examination_request $request)
     {
         // Radiology_lab_patient
@@ -117,7 +152,6 @@ class RadiologyController extends Controller
             'test_name' => $validated['test_name'],
             'user_id' => $validated['doctor_id']
         ]);
-
 
         $all_exam = json_decode($validated['all_exam'], true);
 
