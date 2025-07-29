@@ -123,7 +123,7 @@ class RadiologyController extends Controller
         }
     }
 
-    public function updateResult($id, RadiologyResultRequest $request)
+    public function updateResult($id, Request $request)
     {
         try {
             DB::beginTransaction();

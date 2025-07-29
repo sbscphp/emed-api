@@ -43,6 +43,10 @@ class FileUploadHelper
     public static function singleStringFileUpload($requestFile, $fileKey)
     {
         // Extract base64 data and mime type from the input string
+        // if (!preg_match('/^data:(.*);base64,(.*)$/', $requestFile, $matches)) {
+        //     throw new \Exception('Invalid base64 file format.');
+        // }
+
         if (!preg_match('/^data:(.*);base64,(.*)$/', $requestFile, $matches)) {
             throw new \Exception('Invalid base64 file format.');
         }
