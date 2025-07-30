@@ -303,12 +303,13 @@ class RegistrationController extends Controller
                 return JsonResponser::send(false, "Tenant {$data['name']} already exists.", [], 500);
             }
 
-            $isProduction = app()->environment(['production', 'staging', 'qa']);
+            $isProduction = env('IS_PRODUCTION');
+            // app()->environment(['production', 'staging', 'qa']);
             $tenantDatabase = $isProduction
                 ? 'jkpmjemy_tenant_john_hospital'
                 : 'tenant_' . Str::slug($data['name'], '_');
 
-            dd($isProduction);
+            dd([$isProduction, $tenantDatabase]);
             $tenant = Tenant::create([
                 'name' => $data['name'],
                 'domain' => $domain,
