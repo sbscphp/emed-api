@@ -321,11 +321,12 @@ class RegistrationController extends Controller
                 ]
             ]);
             //
-            $tenant = Tenant::on('landlord')->create([
-                'name' => $data['name'],
-                'domain' => $domain,
-                'database' => $tenantDatabase
-            ]);
+            $tenant = new Tenant();
+            $tenant->setConnection('landlord');
+            $tenant->name = $data['name'];
+            $tenant->domain = $domain;
+            $tenant->database = $tenantDatabase;
+            $tenant->save();
 
             dd(json_encode([$isProduction, $tenantDatabase, $tenant?->database]));
 
