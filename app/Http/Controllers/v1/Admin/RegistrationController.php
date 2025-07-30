@@ -316,7 +316,7 @@ class RegistrationController extends Controller
                 'database' => $tenantDatabase,
             ]);
 
-            // dd(json_encode([$isProduction, $tenantDatabase, $tenant]));
+            dd(json_encode([$isProduction, $tenantDatabase, $tenant?->database]));
 
             // if ($isProduction === false) {
             //     DB::statement("CREATE DATABASE IF NOT EXISTS {$tenantDatabase} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
