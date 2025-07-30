@@ -202,16 +202,16 @@ class RadiologyService
                 $q->where('id', $validated['patient_id']);
             })
             ->when(!empty($validated['search']), function ($query) use ($validated) {
-                $query->where("test_name", $validated['search'])
+                $query->where("test_name", 'like', "%{$validated['search']}%")
                     ->whereHas('patient', function ($q1) use ($validated) {
-                        $q1->where('firstname', $validated['search'])
-                            ->orWhere('lastname', $validated['search'])
-                            ->orWhere('patientno', $validated['search']);
+                        $q1->where('firstname', 'like', "%{$validated['search']}%")
+                            ->orWhere('lastname', 'like', "%{$validated['search']}%")
+                            ->orWhere('patientno', 'like', "%{$validated['search']}%");
                     })
                     ->orWhereHas('consultation.patientVisit.billingLogsForPatient', function ($query) use ($validated) {
                         // payment_status payment_method
-                        $query->where('payment_status', $validated['search'])
-                            ->orWhere('payment_method', $validated['search']);
+                        $query->where('payment_status', 'like', "%{$validated['search']}%")
+                            ->orWhere('payment_method', 'like', "%{$validated['search']}%");
                     });
             });
 
@@ -297,6 +297,11 @@ class RadiologyService
             $allReady = RadiologyResult::where('radiology_id', $radiology->id)
                 ->where('status', '!=', 'Ready')
                 ->doesntExist();
+            // test_status
+
+            $radiology->update([
+                "test_status" => "complete",
+            ]);
 
             if ($allReady) {
                 $radiology->update(['status' => 'Completed']);
