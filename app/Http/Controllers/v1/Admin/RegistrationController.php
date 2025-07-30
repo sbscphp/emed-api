@@ -303,8 +303,7 @@ class RegistrationController extends Controller
                 return JsonResponser::send(false, "Tenant {$data['name']} already exists.", [], 500);
             }
 
-            $isProduction = true;
-            //app()->environment(['production', 'staging', 'qa']);
+            $isProduction = app()->environment(['production', 'staging', 'qa']);
 
 
             $tenantDatabase = $isProduction
@@ -313,7 +312,6 @@ class RegistrationController extends Controller
 
 
             //
-            DB::connection('landlord')->beginTransaction();
             $tenant = (new Tenant())->setConnection('landlord');
             $tenant->fill([
                 'name' => $data['name'],
@@ -321,37 +319,23 @@ class RegistrationController extends Controller
                 'database' => $tenantDatabase,
             ]);
             $tenant->save();
-            DB::connection('landlord')->commit();
 
-            return JsonResponser::send(
-                true,
-                'successfully',
-                $tenant,
-                200
-            );
 
-            if (!$tenant->save()) {
-                logger()->error('Failed to save tenant', $tenant->toArray());
-                return JsonResponser::send(false, 'Failed to save tenant record.', null, 500);
+
+            if (!$isProduction) {
+                DB::statement("CREATE DATABASE IF NOT EXISTS {$tenantDatabase} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+            } else {
+                $dbExists = DB::connection('landlord')->select("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?", [$tenantDatabase]);
+                if (empty($dbExists)) {
+                    DB::connection('landlord')->rollBack();
+                    return JsonResponser::send(
+                        false,
+                        "Database {$tenantDatabase} does not exist. Please create it manually before onboarding this tenant.",
+                        null,
+                        500
+                    );
+                }
             }
-
-            // dd(json_encode([$isProduction, $tenantDatabase, $tenant?->database]));
-
-            // if ($isProduction === false) {
-            //     DB::statement("CREATE DATABASE IF NOT EXISTS {$tenantDatabase} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-            // }
-            // else {
-            //     $dbExists = DB::connection('landlord')->select("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?", [$tenantDatabase]);
-            //     if (empty($dbExists)) {
-            //         DB::connection('landlord')->rollBack();
-            //         return JsonResponser::send(
-            //             false,
-            //             "Database {$tenantDatabase} does not exist. Please create it manually before onboarding this tenant.",
-            //             null,
-            //             500
-            //         );
-            //     }
-            // }
 
             // $tenant->makeCurrent();
             // config(['database.connections.tenant.database' => $tenantDatabase]);
