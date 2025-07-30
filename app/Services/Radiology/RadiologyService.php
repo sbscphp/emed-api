@@ -192,8 +192,8 @@ class RadiologyService
         }
 
         return [
-            "today" => $today,
             'data' => $radiology->paginate(10),
+            "today" => $today,
             'tested_today' => $tested_today,
             'payment_confirm' => count($arr)
 
