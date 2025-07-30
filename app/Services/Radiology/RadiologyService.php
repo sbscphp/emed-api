@@ -202,60 +202,57 @@ class RadiologyService
             'consultation.patientVisit.patient',
             'consulted_by',
             'result'
-        ]);
-
-        $radiology->where(function ($query) use ($validated) {
-            // Restrict by patient_id first
-            $query->whereHas('consultation.patientVisit.patient', function ($q) use ($validated) {
+        ])
+            ->whereHas('consultation.patientVisit.patient', function ($q) use ($validated) {
                 $q->where('id', $validated['patient_id']);
             });
 
-            // Then apply search filter, if present
-            if (!empty($validated['search'])) {
-                $query->where(function ($q2) use ($validated) {
-                    $q2->where("test_name", 'like', "%{$validated['search']}%")
-                        ->orWhereHas('consultation.patientVisit.patient', function ($q3) use ($validated) {
-                            $q3->where(function ($q4) use ($validated) {
-                                $q4->where('firstname', 'like', "%{$validated['search']}%")
-                                    ->orWhere('lastname', 'like', "%{$validated['search']}%")
-                                    ->orWhere('patientno', 'like', "%{$validated['search']}%");
-                            });
-                        })
-                        ->orWhereHas('consultation.patientVisit.billingLogsForPatient', function ($q5) use ($validated) {
-                            $q5->where('payment_status', 'like', "%{$validated['search']}%")
-                                ->orWhere('payment_method', 'like', "%{$validated['search']}%");
+
+        if (!empty($validated['search'])) {
+            $radiology->where(function ($query) use ($validated) {
+                $query->where("test_name", 'like', "%{$validated['search']}%")
+                    ->orWhereHas('consultation.patientVisit.patient', function ($q3) use ($validated) {
+                        $q3->where(function ($q4) use ($validated) {
+                            $q4->where('firstname', 'like', "%{$validated['search']}%")
+                                ->orWhere('lastname', 'like', "%{$validated['search']}%")
+                                ->orWhere('patientno', 'like', "%{$validated['search']}%");
                         });
-                });
-            }
-        });
-
-
-
-
-        if (!empty($validated['phone_number'])) {
-            $radiology->whereHas('patient', function ($q1) use ($validated) {
-                $q1->where("phoneno", $validated["phone_number"]);
+                    })
+                    ->orWhereHas('consultation.patientVisit.billingLogsForPatient', function ($q5) use ($validated) {
+                        $q5->where('payment_status', 'like', "%{$validated['search']}%")
+                            ->orWhere('payment_method', 'like', "%{$validated['search']}%");
+                    });
             });
         }
 
+
+        if (!empty($validated['phone_number'])) {
+            $radiology->whereHas('consultation.patientVisit.patient', function ($q) use ($validated) {
+                $q->where("phoneno", $validated["phone_number"]);
+            });
+        }
+
+
         if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
-            $startDate = $validated['start_date'];
-            $endDate = $validated['end_date'];
-            $radiology->whereBetween('created_at', [Carbon::parse($startDate), Carbon::parse($endDate)]);
+            $radiology->whereBetween('created_at', [
+                Carbon::parse($validated['start_date'])->startOfDay(),
+                Carbon::parse($validated['end_date'])->endOfDay()
+            ]);
         }
 
         if (!empty($validated['test_status'])) {
             $radiology->where('test_name', $validated['test_status']);
         }
 
+
         if (!empty($validated['payment_status'])) {
-            $radiology->whereHas('consultation.patientVisit.billingLogsForPatient', function ($q1) use ($validated) {
-                $q1->where("payment_status", $validated["payment_status"]);
+            $radiology->whereHas('consultation.patientVisit.billingLogsForPatient', function ($q) use ($validated) {
+                $q->where("payment_status", $validated["payment_status"]);
             });
         }
 
 
-        return   $radiology->paginate(10);
+        return $radiology->paginate(10);
     }
 
     public function result($data)
