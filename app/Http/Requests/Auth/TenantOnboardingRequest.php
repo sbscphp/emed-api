@@ -26,38 +26,35 @@ class TenantOnboardingRequest extends FormRequest
     {
         return [
             // Hospital Details
-            //'name'          => 'required|string',
-
             'name' => [
                 'required',
                 'string',
                 function ($attribute, $value, $fail) {
-                    $exists = DB::connection('tenant')
+                    $exists = DB::connection('landlord')
                         ->table('registrations')
                         ->where('name', $value)
                         ->exists();
 
                     if ($exists) {
-                        $fail('the name already exist.');
+                        $fail('The name already exists.');
                     }
                 },
             ],
-            'state_city'             => 'required|string',
-            'registration_number'    => 'required|string',
-            //'email'         => 'required|email',
-            //'phone_number'  => 'required|numeric',
+
+            'state_city' => 'required|string',
+            'registration_number' => 'required|string',
 
             'phone_number' => [
                 'required',
                 'numeric',
                 function ($attribute, $value, $fail) {
-                    $exists = DB::connection('tenant')
+                    $exists = DB::connection('landlord')
                         ->table('registrations')
                         ->where('phone_number', $value)
                         ->exists();
 
                     if ($exists) {
-                        $fail('phone number  already exist.');
+                        $fail('Phone number already exists.');
                     }
                 },
             ],
@@ -66,56 +63,59 @@ class TenantOnboardingRequest extends FormRequest
                 'required',
                 'email:rfc,dns',
                 function ($attribute, $value, $fail) {
-                    $exists = DB::connection('tenant')
+                    $exists = DB::connection('landlord')
                         ->table('registrations')
                         ->where('email', $value)
                         ->exists();
 
                     if ($exists) {
-                        $fail('email  already exist.');
+                        $fail('Email already exists.');
                     }
                 },
             ],
-            'address'                => 'required|string',
-            'license'                => 'nullable|file|max:3000',
+
+            'address' => 'required|string',
+            'license' => 'nullable|file|max:3000',
 
             // Admin Details
-            'admin_fullname'         => 'required|string',
-            'admin_role'             => 'required|string',
-            // 'admin_phone_number'     => 'required|numeric',
+            'admin_fullname' => 'required|string',
+            'admin_role' => 'required|string',
+
             'admin_phone_number' => [
                 'required',
                 'numeric',
                 function ($attribute, $value, $fail) {
-                    $exists = DB::connection('tenant')
+                    $exists = DB::connection('landlord')
                         ->table('users')
                         ->where('phone_number', $value)
                         ->exists();
 
                     if ($exists) {
-                        $fail('phone number  already exist.');
+                        $fail('Admin phone number already exists.');
                     }
                 },
             ],
-            // 'admin_email'            => 'required|email|unique:users,email',
+
             'admin_email' => [
                 'required',
                 'email:rfc,dns',
                 function ($attribute, $value, $fail) {
-                    $exists = DB::connection('tenant')
+                    $exists = DB::connection('landlord')
                         ->table('users')
                         ->where('email', $value)
                         ->exists();
 
                     if ($exists) {
-                        $fail('email  already exist.');
+                        $fail('Admin email already exists.');
                     }
                 },
             ],
-            'admin_password'      => 'required|confirmed|min:6',
+
+            'admin_password' => 'required|confirmed|min:6',
             'admin_password_confirm' => 'sometimes|same:admin_password',
         ];
     }
+
 
     /**
      * Get custom messages for validator errors.
