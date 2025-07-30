@@ -321,7 +321,19 @@ class RegistrationController extends Controller
             ]);
             $tenant->save();
 
-            dd(json_encode([$isProduction, $tenantDatabase, $tenant?->database]));
+            return JsonResponser::send(
+                true,
+                'successfully',
+                $tenant,
+                200
+            );
+
+            if (!$tenant->save()) {
+                logger()->error('Failed to save tenant', $tenant->toArray());
+                return JsonResponser::send(false, 'Failed to save tenant record.', null, 500);
+            }
+
+            // dd(json_encode([$isProduction, $tenantDatabase, $tenant?->database]));
 
             // if ($isProduction === false) {
             //     DB::statement("CREATE DATABASE IF NOT EXISTS {$tenantDatabase} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
