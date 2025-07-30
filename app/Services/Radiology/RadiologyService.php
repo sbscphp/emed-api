@@ -197,23 +197,46 @@ class RadiologyService
 
     public function radiology_patient($validated)
     {
-        $radiology =  Radiology::with(['consultation.patientVisit.billingLogsForPatient', 'consulted_by', 'result'])
+        $radiology =  Radiology::with(['consultation.patientVisit.billingLogsForPatient', 'consultation.patientVisit.patient', 'consulted_by', 'result'])
             ->whereHas('patient', function ($q) use ($validated) {
                 $q->where('id', $validated['patient_id']);
             })
+            // ->when(!empty($validated['search']), function ($query) use ($validated) {
+            //     $query->where(function ($q) use ($validated) {
+            //         $q->where("test_name", 'like', "%{$validated['search']}%")
+            //             ->orWhereHas('consultation.patientVisit.patient', function ($q1) use ($validated) {
+            //                 $q1->where(function ($q2) use ($validated) {
+            //                     $q2->where('firstname', 'like', "%{$validated['search']}%")
+            //                         ->orWhere('lastname', 'like', "%{$validated['search']}%")
+            //                         ->orWhere('patientno', 'like', "%{$validated['search']}%");
+            //                 });
+            //             });
+            //     })
+            //         ->orWhereHas('consultation.patientVisit.billingLogsForPatient', function ($query) use ($validated) {
+            //             // payment_status payment_method
+            //             $query->where('payment_status', 'like', "%{$validated['search']}%")
+            //                 ->orWhere('payment_method', 'like', "%{$validated['search']}%");
+            //         });
+            // });
+
+
             ->when(!empty($validated['search']), function ($query) use ($validated) {
-                $query->where("test_name", 'like', "%{$validated['search']}%")
-                    ->whereHas('patient', function ($q1) use ($validated) {
-                        $q1->where('firstname', 'like', "%{$validated['search']}%")
-                            ->orWhere('lastname', 'like', "%{$validated['search']}%")
-                            ->orWhere('patientno', 'like', "%{$validated['search']}%");
-                    })
-                    ->orWhereHas('consultation.patientVisit.billingLogsForPatient', function ($query) use ($validated) {
-                        // payment_status payment_method
-                        $query->where('payment_status', 'like', "%{$validated['search']}%")
-                            ->orWhere('payment_method', 'like', "%{$validated['search']}%");
-                    });
+                $query->where(function ($q) use ($validated) {
+                    $q->where("test_name", 'like', "%{$validated['search']}%")
+                        ->orWhereHas('consultation.patientVisit.patient', function ($q1) use ($validated) {
+                            $q1->where(function ($q2) use ($validated) {
+                                $q2->where('firstname', 'like', "%{$validated['search']}%")
+                                    ->orWhere('lastname', 'like', "%{$validated['search']}%")
+                                    ->orWhere('patientno', 'like', "%{$validated['search']}%");
+                            });
+                        })
+                        ->orWhereHas('consultation.patientVisit.billingLogsForPatient', function ($q3) use ($validated) {
+                            $q3->where('payment_status', 'like', "%{$validated['search']}%")
+                                ->orWhere('payment_method', 'like', "%{$validated['search']}%");
+                        });
+                });
             });
+
 
 
         if (!empty($validated['phone_number'])) {
