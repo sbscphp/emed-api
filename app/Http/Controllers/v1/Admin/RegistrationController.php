@@ -303,32 +303,32 @@ class RegistrationController extends Controller
                 return JsonResponser::send(false, "Tenant {$data['name']} already exists.", [], 500);
             }
 
-            $isProduction = true;
-            //app()->environment(['production', 'staging', 'qa']);
+            $isProduction = app()->environment(['production', 'staging', 'qa']);
             $tenantDatabase = $isProduction
                 ? 'jkpmjemy_tenant_john_hospital'
                 : 'tenant_' . Str::slug($data['name'], '_');
 
+            dd($isProduction);
             $tenant = Tenant::create([
                 'name' => $data['name'],
                 'domain' => $domain,
                 'database' => $tenantDatabase,
             ]);
 
-            if ($isProduction == false) {
-                DB::statement("CREATE DATABASE IF NOT EXISTS {$tenantDatabase} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-            } else {
-                $dbExists = DB::connection('landlord')->select("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?", [$tenantDatabase]);
-                if (empty($dbExists)) {
-                    DB::connection('landlord')->rollBack();
-                    return JsonResponser::send(
-                        false,
-                        "Database {$tenantDatabase} does not exist. Please create it manually before onboarding this tenant.",
-                        null,
-                        500
-                    );
-                }
-            }
+            // if ($isProduction == false) {
+            //     DB::statement("CREATE DATABASE IF NOT EXISTS {$tenantDatabase} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+            // } else {
+            //     $dbExists = DB::connection('landlord')->select("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?", [$tenantDatabase]);
+            //     if (empty($dbExists)) {
+            //         DB::connection('landlord')->rollBack();
+            //         return JsonResponser::send(
+            //             false,
+            //             "Database {$tenantDatabase} does not exist. Please create it manually before onboarding this tenant.",
+            //             null,
+            //             500
+            //         );
+            //     }
+            // }
 
             // $tenant->makeCurrent();
             // config(['database.connections.tenant.database' => $tenantDatabase]);
