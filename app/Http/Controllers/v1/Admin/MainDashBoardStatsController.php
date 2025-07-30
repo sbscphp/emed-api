@@ -295,4 +295,38 @@ class MainDashBoardStatsController extends Controller
             return JsonResponser::send(true, 'Error fetching  .', [], 500, $e);
         }
     }
+
+    public function in_and_out_patient(Request $request)
+    {
+        try {
+
+            $overview = $this->service_department_service->in_and_out_patient($request);
+
+            return JsonResponser::send(false, 'Record(s) found successfully', $overview, 200);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Error fetching in and out patients.', [], 500, $e);
+        }
+    }
+
+    public function appointments(Request $request)
+    {
+        try {
+            $overview = $this->service_department_service->appointments($request);
+
+            return JsonResponser::send(false, 'Record(s) found successfully', $overview, 200);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Error fetching appointments.', [], 500, $e);
+        }
+    }
+
+    public function departments()
+    {
+        try {
+            $overview = $this->service_department_service->departments();
+
+            return JsonResponser::send(false, 'Record(s) found successfully', $overview, 200);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Error fetching departments.', [], 500, $e);
+        }
+    }
 }

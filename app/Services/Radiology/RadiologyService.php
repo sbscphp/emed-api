@@ -269,17 +269,17 @@ class RadiologyService
 
     }
 
-    public function updateResult($data, $id)
+    public function updateResult($data, $result)
     {
         $currentUserInstance = UserMgtHelper::userInstance();
         $userId = $currentUserInstance->id;
 
         $resultImage = isset($data->result_img) && !empty($data->result_img)
             ? FileUploadHelper::singleStringFileUpload($data->result_img, "radiology_results")
-            : null;
+            : $result->result_img; // Keep existing image if not provided
 
         // Update radiology result
-        $record = RadiologyResult::where('id', $id)->update([
+        $result->update([
             'updated_by' => $userId,
             // 'radiology_id' => $data->radiology_id,
             // 'patient_id' => $data->patient_id,
@@ -290,6 +290,6 @@ class RadiologyService
             'result_img' => $resultImage,
         ]);
 
-        return RadiologyResult::find($id);
+        return $result->refresh();
     }
 }

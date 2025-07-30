@@ -285,6 +285,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/patient', [RadiologyController::class, "patient"]);
                     Route::post('/result', [RadiologyController::class, "result"]);
                     Route::put('/update/result/{id}', [RadiologyController::class, "updateResult"]);
+                    Route::put('/update/result/status/{id}', [RadiologyController::class, "updateResultStaus"]);
                     Route::post('/radiology_examination', [RadiologyController::class, 'radiology_examination']);
                     Route::get('/radiology_examination', [RadiologyController::class, 'radiology_examination_get']);
                 });
@@ -298,6 +299,9 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get("/patient_age_gender", [MainDashBoardStatsController::class, "patient_age_gender"]);
                     Route::get('appointment', [MainDashBoardStatsController::class, "appointment"]);
                     Route::get('lab_test_year', [MainDashBoardStatsController::class, "lab_test_year"]);
+                    Route::get('/in_and_out/patient', [MainDashBoardStatsController::class, "in_and_out_patient"]);
+                    Route::get('/appointments', [MainDashBoardStatsController::class, "appointments"]);
+                    Route::get('/departments/all', [MainDashBoardStatsController::class, "departments"]);
                 });
 
 

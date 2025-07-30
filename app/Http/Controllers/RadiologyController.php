@@ -131,10 +131,43 @@ class RadiologyController extends Controller
             if (!$result) {
                 return JsonResponser::send(true, 'Radiology result not found.', [], 404);
             }
-            $record = $this->radiologyService->updateResult($request, $id);
+            $record = $this->radiologyService->updateResult($request, $result);
 
             DB::commit();
             return JsonResponser::send(false, 'Result updated successfully', $record);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
+    public function updateResultStaus($id, Request $request)
+    {
+        try {
+            DB::beginTransaction();
+            $result = RadiologyResult::find($id);
+
+            if (!$result) {
+                return JsonResponser::send(true, 'Radiology result not found.', [], 404);
+            }
+
+            $radiology = Radiology::find($result->radiology_id);
+
+            // Update the result's status
+            $result->update(['status' => $request['status']]);
+
+            if ($radiology) {
+                // Check if all results for this radiology are "Ready"
+                $allReady = RadiologyResult::where('radiology_id', $radiology->id)
+                    ->where('status', '!=', 'Ready')
+                    ->doesntExist();
+
+                if ($allReady) {
+                    $radiology->update(['status' => 'Completed']);
+                }
+            }
+            DB::commit();
+            return JsonResponser::send(false, 'Result status updated successfully', $result);
         } catch (\Throwable $th) {
             DB::rollBack();
             return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
