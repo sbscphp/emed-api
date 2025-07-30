@@ -359,25 +359,55 @@ class ServiceDepartmentService
             ];
         }
 
-        $department_revenue = collect([
-            1 => 'registration',
-            2 => 'pharmacy',
-            4 => 'laboratory',
-            5 => 'radiology',
-            3 => 'consultation',
-        ])->map(function ($name, $unitId) {
+        // Prepare custom date range if provided
+        $customDate = [];
+        if (
+            ($validated['period'] ?? '') === 'custom date' &&
+            !empty($validated['start_date']) &&
+            !empty($validated['end_date'])
+        ) {
+            $customDate = [$validated['start_date'], $validated['end_date']];
+        }
+
+        // Use shared date filter logic
+        $dateFilter = GeneralHelper::dateFilter($validated['period'] ?? null, $customDate);
+
+        // Determine actual date range
+        if (!empty($customDate) && count($customDate) === 2) {
+            $startDate = Carbon::parse($customDate[0])->startOfDay();
+            $endDate = Carbon::parse($customDate[1])->endOfDay();
+        } elseif (is_array($dateFilter) && count($dateFilter) === 2) {
+            [$startDate, $endDate] = $dateFilter;
+            $startDate = Carbon::parse($startDate)->startOfDay();
+            $endDate = Carbon::parse($endDate)->endOfDay();
+        } else {
+            // Default to last 7 days
+            $endDate = Carbon::today()->endOfDay();
+            $startDate = $endDate->copy()->subDays(6)->startOfDay();
+        }
+
+        // Fetch and filter revenue data
+        $query = BillingLog::whereBetween('created_at', [$startDate, $endDate]);
+
+        if (!empty($validated['department_id'])) {
+            $query->where('service_unit_id', $validated['department_id']);
+        }
+
+        $revenueData = $query->get()->groupBy(function ($log) {
+            return Carbon::parse($log->created_at)->format('D');
+        })->map(function ($group) {
+            return round($group->sum('amount'), 2);
+        });
+
+        // Build chart data for week
+        $weekdays = collect(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']);
+        $department_revenue = $weekdays->map(function ($day) use ($revenueData) {
             return [
-                'name' => $name,
-                'calender' => [
-                    'daily' => BillingLog::where('service_unit_id', $unitId)
-                        ->whereBetween('created_at', [Carbon::now()->startOfDay(), Carbon::now()->endOfDay()])->count(),
-                    'monthly' => BillingLog::where('service_unit_id', $unitId)
-                        ->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])->count(),
-                    'yearly' => BillingLog::where('service_unit_id', $unitId)
-                        ->whereBetween('created_at', [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()])->count(),
-                ]
+                'day' => $day,
+                'revenue' => $revenueData->get($day, 0),
             ];
-        })->values()->all();
+        });
+
 
         // Final data
         return [
@@ -501,5 +531,138 @@ class ServiceDepartmentService
         return $patient->paginate(10);
         // where('firstname', $firstname)->where('lastname', $lastname)
 
+    }
+
+    public function in_and_out_patient($request)
+    {
+        $period = $request->input('period');
+        $startDateInput = $request->input('start_date');
+        $endDateInput = $request->input('end_date');
+
+        $customDate = [];
+        if ($period === 'custom date' && $startDateInput && $endDateInput) {
+            $customDate = [$startDateInput, $endDateInput];
+        }
+
+        // Use shared logic or fallback to current year
+        $dateFilter = GeneralHelper::dateFilter($period, $customDate);
+
+        if (!empty($customDate)) {
+            $startDate = Carbon::parse($customDate[0])->startOfDay();
+            $endDate = Carbon::parse($customDate[1])->endOfDay();
+        } elseif ($dateFilter) {
+            $startDate = $dateFilter[0];
+            $endDate = $dateFilter[1];
+        } else {
+            $endDate = Carbon::now()->endOfDay();
+            $startDate = $endDate->copy()->startOfYear();
+        }
+
+        // Fetch all consultations within the date range
+        $consultations = Consultation::whereBetween('created_at', [$startDate, $endDate])->get();
+
+        $chartData = [];
+        $totalInpatient = 0;
+        $totalOutpatient = 0;
+
+        $months = range(1, 12);
+        $currentYear = now()->year;
+
+        foreach ($months as $month) {
+            $startOfMonth = Carbon::create($currentYear, $month, 1)->startOfMonth();
+            $endOfMonth = Carbon::create($currentYear, $month, 1)->endOfMonth();
+
+            if ($startOfMonth->lt($startDate) || $startOfMonth->gt($endDate)) {
+                $in = 0;
+                $out = 0;
+            } else {
+                $monthly = $consultations->filter(function ($c) use ($startOfMonth, $endOfMonth) {
+                    $created = Carbon::parse($c->created_at);
+                    return $created->between($startOfMonth, $endOfMonth);
+                });
+
+                $in = $monthly->where('admitted', 1)->count();
+                $out = $monthly->where('admitted', 0)->count();
+            }
+
+            $totalInpatient += $in;
+            $totalOutpatient += $out;
+
+            $chartData[] = [
+                'label' => $startOfMonth->format('M Y'),
+                'inpatient' => $in,
+                'outpatient' => $out,
+            ];
+        }
+
+        return [
+            'total_inpatient' => $totalInpatient,
+            'total_outpatient' => $totalOutpatient,
+            'chart_data' => $chartData,
+        ];
+    }
+
+    public function appointments($request)
+    {
+        $period = $request->input('period');
+        $startDateInput = $request->input('start_date');
+        $endDateInput = $request->input('end_date');
+
+        $customDate = [];
+        if ($period === 'custom date' && $startDateInput && $endDateInput) {
+            $customDate = [$startDateInput, $endDateInput];
+        }
+
+        $dateFilter = GeneralHelper::dateFilter($period, $customDate);
+
+        if (!empty($customDate)) {
+            $startDate = Carbon::parse($customDate[0])->startOfDay();
+            $endDate = Carbon::parse($customDate[1])->endOfDay();
+        } elseif ($dateFilter) {
+            $startDate = $dateFilter[0];
+            $endDate = $dateFilter[1];
+        } else {
+            $endDate = Carbon::now()->endOfDay();
+            $startDate = $endDate->copy()->startOfYear();
+        }
+
+        // Fetch appointments within date range
+        $appointments = PatientVisit::whereBetween('created_at', [$startDate, $endDate])->get();
+
+        $chartData = [];
+        $months = range(1, 12);
+        $selectedYear = $startDate->year;
+
+        foreach ($months as $month) {
+            $startOfMonth = Carbon::create($selectedYear, $month, 1)->startOfMonth();
+            $endOfMonth = Carbon::create($selectedYear, $month, 1)->endOfMonth();
+
+            if ($startOfMonth->lt($startDate) || $startOfMonth->gt($endDate)) {
+                $count = 0;
+            } else {
+                $monthly = $appointments->filter(function ($a) use ($startOfMonth, $endOfMonth) {
+                    $created = Carbon::parse($a->created_at);
+                    return $created->between($startOfMonth, $endOfMonth);
+                });
+
+                $count = $monthly->count();
+            }
+
+            $chartData[] = [
+                'label' => $startOfMonth->format('M'),
+                'appointments' => $count
+            ];
+        }
+
+        return [
+            'totalAppointments' => $appointments->count(),
+            'appointmentData' => $chartData,
+        ];
+    }
+
+    public function departments()
+    {
+        $departments = ServiceUnit::all();
+        return $departments;
     }
 }

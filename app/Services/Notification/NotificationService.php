@@ -2,13 +2,8 @@
 
 namespace App\Services\Notification;
 
-use App\Enums\GeneralEnums;
 use App\Helpers\GeneralHelper;
-use App\Helpers\UserMgtHelper;
-use App\Models\Department;
-use App\Models\EmployeeDetail;
 use App\Models\Notification;
-use App\Models\Team;
 use Illuminate\Support\Facades\Auth;
 
 /**

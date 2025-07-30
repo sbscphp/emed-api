@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('test_name')->nullable();
             $table->string('ordered_test')->nullable();
             $table->string('others')->nullable();
+            $table->string('status')->default('Pending')->comment('Pending, Completed, Cancelled');
             $table->timestamps();
 
             $table->index('visitno');
