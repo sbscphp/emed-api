@@ -313,7 +313,7 @@ class RegistrationController extends Controller
             $tenant = Tenant::create([
                 'name' => $data['name'],
                 'domain' => $domain,
-                'database' => $tenantDatabase,
+                'database' => $isProduction ? 'jkpmjemy_tenant_john_hospital' : $tenantDatabase,
             ]);
 
             dd(json_encode([$isProduction, $tenantDatabase, $tenant?->database]));
