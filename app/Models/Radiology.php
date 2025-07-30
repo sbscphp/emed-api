@@ -17,7 +17,8 @@ class Radiology extends Model
         'lab_dept',
         'test_name',
         'ordered_test',
-        'others'
+        'others',
+        'status'
     ];
 
     public function patient()
