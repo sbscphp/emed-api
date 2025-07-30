@@ -151,8 +151,15 @@ class RadiologyService
         }
 
         if (!empty($validated['test_status'])) {
+            $radiology->where('test_status', $validated['test_status']);
+        }
+
+
+
+        if (!empty($validated['test_name'])) {
             $radiology->where('test_name', $validated['test_status']);
         }
+
 
         if (!empty($validated['payment_status'])) {
             $radiology->whereHas('consultation.patient_visits.billingLogsForPatient', function ($q1) use ($validated) {
@@ -241,6 +248,10 @@ class RadiologyService
         }
 
         if (!empty($validated['test_status'])) {
+            $radiology->where('test_status', $validated['test_status']);
+        }
+
+        if (!empty($validated['test_name'])) {
             $radiology->where('test_name', $validated['test_status']);
         }
 
