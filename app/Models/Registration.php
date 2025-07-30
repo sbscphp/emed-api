@@ -19,6 +19,7 @@ class Registration extends BaseTenant
         'theme_color',
         'logo',
         'updated_by',
+        'database',
     ];
 
     public static function booted()

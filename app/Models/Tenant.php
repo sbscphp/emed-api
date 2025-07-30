@@ -21,14 +21,14 @@ class Tenant extends BaseTenant
     // }
     public static function booted()
     {
-        static::creating(function ($tenant) {
-            if (!app()->environment('production')) {
-                // $tenant->database = 'jkpmjemy_tenant_' . Str::slug($tenant->name, '_') . '_' . Str::random(4);
-                $tenant->database = 'tenant_' . Str::slug($tenant->name, '_');
-            } elseif (empty($tenant->database)) {
-                $tenant->database = 'jkpmjemy_tenant_john_hospital';
-            }
-        });
+        // static::creating(function ($tenant) {
+        //     if (!app()->environment('production')) {
+        //         // $tenant->database = 'jkpmjemy_tenant_' . Str::slug($tenant->name, '_') . '_' . Str::random(4);
+        //         $tenant->database = 'tenant_' . Str::slug($tenant->name, '_');
+        //     } elseif (empty($tenant->database)) {
+        //         $tenant->database = 'jkpmjemy_tenant_john_hospital';
+        //     }
+        // });
     }
 
     public function register()

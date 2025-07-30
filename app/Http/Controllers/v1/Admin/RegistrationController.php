@@ -275,12 +275,22 @@ class RegistrationController extends Controller
 
 
         try {
-            DB::purge('landlord');
-            Config::set('database.connections.tenant.database',  'jkpmjemy_emed');
+            // DB::purge('landlord');
+            // Config::set('database.connections.landlord.database',  env('DB_DATABASE'));
 
-            DB::reconnect('landlord');
+            // DB::reconnect('landlord');
             $data = $request->validated();
             $adminRole = $this->roleService->getAdminRole();
+
+            $isProduction = true;
+            //app()->environment(['production', 'staging', 'qa']);
+
+
+            $tenantDatabase = $isProduction
+                ? 'jkpmjemy_tenant_john_hospital'
+                : 'tenant_' . Str::slug($data['name'], '_');
+
+            // dd($tenantDatabase);
 
             $registrationData = [
                 'name' => $data['name'],
@@ -289,6 +299,7 @@ class RegistrationController extends Controller
                 'email' => $data['email'],
                 'phone_number' => $data['phone_number'],
                 'address' => $data['address'],
+                //'database' => $tenantDatabase
             ];
 
             if ($request->hasFile('license')) {
@@ -307,24 +318,16 @@ class RegistrationController extends Controller
                 return JsonResponser::send(false, "Tenant {$data['name']} already exists.", [], 500);
             }
 
-            $isProduction = true;
-            //app()->environment(['production', 'staging', 'qa']);
 
-
-            $tenantDatabase = $isProduction
-                ? 'jkpmjemy_tenant_john_hospital'
-                : 'tenant_' . Str::slug($data['name'], '_');
 
 
             //
-            $tenant = (new Tenant())->setConnection('landlord');
-            $tenant->fill([
+            // dd($tenantDatabase);
+            $tenant = Tenant::create([
                 'name' => $data['name'],
                 'domain' => $domain,
                 'database' => $tenantDatabase,
             ]);
-            $tenant->save();
-
 
 
             if (!$isProduction) {
@@ -405,6 +408,11 @@ class RegistrationController extends Controller
                 //     'updated_at' => now(),
                 // ]);
                 //dd(json_encode($adminLandlord, JSON_PRETTY_PRINT));
+                $tenant_tenants = DB::connection('tenant')->table('tenants')->insertGetId([
+                    'name' => $data['name'],
+                    'domain' => $domain,
+                    'database' => $tenantDatabase,
+                ]);
                 DB::connection('tenant')->table('users')->insert([
                     'id' => $adminLandlord->id,
                     'uuid' => $adminLandlord->uuid,
@@ -413,7 +421,7 @@ class RegistrationController extends Controller
                     'phone_number' => $adminLandlord->phone_number,
                     'email' => $adminLandlord->email,
                     'password' => $adminLandlord->password,
-                    'tenant_id' => $tenant->id,
+                    'tenant_id' => $tenant_tenants,
                     'remember_token' => $adminLandlord->remember_token,
                 ]);
             }
