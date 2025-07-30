@@ -309,16 +309,17 @@ class RegistrationController extends Controller
                 ? 'jkpmjemy_tenant_john_hospital'
                 : 'tenant_' . Str::slug($data['name'], '_');
 
-            dd([$isProduction, $tenantDatabase]);
+            // dd([$isProduction, $tenantDatabase]);
             $tenant = Tenant::create([
                 'name' => $data['name'],
                 'domain' => $domain,
                 'database' => $tenantDatabase,
             ]);
 
-            // if ($isProduction == false) {
-            //     DB::statement("CREATE DATABASE IF NOT EXISTS {$tenantDatabase} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-            // } else {
+            if ($isProduction === false) {
+                DB::statement("CREATE DATABASE IF NOT EXISTS {$tenantDatabase} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+            }
+            // else {
             //     $dbExists = DB::connection('landlord')->select("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?", [$tenantDatabase]);
             //     if (empty($dbExists)) {
             //         DB::connection('landlord')->rollBack();
