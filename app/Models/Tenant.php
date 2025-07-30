@@ -11,8 +11,6 @@ class Tenant extends BaseTenant
         'name',
         'domain',
         'database',
-        'created_by',
-        'updated_by'
     ];
 
     // public static function booted()
