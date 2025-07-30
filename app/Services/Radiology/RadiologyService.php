@@ -2,8 +2,11 @@
 
 namespace App\Services\Radiology;
 
+use App\Helpers\FileUploadHelper;
+use App\Helpers\UserMgtHelper;
 use App\Models\BillingLog;
 use App\Models\Radiology;
+use App\Models\RadiologyResult;
 use App\Repositories\Radiology\RadiologyInterface;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -194,7 +197,7 @@ class RadiologyService
 
     public function radiology_patient($validated)
     {
-        $radiology =  Radiology::with(['patient.visits_recent.billingLogsForPatient', 'pharmacist'])
+        $radiology =  Radiology::with(['patient.visits_recent.billingLogsForPatient', 'pharmacist', 'result'])
             ->whereHas('patient', function ($q) use ($validated) {
                 $q->where('id', $validated['patient_id']);
             })
@@ -211,7 +214,6 @@ class RadiologyService
                             ->orWhere('payment_method', $validated['search']);
                     });
             });
-
 
 
         if (!empty($validated['phone_number'])) {
@@ -238,5 +240,56 @@ class RadiologyService
 
 
         return   $radiology->paginate(10);
+    }
+
+    public function result ($data) {
+
+        $currentUserInstance = UserMgtHelper::userInstance();
+        $userId = $currentUserInstance->id;
+        $tenant = $currentUserInstance->tenant->domain;
+
+        $resultImage = isset($data->result_img) && !empty($data->result_img)
+            ? FileUploadHelper::singleStringFileUpload($data->result_img, "radiology_results")
+            : null;
+
+        // Create radiology result
+        $record = RadiologyResult::create([
+            'tenant_domain' => $tenant,
+            'user_id' => $userId,
+            'radiology_id' => $data->radiology_id,
+            'patient_id' => $data->patient_id,
+            'examination_type' => $data->examination_type,
+            'clinical_indication' => $data->clinical_indication,
+            'technique' => $data->technique,
+            'findings' => $data->findings,
+            'result_img' => $resultImage,
+        ]);
+
+        return $record;
+
+    }
+
+    public function updateResult($data, $result)
+    {
+        $currentUserInstance = UserMgtHelper::userInstance();
+        $userId = $currentUserInstance->id;
+
+        $resultImage = isset($data->result_img) && !empty($data->result_img)
+            ? FileUploadHelper::singleStringFileUpload($data->result_img, "radiology_results")
+            : $result->result_img; // Keep existing image if not provided
+
+        // Update radiology result
+        $result->update([
+            'updated_by' => $userId,
+            // 'radiology_id' => $data->radiology_id,
+            // 'patient_id' => $data->patient_id,
+            'examination_type' => $data->examination_type,
+            'clinical_indication' => $data->clinical_indication,
+            'technique' => $data->technique,
+            'findings' => $data->findings,
+            'result_img' => $resultImage,
+        ]);
+
+        return $result->refresh();
     }
 }

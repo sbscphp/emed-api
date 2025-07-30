@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('test_name')->nullable();
             $table->string('ordered_test')->nullable();
             $table->string('others')->nullable();
-            $table->enum('payment_status', ['pending', 'complete', 'canceled'])->nullable();
+            $table->enum('payment_status', ['paid', 'part_paid', 'pending'])->nullable();
             $table->enum('test_status', ['complete', 'in progress', 'pending'])->nullable();
             $table->timestamps();
 
