@@ -314,7 +314,7 @@ class RegistrationController extends Controller
                 'database' => $tenantDatabase,
             ]);
 
-            if (!empty($tenantDatabase) && !$isProduction) {
+            if (!$isProduction) {
                 DB::statement("CREATE DATABASE IF NOT EXISTS {$tenantDatabase} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
             } else {
                 $dbExists = DB::connection('landlord')->select("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?", [$tenantDatabase]);
@@ -444,9 +444,20 @@ class RegistrationController extends Controller
         } catch (\Exception $e) {
             DB::connection('landlord')->rollBack();
 
+            // if (!empty($tenantDatabase) && !$isProduction) {
+            //     DB::statement("DROP DATABASE IF EXISTS {$tenantDatabase}");
+            // }
+
             if (!empty($tenantDatabase) && !$isProduction) {
-                DB::statement("DROP DATABASE IF EXISTS {$tenantDatabase}");
+                try {
+                    DB::statement("DROP DATABASE IF EXISTS {$tenantDatabase}");
+                } catch (\Exception $dropEx) {
+                    Log::warning("Failed to drop tenant DB {$tenantDatabase}: " . $dropEx->getMessage());
+                }
+            } elseif ($isProduction) {
+                Log::info("Skipping DROP DATABASE for {$tenantDatabase} in production.");
             }
+
 
             return JsonResponser::send(
                 false,
