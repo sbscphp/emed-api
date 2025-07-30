@@ -19,7 +19,8 @@ class Radiology extends Model
         'test_status',
         'ordered_test',
         'others',
-        'payment_status'
+        'payment_status',
+        'status'
     ];
 
     public function patient()

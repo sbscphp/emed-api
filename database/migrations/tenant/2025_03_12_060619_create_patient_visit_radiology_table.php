@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('others')->nullable();
             $table->enum('payment_status', ['paid', 'part_paid', 'pending'])->nullable();
             $table->enum('test_status', ['complete', 'in progress', 'pending'])->nullable();
+            $table->string('status')->default('Pending')->comment('Pending, Completed, Cancelled');
             $table->timestamps();
 
             $table->index('visitno');

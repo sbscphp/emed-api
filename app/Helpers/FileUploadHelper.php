@@ -47,7 +47,7 @@ class FileUploadHelper
         //     throw new \Exception('Invalid base64 file format.');
         // }
 
-        if (!preg_match('/^data:(.*);base64,(.*)$/', $requestFile, $matches)) {
+        if (!preg_match('/^data:([a-zA-Z0-9\/\-\+\.]+);base64,(.+)$/', $requestFile, $matches)) {
             throw new \Exception('Invalid base64 file format.');
         }
 

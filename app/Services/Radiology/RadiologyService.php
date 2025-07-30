@@ -288,7 +288,20 @@ class RadiologyService
             'technique' => $data->technique,
             'findings' => $data->findings,
             'result_img' => $resultImage,
+            'status' => 'Ready', // Update status if provided
         ]);
+
+        $radiology = Radiology::find($result->radiology_id);
+        if ($radiology) {
+            // Check if all results for this radiology are "Ready"
+            $allReady = RadiologyResult::where('radiology_id', $radiology->id)
+                ->where('status', '!=', 'Ready')
+                ->doesntExist();
+
+            if ($allReady) {
+                $radiology->update(['status' => 'Completed']);
+            }
+        }
 
         return $result->refresh();
     }
