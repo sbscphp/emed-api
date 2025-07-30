@@ -313,6 +313,7 @@ class RegistrationController extends Controller
 
 
             //
+            DB::connection('landlord')->beginTransaction();
             $tenant = (new Tenant())->setConnection('landlord');
             $tenant->fill([
                 'name' => $data['name'],
@@ -320,6 +321,7 @@ class RegistrationController extends Controller
                 'database' => $tenantDatabase,
             ]);
             $tenant->save();
+            DB::connection('landlord')->commit();
 
             return JsonResponser::send(
                 true,
