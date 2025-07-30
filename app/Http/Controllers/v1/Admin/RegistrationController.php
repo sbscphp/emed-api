@@ -311,15 +311,7 @@ class RegistrationController extends Controller
                 ? 'jkpmjemy_tenant_john_hospital'
                 : 'tenant_' . Str::slug($data['name'], '_');
 
-            dd([
-                'isProduction' => $isProduction,
-                'tenantDatabase' => $tenantDatabase,
-                'creating_with' => [
-                    'name' => $data['name'],
-                    'domain' => $domain,
-                    'database' => $tenantDatabase,
-                ]
-            ]);
+
             //
             $tenant = new Tenant();
             $tenant->setConnection('landlord');
