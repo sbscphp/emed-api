@@ -13,12 +13,14 @@ use App\Http\Requests\CreateservichospitalRequst;
 use App\Http\Requests\DosageAdminRequest;
 use App\Http\Requests\EditservichospitalRequest;
 use App\Http\Requests\ImmunizationRequest;
+use App\Http\Requests\Observetation_Recommandation_Request;
 use App\Models\Consultation_Details;
 use App\Models\Consultation_Details_Laborartory;
 use App\Models\Consultation_Details_Radiology;
 use App\Models\Consultation_Details_Treatment;
 use App\Models\Dosage_Adminstration;
 use App\Models\Immunization;
+use App\Models\Observetation_Recommandation;
 use App\Models\Registartion_Service;
 use App\Models\ServiceDepartment;
 use App\Models\ServiceUnit;
@@ -157,6 +159,18 @@ class ImmunizationController extends Controller
                 });
             })->paginate(10);
             return JsonResponser::send(false, 'featch successfully.', $services);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'Error  .', [], 500, $th);
+        }
+    }
+
+
+    public function observetation_recommandation(Observetation_Recommandation_Request $request)
+    {
+        try {
+            $validated = $request->validated();
+            $data = Observetation_Recommandation::create($validated);
+            return JsonResponser::send(false, 'successfull.', $data);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'Error  .', [], 500, $th);
         }

@@ -314,7 +314,7 @@ class RegistrationController extends Controller
                 'database' => $tenantDatabase,
             ]);
 
-            if (!$isProduction) {
+            if (!empty($tenantDatabase) && !$isProduction) {
                 DB::statement("CREATE DATABASE IF NOT EXISTS {$tenantDatabase} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
             } else {
                 $dbExists = DB::connection('landlord')->select("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?", [$tenantDatabase]);
