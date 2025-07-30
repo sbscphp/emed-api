@@ -125,7 +125,7 @@ class RadiologyService
         ])
             ->when(!empty($validated['search']), function ($query) use ($validated) {
                 $query->where(function ($q) use ($validated) {
-                    $q->where("test_name", 'like', "%{$validated['search']}%")
+                    $q->where("test_name", $validated['search'])
                         ->orWhereHas('consultation.patient', function ($q1) use ($validated) {
                             $q1->where('firstname', 'like', "%{$validated['search']}%")
                                 ->orWhere('lastname', 'like', "%{$validated['search']}%")
@@ -217,7 +217,7 @@ class RadiologyService
 
         if (!empty($validated['search'])) {
             $radiology->where(function ($query) use ($validated) {
-                $query->where("test_name", 'like', "%{$validated['search']}%")
+                $query->where("test_name",  $validated['search'])
                     ->orWhereHas('consultation.patientVisit.patient', function ($q3) use ($validated) {
                         $q3->where(function ($q4) use ($validated) {
                             $q4->where('firstname', 'like', "%{$validated['search']}%")

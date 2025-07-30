@@ -75,6 +75,7 @@ class RadiologyController extends Controller
             'phone_number' => "nullable|string",
             'payment_status' => "nullable|string",
             'test_status' => "nullable|string",
+            'test_name' => "nullable|string",
             'patient_id' => "required|numeric"
         ]);
 
