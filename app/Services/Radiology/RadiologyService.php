@@ -290,6 +290,15 @@ class RadiologyService
             'result_img' => $resultImage,
         ]);
 
+        $radio = Radiology::find($data->radiology_id);
+        if ($radio) {
+            $radio->update([
+                "test_status" => "complete",
+                // "payment_status" => "pending"
+            ]);
+        }
+
+
         return $record;
     }
 
@@ -325,6 +334,7 @@ class RadiologyService
 
             $radiology->update([
                 "test_status" => "complete",
+                // "payment_status" => "pending"
             ]);
 
             if ($allReady) {

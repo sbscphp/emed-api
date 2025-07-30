@@ -23,7 +23,7 @@ class RadiologyResultRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'radiology_id' => 'required',
+            'radiology_id' => 'required|exists:tenant.patient_visit_radiology,id',
             'patient_id' => 'required',
             'examination_type' => 'required',
             'clinical_indication' => 'required',
