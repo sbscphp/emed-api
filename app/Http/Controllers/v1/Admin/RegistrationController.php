@@ -310,7 +310,7 @@ class RegistrationController extends Controller
                 : 'tenant_' . Str::slug($data['name'], '_');
 
             //
-            $tenant = Tenant::create([
+            $tenant = Tenant::on('landlord')->create([
                 'name' => $data['name'],
                 'domain' => $domain,
                 'database' => $isProduction ? 'jkpmjemy_tenant_john_hospital' : $tenantDatabase,
