@@ -16,8 +16,10 @@ class Radiology extends Model
         'visitno',
         'lab_dept',
         'test_name',
+        'test_status',
         'ordered_test',
         'others',
+        'payment_status',
         'status'
     ];
 

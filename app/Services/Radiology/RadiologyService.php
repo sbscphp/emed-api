@@ -197,7 +197,7 @@ class RadiologyService
 
     public function radiology_patient($validated)
     {
-        $radiology =  Radiology::with(['patient.visits_recent.billingLogsForPatient', 'pharmacist', 'result'])
+        $radiology =  Radiology::with(['consultation.patientVisit.billingLogsForPatient', 'consulted_by', 'result'])
             ->whereHas('patient', function ($q) use ($validated) {
                 $q->where('id', $validated['patient_id']);
             })
@@ -208,7 +208,7 @@ class RadiologyService
                             ->orWhere('lastname', $validated['search'])
                             ->orWhere('patientno', $validated['search']);
                     })
-                    ->orWhereHas('patient.visits_recent.billingLogsForPatient', function ($query) use ($validated) {
+                    ->orWhereHas('consultation.patientVisit.billingLogsForPatient', function ($query) use ($validated) {
                         // payment_status payment_method
                         $query->where('payment_status', $validated['search'])
                             ->orWhere('payment_method', $validated['search']);
@@ -233,7 +233,7 @@ class RadiologyService
         }
 
         if (!empty($validated['payment_status'])) {
-            $radiology->whereHas('patient.visits_recent.billingLogsForPatient', function ($q1) use ($validated) {
+            $radiology->whereHas('consultation.patientVisit.billingLogsForPatient', function ($q1) use ($validated) {
                 $q1->where("payment_status", $validated["payment_status"]);
             });
         }
@@ -242,7 +242,8 @@ class RadiologyService
         return   $radiology->paginate(10);
     }
 
-    public function result ($data) {
+    public function result($data)
+    {
 
         $currentUserInstance = UserMgtHelper::userInstance();
         $userId = $currentUserInstance->id;
@@ -266,7 +267,6 @@ class RadiologyService
         ]);
 
         return $record;
-
     }
 
     public function updateResult($data, $result)
@@ -288,7 +288,20 @@ class RadiologyService
             'technique' => $data->technique,
             'findings' => $data->findings,
             'result_img' => $resultImage,
+            'status' => 'Ready', // Update status if provided
         ]);
+
+        $radiology = Radiology::find($result->radiology_id);
+        if ($radiology) {
+            // Check if all results for this radiology are "Ready"
+            $allReady = RadiologyResult::where('radiology_id', $radiology->id)
+                ->where('status', '!=', 'Ready')
+                ->doesntExist();
+
+            if ($allReady) {
+                $radiology->update(['status' => 'Completed']);
+            }
+        }
 
         return $result->refresh();
     }
