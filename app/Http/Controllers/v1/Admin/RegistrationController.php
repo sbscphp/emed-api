@@ -305,10 +305,21 @@ class RegistrationController extends Controller
 
             $isProduction = true;
             //app()->environment(['production', 'staging', 'qa']);
+
+
             $tenantDatabase = $isProduction
                 ? 'jkpmjemy_tenant_john_hospital'
                 : 'tenant_' . Str::slug($data['name'], '_');
 
+            dd([
+                'isProduction' => $isProduction,
+                'tenantDatabase' => $tenantDatabase,
+                'creating_with' => [
+                    'name' => $data['name'],
+                    'domain' => $domain,
+                    'database' => $tenantDatabase,
+                ]
+            ]);
             //
             $tenant = Tenant::on('landlord')->create([
                 'name' => $data['name'],
