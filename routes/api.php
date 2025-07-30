@@ -310,6 +310,7 @@ Route::group(["prefix" => "v1"], function () {
                 Route::group(['prefix' => 'immunization'], function () {
                     Route::post("/create_immunization",  [ImmunizationController::class, "create_immunization"]);
                     Route::post("/dosage_admin", [ImmunizationController::class, "dosage_admin"]);
+                    Route::post("/observetation_reco",);
                 });
 
                 Route::group(['prefix' => 'service'], function () {
