@@ -103,7 +103,7 @@ class RadiologyController extends Controller
         }
 
         $data = [
-            'data' => $radiology,
+            'data' => $data,
             'patient' => Patient::with('visits_recent')->first()
         ];
 

@@ -272,9 +272,13 @@ class RegistrationController extends Controller
 
     public function onboardTenant(TenantOnboardingRequest $request)
     {
-        DB::connection('landlord')->beginTransaction();
+
 
         try {
+            DB::purge('landlord');
+            Config::set('database.connections.tenant.database',  'jkpmjemy_emed');
+
+            DB::reconnect('landlord');
             $data = $request->validated();
             $adminRole = $this->roleService->getAdminRole();
 
@@ -303,7 +307,8 @@ class RegistrationController extends Controller
                 return JsonResponser::send(false, "Tenant {$data['name']} already exists.", [], 500);
             }
 
-            $isProduction = app()->environment(['production', 'staging', 'qa']);
+            $isProduction = true;
+            //app()->environment(['production', 'staging', 'qa']);
 
 
             $tenantDatabase = $isProduction
