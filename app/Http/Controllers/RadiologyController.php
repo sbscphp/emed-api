@@ -78,7 +78,7 @@ class RadiologyController extends Controller
             'patient_id' => "required|numeric"
         ]);
 
-        $radiology =  Radiology::with(['patient.visits_recent.billingLogsForPatient', 'pharmacist', 'result'])
+        $radiology =  Radiology::with(['consultation.patientVisit.billingLogsForPatient', 'consulted_by', 'result'])
             ->whereHas('patient', function ($q) use ($validated) {
                 $q->where('id', $validated['patient_id']);
             })
