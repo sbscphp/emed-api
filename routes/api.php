@@ -112,6 +112,7 @@ Route::group(["prefix" => "v1"], function () {
 
                 //Consultant routes
                 Route::group(['prefix' => 'consultant',  'middleware' => 'role.consultant'], function () {
+                    Route::get("/consultaton_stats", [ConsultationController::class, "consultaton_stats"]);
                     Route::post('/patients', [ConsultationController::class, 'patientsForConsultation']);
                     Route::get('/patient/{visitNo}', [ConsultationController::class, 'show']);
                     Route::post('/all/patients', [ConsultationController::class, 'getAllVisits']);

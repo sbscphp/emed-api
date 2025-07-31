@@ -35,7 +35,7 @@ return new class extends Migration
             $table->string('recieptno')->unique()->nullable();
             $table->dateTime('arrival_time')->nullable();
             $table->dateTime('departure_time')->nullable();
-            $table->string('status')->nullable();
+            $table->enum('status', ['discharged', 'admitted'])->nullable();
             $table->string('patientno');
             $table->enum('is_active', [false, true])->default(true);
             $table->unsignedBigInteger('service_id')->nullable();
