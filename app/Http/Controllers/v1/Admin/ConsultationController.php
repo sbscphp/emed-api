@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ConsultationRequest;
 use App\Http\Requests\Admin\LabRequest;
 use App\Http\Requests\Admin\TreatmentRequest;
+use App\Http\Resources\PatientVistResource;
 use App\Models\Consultation;
 use App\Models\DrugHistory;
 use App\Models\FamilyHistory;
@@ -91,6 +92,21 @@ class ConsultationController extends Controller
             $perPage = $request->perPage ?? 10;
 
             $patients = $this->patientVisitService->getPatientForConsultation($search, $sortBy, $date, $paginate, $perPage);
+            $patient = PatientVisit::with(['patient', 'patient.triage'])->get();
+            $exportData = PatientVistResource::collection($patient)->resolve();
+            if (!empty($request->export)) {
+
+                $export =  $request->export;
+
+                if ($export === 'csv') {
+                    return ExportHelper::streamCsv($exportData, null, 'audit-logs.csv');
+                }
+
+                if ($export === 'pdf') {
+                    return ExportHelper::downloadPdf($exportData, 'audit-logs.pdf');
+                }
+            }
+
             if ($patients->isEmpty()) {
                 return JsonResponser::send(true, 'Records not found.', null, 200);
             }
