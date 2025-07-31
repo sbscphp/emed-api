@@ -2,10 +2,13 @@
 
 namespace App\Services\AuditLog;
 
+use App\Exports\AuditLogExport;
 use App\Helpers\ExportHelper;
+use App\Helpers\GeneralHelper;
 use App\Models\AuditLog;
 use App\Repositories\AuditLog\AuditLogInterface;
 use Carbon\Carbon;
+use Maatwebsite\Excel\Facades\Excel;
 
 /**
  * Class AuditLogService
@@ -25,6 +28,101 @@ class AuditLogService
     {
         $this->AuditLogInterface = $AuditLogInterface;
     }
+
+    public function activityOverview($request)
+    {
+        $period = $request->input('period');
+        $startDateInput = $request->input('start_date');
+        $endDateInput = $request->input('end_date');
+
+        $customDate = [];
+        if ($period === 'custom date' && $startDateInput && $endDateInput) {
+            $customDate = [$startDateInput, $endDateInput];
+        }
+
+        $dateFilter = GeneralHelper::dateFilter($period, $customDate);
+        $records = AuditLog::query()
+            ->whereIn('module_accessed', ['Billing', 'Records', 'Pharmacy'])
+            ->when(!empty($request->search), function ($query) use ($request) {
+                $query->where(function ($q) use ($request) {
+                    $q->where('action', 'LIKE', '%' . $request->search . '%')
+                        ->orWhere('log_name', 'LIKE', '%' . $request->search . '%')
+                        ->orWhere('module_accessed', 'LIKE', '%' . $request->search . '%')
+                        ->orWhere('action', 'LIKE', '%' . $request->search . '%')
+
+                        ->orWhereHas('causer', function ($q2) use ($request) {
+                            $q2->where('fullname', 'LIKE', '%' . $request->search . '%')
+                                ->orWhere('id',  intval($request->search));
+                        });
+                });
+            })
+
+            ->when(!empty($request['role']), function ($query) use ($request) {
+                $query->whereRelation('causer', 'role', $request['role']);
+            })
+            ->when(!empty($request['module_accessed']), function ($query) use ($request) {
+                $query->where('module_accessed', $request['module_accessed']);
+            })
+            ->when(!empty($request['start_date']) && !empty($request['end_date']), function ($query) use ($request) {
+                $query->whereBetween('created_at', [$request['start_date'], $request['end_date']]);
+            })
+            ->when($dateFilter, function ($query) use ($dateFilter) {
+                $query->whereBetween('created_at', $dateFilter);
+            })->when(($request['sortBy'] ?? null) === 'date_ascending', function ($query) {
+                $query->orderBy('created_at', 'ASC');
+            })->when(($request['sortBy'] ?? null) === 'date_descending', function ($query) {
+                $query->orderBy('created_at', 'DESC');
+            })
+            ->with(['audit_log_transactions', 'causer']);
+
+        if (!empty($request['paginate']) && empty($request['export'])) {
+            return $records->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
+        }
+
+        return $records->orderBy('id', 'DESC')->get();
+    }
+
+    public function activityStats($request)
+    {
+        $period = $request->input('period');
+        $startDateInput = $request->input('start_date');
+        $endDateInput = $request->input('end_date');
+
+        $customDate = [];
+        if ($period === 'custom date' && $startDateInput && $endDateInput) {
+            $customDate = [$startDateInput, $endDateInput];
+        }
+
+        $dateFilter = GeneralHelper::dateFilter($period, $customDate);
+
+        // Main query (optionally filtered)
+        $query = AuditLog::query()
+            ->whereIn('module_accessed', ['Billing', 'Records', 'Pharmacy'])
+            ->when($dateFilter, function ($query) use ($dateFilter) {
+                return $query->whereBetween('created_at', $dateFilter);
+            });
+
+        $total = (clone $query)->count();
+        return [
+            'totalUserActivity' => $total,
+        ];
+    }
+
+    public function activityExport($records)
+    {
+        $recordHeadings = ['User ID', 'User Role', 'Timestamp', 'Action Taken', 'Module Accessed'];
+        $records = $records->map(function ($record) {
+            return [
+                $record->causer->id ?? 'N/A',
+                $record->causer->role ?? 'N/A',
+                $record->created_at->toDateTimeString(),
+                $record->action,
+                $record->module_accessed,
+            ];
+        });
+        return Excel::download(new AuditLogExport($records, $recordHeadings), 'user_activity.xlsx');
+    }
+
 
     /**
      * Retrieve all AuditLog.
