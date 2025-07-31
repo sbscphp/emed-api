@@ -151,19 +151,22 @@ class RadiologyService
         }
 
         if (!empty($validated['test_status'])) {
-            $radiology->where('test_status', $validated['test_status']);
+            // $radiology->where('test_status', $validated['test_status']);
+            $radiology->whereRaw('LOWER(test_status) = ?', [strtolower($validated['test_status'])]);
         }
 
 
 
         if (!empty($validated['test_name'])) {
-            $radiology->where('test_name', $validated['test_status']);
+            // $radiology->where('test_name', $validated['test_status']);
+            $radiology->whereRaw('LOWER(test_name) = ?', [strtolower($validated['test_status'])]);
         }
 
 
         if (!empty($validated['payment_status'])) {
             $radiology->whereHas('consultation.patientVisit.billingLogsForPatient', function ($q1) use ($validated) {
-                $q1->where("payment_status", $validated["payment_status"]);
+                // $q1->where("payment_status", $validated["payment_status"]);
+                $q1->whereRaw('LOWER(payment_status) = ?', [strtolower($validated['payment_status'])]);
             });
         }
 
@@ -248,17 +251,20 @@ class RadiologyService
         }
 
         if (!empty($validated['test_status'])) {
-            $radiology->where('test_status', $validated['test_status']);
+            // $radiology->where('test_status', $validated['test_status']);
+            $radiology->whereRaw('LOWER(test_status) = ?', [strtolower($validated['test_status'])]);
         }
 
         if (!empty($validated['test_name'])) {
-            $radiology->where('test_name', $validated['test_status']);
+            // $radiology->where('test_name', $validated['test_name']);
+            $radiology->whereRaw('LOWER(test_name) = ?', [strtolower($validated['test_name'])]);
         }
 
 
         if (!empty($validated['payment_status'])) {
             $radiology->whereHas('consultation.patientVisit.billingLogsForPatient', function ($q) use ($validated) {
-                $q->where("payment_status", $validated["payment_status"]);
+                // $q->where("payment_status", $validated["payment_status"]);
+                $q->whereRaw('LOWER(payment_status) = ?', [strtolower($validated['payment_status'])]);
             });
         }
 
