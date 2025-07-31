@@ -34,6 +34,8 @@ class TreatmentRequest extends FormRequest
             'medications.*.duration' => 'required|string',
             'medications.*.route' => 'nullable|string',
             'medications.*.remark' => 'nullable|string',
+            'medications.*.is_surgery' => 'nullable|boolean',
+            'medications.*.surgery' => 'nullable|string',
             // 'medications.*.pharmacy_id' => [
             //     'required',
             //     'integer',
