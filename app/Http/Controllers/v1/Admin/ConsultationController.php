@@ -90,8 +90,9 @@ class ConsultationController extends Controller
             $date = $request->date ?? null;
             $paginate = $request->paginate ?? false;
             $perPage = $request->perPage ?? 10;
+            $patient_type = $request->patient_type;
 
-            $patients = $this->patientVisitService->getPatientForConsultation($search, $sortBy, $date, $paginate, $perPage);
+            $patients = $this->patientVisitService->getPatientForConsultation($search, $sortBy, $date, $paginate, $perPage, $patient_type);
             $patient = PatientVisit::with(['patient', 'patient.triage'])->get();
             $exportData = PatientVistResource::collection($patient)->resolve();
             if (!empty($request->export)) {

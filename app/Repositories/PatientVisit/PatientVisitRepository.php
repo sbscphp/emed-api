@@ -158,7 +158,7 @@ class PatientVisitRepository implements PatientVisitInterface
      * @param [type] $date
      * @return void
      */
-    public function getPatientForConsultation($search, $sortBy, $date = Null, $paginate, $perPage)
+    public function getPatientForConsultation($search, $sortBy, $date = Null, $paginate, $perPage, $patient_type)
     {
         $query = PatientVisit::with(['patient', 'patient.triage']);
         // $query->join('billings', 'patient_visits.visitno', '=', 'billings.visitno');
@@ -185,6 +185,12 @@ class PatientVisitRepository implements PatientVisitInterface
 
         if (isset($date)) {
             $query->whereDate('arrival_date', Carbon::parse($date)->toDateString());
+        }
+
+        if (!empty($patient_type)) {
+            $query->whereHas('patient',  function ($q) use ($patient_type) {
+                $q->where('patient_type',  $patient_type);
+            });
         }
 
         $query->where('stage', 'consultation');
