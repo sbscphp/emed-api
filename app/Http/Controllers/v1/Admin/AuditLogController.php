@@ -26,6 +26,37 @@ class AuditLogController extends Controller
         $this->auditLogService = $auditLogService;
     }
 
+    public function userActivityRecords(Request $request)
+    {
+
+        try {
+            $overview = $this->auditLogService->activityOverview($request);
+
+            $stats = $this->auditLogService->activityStats($request);
+            $records = [
+                ...$stats,
+                'data' => $overview
+            ];
+
+            if ($request['export'] === 'csv') {
+                return $this->auditLogService->activityExport($overview);
+            }
+
+            if($request['export'] === 'pdf') {
+                $pdf = Pdf::loadView('exports.audit_logs', ['logs' => $overview]);
+                return $pdf->download('audit_logs.pdf');
+            }
+
+            if (!$request['paginate']) {
+                $records = $overview;
+            }
+
+            return JsonResponser::send(false, 'Record(s) found successfully', $records);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
     public function userActivity(AuditLogRequest $request)
     {
         try {
