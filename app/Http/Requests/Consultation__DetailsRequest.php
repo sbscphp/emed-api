@@ -23,7 +23,7 @@ class Consultation__DetailsRequest extends FormRequest
     {
         return [
             'patient_id' => 'nullable|exists:tenant.patients,id',
-            'patient_visits_id' => 'nullable|exists:tenant.patient_visits,id',
+            'patient_visits_id' => 'nullable|numeric|exists:tenant.patient_visits,id',
             'complaints' => 'nullable|string',
             'history_of_present_complaints' => 'nullable|string',
             'system_view' => 'nullable|string',

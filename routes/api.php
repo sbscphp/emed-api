@@ -308,9 +308,13 @@ Route::group(["prefix" => "v1"], function () {
                 Route::group(['prefix' => 'patient_consultation_summary'], function () {
                     Route::get('/', [MainDashBoardStatsController::class, "patient_consultation_summary_data"]);
                     Route::post("/consultation_details", [ImmunizationController::class, "consultation_details"]);
+                    Route::get("/consultation_details", [ImmunizationController::class, "consultation_details_get"]);
                     Route::post("/consultation_details_laborartory", [ImmunizationController::class, "consultation_details_laborartory"]);
+                    Route::get("consultation_details_laborartory", [ImmunizationController::class, "consultation_details_laborartory_get"]);
                     Route::post("/consultation_detail_radiology", [ImmunizationController::class, "consultation_detail_radiology"]);
+                    Route::get("/consultation_detail_radiology", [ImmunizationController::class, "consultation_detail_radiology_get"]);
                     Route::post("/consultation_detail_treatment", [ImmunizationController::class, "consultation_detail_treatment"]);
+                    Route::get("/consultation_detail_treatment", [ImmunizationController::class, "consultation_detail_treatment_get"]);
                 });
 
                 Route::group(['prefix' => 'immunization'], function () {

@@ -21,6 +21,7 @@ use App\Models\Consultation_Details_Treatment;
 use App\Models\Dosage_Adminstration;
 use App\Models\Immunization;
 use App\Models\Observetation_Recommandation;
+use App\Models\Patient;
 use App\Models\Registartion_Service;
 use App\Models\ServiceDepartment;
 use App\Models\ServiceUnit;
@@ -61,6 +62,83 @@ class ImmunizationController extends Controller
         try {
             $validated = $request->validated();
             $data = Consultation_Details::create($validated);
+            return JsonResponser::send(false, ' created successfully.', $data);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'Error fetching  .', [], 500, $th);
+        }
+    }
+
+
+    public function consultation_details_get(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                "patient_id" => "nullable|numeric|exists:tenant.patients,id"
+            ]);
+
+            $consultation_Details =  Consultation_Details::where('patient_id',  $validated['patient_id'])->first();
+            $patient = Patient::find($validated['patient_id']);
+            $data = [
+                "consultation" => $consultation_Details,
+                "patient" => $patient
+            ];
+            return JsonResponser::send(false, ' created successfully.', $data);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'Error fetching  .', [], 500, $th);
+        }
+    }
+
+    public function consultation_details_laborartory_get(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                "patient_id" => "nullable|numeric|exists:tenant.patients,id"
+            ]);
+
+            $consultation_details_laborartory =  Consultation_Details_Laborartory::where('patient_id',  $validated['patient_id'])->first();
+            $patient = Patient::find($validated['patient_id']);
+            $data = [
+                "laborartory" => $consultation_details_laborartory,
+                "patient" => $patient
+            ];
+            return JsonResponser::send(false, ' created successfully.', $data);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'Error fetching  .', [], 500, $th);
+        }
+    }
+
+    public function consultation_detail_radiology_get(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                "patient_id" => "nullable|numeric|exists:tenant.patients,id"
+            ]);
+
+            $consultation_details_laborartory =  Consultation_Details_Radiology::where('patient_id',  $validated['patient_id'])->first();
+            $patient = Patient::find($validated['patient_id']);
+            $data = [
+                "radiology" => $consultation_details_laborartory,
+                "patient" => $patient
+            ];
+            return JsonResponser::send(false, ' created successfully.', $data);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'Error fetching  .', [], 500, $th);
+        }
+    }
+
+    public function consultation_detail_treatment_get(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                "patient_id" => "nullable|numeric|exists:tenant.patients,id"
+            ]);
+
+            $consultation_details_treatment =  Consultation_Details_Treatment::where('patient_id',  $validated['patient_id'])->first();
+            $patient = Patient::find($validated['patient_id']);
+            $data = [
+                "treatment" => $consultation_details_treatment,
+                "patient" => $patient
+            ];
             return JsonResponser::send(false, ' created successfully.', $data);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'Error fetching  .', [], 500, $th);
