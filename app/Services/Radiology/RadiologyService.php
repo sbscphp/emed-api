@@ -162,7 +162,7 @@ class RadiologyService
 
 
         if (!empty($validated['payment_status'])) {
-            $radiology->whereHas('consultation.patient_visits.billingLogsForPatient', function ($q1) use ($validated) {
+            $radiology->whereHas('consultation.patientVisit.billingLogsForPatient', function ($q1) use ($validated) {
                 $q1->where("payment_status", $validated["payment_status"]);
             });
         }
