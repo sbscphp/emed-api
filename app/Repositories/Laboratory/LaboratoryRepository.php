@@ -238,8 +238,6 @@ class LaboratoryRepository implements LaboratoryInterface
             if ($export === 'pdf') {
                 return ExportHelper::downloadPdf($exportData->toArray(), 'lab-records.pdf');
             }
-
-            return $records;
         }
 
         // Optional pagination (uncomment if needed)

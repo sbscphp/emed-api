@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\v1\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Laboratory;
 use App\Responser\JsonResponser;
 use App\Services\Consultation\ConsultationService;
 use App\Services\Laboratory\LaboratoryService;
@@ -65,9 +66,23 @@ class LabController extends Controller
 
                 return JsonResponser::send(false, "Record(s) not found.", $labRecords, 200);
             }
+            $query = Laboratory::query()
+                ->join('patients', 'patient_visit_lab.patient_id', '=', 'patients.id')
+                ->leftJoin('billing_logs', 'patient_visit_lab.patient_id', '=', 'billing_logs.patient_id')
+                ->select(
+                    'patient_visit_lab.*',
+                    'patients.firstname',
+                    'patients.lastname',
+                    'patients.patientno',
+                    'patients.cardno',
+                    'billing_logs.id as billing_id',
+                    'billing_logs.sub_total as billing_amount',
+                    'billing_logs.payment_status as billing_status'
+                )->get();
 
             $response = [
-                'records' => $labRecords,
+                'records' => $query,
+                // 'records' => $labRecords,
                 'total' => collect($labRecords)->count()
             ];
             DB::connection('tenant')->commit();
