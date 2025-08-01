@@ -150,7 +150,7 @@ Route::group(["prefix" => "v1"], function () {
 
 
                 Route::group(['prefix' => 'medicine', 'middleware' => 'role.pharmacy'], function () {
-                    Route::post('/create', [MedicationController::class, 'store']);
+                    Route::post('/create', [MedicationController::class, 'stfinancialore']);
                     Route::post('/lists', [MedicationController::class, 'index']);
                     Route::get('/list/{id}', [MedicationController::class, 'show']);
                     Route::put('/update/{id}', [MedicationController::class, 'update']);

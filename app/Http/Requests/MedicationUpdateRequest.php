@@ -38,22 +38,23 @@ class MedicationUpdateRequest extends FormRequest
 
             'manufacturer' => 'required|string|max:255',
             'medicine_status'  => 'nullable|in:available,about to expire,out of stock,expired',
-            // 'pharmacy_id' => 'nullable|exists:tenant.pharmacies,id',
-            'pharmacy_id' => [
-                'nullable',
-                'alpha_num',
-                'max:255',
-                function ($attribute, $value, $fail) {
-                    $exists = DB::connection('tenant')
-                        ->table('pharmacies')
-                        ->where('id', $value)
-                        ->exists();
+            'pharmacy_id' => 'nullable|exists:tenant.pharmacies,id',
+            'active_ingredent' => 'nullable|string',
+            //     'pharmacy_id' => [
+            //         'nullable',
+            //         'alpha_num',
+            //         'max:255',
+            //         function ($attribute, $value, $fail) {
+            //             $exists = DB::connection('tenant')
+            //                 ->table('pharmacies')
+            //                 ->where('id', $value)
+            //                 ->exists();
 
-                    if (!$exists) {
-                        $fail('this pharmacy id does not exist');
-                    }
-                },
-            ],
+            //             if (!$exists) {
+            //                 $fail('this pharmacy id does not exist');
+            //             }
+            //         },
+            //     ],
         ];
     }
 
