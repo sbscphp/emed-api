@@ -101,11 +101,11 @@ class ConsultationController extends Controller
                 $export =  $request->export;
 
                 if ($export === 'csv') {
-                    return ExportHelper::streamCsv($exportData, null, 'audit-logs.csv');
+                    return ExportHelper::streamCsv($exportData, null, 'patientsForConsultation.csv');
                 }
 
                 if ($export === 'pdf') {
-                    return ExportHelper::downloadPdf($exportData, 'audit-logs.pdf');
+                    return ExportHelper::downloadPdf($exportData, 'patientsForConsultation.pdf');
                 }
             }
 
