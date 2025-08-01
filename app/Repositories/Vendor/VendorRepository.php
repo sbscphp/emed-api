@@ -152,6 +152,7 @@ class VendorRepository implements VendorInterface
             $record->phone_number = $data['phone_number'];
             $record->registration_no = $data['registration_no'];
             $record->status = $data['status'];
+            $record->category = $data['category'];
             $record->save();
             DB::connection('tenant')->commit();
             return $record;
