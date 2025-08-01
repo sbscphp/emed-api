@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use Throwable;
+use Barryvdh\DomPDF\Facade\Pdf;
 use function PHPUnit\Framework\isEmpty;
 
 class LabController extends Controller
@@ -107,7 +108,10 @@ class LabController extends Controller
                 }
 
                 if ($export === 'pdf') {
-                    return ExportHelper::downloadPdf($exportData->toArray(), 'lab-records.pdf');
+                    // return ExportHelper::downloadPdf($exportData->toArray(), 'lab-records.pdf');
+
+                    $pdf = PDF::loadView('exports.patients', ['patients' => $exportData->toArray()])->setPaper('A1', 'landscape');
+                    return $pdf->download('lab-records.pdf');
                 }
             }
 
