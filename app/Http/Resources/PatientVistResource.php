@@ -21,7 +21,7 @@ class PatientVistResource extends JsonResource
             "patient Number" => $this->patient?->patientno,
             "arrival_date" => $this->arrival_date,
             "departure_date" => $this->departure_date,
-            "Acuity" => $this->patient?->reg_status,
+            // "Acuity" => $this->patient?->reg_status,
             "patient status" => $this->patient?->status
         ];
     }

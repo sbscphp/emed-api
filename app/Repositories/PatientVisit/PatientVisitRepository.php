@@ -161,15 +161,16 @@ class PatientVisitRepository implements PatientVisitInterface
     public function getPatientForConsultation($search, $sortBy, $date = Null, $paginate, $perPage, $patient_type)
     {
         $query = PatientVisit::with(['patient', 'patient.triage']);
+        // with(['patient', 'patient.triage']);
         // $query->join('billings', 'patient_visits.visitno', '=', 'billings.visitno');
-        $query->select(
-            'patient_id',
-            'visitno',
-            'arrival_date',
-            'departure_date',
-            'stage',
-            'status'
-        );
+        // $query->select(
+        //     'patient_id',
+        //     'visitno',
+        //     'arrival_date',
+        //     'departure_date',
+        //     'stage',
+        //     'status'
+        // );
 
         if (isset($search)) {
             $query->where('visitno', 'like', '%' . $search . '%')
