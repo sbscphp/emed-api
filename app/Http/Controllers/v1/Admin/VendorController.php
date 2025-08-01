@@ -9,6 +9,7 @@ use App\Helpers\GeneralHelper;
 use App\Http\Requests\Admin\StoreVendorRequest;
 use App\Http\Requests\Admin\UpdateVendorRequest;
 use App\Http\Requests\Admin\UpdateStatusVendorRequest;
+use App\Models\User;
 use App\Models\Vendor;
 use App\Services\Vendor\VendorService;
 use Illuminate\Http\Request;
@@ -88,9 +89,9 @@ class VendorController extends Controller
             }
 
             $vendor = $this->service->create($validated);
-
+            $main_user = User::on("tenant")->where("email",  $currentUser->email)->first() ?? null;
             GeneralHelper::storeAuditLog([
-                'causer_id' => $currentUser->id,
+                'causer_id' => $main_user->id,
                 'action_id' => $vendor->id,
                 'action' => 'Create',
                 'action_type' => "Models\\Vendor",
