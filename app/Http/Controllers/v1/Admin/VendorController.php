@@ -71,10 +71,11 @@ class VendorController extends Controller
 
     public function store(StoreVendorRequest $request)
     {
-        DB::connection('tenant')->beginTransaction();
+
 
         try {
-            $currentUser = Auth::user();
+            DB::connection('tenant')->beginTransaction();
+            $currentUser = Auth::guard('tenant')->user();
             $validated = array_merge($request->validated(), [
                 'created_by' => $currentUser->id,
             ]);
