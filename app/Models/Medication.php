@@ -22,7 +22,7 @@ class Medication extends Model
         'manufacturer',
         'medicine_status',
         'pharmacy_id',
-        'active_ingredent'
+        'active_ingredient'
     ];
 
     public function pharmacy()

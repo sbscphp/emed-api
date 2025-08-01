@@ -39,7 +39,7 @@ class MedicationUpdateRequest extends FormRequest
             'manufacturer' => 'required|string|max:255',
             'medicine_status'  => 'nullable|in:available,about to expire,out of stock,expired',
             'pharmacy_id' => 'nullable|exists:tenant.pharmacies,id',
-            'active_ingredent' => 'nullable|string',
+            'active_ingredient' => 'nullable|string',
             //     'pharmacy_id' => [
             //         'nullable',
             //         'alpha_num',
