@@ -160,6 +160,7 @@ class VendorRepository implements VendorInterface
             $record->registration_no = $data['registration_no'];
             $record->category = $data['category'];
             $record->status = $data['status'];
+            $record->category = $data['category'];
             $record->save();
 
             $newData = $record->toArray(); // Get the new state after update

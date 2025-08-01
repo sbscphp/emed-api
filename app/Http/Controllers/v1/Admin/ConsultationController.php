@@ -93,25 +93,26 @@ class ConsultationController extends Controller
             $patient_type = $request->patient_type;
 
             $patients = $this->patientVisitService->getPatientForConsultation($search, $sortBy, $date, $paginate, $perPage, $patient_type);
-            $patient = PatientVisit::with(['patient', 'patient.triage'])->get();
+            $patient = PatientVisit::with(['patient', 'patient.triage'])->where('stage', 'consultation')->where('status', 'ongoing')->get();
+
             $exportData = PatientVistResource::collection($patient)->resolve();
             if (!empty($request->export)) {
 
                 $export =  $request->export;
 
                 if ($export === 'csv') {
-                    return ExportHelper::streamCsv($exportData, null, 'audit-logs.csv');
+                    return ExportHelper::streamCsv($exportData, null, 'patientsForConsultation.csv');
                 }
 
                 if ($export === 'pdf') {
-                    return ExportHelper::downloadPdf($exportData, 'audit-logs.pdf');
+                    return ExportHelper::downloadPdf($exportData, 'patientsForConsultation.pdf');
                 }
             }
 
             if ($patients->isEmpty()) {
                 return JsonResponser::send(true, 'Records not found.', null, 200);
             }
-            $patients->load(['patient', 'patient.triage']);
+            // $patients->load(['patient', 'patient.triage']);
 
             $response = [
                 'patients' => $patients,
