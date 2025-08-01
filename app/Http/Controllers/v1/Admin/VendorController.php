@@ -75,7 +75,7 @@ class VendorController extends Controller
 
         try {
             DB::connection('tenant')->beginTransaction();
-            $currentUser = Auth::guard('tenant')->user();
+            $currentUser = auth()->user();
             $validated = array_merge($request->validated(), [
                 'created_by' => $currentUser->id,
             ]);
