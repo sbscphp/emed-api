@@ -9,6 +9,7 @@ use App\Helpers\GeneralHelper;
 use App\Http\Requests\Admin\StoreVendorRequest;
 use App\Http\Requests\Admin\UpdateVendorRequest;
 use App\Http\Requests\Admin\UpdateStatusVendorRequest;
+use App\Models\Vendor;
 use App\Services\Vendor\VendorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -79,6 +80,12 @@ class VendorController extends Controller
             $validated = array_merge($request->validated(), [
                 'created_by' => $currentUser->id,
             ]);
+
+            $checkVendorName = Vendor::where('vendor_name', $validated['vendor_name'])->first();
+
+            if ($checkVendorName) {
+                return JsonResponser::send(true, 'Vendor with this name already exists.', null, 400);
+            }
 
             $vendor = $this->service->create($validated);
 

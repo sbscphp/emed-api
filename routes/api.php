@@ -301,6 +301,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get("/patient_age_gender", [MainDashBoardStatsController::class, "patient_age_gender"]);
                     Route::get('appointment', [MainDashBoardStatsController::class, "appointment"]);
                     Route::get('lab_test_year', [MainDashBoardStatsController::class, "lab_test_year"]);
+                    Route::get('/revenue', [MainDashBoardStatsController::class, "revenue"]);
                     Route::get('/in_and_out/patient', [MainDashBoardStatsController::class, "in_and_out_patient"]);
                     Route::get('/appointments', [MainDashBoardStatsController::class, "appointments"]);
                     Route::get('/departments/all', [MainDashBoardStatsController::class, "departments"]);
