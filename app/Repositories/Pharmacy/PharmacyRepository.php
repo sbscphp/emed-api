@@ -27,12 +27,10 @@ class PharmacyRepository implements PharmacyInterface
     public function treatmentLogall($search = null, $from,  $to)
     {
         DB::connection('tenant');
-
         $query = Treatment::on('tenant')->with([
             'patient:id,firstname,lastname,cardno,patient_type,patientno,status',
             'pharmacy:id,name'
         ]);
-
 
         if ($search) {
             $query->where(function ($q) use ($search) {

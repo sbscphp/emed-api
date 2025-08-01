@@ -2,10 +2,13 @@
 
 namespace App\Repositories\Vendor;
 
+use App\Enums\ListModuleEnums;
 use App\Helpers\ExportHelper;
+use App\Helpers\GeneralHelper;
 use App\Models\Vendor;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class VendorRepository implements VendorInterface
 {
@@ -142,24 +145,46 @@ class VendorRepository implements VendorInterface
     public function update(array $data, $id)
     {
         DB::connection('tenant')->beginTransaction();
+        $currentUser = Auth::user();
         $record = Vendor::find(intval($id));
-        // $record->update($data);
+
         if ($record) {
+            $oldData = $record->toArray(); // Get the current state before update
+
+            // Apply updates
             $record->vendor_name = $data['vendor_name'];
             $record->contact_person = $data['contact_person'];
             $record->email = $data['email'];
             $record->address = $data['address'];
             $record->phone_number = $data['phone_number'];
             $record->registration_no = $data['registration_no'];
+            $record->category = $data['category'];
             $record->status = $data['status'];
             $record->category = $data['category'];
             $record->save();
+
+            $newData = $record->toArray(); // Get the new state after update
+
+            GeneralHelper::storeAuditLog([
+                'causer_id' => $currentUser->id,
+                'action_id' => $id,
+                'action' => 'Update',
+                'action_type' => "Models\\Vendor",
+                'log_name' => "Vendor updated",
+                'old_data' => $oldData,
+                'new_data' => $newData,
+                'description' => "{$currentUser->firstname} {$currentUser->lastname} updated vendor: {$record->vendor_name}",
+                'module_accessed' => ListModuleEnums::Records
+            ]);
+
             DB::connection('tenant')->commit();
             return $record;
         } else {
             DB::connection('tenant')->rollBack();
+            return null;
         }
     }
+
 
 
     /**
