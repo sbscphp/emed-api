@@ -533,6 +533,90 @@ class ServiceDepartmentService
 
     }
 
+    public function revenue($request)
+    {
+        // Extract custom date range if explicitly provided
+        $customDate = [];
+        if (
+            ($request['period'] ?? '') === 'custom date' &&
+            !empty($request['start_date']) &&
+            !empty($request['end_date'])
+        ) {
+            $customDate = [$request['start_date'], $request['end_date']];
+        }
+
+        // Use helper to resolve date range
+        $dateFilter = GeneralHelper::dateFilter($request['period'] ?? null, $customDate);
+
+        // Determine effective date range
+        if (!empty($customDate) && count($customDate) === 2) {
+            $startDate = Carbon::parse($customDate[0])->startOfDay();
+            $endDate = Carbon::parse($customDate[1])->endOfDay();
+        } elseif (is_array($dateFilter) && count($dateFilter) === 2) {
+            [$startDate, $endDate] = $dateFilter;
+            $startDate = Carbon::parse($startDate)->startOfDay();
+            $endDate = Carbon::parse($endDate)->endOfDay();
+        } else {
+            $startDate = null;
+            $endDate = null;
+        }
+
+        // Static time ranges
+        $today = Carbon::today();
+        $thisWeekStart = $today->copy()->startOfWeek();
+        $thisMonthStart = $today->copy()->startOfMonth();
+        $thisYearStart = $today->copy()->startOfYear();
+        $last3Days = [Carbon::today()->subDays(2), Carbon::today()];
+
+        // Predefined statistics
+        $baseQuery = BillingLog::query();
+        $statistics = [
+            'today' => round((clone $baseQuery)->whereDate('billing_date', $today)->sum('grand_total'), 2),
+            'this_week' => round((clone $baseQuery)->whereBetween('billing_date', [$thisWeekStart, $today])->sum('grand_total'), 2),
+            'this_month' => round((clone $baseQuery)->whereBetween('billing_date', [$thisMonthStart, $today])->sum('grand_total'), 2),
+            'this_year' => round((clone $baseQuery)->whereBetween('billing_date', [$thisYearStart, $today])->sum('grand_total'), 2),
+            'last_3_days' => round((clone $baseQuery)->whereBetween('billing_date', $last3Days)->sum('grand_total'), 2),
+        ];
+
+        // Total department revenue (without date filter)
+        $query = BillingLog::query();
+        if (!empty($request['department_id'])) {
+            $query->where('service_unit_id', $request['department_id']);
+        }
+        $totalDepartmentRevenue = round($query->sum('grand_total'), 2);
+
+        // Revenue for selected date range
+        $filteredQuery = BillingLog::query();
+        if ($startDate && $endDate) {
+            $filteredQuery->whereBetween('billing_date', [$startDate, $endDate]);
+        }
+
+        $totalRevenue = round($filteredQuery->sum('grand_total'), 2);
+
+        // Top earning department for selected date range
+        $topDepartment = BillingLog::with('serviceUnit')
+            ->select('service_unit_id', DB::raw('SUM(grand_total) as total'))
+            ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('billing_date', [$startDate, $endDate]);
+            })
+            ->groupBy('service_unit_id')
+            ->orderByDesc('total')
+            ->first();
+
+        $topDepartmentRevenue = [
+            'name' => $topDepartment?->serviceUnit?->name ?? 'N/A',
+            'amount' => round($topDepartment?->total ?? 0, 2),
+        ];
+
+        return [
+            'totalRevenue' => $totalRevenue,
+            'topDepartmentRevenue' => $topDepartmentRevenue,
+            'statistics' => $statistics,
+            'totalDepartmentRevenue' => $totalDepartmentRevenue,
+        ];
+    }
+
+
     public function in_and_out_patient($request)
     {
         $period = $request->input('period');

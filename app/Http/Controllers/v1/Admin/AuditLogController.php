@@ -42,7 +42,7 @@ class AuditLogController extends Controller
                 return $this->auditLogService->activityExport($overview);
             }
 
-            if($request['export'] === 'pdf') {
+            if ($request['export'] === 'pdf') {
                 $pdf = Pdf::loadView('exports.audit_logs', ['logs' => $overview]);
                 return $pdf->download('audit_logs.pdf');
             }
@@ -193,9 +193,10 @@ class AuditLogController extends Controller
             // $search = $validate['search'];
             config(['database.default' => 'tenant']);
             DB::connection('tenant');
-            $medical_log = Medicine_Log::with(["patient", "medication", "pharmacy"])->when(!empty($validate['patient_status']), function ($query, $validate) {
-                $query->where('patient_status', 'LIKE', "%{$validate['patient_status']}%");
-            })
+            $medical_log = Medicine_Log::with(["patient", "medication", "pharmacy"])
+                ->when(!empty($validate['patient_status']), function ($query, $validate) {
+                    $query->where('patient_status', 'LIKE', "%{$validate['patient_status']}%");
+                })
                 ->when(!empty($validate['status']), function ($query, $validate) {
                     $query->where('status', 'LIKE', "%{$validate['status']}%");
                 })
