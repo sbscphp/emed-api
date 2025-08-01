@@ -118,16 +118,16 @@ class VendorController extends Controller
 
             $vendor = $this->service->update($validated, $id);
 
-            GeneralHelper::storeAuditLog([
-                'causer_id' => $currentUser->id,
-                'action_id' => $vendor->id,
-                'action' => 'Update',
-                'action_type' => "Models\\Vendor",
-                'log_name' => "Vendor updated",
-                'description' => "{$currentUser->firstname} {$currentUser->lastname} updated vendor: {$vendor->name}",
-                'module_accessed' => ListModuleEnums::Records
+            // GeneralHelper::storeAuditLog([
+            //     'causer_id' => $currentUser->id,
+            //     'action_id' => $vendor->id,
+            //     'action' => 'Update',
+            //     'action_type' => "Models\\Vendor",
+            //     'log_name' => "Vendor updated",
+            //     'description' => "{$currentUser->firstname} {$currentUser->lastname} updated vendor: {$vendor->name}",
+            //     'module_accessed' => ListModuleEnums::Records
 
-            ]);
+            // ]);
 
             DB::connection('tenant')->commit();
             return JsonResponser::send(false, 'Vendor updated successfully', $vendor);

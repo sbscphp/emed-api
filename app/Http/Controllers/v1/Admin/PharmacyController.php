@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\v1\Admin;
 
 use App\Enums\ListModuleEnums;
+use App\Exports\AuditLogExport;
 use App\Helpers\ExportHelper;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use Carbon\Carbon;
 use App\Models\Pharmacy;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PharmacyController extends Controller
 {
@@ -142,7 +144,7 @@ class PharmacyController extends Controller
                 return JsonResponser::send(true, 'No treatment logs found.', [], 200);
             }
 
-            if ($request->has('export')) {
+            if ($request->has('export') && in_array($request->export, ['csv', 'pdf'])) {
                 $exportData = $treatments->map(function ($treatment) {
                     return [
                         'Patient Name'     => $treatment->patient->firstname . ' ' . $treatment->patient->lastname,
@@ -156,8 +158,11 @@ class PharmacyController extends Controller
                     ];
                 });
 
+                
                 if ($request->export === 'csv') {
-                    return ExportHelper::streamCsv($exportData->toArray(), null, 'treatment_logs.csv');
+                    $recordHeadings = ['Patient Name', 'Card No', 'Patient Type', 'Patient No', 'Prescribed Drug', 'Pharmacy Name', 'Patient Status', 'Status'];
+                    return Excel::download(new AuditLogExport($exportData, $recordHeadings), 'treatment_logs.xlsx');
+                    // return ExportHelper::streamCsv($exportData->toArray(), null, 'treatment_logs.csv');
                 }
 
                 if ($request->export === 'pdf') {
