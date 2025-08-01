@@ -30,11 +30,12 @@ class MedicationUpdateRequest extends FormRequest
             'medicine_type' => 'required|string|max:255',
             'cost_price' => 'required|numeric|min:0',
             'selling_price' => 'required|numeric|min:0',
-            'reg_no' => [
-                'required',
-                'string',
-                Rule::exists('tenant.medications', 'reg_no'),
-            ],
+            // 'reg_no' => [
+            //     'required',
+            //     'string',
+            //     Rule::exists('tenant.medications', 'reg_no'),
+            // ],
+            "reg_no" => "nullable|string",
 
             'manufacturer' => 'required|string|max:255',
             'medicine_status'  => 'nullable|in:available,about to expire,out of stock,expired',
