@@ -296,6 +296,18 @@ class MainDashBoardStatsController extends Controller
         }
     }
 
+    public function revenue(Request $request)
+    {
+        try {
+
+            $overview = $this->service_department_service->revenue($request);
+
+            return JsonResponser::send(false, 'Record(s) found successfully', $overview, 200);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Error fetching in and out patients.', [], 500, $e);
+        }
+    }
+
     public function in_and_out_patient(Request $request)
     {
         try {

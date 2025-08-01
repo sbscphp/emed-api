@@ -29,7 +29,7 @@ class UpdateVendorRequest extends FormRequest
             'address'          => 'nullable|string|max:500',
             'registration_no'  => 'nullable|string|max:100',
             'status'           => 'sometimes|required|in:Active,Inactive',
-            'category'          => 'required|in:Equipment, Pharmacy Supply, Consumables, Stationary'
+            // 'category'          => 'required|in:Equipment, Pharmacy Supply, Consumables, Stationary'
         ];
     }
 }
