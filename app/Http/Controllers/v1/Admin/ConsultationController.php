@@ -111,7 +111,7 @@ class ConsultationController extends Controller
             if ($patients->isEmpty()) {
                 return JsonResponser::send(true, 'Records not found.', null, 200);
             }
-            $patients->load(['patient', 'patient.triage']);
+            // $patients->load(['patient', 'patient.triage']);
 
             $response = [
                 'patients' => $patients,
