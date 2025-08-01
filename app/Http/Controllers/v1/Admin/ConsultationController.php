@@ -10,13 +10,19 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ConsultationRequest;
 use App\Http\Requests\Admin\LabRequest;
 use App\Http\Requests\Admin\TreatmentRequest;
+use App\Http\Resources\PatientVistResource;
+use App\Models\Consultation;
 use App\Models\DrugHistory;
 use App\Models\FamilyHistory;
+use App\Models\Laboratory;
 use App\Models\MedicalHistory;
 use App\Models\Medicine_Log;
 use App\Models\Notification;
+use App\Models\Patient;
 use App\Models\PatientVisit;
+use App\Models\Radiology;
 use App\Models\SocialHistory;
+use App\Models\Treatment;
 use App\Models\User;
 use App\Responser\JsonResponser;
 use App\Services\Admission\AdmissionService;
@@ -84,8 +90,24 @@ class ConsultationController extends Controller
             $date = $request->date ?? null;
             $paginate = $request->paginate ?? false;
             $perPage = $request->perPage ?? 10;
+            $patient_type = $request->patient_type;
 
-            $patients = $this->patientVisitService->getPatientForConsultation($search, $sortBy, $date, $paginate, $perPage);
+            $patients = $this->patientVisitService->getPatientForConsultation($search, $sortBy, $date, $paginate, $perPage, $patient_type);
+            $patient = PatientVisit::with(['patient', 'patient.triage'])->get();
+            $exportData = PatientVistResource::collection($patient)->resolve();
+            if (!empty($request->export)) {
+
+                $export =  $request->export;
+
+                if ($export === 'csv') {
+                    return ExportHelper::streamCsv($exportData, null, 'audit-logs.csv');
+                }
+
+                if ($export === 'pdf') {
+                    return ExportHelper::downloadPdf($exportData, 'audit-logs.pdf');
+                }
+            }
+
             if ($patients->isEmpty()) {
                 return JsonResponser::send(true, 'Records not found.', null, 200);
             }
@@ -100,6 +122,33 @@ class ConsultationController extends Controller
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'Internal server error.', null, 500, $th);
         }
+    }
+
+
+    public function consultaton_stats()
+    {
+        $admitted = Consultation::where("admitted", 1)->count();
+        $completed =  Consultation::where("admitted", 0)->count();
+
+        $investigation_pending =   Laboratory::where("status", "pending")->count();
+        $investigation_complete =   Laboratory::where("status", "complete")->count();
+
+        $procedure_pending =  Radiology::where("test_status", "pending")->count();
+        $procedure_complete =  Radiology::where("test_status", "complete")->count();
+
+        $due = Treatment::where('is_surgery', 1)->count();
+        $complete =  Treatment::where('surgery', 'complete')->count();
+        $data = [
+            'admitted' => $admitted,
+            'completed' => $completed,
+            'investigation_pending' => $investigation_pending,
+            'investigation_complete' => $investigation_complete,
+            'procedure_pending' => $procedure_pending,
+            'procedure_complete' => $procedure_complete,
+            'due' => $due,
+            'complete' => $complete
+        ];
+        return JsonResponser::send(false, 'Records found successfully.', $data, 200);
     }
 
 
@@ -487,6 +536,8 @@ class ConsultationController extends Controller
                     'duration' => $med['duration'],
                     'route' => $med['route'],
                     'remark' => $med['remark'],
+                    'is_surgery' => $med['is_surgery'],
+                    'surgery' => $med['surgery']
                     //'pharmacy_id' => $med['pharmacy_id'] ?? null,
                 ];
                 $treatment = $this->treatmentService->create($data);

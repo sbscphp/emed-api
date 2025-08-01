@@ -62,6 +62,13 @@ class ImmunizationController extends Controller
         try {
             $validated = $request->validated();
             $data = Consultation_Details::create($validated);
+            $patient =  Patient::find($validated['patient_id']);
+            $status =    $validated['admit_patient'] == 1 ? 'admitted' : null;
+            if ($patient) {
+                $patient->update([
+                    "status" => $status
+                ]);
+            }
             return JsonResponser::send(false, ' created successfully.', $data);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'Error fetching  .', [], 500, $th);

@@ -25,7 +25,9 @@ class Treatment extends Model
         'route',
         'remark',
         'receiptno',
-        'drug_id'
+        'drug_id',
+        'is_surgery',
+        'surgery'
     ];
 
     public function patient()

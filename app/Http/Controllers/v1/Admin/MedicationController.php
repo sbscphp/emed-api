@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\v1\Admin;
 
 use App\Enums\ListModuleEnums;
+use App\Enums\PatientVisitStageEnums;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\MedicationCsvUploadRequest;
 use App\Http\Requests\Admin\MedicationRequest;
 use App\Http\Requests\MedicationUpdateRequest;
+use App\Models\Medicine_Log;
 use App\Responser\JsonResponser;
 use App\Services\Medication\MedicationService;
 use App\Services\User\UserService;
@@ -112,6 +114,7 @@ class MedicationController extends Controller
                 'description' => "{$user->firstname} {$user->lastname} created a new Medicine: {$med->name}",
                 'module_accessed' => ListModuleEnums::PHARMACY
             ];
+            //   PatientVisitStageEnums
 
             GeneralHelper::storeAuditLog($dataToLog);
 

@@ -118,8 +118,10 @@ class MedicationRepository implements MedicationRepositoryInterface
     public function update($id, array $data)
     {
         $med = Medication::findOrFail($id);
-        $med->update($data);
-        return $med;
+        if ($med) {
+            $med->update($data);
+            return $med;
+        }
     }
 
     public function delete($id)

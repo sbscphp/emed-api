@@ -32,10 +32,15 @@
         </thead>
         <tbody>
             @foreach($report as $item)
+                @php
+                    $department = strval($item['department']);
+                    $total_revenue = strval($item['total_revenue']);
+                   $pending_payment = strval($item['pending_payment']);
+                @endphp
                 <tr>
-                    <td>{{ $item['department'] }}</td>
-                    <td>{{ $item['total_revenue'] }}</td>
-                    <td>{{ $item['pending_payment'] }}</td>
+                    <td>{{ $department }}</td>
+                    <td>{{ $total_revenue }}</td>
+                    <td>{{  $pending_payment }}</td>
                 </tr>
             @endforeach
             <tr>

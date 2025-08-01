@@ -20,12 +20,12 @@ return new class extends Migration
             $table->decimal('cost_price', 10, 2);
             $table->decimal('selling_price', 10, 2);
             $table->string('reg_no')->unique();
+            // active_ingredent
             $table->string('manufacturer');
             $table->enum('medicine_status', ['available', 'about to expire', 'out of stock', 'expired'])->default('available');
-
+            $table->string('active_ingredent')->nullable();
             $table->unsignedBigInteger('pharmacy_id');
             $table->foreign('pharmacy_id')->references('id')->on('pharmacies')->onDelete('cascade');
-
             $table->timestamps();
         });
     }

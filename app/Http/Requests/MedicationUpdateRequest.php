@@ -30,30 +30,32 @@ class MedicationUpdateRequest extends FormRequest
             'medicine_type' => 'required|string|max:255',
             'cost_price' => 'required|numeric|min:0',
             'selling_price' => 'required|numeric|min:0',
-            'reg_no' => [
-                'required',
-                'string',
-                Rule::exists('tenant.medications', 'reg_no'),
-            ],
+            // 'reg_no' => [
+            //     'required',
+            //     'string',
+            //     Rule::exists('tenant.medications', 'reg_no'),
+            // ],
+            "reg_no" => "nullable|string",
 
             'manufacturer' => 'required|string|max:255',
             'medicine_status'  => 'nullable|in:available,about to expire,out of stock,expired',
-            // 'pharmacy_id' => 'nullable|exists:tenant.pharmacies,id',
-            'pharmacy_id' => [
-                'nullable',
-                'alpha_num',
-                'max:255',
-                function ($attribute, $value, $fail) {
-                    $exists = DB::connection('tenant')
-                        ->table('pharmacies')
-                        ->where('id', $value)
-                        ->exists();
+            'pharmacy_id' => 'nullable|exists:tenant.pharmacies,id',
+            'active_ingredient' => 'nullable|string',
+            //     'pharmacy_id' => [
+            //         'nullable',
+            //         'alpha_num',
+            //         'max:255',
+            //         function ($attribute, $value, $fail) {
+            //             $exists = DB::connection('tenant')
+            //                 ->table('pharmacies')
+            //                 ->where('id', $value)
+            //                 ->exists();
 
-                    if (!$exists) {
-                        $fail('this pharmacy id does not exist');
-                    }
-                },
-            ],
+            //             if (!$exists) {
+            //                 $fail('this pharmacy id does not exist');
+            //             }
+            //         },
+            //     ],
         ];
     }
 

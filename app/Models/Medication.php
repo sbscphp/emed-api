@@ -21,7 +21,8 @@ class Medication extends Model
         'reg_no',
         'manufacturer',
         'medicine_status',
-        'pharmacy_id'
+        'pharmacy_id',
+        'active_ingredient'
     ];
 
     public function pharmacy()
