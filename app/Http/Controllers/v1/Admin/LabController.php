@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Helpers\ExportHelper;
 use App\Http\Controllers\Controller;
+use App\Models\Laboratory;
 use App\Responser\JsonResponser;
 use App\Services\Consultation\ConsultationService;
 use App\Services\Laboratory\LaboratoryService;
@@ -60,11 +62,55 @@ class LabController extends Controller
 
 
             $labRecords = $this->laboratoryService->getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage, $export, $from, $to);
+            $laboratory = Laboratory::query()
+                ->join('patients', 'patient_visit_lab.patient_id', '=', 'patients.id')
+                ->leftJoin('billing_logs', 'patient_visit_lab.patient_id', '=', 'billing_logs.patient_id')
+                ->select(
+                    'patient_visit_lab.*',
+                    'patients.firstname',
+                    'patients.lastname',
+                    'patients.patientno',
+                    'patients.cardno',
+                    'billing_logs.id as billing_id',
+                    'billing_logs.sub_total as billing_amount',
+                    'billing_logs.payment_status as billing_status'
+                )->get();
 
-            if (!$paginate  && $labRecords->count() == 0) {
+            if (!$paginate  && $laboratory->count() == 0) {
 
                 return JsonResponser::send(false, "Record(s) not found.", $labRecords, 200);
             }
+
+
+            if (!empty($export)) {
+
+                $exportData = $laboratory->map(function ($item) {
+                    return [
+                        'Patient Name' => "{$item->firstname} {$item->lastname}",
+                        'Patient No' => $item->patientno,
+                        'Card No' => $item->cardno,
+                        'Visit No' => $item->visitno,
+                        'Lab Dept' => $item->lab_dept,
+                        'Test Name' => $item->test_name,
+                        'Ordered Tests' => $item->ordered_test,
+                        'Others' => $item->others,
+                        'Test Status' => $item->test_status,
+                        'Payment Status' => $item->payment_status,
+                        'Billing Amount' => $item->billing_amount,
+                        'Billing Status' => $item->billing_status,
+                        'Created At' => $item->created_at->toDateTimeString(),
+                    ];
+                });
+
+                if ($export === 'csv') {
+                    return ExportHelper::streamCsv($exportData->toArray(), null, 'lab-records.csv');
+                }
+
+                if ($export === 'pdf') {
+                    return ExportHelper::downloadPdf($exportData->toArray(), 'lab-records.pdf');
+                }
+            }
+
 
 
 

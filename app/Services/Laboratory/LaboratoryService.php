@@ -142,35 +142,35 @@ class LaboratoryService
         $query->orderBy('patient_visit_lab.created_at', 'desc');
 
         // Export handling
-        if (!empty($export)) {
-            $records = $query->get();
+        // if (!empty($export)) {
+        //     $records = $query->get();
 
-            $exportData = $records->map(function ($item) {
-                return [
-                    'Patient Name' => "{$item->firstname} {$item->lastname}",
-                    'Patient No' => $item->patientno,
-                    'Card No' => $item->cardno,
-                    'Visit No' => $item->visitno,
-                    'Lab Dept' => $item->lab_dept,
-                    'Test Name' => $item->test_name,
-                    'Ordered Tests' => $item->ordered_test,
-                    'Others' => $item->others,
-                    'Test Status' => $item->test_status,
-                    'Payment Status' => $item->payment_status,
-                    'Billing Amount' => $item->billing_amount,
-                    'Billing Status' => $item->billing_status,
-                    'Created At' => $item->created_at->toDateTimeString(),
-                ];
-            });
+        //     $exportData = $records->map(function ($item) {
+        //         return [
+        //             'Patient Name' => "{$item->firstname} {$item->lastname}",
+        //             'Patient No' => $item->patientno,
+        //             'Card No' => $item->cardno,
+        //             'Visit No' => $item->visitno,
+        //             'Lab Dept' => $item->lab_dept,
+        //             'Test Name' => $item->test_name,
+        //             'Ordered Tests' => $item->ordered_test,
+        //             'Others' => $item->others,
+        //             'Test Status' => $item->test_status,
+        //             'Payment Status' => $item->payment_status,
+        //             'Billing Amount' => $item->billing_amount,
+        //             'Billing Status' => $item->billing_status,
+        //             'Created At' => $item->created_at->toDateTimeString(),
+        //         ];
+        //     });
 
-            if ($export === 'csv') {
-                return ExportHelper::streamCsv($exportData->toArray(), null, 'lab-records.csv');
-            }
+        //     if ($export === 'csv') {
+        //         return ExportHelper::streamCsv($exportData->toArray(), null, 'lab-records.csv');
+        //     }
 
-            if ($export === 'pdf') {
-                return ExportHelper::downloadPdf($exportData->toArray(), 'lab-records.pdf');
-            }
-        }
+        //     if ($export === 'pdf') {
+        //         return ExportHelper::downloadPdf($exportData->toArray(), 'lab-records.pdf');
+        //     }
+        // }
 
         // Optional pagination (uncomment if needed)
         return $paginate ? $query->paginate($perPage ?? 10) : $query->get();
