@@ -583,6 +583,9 @@ class ServiceDepartmentService
         if (!empty($request['department_id'])) {
             $query->where('service_unit_id', $request['department_id']);
         }
+        if ($startDate && $endDate) {
+            $query->whereBetween('billing_date', [$startDate, $endDate]);
+        }
         $totalDepartmentRevenue = round($query->sum('grand_total'), 2);
 
         // Revenue for selected date range
