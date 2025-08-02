@@ -3,6 +3,7 @@
 namespace App\Repositories\MedicationInventory;
 
 use App\Helpers\ExportHelper;
+use App\Helpers\GeneralHelper;
 use App\Models\MedicationInventory;
 use App\Http\Resources\MedicationInventoryResource;
 use Carbon\Carbon;
@@ -12,6 +13,15 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
     public function create(array $data)
     {
         $data['current_stock'] = $data['received_qty'];
+        
+        $shipment_no = GeneralHelper::getModelUniqueOrderlyId([
+            'modelNamespace' => MedicationInventory::class,
+            'modelField' => 'shipment_no',
+            'prefix' => 'SHIP',
+            'idLength' => 6,
+        ]);
+        $data['shipment_no'] = $shipment_no;
+
         return MedicationInventory::create($data);
     }
 
@@ -143,6 +153,6 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
 
     public function find($id)
     {
-        return MedicationInventory::with(['medication', 'pharmacy'])->find($id);
+        return MedicationInventory::with(['medication', 'pharmacy', 'vendor'])->find($id);
     }
 }
