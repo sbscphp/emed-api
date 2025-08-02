@@ -91,9 +91,11 @@ class ConsultationController extends Controller
             $paginate = $request->paginate ?? false;
             $perPage = $request->perPage ?? 10;
             $patient_type = $request->patient_type;
+            $stage = $request->stage;
+            $status = $request->status;
 
-            $patients = $this->patientVisitService->getPatientForConsultation($search, $sortBy, $date, $paginate, $perPage, $patient_type);
-            $patient = PatientVisit::with(['patient', 'patient.triage'])->where('stage', 'consultation')->where('status', 'ongoing')->get();
+            $patients = $this->patientVisitService->getPatientForConsultation($search, $sortBy, $date, $paginate, $perPage, $patient_type,  $stage, $status);
+            $patient = PatientVisit::with(['patient', 'patient.triage'])->get();
 
             $exportData = PatientVistResource::collection($patient)->resolve();
             if (!empty($request->export)) {

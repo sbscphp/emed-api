@@ -166,7 +166,6 @@ class LaboratoryRepository implements LaboratoryInterface
         // return $query->get();
         // //return $paginate ? $query->paginate($perPage ?? 10) : $query->get();
 
-        $paymentStatus = $paymentStatus ?? 'pending';
 
         // Start query
         $query = Laboratory::query()
@@ -239,8 +238,6 @@ class LaboratoryRepository implements LaboratoryInterface
             if ($export === 'pdf') {
                 return ExportHelper::downloadPdf($exportData->toArray(), 'lab-records.pdf');
             }
-
-            return $records;
         }
 
         // Optional pagination (uncomment if needed)

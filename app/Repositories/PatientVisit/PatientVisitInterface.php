@@ -66,7 +66,7 @@ interface PatientVisitInterface
 
     public function findByMultiAttributes(array $attrs);
 
-    public function getPatientForConsultation($search, $sortBy, $date, $paginate, $perPage, $patient_type);
+    public function getPatientForConsultation($search, $sortBy, $date, $paginate, $perPage, $patient_type,  $stage, $status);
     public function getPatientVisits($patientId);
     public function getPatientPreviousVisits($patientId, $visitNo);
     public function getPatients($search, $sortBy, $stage, $status, $date, $paginate, $perPage);

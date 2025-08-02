@@ -158,9 +158,10 @@ class PatientVisitRepository implements PatientVisitInterface
      * @param [type] $date
      * @return void
      */
-    public function getPatientForConsultation($search, $sortBy, $date = Null, $paginate, $perPage, $patient_type)
+    public function getPatientForConsultation($search, $sortBy, $date = Null, $paginate, $perPage, $patient_type,  $stage, $status)
     {
-        $query = PatientVisit::with(['patient', 'patient.triage'])->where('stage', 'consultation')->where('status', 'ongoing');
+        $query = PatientVisit::with(['patient', 'patient.triage', 'consultation']);
+
         if (isset($search)) {
             $query->where('visitno', 'like', '%' . $search . '%')
                 ->orWhere('arrival_date', 'like', '%' . $search . '%')
@@ -182,6 +183,18 @@ class PatientVisitRepository implements PatientVisitInterface
                 $q->where('patient_type',  $patient_type);
             });
         }
+
+        if (!empty($stage)) {
+            $query->where('stage', $stage);
+        }
+
+        if (!empty($status)) {
+            $query->where('status', $status);
+        }
+        //  ->where('stage', 'consultation')
+
+
+        // ->where('status', 'ongoing')
 
 
         // $query->where('billings.payment_status', 'paid');
