@@ -578,13 +578,38 @@ class ServiceDepartmentService
             'last_3_days' => round((clone $baseQuery)->whereBetween('billing_date', $last3Days)->sum('grand_total'), 2),
         ];
 
+        $customDates = [];
+        if (
+            ($request['periods'] ?? '') === 'custom date' &&
+            !empty($request['start_dates']) &&
+            !empty($request['end_dates'])
+        ) {
+            $customDates = [$request['start_dates'], $request['end_dates']];
+        }
+
+        // Use helper to resolve date range
+        $dateFilter = GeneralHelper::dateFilter($request['periods'] ?? null, $customDates);
+
+        // Determine effective date range
+        if (!empty($customDates) && count($customDates) === 2) {
+            $start_date = Carbon::parse($customDates[0])->startOfDay();
+            $end_date = Carbon::parse($customDates[1])->endOfDay();
+        } elseif (is_array($dateFilter) && count($dateFilter) === 2) {
+            [$start_date, $end_date] = $dateFilter;
+            $start_date = Carbon::parse($start_date)->startOfDay();
+            $end_date = Carbon::parse($end_date)->endOfDay();
+        } else {
+            $start_date = null;
+            $end_date = null;
+        }
+
         // Total department revenue (without date filter)
         $query = BillingLog::query();
         if (!empty($request['department_id'])) {
             $query->where('service_unit_id', $request['department_id']);
         }
-        if ($startDate && $endDate) {
-            $query->whereBetween('billing_date', [$startDate, $endDate]);
+        if ($start_date && $end_date) {
+            $query->whereBetween('billing_date', [$start_date, $end_date]);
         }
         $totalDepartmentRevenue = round($query->sum('grand_total'), 2);
 
