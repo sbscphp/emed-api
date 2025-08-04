@@ -29,4 +29,9 @@ class Medication extends Model
     {
         return $this->belongsTo(Pharmacy::class);
     }
+
+    public function medicationInventories()
+    {
+        return $this->hasMany(MedicationInventory::class);
+    }
 }

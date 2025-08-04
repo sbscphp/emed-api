@@ -53,6 +53,20 @@ class VendorController extends Controller
         }
     }
 
+    public function all(Request $request)
+    {
+        try {
+            // config(['database.default' => 'tenant']);
+            $records = Vendor::orderBy('created_at', 'desc')->get();
+
+            return JsonResponser::send(false, 'Vendors fetched successfully.', $records);
+        } catch (\InvalidArgumentException $e) {
+            return JsonResponser::send(true, $e->getMessage(), null, 400);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Internal server error.', [], 500);
+        }
+    }
+
 
     public function show($id)
     {

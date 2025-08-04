@@ -440,38 +440,111 @@ class ServiceDepartmentService
 
 
 
-    public function top_drugs()
+    public function top_drugs($request)
     {
+        $customDate = [];
+        if (
+            ($request['period'] ?? '') === 'custom date' &&
+            !empty($request['start_date']) &&
+            !empty($request['end_date'])
+        ) {
+            $customDate = [$request['start_date'], $request['end_date']];
+        }
+
+        $dateFilter = GeneralHelper::dateFilter($request['period'] ?? null, $customDate);
+
+        if (!empty($customDate) && count($customDate) === 2) {
+            $startDate = Carbon::parse($customDate[0])->startOfDay();
+            $endDate = Carbon::parse($customDate[1])->endOfDay();
+        } elseif (is_array($dateFilter) && count($dateFilter) === 2) {
+            [$startDate, $endDate] = $dateFilter;
+            $startDate = Carbon::parse($startDate)->startOfDay();
+            $endDate = Carbon::parse($endDate)->endOfDay();
+        } else {
+            $startDate = null;
+            $endDate = null;
+        }
+
         $medications = Medication::all();
         $arr = [];
-        foreach ($medications as  $medication) {
-            $medication->medicine_name;
-            $medication->cost_price;
-            $count = Treatment::where("drug_id", $medication->id)->count();
+
+        foreach ($medications as $medication) {
+            // Count treatments within the date range
+            $treatmentQuery = Treatment::where('drug_id', $medication->id);
+
+            if ($startDate && $endDate) {
+                $treatmentQuery->whereBetween('created_at', [$startDate, $endDate]);
+            }
+
+            $count = $treatmentQuery->count();
             $ans = intval($medication->cost_price) * $count;
 
             $arr[] = [
-                "name" => $medication->medicine_name,
+                'name' => $medication->medicine_name,
                 'total' => $ans
             ];
         }
 
-        rsort($arr);
+        usort($arr, fn($a, $b) => $b['total'] <=> $a['total']);
         $max = array_slice($arr, 0, 5);
 
         return $max;
     }
 
-    public function patient_diagnosis()
+    public function patient_diagnosis($request)
     {
-        // 	diagnosis
-        $topDiagnosis = Consultation::select('diagnosis', DB::raw('count(*) as count'))
-            ->groupBy('diagnosis')
-            ->orderByDesc('count')
-            ->take(5)
-            ->get();
+        // Step 1: Resolve custom date from request
+        $customDate = [];
+        if (
+            ($request['period'] ?? '') === 'custom date' &&
+            !empty($request['start_date']) &&
+            !empty($request['end_date'])
+        ) {
+            $customDate = [$request['start_date'], $request['end_date']];
+        }
 
-        return  $topDiagnosis;
+        // Step 2: Use helper to resolve date range
+        $dateFilter = GeneralHelper::dateFilter($request['period'] ?? null, $customDate);
+
+        // Step 3: Determine effective date range
+        if (!empty($customDate) && count($customDate) === 2) {
+            $startDate = Carbon::parse($customDate[0])->startOfDay();
+            $endDate = Carbon::parse($customDate[1])->endOfDay();
+        } elseif (is_array($dateFilter) && count($dateFilter) === 2) {
+            [$startDate, $endDate] = $dateFilter;
+            $startDate = Carbon::parse($startDate)->startOfDay();
+            $endDate = Carbon::parse($endDate)->endOfDay();
+        } else {
+            $startDate = null;
+            $endDate = null;
+        }
+
+        // Step 4: Get top 5 diagnoses overall (not filtered)
+        $topDiagnoses = Consultation::select('diagnosis', DB::raw('count(*) as total'))
+            ->groupBy('diagnosis')
+            ->orderByDesc('total')
+            ->take(5)
+            ->pluck('diagnosis')
+            ->toArray();
+
+        // Step 5: For each of these diagnoses, count filtered consultations
+        $results = [];
+        foreach ($topDiagnoses as $diagnosis) {
+            $query = Consultation::where('diagnosis', $diagnosis);
+
+            if ($startDate && $endDate) {
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+            }
+
+            $count = $query->count();
+
+            $results[] = [
+                'diagnosis' => $diagnosis,
+                'count' => $count
+            ];
+        }
+
+        return $results;
     }
 
     public function recent_patient($validated)

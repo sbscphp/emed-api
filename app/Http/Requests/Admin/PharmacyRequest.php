@@ -32,7 +32,7 @@ class PharmacyRequest extends FormRequest
             'closing_time' => 'required|date_format:H:i|after:opening_time',
             'assigned_pharmacist' => 'nullable|exists:users,id',
             'license_number' => 'nullable|string|max:255',
-            'email_address' => 'nullable|email|max:255|exists:tenant.pharmacies,email_address',
+            'email_address' => 'nullable|email|max:255',
             'active_ingredent' => "nullable|string",
             // 'email_address' => 'nullable|email|max:255|exists:pharmacies,email_address',
             // 'pharmacy_id' => 'required|string|unique:tenant.pharmacies,pharmacy_id',
