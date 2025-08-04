@@ -194,9 +194,9 @@ class ConsultationController extends Controller
             $patientVisits_data = PatientVisit::with('billingLogsForPatient.serviceType')
                 ->where("patient_id", $patientVisit->patient_id)
                 ->when(!empty($validate['search']), function ($query) use ($validate) {
-                    $query->where("visitno", $validate['search'])
+                    $query->where("visitno", 'like', "%{$validate['search']}%")
                         ->orWhereHas('billingLogsForPatient', function ($qu) use ($validate) {
-                            $qu->where('payment_status', $validate['search']);
+                            $qu->where('payment_status', "%{$validate['search']}%");
                         });
                 })
                 ->when(!empty($validate['payment_status']), function ($query) use ($validate) {
