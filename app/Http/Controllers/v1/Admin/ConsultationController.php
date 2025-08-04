@@ -189,7 +189,7 @@ class ConsultationController extends Controller
             );
             $consultation = $this->consultationService->findByAttribute('visitno', $visitNo);
             $previousVisits = $this->patientVisitService->getPatientPreviousVisits($patientVisit->patient_id, $visitNo);
-            $patientVisits = PatientVisit::with('billingLogsForPatient.serviceType')->where("patient_id", $patientVisit->patient_id)->orderBy('arrival_date', 'desc')->get();
+            $patientVisits = PatientVisit::with('billingLogsForPatient.serviceType')->where("visitno", $visitNo)->orderBy('arrival_date', 'desc')->paginate(10);
             // $this->patientVisitService->getPatientVisits($patientVisit->patient_id);
             $laboratory = $this->consultationService->findByVisitNoLabOrBoth($visitNo);
             $radiology = $this->consultationService->findByVisitNoRadiologyOrBoth($visitNo);
