@@ -22,16 +22,26 @@ class Consultation_Details_Treatment_Request extends FormRequest
     public function rules(): array
     {
         return [
-            'patient_id' => 'nullable|exists:tenant.patients,id',
-            'patient_visits_id' => 'nullable|exists:tenant.patient_visits,id',
-            'select_drug' => 'nullable|string',
-            'qualifier' => 'nullable|string',
-            'dosage' => 'nullable|string',
-            'weight' => 'nullable|string',
-            'adherence_period' => 'nullable|string|max:255',
-            'duration' => 'nullable|string|max:255',
-            'route' => 'nullable|string',
-            'remark' => 'nullable|string|max:1000',
+            // 'patient_id' => 'nullable|exists:tenant.patients,id',
+            // 'patient_visits_id' => 'nullable|exists:tenant.patient_visits,id',
+            // 'select_drug' => 'nullable|string',
+            // 'qualifier' => 'nullable|string',
+            // 'dosage' => 'nullable|string',
+            // 'weight' => 'nullable|string',
+            // 'adherence_period' => 'nullable|string|max:255',
+            // 'duration' => 'nullable|string|max:255',
+            // 'route' => 'nullable|string',
+            // 'remark' => 'nullable|string|max:1000',
+            '*.patient_id' => 'nullable|exists:tenant.patients,id',
+            '*.patient_visits_id' => 'nullable|exists:tenant.patient_visits,id',
+            '*.select_drug' => 'nullable|string',
+            '*.qualifier' => 'nullable|string',
+            '*.dosage' => 'nullable|string',
+            '*.weight' => 'nullable|string',
+            '*.adherence_period' => 'nullable|string|max:255',
+            '*.duration' => 'nullable|string|max:255',
+            '*.route' => 'nullable|string',
+            '*.remark' => 'nullable|string|max:1000',
         ];
     }
 }

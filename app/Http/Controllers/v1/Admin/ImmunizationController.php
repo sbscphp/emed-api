@@ -178,8 +178,13 @@ class ImmunizationController extends Controller
     {
         try {
             $validated = $request->validated();
-            $data = Consultation_Details_Treatment::create($validated);
-            return JsonResponser::send(false, ' created successfully.', $data);
+            //   Consultation_Details_Treatment_Request $request
+
+            foreach ($validated as $treatment) {
+                Consultation_Details_Treatment::create($treatment);
+            }
+
+            return JsonResponser::send(false, ' created successfully.', []);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'Error fetching  .', [], 500, $th);
         }
