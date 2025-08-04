@@ -15,12 +15,20 @@ class PatientVistConsultationResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // return [
+        //     "data" => $this->arrival_date,
+        //     "Visit Number" => $this->visitno,
+        //     "Service Type" => $this->billingLogsForPatient?->serviceType?->name ?? "",
+        //     "Payment Status" => $this->billingLogsForPatient?->payment_status ?? "",
+        //     "Payment Type" => $this->billingLogsForPatient?->payment_method ?? "",
+        // ];
+
         return [
-            "data" => $this->arrival_date,
-            "Visit Number" => $this->visitno,
-            "Service Type" => $this->billingLogsForPatient?->serviceType?->name ?? "",
-            "Payment Status" => $this->billingLogsForPatient?->payment_status ?? "",
-            "Payment Type" => $this->billingLogsForPatient?->payment_method ?? "",
+            "arrival_date" => $this->arrival_date ? Carbon::parse($this->arrival_date)->toDateString() : null,
+            "visit_number" => $this->visitno,
+            "service_type" => $this->billingLogsForPatient?->serviceType?->name ?? null,
+            "payment_status" => $this->billingLogsForPatient?->payment_status ?? null,
+            "payment_method" => $this->billingLogsForPatient?->payment_method ?? null,
         ];
     }
 }
