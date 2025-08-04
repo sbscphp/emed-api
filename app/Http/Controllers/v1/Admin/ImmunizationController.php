@@ -159,7 +159,7 @@ class ImmunizationController extends Controller
             $data = Consultation_Details_Laborartory::create($validated);
             return JsonResponser::send(false, ' created successfully.', $data);
         } catch (\Throwable $th) {
-            return JsonResponser::send(true, 'Error fetching  .', [], 500, $th);
+            return JsonResponser::send(true, 'Error   .', [], 500, $th);
         }
     }
 
@@ -170,7 +170,7 @@ class ImmunizationController extends Controller
             $data = Consultation_Details_Radiology::create($validated);
             return JsonResponser::send(false, ' created successfully.', $data);
         } catch (\Throwable $th) {
-            return JsonResponser::send(true, 'Error fetching  .', [], 500, $th);
+            return JsonResponser::send(true, 'Error   .', [], 500, $th);
         }
     }
 
