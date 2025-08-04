@@ -162,7 +162,8 @@ class ConsultationController extends Controller
 
             $validate = $request->validate([
                 "export" => "nullable|in:pdf,csv",
-                "payment_status" => "nullable|string"
+                "payment_status" => "nullable|string",
+                "search" => "nullable|string"
             ]);
             config(['database.default' => 'tenant']);
             DB::connection('tenant');
@@ -192,6 +193,12 @@ class ConsultationController extends Controller
             $previousVisits = $this->patientVisitService->getPatientPreviousVisits($patientVisit->patient_id, $visitNo);
             $patientVisits_data = PatientVisit::with('billingLogsForPatient.serviceType')
                 ->where("patient_id", $patientVisit->patient_id)
+                ->when(!empty($validate['search']), function ($query) use ($validate) {
+                    $query->where("visitno", $validate['search'])
+                        ->orWhereHas('billingLogsForPatient', function ($qu) use ($validate) {
+                            $qu->where('payment_status', $validate['search']);
+                        });
+                })
                 ->when(!empty($validate['payment_status']), function ($query) use ($validate) {
                     $query->whereHas('billingLogsForPatient', function ($qu) use ($validate) {
                         $qu->where('payment_status', $validate['payment_status']);
