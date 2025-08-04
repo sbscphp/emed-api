@@ -14,7 +14,7 @@ class MedicationRepository implements MedicationRepositoryInterface
     public function all($request)
     {
         $filters  =  $request;
-        $query = Medication::on('tenant')->with('pharmacy:id,name')
+        $query = Medication::on('tenant')->with('pharmacy:id,name', 'medicationInventories:id,medication_id,active_ingredient')
             ->when(!empty($request['search']), function ($query) use ($request) {
                 $query->where('generic_name', 'like', "%{$request['search']}%")
                     ->orWhere('medicine_name', 'like', "%{$request['search']}%")

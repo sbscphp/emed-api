@@ -187,6 +187,7 @@ Route::group(["prefix" => "v1"], function () {
 
 
                 Route::group(['prefix' => 'vendor', 'middleware' => 'role.pharmacy'], function () {
+                    Route::get('/fetch/all', [VendorController::class, 'all']);
                     Route::post('/lists', [VendorController::class, 'index']);
                     Route::get('/{id}', [VendorController::class, 'show']);
                     Route::post('/', [VendorController::class, 'store']);

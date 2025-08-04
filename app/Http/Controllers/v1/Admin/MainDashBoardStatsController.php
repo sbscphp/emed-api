@@ -49,10 +49,10 @@ class MainDashBoardStatsController extends Controller
     }
 
 
-    public function top_drugs()
+    public function top_drugs(Request $request)
     {
         try {
-            $data = $this->service_department_service->top_drugs();
+            $data = $this->service_department_service->top_drugs($request);
             return JsonResponser::send(false, ' fetched successfully.', $data);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Error fetching  .', [], 500, $e);
@@ -60,10 +60,10 @@ class MainDashBoardStatsController extends Controller
     }
 
 
-    public function patient_diagnosis()
+    public function patient_diagnosis(Request $request)
     {
         try {
-            $data = $this->service_department_service->patient_diagnosis();
+            $data = $this->service_department_service->patient_diagnosis($request);
             return JsonResponser::send(false, ' fetched successfully.', $data);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Error fetching  .', [], 500, $e);
