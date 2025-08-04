@@ -34,10 +34,10 @@ class EnumCommand extends Command
         $namespace = $this->getModelNamespace($enumWithNamespace)['namespace'];
         $enum = $this->getModelNamespace($enumWithNamespace)['enum'];
 
-        $this->createEnum($namespace, $enum, $options['enums']);
+        $this->createEnum($namespace, $enum, $options['enums'] ?? '');
     }
 
-    protected function createEnum(string $namespace, string $enum, string $options): void
+    protected function createEnum(string $namespace, string $enum, ?string $options): void
     {
         $this->createFolder('Enums', $namespace);
 

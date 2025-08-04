@@ -26,8 +26,10 @@ class Consultation__Details__Laborartories_Request extends FormRequest
             'patient_visits_id' => 'nullable|exists:tenant.patient_visits,id',
             // 'laborartory_dept' => 'nullable|string',
             // 'laborartory_test' => 'nullable|string',
-            'laborartory_dept' => 'nullable|string|in:bacteriology,chemical pathology,heamatology,parasitology,anc,other test',
-            'laborartory_test' => 'nullable|string|in:mircoscopic culture sensitivity,serology,microscopy,widal test,semen analysis,skin snip test',
+            'laborartory_dept' => 'nullable|string',
+            // bacteriology,chemical pathology,heamatology,parasitology,anc,other test
+            'laborartory_test' => 'nullable|string',
+            // mircoscopic culture sensitivity,serology,microscopy,widal test,semen analysis,skin snip test
             'other_laborartory' => 'nullable|string',
             'order_test' => 'nullable|string',
         ];

@@ -22,16 +22,26 @@ class Consultation_Details_Treatment_Request extends FormRequest
     public function rules(): array
     {
         return [
-            'patient_id' => 'nullable|exists:tenant.patients,id',
-            'patient_visits_id' => 'nullable|exists:tenant.patient_visits,id',
-            'select_drug' => 'nullable|string|in:paracetamol-tablets,paracetamol-injection,paracetamol syr-syrup,paracetamol-infusion,paramark-infusion',
-            'qualifier' => 'nullable|string|in:tablets,capsule,injection,infusion,creams,syrup',
-            'dosage' => 'nullable|in:once daily,twice daily,three time daily,four time daily,nocte',
-            'weight' => 'nullable|in:Mg-Milligram,Gm-Grams,Mcg-Mircograms,Mis-Mis',
-            'adherence_period' => 'nullable|string|max:255',
-            'duration' => 'nullable|string|max:255',
-            'route' => 'nullable|string|in:oral,mouth,intra-dermal,intra-muscular,sublingual,tropical',
-            'remark' => 'nullable|string|max:1000',
+            // 'patient_id' => 'nullable|exists:tenant.patients,id',
+            // 'patient_visits_id' => 'nullable|exists:tenant.patient_visits,id',
+            // 'select_drug' => 'nullable|string',
+            // 'qualifier' => 'nullable|string',
+            // 'dosage' => 'nullable|string',
+            // 'weight' => 'nullable|string',
+            // 'adherence_period' => 'nullable|string|max:255',
+            // 'duration' => 'nullable|string|max:255',
+            // 'route' => 'nullable|string',
+            // 'remark' => 'nullable|string|max:1000',
+            '*.patient_id' => 'nullable|exists:tenant.patients,id',
+            '*.patient_visits_id' => 'nullable|exists:tenant.patient_visits,id',
+            '*.select_drug' => 'nullable|string',
+            '*.qualifier' => 'nullable|string',
+            '*.dosage' => 'nullable|string',
+            '*.weight' => 'nullable|string',
+            '*.adherence_period' => 'nullable|string|max:255',
+            '*.duration' => 'nullable|string|max:255',
+            '*.route' => 'nullable|string',
+            '*.remark' => 'nullable|string|max:1000',
         ];
     }
 }

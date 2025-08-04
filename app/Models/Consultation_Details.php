@@ -8,6 +8,7 @@ class Consultation_Details extends Model
 {
     protected $guarded = ['id'];
     protected $connection = 'tenant';
+    protected $table = 'consultation__details';
     protected $fillable = [
         'patient_id',
         'patient_visits_id',

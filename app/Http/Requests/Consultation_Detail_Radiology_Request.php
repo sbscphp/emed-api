@@ -24,8 +24,10 @@ class Consultation_Detail_Radiology_Request extends FormRequest
         return [
             'patient_id' => 'nullable|exists:tenant.patients,id',
             'patient_visits_id' => 'nullable|exists:tenant.patient_visits,id',
-            'laborartory_department' => 'nullable|string|in:x-ray,scan,special scan,ultrasound',
-            'laborartory_test' => 'nullable|string|in:abdomen supine/erect,both elbow,both elbow joint ap/lat,both ankle ap./lat,knee ap./lat,cervical spine lat only',
+            'laborartory_department' => 'nullable|string',
+            // in:x-ray,scan,special scan,ultrasound
+            'laborartory_test' => 'nullable|string',
+            // in:abdomen supine/erect,both elbow,both elbow joint ap/lat,both ankle ap./lat,knee ap./lat,cervical spine lat only
             'other_laborartory_test' => 'nullable|string|max:255',
             'ordered_test' => 'nullable|string|max:255',
         ];

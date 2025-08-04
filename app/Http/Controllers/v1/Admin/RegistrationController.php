@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\v1\Admin;
 
 use App\Enums\ListModuleEnums;
+use App\Enums\RegistrationEnum;
 use App\Helpers\FileUploadHelper;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
@@ -282,7 +283,8 @@ class RegistrationController extends Controller
             $data = $request->validated();
             $adminRole = $this->roleService->getAdminRole();
 
-            $isProduction = true;
+            // $isProduction = true;
+            $isProduction = RegistrationEnum::IS_PRODUCATION;
             //app()->environment(['production', 'staging', 'qa']);
 
 

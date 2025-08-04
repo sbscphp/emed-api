@@ -140,7 +140,7 @@ class ImmunizationController extends Controller
                 "patient_id" => "nullable|numeric|exists:tenant.patients,id"
             ]);
 
-            $consultation_details_treatment =  Consultation_Details_Treatment::where('patient_id',  $validated['patient_id'])->first();
+            $consultation_details_treatment =  Consultation_Details_Treatment::where('patient_id',  $validated['patient_id'])->get();
             $patient = Patient::find($validated['patient_id']);
             $data = [
                 "treatment" => $consultation_details_treatment,
@@ -159,7 +159,7 @@ class ImmunizationController extends Controller
             $data = Consultation_Details_Laborartory::create($validated);
             return JsonResponser::send(false, ' created successfully.', $data);
         } catch (\Throwable $th) {
-            return JsonResponser::send(true, 'Error fetching  .', [], 500, $th);
+            return JsonResponser::send(true, 'Error   .', [], 500, $th);
         }
     }
 
@@ -170,7 +170,7 @@ class ImmunizationController extends Controller
             $data = Consultation_Details_Radiology::create($validated);
             return JsonResponser::send(false, ' created successfully.', $data);
         } catch (\Throwable $th) {
-            return JsonResponser::send(true, 'Error fetching  .', [], 500, $th);
+            return JsonResponser::send(true, 'Error   .', [], 500, $th);
         }
     }
 
@@ -178,8 +178,24 @@ class ImmunizationController extends Controller
     {
         try {
             $validated = $request->validated();
-            $data = Consultation_Details_Treatment::create($validated);
-            return JsonResponser::send(false, ' created successfully.', $data);
+            //   Consultation_Details_Treatment_Request $request
+
+            foreach ($validated as $treatment) {
+                $Consultation =  new Consultation_Details_Treatment();
+                $Consultation->patient_id = $treatment['patient_id'];
+                $Consultation->patient_visits_id =  $treatment['patient_visits_id'];
+                $Consultation->select_drug = $treatment['select_drug'];
+                $Consultation->qualifier = $treatment['qualifier'];
+                $Consultation->dosage = $treatment['dosage'];
+                $Consultation->weight = $treatment['weight'];
+                $Consultation->adherence_period = $treatment['adherence_period'];
+                $Consultation->duration = $treatment['duration'];
+                $Consultation->route = $treatment['route'];
+                $Consultation->remark = $treatment['remark'];
+                $Consultation->save();
+            }
+
+            return JsonResponser::send(false, ' created successfully.', []);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'Error fetching  .', [], 500, $th);
         }

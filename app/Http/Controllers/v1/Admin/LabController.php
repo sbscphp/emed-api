@@ -4,7 +4,17 @@ namespace App\Http\Controllers\v1\Admin;
 
 use App\Helpers\ExportHelper;
 use App\Http\Controllers\Controller;
+use App\Models\BillingLog;
+use App\Models\Consultation;
+use App\Models\FamilyHistory;
 use App\Models\Laboratory;
+use App\Models\Patient;
+use App\Models\PatientVisit;
+use App\Models\Radiology;
+use App\Models\ServiceDepartment;
+use App\Models\ServiceUnit;
+use App\Models\SocialHistory;
+use App\Models\Treatment;
 use App\Responser\JsonResponser;
 use App\Services\Consultation\ConsultationService;
 use App\Services\Laboratory\LaboratoryService;
@@ -17,6 +27,8 @@ use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use Throwable;
 use Barryvdh\DomPDF\Facade\Pdf;
+use PhpOffice\PhpSpreadsheet\Calculation\Web\Service;
+
 use function PHPUnit\Framework\isEmpty;
 
 class LabController extends Controller
@@ -163,11 +175,39 @@ class LabController extends Controller
             }
 
             $record = $this->laboratoryService->findByAttribute('visitno', $visitNo);
+
+            $arr = [];
+            $data = PatientVisit::where('visitno', $visitNo)->first();
+
+            if ($data) {
+                $consultation = $data ? Consultation::where('visitno', $data->visitno)->first() : null;
+                $radiology = Radiology::where('visitno', $data->visitno)->first();
+                $treatment = $consultation ? Treatment::where('consultation_id', $consultation->id)->first() : null;
+                $billingLogsForPatient = BillingLog::where('visit_id', $data->id)->first();
+                $patient = $data ? Patient::find($data->patient_id) : null;
+                $service =  $billingLogsForPatient ? ServiceDepartment::find($billingLogsForPatient->service_type_id) : null;
+                $serviceunit  = $billingLogsForPatient ? ServiceUnit::find($billingLogsForPatient->service_unit_id) : null;
+                $socalhistory = $data ? SocialHistory::where('patient_id', $data->patient_id)->first() : null;
+                $familyHistory =  $data ? FamilyHistory::where("patient_id", $data->patient_id)->first() : null;
+                $arr = [
+                    "patient" => $patient,
+                    'Patientvisit' => $data,
+                    'consultation' => $consultation,
+                    'radiology' => $radiology,
+                    'treatment' => $treatment,
+                    'billing' => $billingLogsForPatient,
+                    'service' => $service,
+                    'serviceunit' => $serviceunit,
+                    "laboratory" => $record,
+                    "socialhistory" => $socalhistory,
+                    "familyHistory" => $familyHistory
+                ];
+            }
             if (!$record) {
                 return JsonResponser::send(true, 'Record not found.', null, 200);
             }
 
-            return JsonResponser::send(false, 'Record(s) found successfully.', $record, 200);
+            return JsonResponser::send(false, 'Record(s) found successfully.', $arr, 200);
         } catch (Throwable $th) {
             return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
         }
