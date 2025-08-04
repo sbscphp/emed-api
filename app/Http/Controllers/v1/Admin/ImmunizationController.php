@@ -140,7 +140,7 @@ class ImmunizationController extends Controller
                 "patient_id" => "nullable|numeric|exists:tenant.patients,id"
             ]);
 
-            $consultation_details_treatment =  Consultation_Details_Treatment::where('patient_id',  $validated['patient_id'])->first();
+            $consultation_details_treatment =  Consultation_Details_Treatment::where('patient_id',  $validated['patient_id'])->get();
             $patient = Patient::find($validated['patient_id']);
             $data = [
                 "treatment" => $consultation_details_treatment,
@@ -181,16 +181,6 @@ class ImmunizationController extends Controller
             //   Consultation_Details_Treatment_Request $request
 
             foreach ($validated as $treatment) {
-                //      '*.patient_id' => 'nullable|exists:tenant.patients,id',
-                // '*.patient_visits_id' => 'nullable|exists:tenant.patient_visits,id',
-                // '*.select_drug' => 'nullable|string',
-                // '*.qualifier' => 'nullable|string',
-                // '*.dosage' => 'nullable|string',
-                // '*.weight' => 'nullable|string',
-                // '*.adherence_period' => 'nullable|string|max:255',
-                // '*.duration' => 'nullable|string|max:255',
-                // '*.route' => 'nullable|string',
-                // '*.remark' => 'nullable|string|max:1000',
                 $Consultation =  new Consultation_Details_Treatment();
                 $Consultation->patient_id = $treatment['patient_id'];
                 $Consultation->patient_visits_id =  $treatment['patient_visits_id'];
