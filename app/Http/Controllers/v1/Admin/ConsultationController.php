@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ConsultationRequest;
 use App\Http\Requests\Admin\LabRequest;
 use App\Http\Requests\Admin\TreatmentRequest;
+use App\Http\Resources\PatientVistConsultationResource;
 use App\Http\Resources\PatientVistResource;
 use App\Models\Consultation;
 use App\Models\DrugHistory;
@@ -155,9 +156,13 @@ class ConsultationController extends Controller
     }
 
 
-    public function show($visitNo)
+    public function show($visitNo, Request $request)
     {
         try {
+
+            $validate = $request->validate([
+                "export" => "nullable|in:pdf,csv"
+            ]);
             config(['database.default' => 'tenant']);
             DB::connection('tenant');
             $currentUser = Auth::user();
@@ -184,11 +189,24 @@ class ConsultationController extends Controller
             );
             $consultation = $this->consultationService->findByAttribute('visitno', $visitNo);
             $previousVisits = $this->patientVisitService->getPatientPreviousVisits($patientVisit->patient_id, $visitNo);
-            $patientVisits = $this->patientVisitService->getPatientVisits($patientVisit->patient_id);
+            $patientVisits = PatientVisit::with('billingLogsForPatient.serviceType')->where("patient_id", $patientVisit->patient_id)->orderBy('arrival_date', 'desc')->get();
+            // $this->patientVisitService->getPatientVisits($patientVisit->patient_id);
             $laboratory = $this->consultationService->findByVisitNoLabOrBoth($visitNo);
             $radiology = $this->consultationService->findByVisitNoRadiologyOrBoth($visitNo);
             $treatment = $this->treatmentService->getConsultationTreatmentByVisitNo($visitNo);
 
+            $data =  PatientVisit::with('billingLogsForPatient.serviceType')->where("patient_id", $patientVisit->patient_id)->orderBy('arrival_date', 'desc')->get();
+            if (!empty($validate['export'])) {
+                $exportData =  PatientVistConsultationResource::collection($data)->resolve();
+
+                if ($validate['export'] === 'csv') {
+                    return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
+                }
+
+                if ($validate['export'] === 'pdf') {
+                    return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+                }
+            }
             $response = [
                 'patientVisit' => $patientVisit,
                 'previousVisits' => $previousVisits ?? [],
