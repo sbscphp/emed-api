@@ -10,20 +10,6 @@ class Medication extends Model
     use HasFactory;
     protected $connection = 'tenant';
     protected $guarded = ['id'];
-    protected $fillable = [
-        'id',
-        'generic_name',
-        'brand_name',
-        'medicine_name',
-        'medicine_type',
-        'cost_price',
-        'selling_price',
-        'reg_no',
-        'manufacturer',
-        'medicine_status',
-        'pharmacy_id',
-        'active_ingredient'
-    ];
 
     public function pharmacy()
     {
