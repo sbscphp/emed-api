@@ -89,6 +89,7 @@ class VendorRepository implements VendorInterface
             'EmailAddress'   => $vendor->email,
             'Address'         => $vendor->address,
             'RegistrationNo' => $vendor->reg,
+            'category' => $vendor->category,
             'Status'          => ucfirst($vendor->status),
             'Created At'      => $vendor->created_at->toDateTimeString(),
         ];
