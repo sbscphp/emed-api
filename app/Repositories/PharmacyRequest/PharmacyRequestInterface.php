@@ -15,7 +15,7 @@ interface PharmacyRequestInterface
      * 
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    public function all($search, $from, $to);
+    public function all($search, $from, $to, $paginate);
 
 
     /**

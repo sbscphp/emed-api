@@ -146,6 +146,7 @@ class MedicationController extends Controller
                 'manufacturer' => $medicine->manufacturer,
                 'medicine_status' => $medicine->medicine_status,
                 'pharmacy' => $medicine->pharmacy->name ?? null,
+                'active_ingredients' => $medicine->medicationInventories->pluck('active_ingredient')->filter()->values(),
                 'created_at' => $medicine->created_at,
             ];
 

@@ -12,7 +12,7 @@ class PharmacyRequestRepository implements PharmacyRequestInterface
      * 
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    public function all($search, $from, $to)
+    public function all($search, $from, $to, $paginate)
     {
         $query = PharmacyRequest::query();
         if (!empty($search)) {
@@ -27,6 +27,10 @@ class PharmacyRequestRepository implements PharmacyRequestInterface
             $from = Carbon::parse($from)->startOfDay();
             $to = Carbon::parse($to)->endOfDay();
             $query->whereBetween('created_at', [$from, $to]);
+        }
+
+        if (!empty($paginate)) {
+            return $query->paginate(10);
         }
 
         return $query->get();

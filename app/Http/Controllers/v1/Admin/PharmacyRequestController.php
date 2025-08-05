@@ -33,7 +33,8 @@ class PharmacyRequestController extends Controller
             $search = $request->input('search');
             $from = $request->from;
             $to = $request->to;
-            $data = $this->service->all($search, $from, $to);
+            $paginate = $request->paginate;
+            $data = $this->service->all($search, $from, $to, $paginate);
 
             if ($request->has('export')) {
                 $exportData = $data->map(function ($item) {

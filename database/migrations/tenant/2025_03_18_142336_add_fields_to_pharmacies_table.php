@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('license_number')->nullable()->after('assigned_pharmacist');
             $table->string('pharmacy_id')->unique()->after('license_number');
 
-            $table->foreign('assigned_pharmacist')->references('id')->on('users')->onDelete('set null');
+            $table->unsignedBigInteger('assigned_pharmacist')->nullable();
         });
     }
 
