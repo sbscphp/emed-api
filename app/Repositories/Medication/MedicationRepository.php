@@ -120,7 +120,7 @@ class MedicationRepository implements MedicationRepositoryInterface
 
     public function find($id)
     {
-        return Medication::with('pharmacy')->find($id);
+        return Medication::with('pharmacy', 'medicationInventories:id,medication_id,active_ingredient')->find($id);
     }
 
 
