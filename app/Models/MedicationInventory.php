@@ -14,24 +14,6 @@ class MedicationInventory extends Model
     protected $identifierKeyPrefix = "sh_";
     protected $identifierKey = "shipment_no";
     protected $guarded = ['id'];
-    protected $fillable = [
-        'id',
-        'medication_id',
-        'pharmacy_id',
-        'shipment_no',
-        'batch_no',
-        'mfg_date',
-        'expiry_date',
-        'received_qty',
-        'current_stock',
-        'vendor_id',
-        'shipment_status',
-        'date_of_shipment',
-        'expected_delivery_date',
-        'active_ingredient',
-        'brand_name',
-        'price',
-    ];
 
     protected $casts = [
         'mfg_date' => 'date',

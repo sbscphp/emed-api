@@ -3,6 +3,7 @@
 namespace App\Repositories\Medication;
 
 use App\Helpers\ExportHelper;
+use App\Helpers\GeneralHelper;
 use App\Models\Medication;
 use App\Responser\JsonResponser;
 use Illuminate\Http\Request;
@@ -13,29 +14,21 @@ class MedicationRepository implements MedicationRepositoryInterface
 
     public function all($request)
     {
-        $filters  =  $request;
-        $query = Medication::on('tenant')->with('pharmacy:id,name', 'medicationInventories:id,medication_id,active_ingredient')
+        $filters = $request;
+
+        $query = Medication::on('tenant')
+            ->with('pharmacy:id,name', 'medicationInventories:id,medication_id,active_ingredient')
             ->when(!empty($request['search']), function ($query) use ($request) {
-                $query->where('generic_name', 'like', "%{$request['search']}%")
-                    ->orWhere('medicine_name', 'like', "%{$request['search']}%")
-                    ->orWhere('medicine_type', 'like', "%{$request['search']}%")
-                    ->orWhere('medicine_status', 'like', "%{$request['search']}%")
-                    ->orWhere('manufacturer', 'like', "%{$request['search']}%");
+                $query->where(function ($q) use ($request) {
+                    $q->where('generic_name', 'like', "%{$request['search']}%")
+                        ->orWhere('medicine_name', 'like', "%{$request['search']}%")
+                        ->orWhere('medicine_type', 'like', "%{$request['search']}%")
+                        ->orWhere('medicine_status', 'like', "%{$request['search']}%")
+                        ->orWhere('manufacturer', 'like', "%{$request['search']}%");
+                });
             });
 
-
-
-
-
-        // foreach ($request as $key => $value) {
-        //     if (in_array($key, ['from', 'to']) || empty($value)) {
-        //         continue;
-        //     }
-
-        //     $query->where($key, 'like', "%$value%");
-        // }
-
-
+        // Apply specific filters
         if (!empty($request['generic_name'])) {
             $query->where('generic_name', 'like', "%{$request['generic_name']}%");
         }
@@ -49,28 +42,41 @@ class MedicationRepository implements MedicationRepositoryInterface
         }
 
         if (!empty($request['medicine_status'])) {
-            $query->where('medicine_status',  $request['medicine_status']);
+            $query->where('medicine_status', $request['medicine_status']);
         }
 
-
-        //    'generic_name' => "nullable|string",
-        //         'brand_name' => "nullable|string",
-        //         'medicine_name' => "nullable|string",
-        //         'medicine_type' => "nullable|string",
-        //         'medicine_status' => "nullable|string",
-        //         'from' => "nullable|date",
-        //         'to' => "nullable|date",
-
-
-        if (!empty($request['from']) && !empty($request['to'])) {
-            $from = Carbon::parse($request['from'])->startOfDay();
-            $to = Carbon::parse($request['to'])->endOfDay();
-            $query->whereBetween('created_at', [$from, $to]);
+        // ✅ Step 1: Resolve custom date from request
+        $customDate = [];
+        if (
+            ($request['period'] ?? '') === 'custom date' &&
+            !empty($request['start_date']) &&
+            !empty($request['end_date'])
+        ) {
+            $customDate = [$request['start_date'], $request['end_date']];
         }
 
+        // ✅ Step 2: Use helper to resolve date range
+        $dateFilter = GeneralHelper::dateFilter($request['period'] ?? null, $customDate);
 
+        // ✅ Step 3: Determine effective date range
+        if (!empty($customDate) && count($customDate) === 2) {
+            $startDate = Carbon::parse($customDate[0])->startOfDay();
+            $endDate = Carbon::parse($customDate[1])->endOfDay();
+        } elseif (is_array($dateFilter) && count($dateFilter) === 2) {
+            [$startDate, $endDate] = $dateFilter;
+            $startDate = Carbon::parse($startDate)->startOfDay();
+            $endDate = Carbon::parse($endDate)->endOfDay();
+        } else {
+            $startDate = null;
+            $endDate = null;
+        }
 
+        // ✅ Apply date filter
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        }
 
+        // ✅ Handle export
         if (!empty($request['export'])) {
             $medications = $query->get();
 
@@ -90,18 +96,21 @@ class MedicationRepository implements MedicationRepositoryInterface
                 ];
             });
 
-            if ($request['export'] == 'csv') {
+            if ($request['export'] === 'csv') {
                 return ExportHelper::streamCsv($exportData->toArray(), null, 'medications.csv');
             }
 
-            if ($request['export'] == 'pdf') {
+            if ($request['export'] === 'pdf') {
                 return ExportHelper::downloadPdf($exportData->toArray(), 'medications.pdf');
             }
+
+            // If export format is invalid, fallback to paginated response
             return $query->paginate(10);
-            // return JsonResponser::send(true, 'Invalid export format specified', null, 400);
         }
+
         return $query->paginate(10);
     }
+
 
 
     public function create(array $data)

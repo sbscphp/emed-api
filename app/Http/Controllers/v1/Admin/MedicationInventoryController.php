@@ -6,6 +6,7 @@ use App\Enums\ListModuleEnums;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreMedicationInventoryRequest;
+use App\Models\MedicationInventory;
 use App\Responser\JsonResponser;
 use App\Services\MedicationInventoryService\MedicationInventoryService;
 use App\Services\User\UserService;
@@ -54,6 +55,27 @@ class MedicationInventoryController extends Controller
             return JsonResponser::send(false, 'Shipment created successfully', $med);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+        }
+    }
+
+    public function updateShipment(Request $request, $id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $shipment = MedicationInventory::where('id', $id)->first();
+
+            if (!$shipment) {
+                return JsonResponser::send(false, 'Shipment not found.');
+            }
+
+            $record = $this->inventoryService->updateShipment($request, $shipment);
+
+            DB::commit();
+            return JsonResponser::send(false, 'Shipment updated successfully', $record);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
         }
     }
 

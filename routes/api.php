@@ -172,6 +172,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/lists', [MedicationInventoryController::class, 'index']);
                     Route::get('/{id}', [MedicationInventoryController::class, 'show']);
                     Route::post('/', [MedicationInventoryController::class, 'store']);
+                    Route::put('/update/shipment/{id}', [MedicationInventoryController::class, 'updateShipment']);
                     Route::patch('/{id}/status', [MedicationInventoryController::class, 'updateStatus']);
                     Route::get('/dashboard/stats', [MedicationInventoryController::class, 'shipmentStat']);
                 });

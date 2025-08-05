@@ -2,6 +2,10 @@
 
 namespace App\Services\MedicationInventoryService;
 
+use App\Enums\ListModuleEnums;
+use App\Helpers\FileUploadHelper;
+use App\Helpers\GeneralHelper;
+use App\Helpers\UserMgtHelper;
 use App\Models\MedicationInventory;
 use App\Repositories\MedicationInventory\MedicationInventoryRepositoryInterface;
 use Illuminate\Support\Facades\DB;
@@ -45,5 +49,43 @@ class MedicationInventoryService
                 ->select(DB::raw('SUM(medication_inventory.received_qty * medications.cost_price) as total_value'))
                 ->value('total_value'),
         ];
+    }
+
+    public function updateShipment($data, $shipment)
+    {
+        $currentUserInstance = UserMgtHelper::userInstance();
+        $supportDoc = $shipment->support_doc;
+        if (!empty($data['support_doc'])) {
+            $supportDoc = FileUploadHelper::singleStringFileUpload($data['support_doc'], 'shipment');
+        }
+        // Update shipment fields
+        $shipment->update([
+            'vendor_id' => $data['vendor_id'],
+            'date_of_shipment' => $data['date_of_shipment'],
+            'expected_delivery_date' => $data['expected_delivery_date'],
+            'courier_service' => $data['courier_service'],
+            'tracking_number' => $data['tracking_number'],
+            'order_placed_by' => $data['order_placed_by'],
+            'delivery_location' => $data['delivery_location'],
+            'dispatched_date' => $data['dispatched_date'],
+            'current_location' => $data['current_location'],
+            'delivery_note' => $data['delivery_note'],
+            'support_doc' => $supportDoc,
+        ]);
+
+
+        $dataToLog = [
+            'causer_id' => $currentUserInstance->id,
+            'action_id' => $shipment->id,
+            'action' => 'Update',
+            'action_type' => "Models\MedicineInventory",
+            'log_name' => "Medicine Inventory updated successfully",
+            'description' => "{$currentUserInstance->firstname} {$currentUserInstance->lastname} updated a Medicine",
+            'module_accessed' => ListModuleEnums::PHARMACY
+        ];
+
+        GeneralHelper::storeAuditLog($dataToLog);
+
+        return $shipment->refresh();
     }
 }

@@ -10,8 +10,17 @@ return new class extends Migration
     {
         Schema::create('medication_inventory', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('medication_id')->constrained()->onDelete('cascade');
+            $table->unsignedBigInteger('medication_id')->nullable();
             $table->foreignId('pharmacy_id')->constrained()->onDelete('cascade');
+            $table->string('product_name')->nullable();
+            $table->string('courier_service')->nullable();
+            $table->string('tracking_number')->nullable();
+            $table->string('order_placed_by')->nullable();
+            $table->string('delivery_location')->nullable();
+            $table->date('dispatched_date')->nullable();
+            $table->string('current_location')->nullable();
+            $table->mediumText('delivery_note')->nullable();
+            $table->string('support_doc')->nullable();
             $table->string('shipment_no');
             $table->string('batch_no');
             $table->date('mfg_date');

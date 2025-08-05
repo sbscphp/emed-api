@@ -15,7 +15,8 @@ class StoreMedicationInventoryRequest extends FormRequest
     {
         return [
             'vendor_id' => 'required|numeric|exists:tenant.vendors,id',
-            'medication_id' => 'required|numeric|exists:tenant.medications,id',
+            'medication_id' => 'required_without:product_name',
+            'product_name' => 'required_without:medication_id',
             'pharmacy_id' => 'required|numeric|exists:tenant.pharmacies,id',
             'shipment_no' => 'nullable|string|max:255',
             'batch_no' => 'required|string|max:255',

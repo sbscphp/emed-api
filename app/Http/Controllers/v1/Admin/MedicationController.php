@@ -31,31 +31,7 @@ class MedicationController extends Controller
 
     public function index(Request $request)
     {
-        // try {
-        $validated = $request->validate([
-            'generic_name' => "nullable|string",
-            'brand_name' => "nullable|string",
-            'medicine_name' => "nullable|string",
-            'medicine_type' => "nullable|string",
-            'medicine_status' => "nullable|string",
-            'from' => "nullable|date",
-            'to' => "nullable|date",
-            'export' => "nullable|string",
-            'search' => "nullable",
-        ]);
-
-
-        // $request = $request->only([
-        //     'generic_name',
-        //     'brand_name',
-        //     'medicine_name',
-        //     'medicine_type',
-        //     'medicine_status',
-        //     'from',
-        //     'to',
-        // ]);
-
-        $data = $this->medicationService->all($validated);
+        $data = $this->medicationService->all($request);
 
         if ($data instanceof \Symfony\Component\HttpFoundation\Response) {
             return $data;
@@ -87,9 +63,6 @@ class MedicationController extends Controller
         $paginated['data'] = $formatted;
 
         return JsonResponser::send(false, 'Medications retrieved successfully', collect($paginated));
-        // } catch (\Exception $e) {
-        //     return JsonResponser::send(true, 'Internal server error', [], 500, $e);
-        // }
     }
 
     public function store(MedicationRequest $request)
