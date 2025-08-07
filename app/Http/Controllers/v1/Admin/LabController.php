@@ -6,6 +6,7 @@ use App\Helpers\ExportHelper;
 use App\Http\Controllers\Controller;
 use App\Models\BillingLog;
 use App\Models\Consultation;
+use App\Models\Consultation_Details_Treatment;
 use App\Models\FamilyHistory;
 use App\Models\Laboratory;
 use App\Models\Patient;
@@ -163,52 +164,54 @@ class LabController extends Controller
         }
     }
 
-    public function show($visitNo)
+    public function show(Request $request, $visitNo)
     {
         try {
 
             DB::connection('tenant');
-            $currentUser = Auth::user();
-            // $user = $this->userService->find($currentUser->id);
-            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
-            if (!$user) {
-                return JsonResponser::send(true, 'User not found.', null, 200);
-            }
 
-            $record = $this->laboratoryService->findByAttribute('visitno', $visitNo);
+            $patientVisit = PatientVisit::where('visitno', $visitNo)->first();
 
-            $arr = [];
-            $data = PatientVisit::where('visitno', $visitNo)->first();
-
-            if ($data) {
-                $consultation = $data ? Consultation::where('visitno', $data->visitno)->first() : null;
-                $radiology = Radiology::where('visitno', $data->visitno)->first();
-                $treatment = $consultation ? Treatment::where('consultation_id', $consultation->id)->first() : null;
-                $billingLogsForPatient = BillingLog::where('visit_id', $data->id)->first();
-                $patient = $data ? Patient::find($data->patient_id) : null;
-                $service =  $billingLogsForPatient ? ServiceDepartment::find($billingLogsForPatient->service_type_id) : null;
-                $serviceunit  = $billingLogsForPatient ? ServiceUnit::find($billingLogsForPatient->service_unit_id) : null;
-                $socalhistory = $data ? SocialHistory::where('patient_id', $data->patient_id)->first() : null;
-                $familyHistory =  $data ? FamilyHistory::where("patient_id", $data->patient_id)->first() : null;
-                $arr = [
-                    "patient" => $patient,
-                    'Patientvisit' => $data,
-                    'consultation' => $consultation,
-                    'radiology' => $radiology,
-                    'treatment' => $treatment,
-                    'billing' => $billingLogsForPatient,
-                    'service' => $service,
-                    'serviceunit' => $serviceunit,
-                    "laboratory" => $record,
-                    "socialhistory" => $socalhistory,
-                    "familyHistory" => $familyHistory
-                ];
-            }
-            if (!$record) {
+            if (!$patientVisit) {
                 return JsonResponser::send(true, 'Record not found.', null, 200);
             }
 
-            return JsonResponser::send(false, 'Record(s) found successfully.', $arr, 200);
+            $patient = $patientVisit ? Patient::find($patientVisit->patient_id) : null;
+            $treatment = Consultation_Details_Treatment::query()
+                ->where('patient_id', $patientVisit->patient_id)->where('patient_visits_id', $patientVisit->id)
+                ->when($request->search_param, function ($query) use ($request) {
+                    $query->where('title', 'LIKE', '%' . $request->search_param . '%');
+                })
+                ->when($request->is_read, function ($query) use ($request) {
+                    $query->where('is_read', $request->is_read);
+                })
+                ->when($request->test_status, function ($query) use ($request) {
+                    $query->where('test_status', $request->test_status);
+                });
+
+            if ($request->paginate === true) {
+                $treatment->orderBy('id', 'DESC')->paginate($request->limit);
+            }
+
+            $treatment->orderBy('id', 'DESC')->get();
+
+            $data = [
+                "patient" => $patient,
+                'patientVisit' => $patientVisit,
+                'treatment' => $treatment,
+
+                // 'consultation' => $consultation,
+                // 'radiology' => $radiology,
+                // 'treatment' => $treatment,
+                // 'billing' => $billingLogsForPatient,
+                // 'service' => $service,
+                // 'serviceunit' => $serviceunit,
+                // "laboratory" => $record,
+                // "socialhistory" => $socalhistory,
+                // "familyHistory" => $familyHistory
+            ];
+
+            return JsonResponser::send(false, 'Record(s) found successfully.', $data, 200);
         } catch (Throwable $th) {
             return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
         }

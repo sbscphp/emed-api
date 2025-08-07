@@ -34,7 +34,7 @@ interface NextOfKinInterface
      * @param int $id
      * @return \App\Models\NextOfKin
      */
-    public function update(array $data, $id);
+    public function update($data, $id);
 
 
     /**
