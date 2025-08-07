@@ -18,7 +18,7 @@ interface PharmacyInterface
     public function all();
     public function treatmentLogall($search, $from,  $to);
     public function getPatientTreatmentDetails(int $patientId);
-    public function fulfillPrescription(array $data);
+    public function fulfillPrescription($data);
 
 
     /**

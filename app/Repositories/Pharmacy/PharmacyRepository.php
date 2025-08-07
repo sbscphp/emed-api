@@ -77,7 +77,7 @@ class PharmacyRepository implements PharmacyInterface
         return $patient;
     }
 
-    public function fulfillPrescription(array $data)
+    public function fulfillPrescription($data)
     {
         DB::connection('tenant');
 
@@ -99,6 +99,7 @@ class PharmacyRepository implements PharmacyInterface
 
         $fulfillment = TreatmentFulfillment::create([
             'treatment_id' => $treatment->id,
+            'patient_id' => $data['patient_id'],
             'dispensing_pharmacist' => $data['dispensing_pharmacist'],
             'dispensing_date' => $data['dispensing_date'],
             'quantity_dispensed' => $data['quantity_dispensed'],
