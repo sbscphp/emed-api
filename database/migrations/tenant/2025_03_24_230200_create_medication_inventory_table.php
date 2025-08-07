@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('current_location')->nullable();
             $table->mediumText('delivery_note')->nullable();
             $table->string('support_doc')->nullable();
+            $table->string('support_file')->nullable();
             $table->string('shipment_no');
             $table->string('batch_no');
             $table->date('mfg_date');

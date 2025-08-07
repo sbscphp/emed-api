@@ -61,7 +61,11 @@ class ImmunizationController extends Controller
     {
         try {
             $validated = $request->validated();
-            $data = Consultation_Details::create($validated);
+
+            $data = Consultation_Details::updateOrCreate(
+                ['patient_visits_id' => $validated['patient_visits_id']], // unique key to match on
+                $validated // data to update or insert
+            );
             $patient =  Patient::find($validated['patient_id']);
             $status =    $validated['admit_patient'] == 1 ? 'admitted' : null;
             if ($patient) {
@@ -84,9 +88,15 @@ class ImmunizationController extends Controller
             ]);
 
             $consultation_Details =  Consultation_Details::where('patient_id',  $validated['patient_id'])->first();
+            $laboratoryDetail = Consultation_Details_Laborartory::where('patient_id',  $validated['patient_id'])->first();
+            $radiologyDetail = Consultation_Details_Radiology::where('patient_id',  $validated['patient_id'])->first();
+            $treatmentDetail = Consultation_Details_Treatment::where('patient_id',  $validated['patient_id'])->orderBy('id', 'DESC')->get();
             $patient = Patient::find($validated['patient_id']);
             $data = [
                 "consultation" => $consultation_Details,
+                "laboratory" => $laboratoryDetail,
+                "radiology" => $radiologyDetail,
+                "treatment" => $treatmentDetail,
                 "patient" => $patient
             ];
             return JsonResponser::send(false, ' created successfully.', $data);
@@ -156,7 +166,10 @@ class ImmunizationController extends Controller
     {
         try {
             $validated = $request->validated();
-            $data = Consultation_Details_Laborartory::create($validated);
+            $data = Consultation_Details_Laborartory::updateOrCreate(
+                ['patient_visits_id' => $validated['patient_visits_id']], // unique key to match on
+                $validated // data to update or insert
+            );
             return JsonResponser::send(false, ' created successfully.', $data);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'Error   .', [], 500, $th);
@@ -167,7 +180,10 @@ class ImmunizationController extends Controller
     {
         try {
             $validated = $request->validated();
-            $data = Consultation_Details_Radiology::create($validated);
+            $data = Consultation_Details_Radiology::updateOrCreate(
+                ['patient_visits_id' => $validated['patient_visits_id']], // unique key to match on
+                $validated // data to update or insert
+            );
             return JsonResponser::send(false, ' created successfully.', $data);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'Error   .', [], 500, $th);
@@ -180,19 +196,9 @@ class ImmunizationController extends Controller
             $validated = $request->validated();
             //   Consultation_Details_Treatment_Request $request
 
-            foreach ($validated as $treatment) {
-                $Consultation =  new Consultation_Details_Treatment();
-                $Consultation->patient_id = $treatment['patient_id'];
-                $Consultation->patient_visits_id =  $treatment['patient_visits_id'];
-                $Consultation->select_drug = $treatment['select_drug'];
-                $Consultation->qualifier = $treatment['qualifier'];
-                $Consultation->dosage = $treatment['dosage'];
-                $Consultation->weight = $treatment['weight'];
-                $Consultation->adherence_period = $treatment['adherence_period'];
-                $Consultation->duration = $treatment['duration'];
-                $Consultation->route = $treatment['route'];
-                $Consultation->remark = $treatment['remark'];
-                $Consultation->save();
+            // Loop through each treatment and create it
+            foreach ($request['treatments'] as $treatment) {
+                Consultation_Details_Treatment::create($treatment);
             }
 
             return JsonResponser::send(false, ' created successfully.', []);

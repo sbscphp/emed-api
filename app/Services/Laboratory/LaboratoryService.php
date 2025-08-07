@@ -101,6 +101,7 @@ class LaboratoryService
     {
         // return $this->LaboratoryInterface->getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage, $export, $from, $to);
         $query = Laboratory::query()
+            ->with('consultation.pharmacist')
             ->join('patients', 'patient_visit_lab.patient_id', '=', 'patients.id')
             ->leftJoin('billing_logs', 'patient_visit_lab.patient_id', '=', 'billing_logs.patient_id')
             ->select(
