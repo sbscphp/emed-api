@@ -33,6 +33,7 @@ return new class extends Migration
             ])->nullable();
             $table->string('other_laborartory')->nullable();
             $table->string('order_test')->nullable();
+            $table->string('test_status')->default('Not Ready')->comment('Not Ready', 'Ready');
             $table->timestamps();
         });
     }

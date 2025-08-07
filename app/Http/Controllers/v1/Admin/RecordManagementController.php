@@ -29,6 +29,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\PatientVisitExport;
 use App\Http\Resources\PatientDetailResoures;
 use App\Models\Medicine_Log;
+use App\Models\NextOfKin;
 use App\Models\Notification;
 use App\Models\Patient;
 use App\Models\PatientVisit;
@@ -295,45 +296,37 @@ class RecordManagementController extends Controller
 
             $currentUser = Auth::user();
             //$user = $this->userService->find($currentUser->id);
-            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
+            $record = NextOfKin::where('patient_id',  $id)->first();
 
-            if (is_null($user)) {
-                return JsonResponser::send(true, 'User not found.', null, 200);
+            if (is_null($record)) {
+                return JsonResponser::send(true, 'Next of kin not found.', null, 200);
             }
 
-            $nextOfKinInfo = $this->nextOfKinService->find($id);
-            if (is_null($nextOfKinInfo)) {
-                return JsonResponser::send(true, 'Record not found', null, 200);
-            }
-
-            //Prepare data to store
-            $data = [
-                'firstname' => $request->firstname ?? $nextOfKinInfo->firstname,
-                'lastname' => $request->lastname ?? $nextOfKinInfo->lastname,
-                'gender' => $request->gender ?? $nextOfKinInfo->gender,
-                'phoneno' => $request->phoneno ?? $nextOfKinInfo->phoneno,
-                'stateoforigin' => $request->stateoforigin ?? $nextOfKinInfo->stateoforigin,
-                'lga' => $request->lga ?? $nextOfKinInfo->lga,
-                'homeaddress' => $request->homeaddress ?? $nextOfKinInfo->homeaddress,
-                'relationship' => $request->relationship ?? $nextOfKinInfo->relationship,
-            ];
-
-            $updateNextOfKin = $this->nextOfKinService->update($data, $id);
+            $record->update([
+                'firstname' => $request->firstname,
+                'lastname' => $request->lastname,
+                'gender' => $request->gender,
+                'phoneno' => $request->phoneno,
+                'stateoforigin' => $request->stateoforigin,
+                'lga' => $request->lga,
+                'homeaddress' => $request->homeaddress,
+                'relationship' => $request->relationship,
+            ]);
 
             $dataToLog = [
-                'causer_id' => $user->id,
-                'action_id' => $updateNextOfKin->id,
+                'causer_id' => $currentUser->id,
+                'action_id' => $record->id,
                 'action' => 'Update',
                 'action_type' => "Models\NextOfKin",
                 'log_name' => "Next of kin updated successfully",
-                'description' => "{$user['fullname']} updated next of kin successfully",
+                'description' => "{$currentUser['fullname']} updated next of kin successfully",
                 'module_accessed' => ListModuleEnums::Records
 
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
             DB::connection('tenant')->commit();
-            return JsonResponser::send(false, 'Next of kin updated successfully', $updateNextOfKin, 201);
+            return JsonResponser::send(false, 'Next of kin updated successfully', $record->refresh(), 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Internal server error', [], 500, $th);
