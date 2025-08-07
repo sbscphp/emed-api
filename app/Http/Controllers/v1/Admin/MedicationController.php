@@ -54,7 +54,7 @@ class MedicationController extends Controller
                 'manufacturer' => $med->manufacturer,
                 'medicine_status' => $med->medicine_status,
                 'pharmacy' => $med->pharmacy->name ?? null,
-                'active_ingredients' => $med->medicationInventories->pluck('active_ingredient')->filter()->values(),
+                'active_ingredient' => $med->active_ingredient,
                 'created_at' => $med->created_at,
             ];
         });
@@ -146,7 +146,7 @@ class MedicationController extends Controller
                 'manufacturer' => $medicine->manufacturer,
                 'medicine_status' => $medicine->medicine_status,
                 'pharmacy' => $medicine->pharmacy->name ?? null,
-                'active_ingredients' => $medicine->medicationInventories->pluck('active_ingredient')->filter()->values(),
+                'active_ingredient' => $medicine->active_ingredient,
                 'created_at' => $medicine->created_at,
             ];
 

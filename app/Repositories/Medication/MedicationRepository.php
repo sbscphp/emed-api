@@ -92,6 +92,7 @@ class MedicationRepository implements MedicationRepositoryInterface
                     'Manufacturer' => $med->manufacturer,
                     'Medicine Status' => $med->medicine_status,
                     'Pharmacy' => $med->pharmacy->name ?? '',
+                    'Active Ingredient' => $med->active_ingredient,
                     'Created At' => $med->created_at,
                 ];
             });
@@ -105,10 +106,10 @@ class MedicationRepository implements MedicationRepositoryInterface
             }
 
             // If export format is invalid, fallback to paginated response
-            return $query->paginate(10);
+            return $query->orderBy('id', 'DESC')->paginate(10);
         }
 
-        return $query->paginate(10);
+        return $query->orderBy('id', 'DESC')->paginate(10);
     }
 
 

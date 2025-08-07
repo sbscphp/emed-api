@@ -55,8 +55,12 @@ class MedicationInventoryService
     {
         $currentUserInstance = UserMgtHelper::userInstance();
         $supportDoc = $shipment->support_doc;
+        $supportFile = $shipment->support_file;
         if (!empty($data['support_doc'])) {
             $supportDoc = FileUploadHelper::singleStringFileUpload($data['support_doc'], 'shipment');
+        }
+        if (!empty($data['support_file'])) {
+            $supportFile = FileUploadHelper::singleStringFileUpload($data['support_file'], 'shipment');
         }
         // Update shipment fields
         $shipment->update([
@@ -71,6 +75,7 @@ class MedicationInventoryService
             'current_location' => $data['current_location'],
             'delivery_note' => $data['delivery_note'],
             'support_doc' => $supportDoc,
+            'support_file' => $supportFile,
         ]);
 
 

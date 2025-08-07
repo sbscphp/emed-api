@@ -76,6 +76,7 @@ class LabController extends Controller
 
             $labRecords = $this->laboratoryService->getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage, $export, $from, $to);
             $laboratory = Laboratory::query()
+                ->with('consultation.pharmacist')
                 ->join('patients', 'patient_visit_lab.patient_id', '=', 'patients.id')
                 ->leftJoin('billing_logs', 'patient_visit_lab.patient_id', '=', 'billing_logs.patient_id')
                 ->select(
@@ -94,13 +95,13 @@ class LabController extends Controller
                 return JsonResponser::send(false, "Record(s) not found.", $labRecords, 200);
             }
 
-
             if (!empty($export)) {
 
                 $exportData = $laboratory->map(function ($item) {
                     return [
                         'Patient Name' => "{$item->firstname} {$item->lastname}",
                         'Patient No' => $item->patientno,
+                        'Consulted By' => $item->consultation->pharmacist->role,
                         'Card No' => $item->cardno,
                         'Visit No' => $item->visitno,
                         'Lab Dept' => $item->lab_dept,
