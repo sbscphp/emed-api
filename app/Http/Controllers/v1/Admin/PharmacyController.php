@@ -158,7 +158,7 @@ class PharmacyController extends Controller
                     ];
                 });
 
-                
+
                 if ($request->export === 'csv') {
                     $recordHeadings = ['Patient Name', 'Card No', 'Patient Type', 'Patient No', 'Prescribed Drug', 'Pharmacy Name', 'Patient Status', 'Status'];
                     return Excel::download(new AuditLogExport($exportData, $recordHeadings), 'treatment_logs.xlsx');
@@ -199,7 +199,7 @@ class PharmacyController extends Controller
 
     public function fulfillTreatment(FulfillTreatmentRequest $request)
     {
-        return $this->pharmacyService->fulfillPrescription($request->validated());
+        return $this->pharmacyService->fulfillPrescription($request);
     }
 
     public function store(PharmacyRequest $request)

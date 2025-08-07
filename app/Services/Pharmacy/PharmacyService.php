@@ -62,7 +62,7 @@ class PharmacyService
         return $this->PharmacyInterface->getPatientTreatmentDetails($patientId);
     }
 
-    public function fulfillPrescription(array $data)
+    public function fulfillPrescription($data)
     {
         return $this->PharmacyInterface->fulfillPrescription($data);
     }
