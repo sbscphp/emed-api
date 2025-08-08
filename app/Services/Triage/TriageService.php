@@ -112,12 +112,9 @@ class TriageService
 
     public function getPatientsAndStatsByService(
         $serviceId,
-        $search = null,
+        $search,
         $from,
         $to,
-        $status,
-        $type,
-        $phone_number,
         $payment_status,
         $patient_status,
         $patient_type
@@ -163,35 +160,17 @@ class TriageService
         }
 
 
-        if (!empty($status)) {
-            $query->where('patient_visits.stage', 'like', "%$search%");
-            // patient_type
+        if (!empty($patient_status)) {
+            $query->where('patient_visits.stage', $patient_status);
         }
 
-
-        if (!empty($type)) {
-            $query->where('patients.patient_type', 'like', "%$type%");
-            // patient_type
+        if (!empty($patient_type)) {
+            $query->where('patients.patient_type', $patient_type);
         }
 
         if (!empty($payment_status)) {
-            $query->where('billing_logs.payment_status', 'like', "%$payment_status%");
-            // patient_type
+            $query->where('billing_logs.payment_status', $payment_status);
         }
-
-        if (!empty($patient_status)) {
-            $query->where('patients.status', 'like', "%$patient_status%");
-            // patient_type
-        }
-
-
-        if (!empty($phone_number)) {
-            $query->where('patients.patient_type', 'like', "%$phone_number%");
-            // patient_type
-        }
-
-
-
 
         $query->when($from && $to, function ($q) use ($from, $to) {
             $q->whereBetween('patient_visits.arrival_date', [
@@ -201,15 +180,6 @@ class TriageService
         });
 
         $patients = $query->orderBy('patient_visits.created_at', 'desc')->paginate(10);
-
-        foreach ($patients as $patient) {
-            $billingLog = BillingLog::where('patient_id', $patient->patient_id)
-                ->where('service_type_id', $serviceId)
-                ->latest()
-                ->first();
-
-            $patient->payment_status = $billingLog->payment_status ?? 'pending';
-        }
 
         $stats = $this->generateServiceStats($serviceId, $today);
 

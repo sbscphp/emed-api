@@ -299,7 +299,7 @@ class RadiologyService
         $radio = Radiology::find($data->radiology_id);
         if ($radio) {
             $radio->update([
-                "test_status" => "complete",
+                "test_status" => "completed",
                 // "payment_status" => "pending"
             ]);
         }
@@ -339,7 +339,7 @@ class RadiologyService
             // test_status
 
             $radiology->update([
-                "test_status" => "complete",
+                "test_status" => "completed",
                 // "payment_status" => "pending"
             ]);
 

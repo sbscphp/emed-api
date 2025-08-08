@@ -529,7 +529,6 @@ class BillingLogService
         $patient_total = 0;
 
         // Pharmacy
-
         foreach ($patients as $patient) {
             $patientvisit =   optional(PatientVisit::where('patient_id', $patient->id)->first());
             $billinglog =   optional(BillingLog::where('visit_id', $patientvisit->id)->first());
@@ -539,7 +538,7 @@ class BillingLogService
             // }
         }
 
-        $pharmacies = Pharmacy::with('treatments.consultations')->get();
+        $pharmacies = Pharmacy::with('treatments')->get();
         $patientIds = [];
         $bill_total = 0;
         foreach ($pharmacies as $pharmacy) {
@@ -548,16 +547,6 @@ class BillingLogService
             $bill_total =  $bill_total + intval($medication->selling_price);
             foreach ($pharmacy->treatments as $treatment) {
                 $patientIds[] = $treatment->patient_id;
-
-                foreach ($treatment->consultations as $consultation) {
-                    //    $consultation->patient_id;
-                    //    $consultation->visitno;
-                    // $patientvisit =   optional(PatientVisit::where('visitno', $consultation->visitno)->first());
-
-                    // $billinglog =   optional(BillingLog::where('visit_id', $patientvisit->id)->first());
-
-                    // $bill_total = $bill_total + $billinglog->grand_total;
-                }
             }
         }
 

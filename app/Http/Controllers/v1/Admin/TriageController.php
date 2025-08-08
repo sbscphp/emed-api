@@ -124,12 +124,10 @@ class TriageController extends Controller
             $search = $request->input('search');
             $from = $request->from;
             $to = $request->to;
-            $status = $request->status;
-            $type =  $request->type;
-            $phone_number =  $request->phone_number;
             $payment_status = $request->payment_status;
             $patient_status = $request->patient_status;
             $patient_type = $request->patient_type;
+
             if (!$serviceId) {
                 return JsonResponser::send(true, 'Service ID is required.', null, 400);
             }
@@ -139,9 +137,6 @@ class TriageController extends Controller
                 $search,
                 $from,
                 $to,
-                $status,
-                $type,
-                $phone_number,
                 $payment_status,
                 $patient_status,
                 $patient_type

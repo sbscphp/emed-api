@@ -3,7 +3,9 @@
 namespace App\Services\Laboratory;
 
 use App\Helpers\ExportHelper;
+use App\Helpers\UserMgtHelper;
 use App\Models\Laboratory;
+use App\Models\LaboratoryResult;
 use App\Repositories\Laboratory\LaboratoryInterface;
 use Carbon\Carbon;
 
@@ -180,5 +182,38 @@ class LaboratoryService
     public function getStats()
     {
         return $this->LaboratoryInterface->getStats();
+    }
+
+    public function updateResult($data, $test)
+    {
+
+        $currentUserInstance = UserMgtHelper::userInstance();
+        $tenant = $currentUserInstance->tenant->domain;
+
+        // Create lab result
+        foreach ($data->results as $item) {
+            $record = LaboratoryResult::updateOrCreate(
+                [
+                    'patient_visit_lab_id' => $test->id, // Unique match key
+                    'test' => $item['test'],
+                ],
+                [
+                    'tenant_domain'    => $tenant,
+                    'visitno'          => $test->visitno,
+                    'result'           => $item['result'],
+                    'reference_range'  => $item['reference_range'],
+                    'status'           => 'Ready'
+                ]
+            );
+        }
+
+        $test->update([
+            'specimen_type' => $data->specimen_type,
+            'notes'         => $data->notes,
+            'requested_by'  => $data->requested_by,
+            'test_status'   => 'completed'
+        ]);
+
+        return $record;
     }
 }

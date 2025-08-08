@@ -15,14 +15,11 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->foreignId('patient_visit_lab_id')->constrained('patient_visit_lab')->onDelete('cascade');
             $table->string('visitno')->nullable();
-            $table->string('test_name');
+            $table->string('test');
             $table->string('result')->nullable();
-            $table->dateTime('date_recorded')->nullable();
-            $table->unsignedBigInteger('recorded_by')->nullable();
+            $table->string('reference_range')->nullable();
+            $table->string('status')->nullable()->comment('Not Ready, Ready');
             $table->timestamps();
-
-            $table->index('result');
-            $table->index('visitno');
         });
     }
 

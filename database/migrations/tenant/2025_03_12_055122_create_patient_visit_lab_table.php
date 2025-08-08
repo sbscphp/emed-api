@@ -21,6 +21,9 @@ return new class extends Migration
             $table->string('test_name')->nullable();
             $table->string('ordered_test')->nullable();
             $table->string('others')->nullable();
+            $table->string('specimen_type')->nullable();
+            $table->longText('notes')->nullable();
+            $table->string('requested_by')->nullable();
             $table->timestamps();
 
             $table->index('visitno');
