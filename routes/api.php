@@ -228,7 +228,10 @@ Route::group(["prefix" => "v1"], function () {
                 Route::prefix('laboratory')->group(function () {
                     Route::get('/stats', [LabController::class, 'stats']);
                     Route::post('/records', [LabController::class, 'allLabRecords']);
-                    Route::get('/single-lab-record/{id}', [LabController::class, 'show']);
+                    Route::get('/single-lab-record', [LabController::class, 'show']);
+                    Route::get('/patient/{id}', [LabController::class, 'patientDetails']);
+                    Route::get('/patient/visit/summary/{id}', [LabController::class, 'patientVisitSummary']);
+                    Route::post('/result', [LabController::class, 'updateResult']);
                 });
 
                 Route::group(['prefix' => 'auditLog', 'middleware' => 'admin.superadmin'], function () {

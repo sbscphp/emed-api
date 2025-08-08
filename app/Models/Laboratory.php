@@ -32,4 +32,21 @@ class Laboratory extends Model
     {
         return $this->belongsTo(Consultation::class);
     }
+
+    public function visit()
+    {
+        return $this->belongsTo(PatientVisit::class, 'visitno', 'visitno');
+    }
+
+    public function billingLogs()
+    {
+        return $this->hasOneThrough(
+            BillingLog::class,         // Final model
+            PatientVisit::class,       // Intermediate model
+            'visitno',                 // Foreign key on PatientVisit for PatientVisitLab (referenced by 'visitno')
+            'visit_id',                // Foreign key on BillingLog pointing to PatientVisit (visit_id = id)
+            'visitno',                 // Local key on PatientVisitLab
+            'id'                       // Local key on PatientVisit
+        );
+    }
 }

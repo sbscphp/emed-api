@@ -164,56 +164,155 @@ class LabController extends Controller
         }
     }
 
-    public function show(Request $request, $visitNo)
+    public function show(Request $request)
     {
         try {
 
             DB::connection('tenant');
 
-            $patientVisit = PatientVisit::where('visitno', $visitNo)->first();
+            $patientVisit = PatientVisit::where('visitno', $request->visit_no)->first();
 
             if (!$patientVisit) {
                 return JsonResponser::send(true, 'Record not found.', null, 200);
             }
 
-            $patient = $patientVisit ? Patient::find($patientVisit->patient_id) : null;
-            $treatment = Consultation_Details_Treatment::query()
-                ->where('patient_id', $patientVisit->patient_id)->where('patient_visits_id', $patientVisit->id)
+            $patient = Patient::find($patientVisit->patient_id);
+
+            $labTestQuery = Laboratory::query()
+                ->where('patient_id', $patientVisit->patient_id)
+                ->where('visitno', $request->visit_no)
                 ->when($request->search_param, function ($query) use ($request) {
-                    $query->where('title', 'LIKE', '%' . $request->search_param . '%');
+                    $query->where('test_name', 'LIKE', '%' . $request->search_param . '%')
+                        ->orWhere('lab_dept', 'LIKE', '%' . $request->search_param . '%')
+                        ->orWhere('ordered_test', 'LIKE', '%' . $request->search_param . '%')
+                        ->orWhere('others', 'LIKE', '%' . $request->search_param . '%');
                 })
-                ->when($request->is_read, function ($query) use ($request) {
-                    $query->where('is_read', $request->is_read);
+                ->when($request->payment_status, function ($query) use ($request) {
+                    $query->whereRelation('billingLogs', 'payment_status', $request->payment_status);
                 })
                 ->when($request->test_status, function ($query) use ($request) {
                     $query->where('test_status', $request->test_status);
+                })
+                ->with('billingLogs')
+                ->orderBy('id', 'DESC');
+
+            $labTest = $request->paginate === "true"
+                ? $labTestQuery->paginate($request->limit ?? 10)
+                : $labTestQuery->get();
+
+            if ($request->export) {
+                // Always work with a collection for exports
+                $exportData = $labTestQuery->get()->map(function ($item) {
+                    return [
+                        'Type Of Test'   => $item->test_name,
+                        'Price'          => $item->billingLogs->grand_total ?? 0,
+                        'Mode Of Payment' => $item->billingLogs->payment_method ?? 'N/A',
+                        'Date'           => $item->created_at->toDateTimeString(),
+                        'Payment Status' => $item->billingLogs->payment_status ?? 'N/A',
+                        'Test Status'    => $item->test_status,
+                    ];
                 });
 
-            if ($request->paginate === true) {
-                $treatment->orderBy('id', 'DESC')->paginate($request->limit);
-            }
+                if ($request->export === 'csv') {
+                    return ExportHelper::streamCsv($exportData->toArray(), null, 'lab-records.csv');
+                }
 
-            $treatment->orderBy('id', 'DESC')->get();
+                if ($request->export === 'pdf') {
+                    $pdf = PDF::loadView('exports.patients', ['patients' => $exportData->toArray()])
+                        ->setPaper('A1', 'landscape');
+                    return $pdf->download('lab-records.pdf');
+                }
+            }
 
             $data = [
                 "patient" => $patient,
                 'patientVisit' => $patientVisit,
-                'treatment' => $treatment,
-
-                // 'consultation' => $consultation,
-                // 'radiology' => $radiology,
-                // 'treatment' => $treatment,
-                // 'billing' => $billingLogsForPatient,
-                // 'service' => $service,
-                // 'serviceunit' => $serviceunit,
-                // "laboratory" => $record,
-                // "socialhistory" => $socalhistory,
-                // "familyHistory" => $familyHistory
+                'labTest' => $labTest,
             ];
 
             return JsonResponser::send(false, 'Record(s) found successfully.', $data, 200);
         } catch (Throwable $th) {
             return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
+        }
+    }
+
+    public function patientDetails($id)
+    {
+        try {
+            $currentUser = Auth::user();
+            // $user = $this->userService->find($currentUser->id);
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
+
+            if (is_null($user)) {
+                return JsonResponser::send(true, 'User not found.', null, 200);
+            }
+
+            $patientDetails = Patient::find($id);
+
+            if (is_null($patientDetails)) {
+                return JsonResponser::send(true, 'Record not found.', null, 200);
+            }
+
+            $data = $patientDetails->load(['nextOfKin', 'emergencyContact', 'visits.billingLogsForPatient', 'service']);
+
+
+            $serviceDate = $patientDetails->service->name ?? null;
+            $servceid =  $patientDetails->service->id ?? null;
+
+            $data->visits->transform(function ($visit) use ($serviceDate,  $servceid) {
+                $visit->service_name = $serviceDate;
+                $visit->service_id = $servceid;
+                return $visit;
+            });
+            unset($data->service);
+
+            return JsonResponser::send(false, 'Record retrieved successfully.', collect($data), 200);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'An error occurred.', 'Internal server error', 500, $th);
+        }
+    }
+
+    public function patientVisitSummary($id)
+    {
+        try {
+
+            $patientVisit = PatientVisit::find($id);
+            $patient = Patient::with('service', 'triage', 'familyHistory', 'medicalHistory', 'socialHistory', 'drugHistory')->find($patientVisit->patient_id);
+            $consultation_Details =  Consultation::where('visitno',  $patientVisit->visitno)->first();
+            $laboratoryDetail = Laboratory::where('visitno',  $patientVisit->visitno)->first();
+            $radiologyDetail = Radiology::where('visitno',  $patientVisit->visitno)->first();
+            $treatmentDetail = Treatment::where('visitno',  $patientVisit->visitno)->orderBy('id', 'DESC')->get();
+            $billingLog = BillingLog::where('visit_id',  $patientVisit->id)->first();
+            $data = [
+                "patient" => $patient,
+                "patientVisit" => $patientVisit,
+                "consultation" => $consultation_Details,
+                "laboratory" => $laboratoryDetail,
+                "radiology" => $radiologyDetail,
+                "billingLog" => $billingLog,
+                "treatment" => $treatmentDetail,
+            ];
+            return JsonResponser::send(false, ' created successfully.', $data);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'Error fetching  .', [], 500, $th);
+        }
+    }
+
+    public function updateResult(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+            $test = Laboratory::find($request->test_id);
+            if (!$test) {
+                return JsonResponser::send(true, 'Lab test not found.', [], 404);
+            }
+            $record = $this->laboratoryService->updateResult($request, $test);
+
+            DB::commit();
+            return JsonResponser::send(false, 'Result updated successfully', $record);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
         }
     }
 }

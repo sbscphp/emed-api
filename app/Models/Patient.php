@@ -115,7 +115,7 @@ class Patient extends Model
 
     public function billingLogs()
     {
-        return $this->hasMany(BillingLog::class, 'patient_id', 'patient_id');
+        return $this->hasMany(BillingLog::class, 'patient_id', 'id');
     }
 
     public function billingLogsForPatient()
