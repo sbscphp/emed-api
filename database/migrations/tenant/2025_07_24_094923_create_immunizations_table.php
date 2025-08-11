@@ -14,18 +14,23 @@ return new class extends Migration
 
         Schema::create('immunizations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('patient_id')->nullable()->constrained('patients')->onDelete('cascade');
-            $table->boolean('schedule_a_follow_up')->default(false)->nullable();
+            $table->foreignId('patient_id')
+                ->nullable()
+                ->constrained('patients')
+                ->onDelete('cascade');
+
+            $table->unsignedBigInteger('visit_id')->nullable();
+
+            $table->boolean('schedule_a_follow_up')->default(false);
             $table->dateTime('schedule_a_follow_up_date')->nullable();
-            $table->boolean('referral')->default(false)->nullable();
+
+            $table->boolean('referral')->default(false);
             $table->mediumText('referral_detail')->nullable();
+
             $table->string('immunization_type')->nullable()->comment(
-                'COVID-19 Vaccine',
-                'Hepatitis B Vaccine',
-                'Polio Vaccine',
-                'Measles Vaccine',
-                'BCG (Tuberculosis Vaccine)'
-            )->nullable();
+                'Possible values: COVID-19 Vaccine, Hepatitis B Vaccine, Polio Vaccine, Measles Vaccine, BCG (Tuberculosis Vaccine)'
+            );
+
             $table->timestamps();
         });
     }

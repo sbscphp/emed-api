@@ -18,7 +18,7 @@ use App\Models\Consultation_Details;
 use App\Models\Consultation_Details_Laborartory;
 use App\Models\Consultation_Details_Radiology;
 use App\Models\Consultation_Details_Treatment;
-use App\Models\Dosage_Adminstration;
+use App\Models\DosageAdministration;
 use App\Models\Immunization;
 use App\Models\Observetation_Recommandation;
 use App\Models\Patient;
@@ -48,7 +48,7 @@ class ImmunizationController extends Controller
     {
         try {
             $validated = $request->validated();
-            $data = Dosage_Adminstration::create($validated);
+            $data = DosageAdministration::create($validated);
             return JsonResponser::send(false, ' created successfully.', $data);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Error fetching  .', [], 500, $e);
@@ -59,7 +59,7 @@ class ImmunizationController extends Controller
     {
         try {
             $validated = $request->validated();
-            $data = Dosage_Adminstration::create($validated);
+            $data = DosageAdministration::create($validated);
             return JsonResponser::send(false, ' created successfully.', $data);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Error fetching  .', [], 500, $e);
