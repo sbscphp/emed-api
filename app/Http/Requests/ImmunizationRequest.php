@@ -21,22 +21,13 @@ class ImmunizationRequest extends FormRequest
      */
     public function rules(): array
     {
-
         return [
-
-            // "patient_id" => "requiredin|exists:tenant.patients,id",
-            // "schedule_a_follow_up" => "nullable|boolean",
-            // "schedule_a_follow_up_date" => "nullable|date",
-            // "referral" => "nullable|boolean",
-            // "immunization_type" => "nullable|in:COVID-19 Vaccine,Hepatitis B Vaccine,Polio Vaccine,Measles Vaccine,BCG (Tuberculosis Vaccine)",
-            // "referral_detail" => "nullable|string"
-
             "patient_id" => "required|exists:tenant.patients,id",
             "schedule_a_follow_up" => "nullable|boolean",
-            "schedule_a_follow_up_date" => "nullable|date",
+            "schedule_a_follow_up_date" => "required_if:schedule_a_follow_up,true|nullable|date",
             "referral" => "nullable|boolean",
-            "immunization_type" => "nullable|in:COVID-19 Vaccine,Hepatitis B Vaccine,Polio Vaccine,Measles Vaccine,BCG (Tuberculosis Vaccine)",
-            "referral_detail" => "nullable|string"
+            "referral_detail" => "required_if:referral,true|nullable|string",
+            "immunization_type" => "nullable|string"
         ];
     }
 }

@@ -38,16 +38,25 @@ class ImmunizationController extends Controller
         try {
             $validated = $request->validated();
             $data = Immunization::create($validated);
-            return JsonResponser::send(false, ' fetched successfully.', $data);
+            return JsonResponser::send(false, ' Create successfully.', $data);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Error fetching  .', [], 500, $e);
         }
     }
 
-
     public function dosage_admin(DosageAdminRequest  $request)
     {
+        try {
+            $validated = $request->validated();
+            $data = Dosage_Adminstration::create($validated);
+            return JsonResponser::send(false, ' created successfully.', $data);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Error fetching  .', [], 500, $e);
+        }
+    }
 
+    public function summary(Request  $request)
+    {
         try {
             $validated = $request->validated();
             $data = Dosage_Adminstration::create($validated);

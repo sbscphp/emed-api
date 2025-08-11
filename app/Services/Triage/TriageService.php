@@ -8,6 +8,7 @@ use App\Models\PatientVisit;
 use App\Models\Triage;
 use App\Repositories\Triage\TriageInterface;
 use App\Responser\JsonResponser;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -119,11 +120,9 @@ class TriageService
         $patient_status,
         $patient_type
     ) {
-
-
         $today = now()->toDateString();
 
-        $query = PatientVisit::join('patients', 'patient_visits.patient_id', '=', 'patients.id')
+        $baseQuery = PatientVisit::join('patients', 'patient_visits.patient_id', '=', 'patients.id')
             ->join('services', 'patients.service_id', '=', 'services.id')
             ->leftJoin('triages', 'patient_visits.patient_id', '=', 'triages.patient_id')
             ->leftJoin('billing_logs', 'patient_visits.id', '=', 'billing_logs.visit_id')
@@ -145,47 +144,52 @@ class TriageService
                 'patient_visits.stage as patient_status',
                 'billing_logs.payment_status',
                 'billing_logs.payment_method',
-                'patients.status',
+                'patients.status'
             );
 
+        // Search filter
         if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('patients.firstname', 'like', "%$search%")
-                    ->orWhere('patients.lastname', 'like', "%$search%")
-                    ->orWhere('patients.cardno', 'like', "%$search%")
-                    ->orWhere('patients.patientno', 'like', "%$search%")
-                    ->orWhere('patient_visits.stage', 'like', "%$search%")
-                    ->orWhere('triages.severity', 'like', "%$search%");
+            $baseQuery->where(function ($q) use ($search) {
+                $q->where('patients.firstname', 'like', "%{$search}%")
+                    ->orWhere('patients.lastname', 'like', "%{$search}%")
+                    ->orWhere('patients.cardno', 'like', "%{$search}%")
+                    ->orWhere('patients.patientno', 'like', "%{$search}%")
+                    ->orWhere('patient_visits.stage', 'like', "%{$search}%")
+                    ->orWhere('triages.severity', 'like', "%{$search}%");
             });
         }
 
-
+        // Filters
         if (!empty($patient_status)) {
-            $query->where('patient_visits.stage', $patient_status);
+            $baseQuery->where('patient_visits.stage', $patient_status);
         }
 
         if (!empty($patient_type)) {
-            $query->where('patients.patient_type', $patient_type);
+            $baseQuery->where('patients.patient_type', $patient_type);
         }
 
         if (!empty($payment_status)) {
-            $query->where('billing_logs.payment_status', $payment_status);
+            $baseQuery->where('billing_logs.payment_status', $payment_status);
         }
 
-        $query->when($from && $to, function ($q) use ($from, $to) {
+        // Date range
+        $baseQuery->when($from && $to, function ($q) use ($from, $to) {
             $q->whereBetween('patient_visits.arrival_date', [
                 Carbon::parse($from)->startOfDay(),
                 Carbon::parse($to)->endOfDay()
             ]);
         });
 
-        $patients = $query->orderBy('patient_visits.created_at', 'desc')->paginate(10);
+        $exportQuery = clone $baseQuery;
+
+        $patients = $baseQuery->orderBy('patient_visits.created_at', 'desc')->paginate(10);
 
         $stats = $this->generateServiceStats($serviceId, $today);
 
         return [
+            'query'    => $exportQuery,
             'patients' => $patients,
-            'stats' => $stats
+            'stats'    => $stats,
         ];
     }
 
@@ -232,7 +236,11 @@ class TriageService
 
         switch (strtolower($format)) {
             case 'pdf':
-                return ExportHelper::downloadPdf($exportData, "{$filename}.pdf", 'exports.triage_patients');
+                // return ExportHelper::downloadPdf($exportData, "{$filename}.pdf", 'exports.triage_patients');
+                // return $pdf->download('lab-records.pdf');
+                $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData])
+                    ->setPaper('A1', 'landscape');
+                return $pdf->download("{$filename}.pdf");
             case 'csv':
             default:
                 return ExportHelper::streamCsv($exportData, null, "{$filename}.csv");
