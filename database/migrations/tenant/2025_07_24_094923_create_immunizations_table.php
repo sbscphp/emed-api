@@ -16,16 +16,16 @@ return new class extends Migration
             $table->id();
             $table->foreignId('patient_id')->nullable()->constrained('patients')->onDelete('cascade');
             $table->boolean('schedule_a_follow_up')->default(false)->nullable();
-            $table->date('schedule_a_follow_up_date')->nullable();
+            $table->dateTime('schedule_a_follow_up_date')->nullable();
             $table->boolean('referral')->default(false)->nullable();
-            $table->enum('immunization_type', [
+            $table->mediumText('referral_detail')->nullable();
+            $table->string('immunization_type')->nullable()->comment(
                 'COVID-19 Vaccine',
                 'Hepatitis B Vaccine',
                 'Polio Vaccine',
                 'Measles Vaccine',
                 'BCG (Tuberculosis Vaccine)'
-            ])->nullable();
-            $table->mediumText('referral_detail')->nullable();
+            )->nullable();
             $table->timestamps();
         });
     }

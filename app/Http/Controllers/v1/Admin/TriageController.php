@@ -4,6 +4,7 @@ namespace App\Http\Controllers\v1\Admin;
 
 use App\Enums\ListModuleEnums;
 use App\Enums\PatientVisitStageEnums;
+use App\Helpers\ExportHelper;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\TriageRequest;
@@ -17,6 +18,7 @@ use App\Services\User\UserService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 class TriageController extends Controller
@@ -120,13 +122,14 @@ class TriageController extends Controller
     {
         try {
             DB::connection('tenant')->beginTransaction();
-            $serviceId = $request->input('service_id');
-            $search = $request->input('search');
-            $from = $request->from;
-            $to = $request->to;
-            $payment_status = $request->payment_status;
-            $patient_status = $request->patient_status;
-            $patient_type = $request->patient_type;
+
+            $serviceId       = $request->input('service_id');
+            $search          = $request->input('search');
+            $from            = $request->from;
+            $to              = $request->to;
+            $payment_status  = $request->payment_status;
+            $patient_status  = $request->patient_status;
+            $patient_type    = $request->patient_type;
 
             if (!$serviceId) {
                 return JsonResponser::send(true, 'Service ID is required.', null, 400);
@@ -142,16 +145,51 @@ class TriageController extends Controller
                 $patient_type
             );
 
+            // Handle export
+            if ($request->export) {
+                // Work on patients collection
+                $exportData = $result['query']->get()->map(function ($p) {
+                    return [
+                        'Firstname'      => $p->firstname ?? '',
+                        'Lastname'       => $p->lastname ?? '',
+                        'Card No'        => $p->cardno ?? '',
+                        'Patient Type'   => $p->patient_type ?? '',
+                        'Patient No'     => $p->patientno ?? '',
+                        'Arrival Date'   => $p->arrival_date ?? '',
+                        'Departure Date' => $p->departure_date ?? '',
+                        'Acuity'         => $p->acuity ?? '',
+                        'Patient Status' => $p->patient_status ?? '',
+                        'Payment Status' => $p->payment_status ?? '',
+                        'Payment Method' => $p->payment_method ?? '',
+                    ];
+                })->toArray();
+
+                $filename = 'patients_export_' . now()->format('Y-m-d_H-i-s');
+
+                if ($request->export === 'csv') {
+                    return ExportHelper::streamCsv($exportData, null, "{$filename}.csv");
+                }
+
+                if ($request->export === 'pdf') {
+                    $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData])
+                        ->setPaper('A1', 'landscape');
+                    return $pdf->download('services.pdf');
+                }
+            }
+
+            DB::connection('tenant')->commit();
+
             return JsonResponser::send(false, 'Patients fetched successfully', [
                 'service_id' => $serviceId,
-                'stats' => $result['stats'],
-                'patients' => $result['patients']
+                'stats'      => $result['stats'],
+                'patients'   => $result['patients']
             ], 200);
         } catch (\Exception $e) {
             DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Internal server error', [], 500, $e);
         }
     }
+
 
     public function getInvestigationOrders(Request $request)
     {

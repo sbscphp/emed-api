@@ -476,7 +476,7 @@ class RecordManagementController extends Controller
         }
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
         try {
             $currentUser = Auth::user();
@@ -493,11 +493,7 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'Record not found.', null, 200);
             }
 
-            $data =  $patientDetails->load(['nextOfKin', 'emergencyContact', 'visits', 'service']);
-            //  $fetch = PatientDetailResoures::make($data); 
-
-            $data = $patientDetails->load(['nextOfKin', 'emergencyContact', 'visits', 'service', 'billingLogs']);
-
+            $data = $patientDetails->load(['nextOfKin', 'emergencyContact', 'service', 'billingLogs']);
 
             $serviceDate = $patientDetails->service->name ?? null;
             $servceid =  $patientDetails->service->id ?? null;
@@ -508,6 +504,48 @@ class RecordManagementController extends Controller
                 return $visit;
             });
             unset($data->service);
+
+            $patientVisitsQuery = PatientVisit::query()
+                ->where('patient_id', $id)
+                ->when($request->search_param, function ($query) use ($request) {
+                    $query->where('visitno', 'LIKE', '%' . $request->search_param . '%');
+                })
+                ->when($request->payment_status, function ($query) use ($request) {
+                    $query->whereRelation('billingLogs', 'payment_status', $request->payment_status);
+                })
+                ->when($request->payment_method, function ($query) use ($request) {
+                    $query->whereRelation('billingLogs', 'payment_method', $request->payment_method);
+                })
+                ->with('billingLogsForPatient')
+                ->orderBy('id', 'DESC');
+
+            $patientVisits = $request->paginate === "true"
+                ? $patientVisitsQuery->paginate($request->limit ?? 10)
+                : $patientVisitsQuery->get();
+
+            if ($request->export) {
+                // Always work with a collection for exports
+                $exportData = $patientVisitsQuery->get()->map(function ($item) {
+                    return [
+                        'Date'   => $item->arrival_date,
+                        'Visit Number'          => $item->visitno,
+                        'Service Type' => $item->billingLogs->payment_method ?? 'N/A',
+                        'Referral'           => $item->created_at->toDateTimeString(),
+                        'Payment Status' => $item->billingLogs->payment_status ?? 'N/A',
+                        'Payment Type'    => $item->test_status,
+                    ];
+                });
+
+                if ($request->export === 'csv') {
+                    return ExportHelper::streamCsv($exportData->toArray(), null, 'patients-visits.csv');
+                }
+
+                if ($request->export === 'pdf') {
+                    $pdf = PDF::loadView('exports.patients', ['patients' => $exportData->toArray()])
+                        ->setPaper('A1', 'landscape');
+                    return $pdf->download('patients-visits.pdf');
+                }
+            }
 
             return JsonResponser::send(false, 'Record retrieved successfully.', collect($data), 200);
         } catch (\Throwable $th) {

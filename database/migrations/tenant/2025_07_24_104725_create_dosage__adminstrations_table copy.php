@@ -19,14 +19,14 @@ return new class extends Migration
             $table->string('vaccine_name')->nullable();
             $table->string('vaccine_code')->unique()->nullable();
             $table->string('dosage')->nullable();
-            $table->enum('weight', ['Milligram', 'Grams', 'Mircogram', 'Mis'])->nullable();
+            $table->string('weight')->nullable()->comment('Milligram', 'Grams', 'Mircogram', 'Mis');
             $table->string('batch_number')->nullable();
             $table->date('administration_date')->nullable();
             $table->string('manufacturer')->nullable();
             $table->date('expiration_date')->nullable();
             $table->string('route_of_adminstration')->nullable();
-            $table->enum('route_of_administration', ['oral', 'intramuscular', 'subcutaneous', 'intradermal'])->nullable();
-            $table->enum('injection_site', ['left arm', 'right arm', 'left thigh', 'right thigh'])->nullable();
+            $table->string('route_of_administration')->nullable()->comment('oral', 'intramuscular', 'subcutaneous', 'intradermal');
+            $table->string('injection_site')->nullable()->comment('left arm', 'right arm', 'left thigh', 'right thigh');
             $table->string('administering_healthcare_professional')->nullable();
             $table->timestamps();
         });
