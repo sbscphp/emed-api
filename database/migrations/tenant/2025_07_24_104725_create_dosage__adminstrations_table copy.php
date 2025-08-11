@@ -11,23 +11,28 @@ return new class extends Migration
      */
     public function up(): void
     {
-
-
-        Schema::create('dosage__adminstrations', function (Blueprint $table) {
+        Schema::create('dosage_administrations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('patient_id')->nullable()->constrained('patients')->onDelete('cascade');
+
+            $table->foreignId('patient_id')
+                ->nullable()
+                ->constrained('patients')
+                ->onDelete('cascade');
+
+            $table->unsignedBigInteger('visit_id')->nullable();
+
             $table->string('vaccine_name')->nullable();
-            $table->string('vaccine_code')->unique()->nullable();
+            $table->string('vaccine_code')->nullable()->unique();
             $table->string('dosage')->nullable();
-            $table->string('weight')->nullable()->comment('Milligram', 'Grams', 'Mircogram', 'Mis');
+            $table->string('weight')->nullable()->comment('Possible units: Milligram, Gram, Microgram, ml');
             $table->string('batch_number')->nullable();
             $table->date('administration_date')->nullable();
             $table->string('manufacturer')->nullable();
             $table->date('expiration_date')->nullable();
-            $table->string('route_of_adminstration')->nullable();
-            $table->string('route_of_administration')->nullable()->comment('oral', 'intramuscular', 'subcutaneous', 'intradermal');
-            $table->string('injection_site')->nullable()->comment('left arm', 'right arm', 'left thigh', 'right thigh');
+            $table->string('route_of_administration')->nullable()->comment('Possible routes: oral, intramuscular, subcutaneous, intradermal');
+            $table->string('injection_site')->nullable()->comment('Possible sites: left arm, right arm, left thigh, right thigh');
             $table->string('administering_healthcare_professional')->nullable();
+
             $table->timestamps();
         });
     }
@@ -37,6 +42,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('dosage__adminstrations');
+        Schema::dropIfExists('dosage_administrations');
     }
 };
