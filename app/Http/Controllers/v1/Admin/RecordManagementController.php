@@ -511,12 +511,12 @@ class RecordManagementController extends Controller
                     $query->where('visitno', 'LIKE', '%' . $request->search_param . '%');
                 })
                 ->when($request->payment_status, function ($query) use ($request) {
-                    $query->whereRelation('billingLogs', 'payment_status', $request->payment_status);
+                    $query->whereRelation('billingLogsForPatient', 'payment_status', $request->payment_status);
                 })
                 ->when($request->payment_method, function ($query) use ($request) {
-                    $query->whereRelation('billingLogs', 'payment_method', $request->payment_method);
+                    $query->whereRelation('billingLogsForPatient', 'payment_method', $request->payment_method);
                 })
-                ->with('billingLogsForPatient')
+                ->with('billingLogsForPatient.service')
                 ->orderBy('id', 'DESC');
 
             $patientVisits = $request->paginate === "true"
@@ -526,13 +526,14 @@ class RecordManagementController extends Controller
             if ($request->export) {
                 // Always work with a collection for exports
                 $exportData = $patientVisitsQuery->get()->map(function ($item) {
+                    $billingLog = $item->billingLogsForPatient; // ✅ Get first log or null
                     return [
-                        'Date'   => $item->arrival_date,
-                        'Visit Number'          => $item->visitno,
-                        'Service Type' => $item->billingLogs->payment_method ?? 'N/A',
-                        'Referral'           => $item->created_at->toDateTimeString(),
-                        'Payment Status' => $item->billingLogs->payment_status ?? 'N/A',
-                        'Payment Type'    => $item->test_status,
+                        'Date'           => $item->arrival_date,
+                        'Visit Number'   => $item->visitno,
+                        'Service Type'   => optional($billingLog)->service->name ?? 'N/A',
+                        'Referral'       => $item->created_at->toDateTimeString(),
+                        'Payment Status' => optional($billingLog)->payment_status ?? 'N/A',
+                        'Payment Type'   => optional($billingLog)->payment_method ?? 'N/A',
                     ];
                 });
 
@@ -547,7 +548,12 @@ class RecordManagementController extends Controller
                 }
             }
 
-            return JsonResponser::send(false, 'Record retrieved successfully.', collect($data), 200);
+            $data = [
+                "patient" => collect($data),
+                "patientVisits" => $patientVisits,
+            ];
+
+            return JsonResponser::send(false, 'Record retrieved successfully.', $data, 200);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'An error occurred.', 'Internal server error', 500, $th);
         }

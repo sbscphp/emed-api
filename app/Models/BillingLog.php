@@ -51,6 +51,6 @@ class BillingLog extends Model
 
     public function service()
     {
-        return $this->belongsTo(ServiceDepartment::class, 'service_id');
+        return $this->belongsTo(ServiceDepartment::class, 'service_unit_id');
     }
 }

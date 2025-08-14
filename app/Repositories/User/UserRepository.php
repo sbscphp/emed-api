@@ -72,8 +72,8 @@ class UserRepository implements UserRepositoryInterface
 
         // Return paginator or full collection
         return $paginate
-            ? $query->paginate($perPage) // LengthAwarePaginator
-            : $query->get();             // Collection
+            ? $query->orderBy('id', 'DESC')->paginate($perPage) // LengthAwarePaginator
+            : $query->orderBy('id', 'DESC')->get();             // Collection
     }
 
 
@@ -126,7 +126,8 @@ class UserRepository implements UserRepositoryInterface
     {
 
         $columns = !empty($selectAttrs) ? $selectAttrs : ['*'];
-        $user = User::on('tenant')->select($columns)->find(intval($id));
+        // $user = User::on('tenant')->select($columns)->find(intval($id));
+        $user = User::on('landlord')->select($columns)->find(intval($id));
         if ($user) {
             return $user;
         }
