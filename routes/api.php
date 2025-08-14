@@ -259,6 +259,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/create', [UserController::class, 'addUser']);
                     Route::get('/view/{id}', [UserController::class, 'viewUser']);
                     Route::put('/update/{id}', [UserController::class, 'updateUser']);
+                    Route::put('/toggle/status/{id}', [UserController::class, 'toggleStatus']);
                     Route::delete('/delete/{id}', [UserController::class, 'deleteUser']);
                 });
 
@@ -371,7 +372,6 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post("/counselling/details/create",  [HivAidsController::class, "createCouncellingDetails"]);
                     Route::post("/observation/create", [HivAidsController::class, "createObservation"]);
                     Route::get("/summary/{id}", [HivAidsController::class, "summary"]);
-                    Route::post("/observetation_recommandation", [HivAidsController::class, "observetation_recommandation"]);
                 });
             });
         });

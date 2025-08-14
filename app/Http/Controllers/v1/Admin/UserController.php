@@ -257,6 +257,22 @@ class UserController extends Controller
         }
     }
 
+    public function toggleStatus($id)
+    {
+        $user = User::find($id);
+        if (!$user) {
+            return JsonResponser::send(false, 'User profile not found.');
+        }
+
+        $user->status = $user->status == GeneralEnums::ACTIVE->value
+            ? GeneralEnums::INACTIVE->value
+            : GeneralEnums::ACTIVE->value;
+
+        $user->save();
+
+        return JsonResponser::send(false, "Account status updated", $user, 200);
+    }
+
 
     public function deleteUser($id)
     {
