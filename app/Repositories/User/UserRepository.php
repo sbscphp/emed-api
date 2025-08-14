@@ -43,33 +43,39 @@ class UserRepository implements UserRepositoryInterface
             $query->where('status', $filters['status']);
         }
 
+        // Handle export (full dataset, no pagination)
         if ($export) {
             $users = $query->get();
 
             $exportData = $users->map(function ($user) {
                 return [
-                    'ID' => $user->id,
-                    'Fullname' => $user->fullname,
-                    'Email' => $user->email,
+                    'ID'            => $user->id,
+                    'Fullname'      => $user->fullname,
+                    'Email'         => $user->email,
                     'Date_of_birth' => $user->date_of_birth,
-                    'PhoneNumber' => $user->phone_number,
-                    'Role' => $user->role,
-                    'Status' => $user->status,
-                    'Created At' => $user->created_at,
+                    'PhoneNumber'   => $user->phone_number,
+                    'Role'          => $user->role,
+                    'Status'        => $user->status,
+                    'Created At'    => $user->created_at,
                 ];
             })->toArray();
 
             if (strtolower($export) === 'csv') {
-                return ExportHelper::streamCsv($exportData, null, 'users.csv');
+                return ExportHelper::streamCsv($exportData, null, 'users.csv'); // Response
             }
             if (strtolower($export) === 'pdf') {
-                return ExportHelper::downloadPdf($exportData, 'users.pdf');
+                return ExportHelper::downloadPdf($exportData, 'users.pdf'); // Response
             }
+
             throw new \Exception('Invalid export format.');
         }
 
-        return $paginate ? $query->paginate($perPage) : $query->get();
+        // Return paginator or full collection
+        return $paginate
+            ? $query->paginate($perPage) // LengthAwarePaginator
+            : $query->get();             // Collection
     }
+
 
 
     /**

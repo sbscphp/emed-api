@@ -27,10 +27,12 @@ use App\Http\Controllers\v1\Admin\MainDashBoardStatsController;
 use App\Http\Controllers\v1\Admin\ArtisanController;
 use App\Http\Controllers\v1\Notification\NotificationController;
 use App\Http\Controllers\v1\Admin\Consultation_Service_Bill;
+use App\Http\Controllers\v1\Admin\HivAidsController;
 use App\Http\Controllers\v1\Admin\ImmunizationController;
 use App\Http\Controllers\v1\Admin\Lab_Service_Controller;
 use App\Http\Controllers\v1\Admin\PharmacyServiceController;
 use App\Http\Controllers\v1\Admin\Radiology_service_Controller;
+use App\Services\HivAids\HivAidsService;
 // use App\Models\Immunization;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
@@ -229,6 +231,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/stats', [LabController::class, 'stats']);
                     Route::post('/records', [LabController::class, 'allLabRecords']);
                     Route::get('/single-lab-record', [LabController::class, 'show']);
+                    Route::put('/test/update/{id}', [LabController::class, 'updateTest']);
                     Route::get('/patient/{id}', [LabController::class, 'patientDetails']);
                     Route::get('/patient/visit/summary/{id}', [LabController::class, 'patientVisitSummary']);
                     Route::post('/result', [LabController::class, 'updateResult']);
@@ -243,6 +246,7 @@ Route::group(["prefix" => "v1"], function () {
 
                 Route::group(['prefix' => 'role', 'middleware' => 'admin.superadmin'], function () {
                     Route::get('/all', [RoleController::class, 'index']);
+                    Route::get('/permissions', [RoleController::class, 'permissions']);
                     Route::post('/create', [RoleController::class, 'store']);
                     Route::get('/view/{id}', [RoleController::class, 'show']);
                     Route::put('/update/{id}', [RoleController::class, 'update']);
@@ -251,6 +255,7 @@ Route::group(["prefix" => "v1"], function () {
 
                 Route::group(['prefix' => 'users', 'middleware' => 'admin.superadmin'], function () {
                     Route::get('/all', [UserController::class, 'allUsers']);
+                    Route::get('/roles', [UserController::class, 'allRoles']);
                     Route::post('/create', [UserController::class, 'addUser']);
                     Route::get('/view/{id}', [UserController::class, 'viewUser']);
                     Route::put('/update/{id}', [UserController::class, 'updateUser']);
@@ -328,7 +333,7 @@ Route::group(["prefix" => "v1"], function () {
                 Route::group(['prefix' => 'immunization'], function () {
                     Route::post("/create_immunization",  [ImmunizationController::class, "create_immunization"]);
                     Route::post("/dosage_admin", [ImmunizationController::class, "dosage_admin"]);
-                    Route::get("/summary", [ImmunizationController::class, "summary"]);
+                    Route::get("/summary/{id}", [ImmunizationController::class, "summary"]);
                     Route::post("/observetation_recommandation", [ImmunizationController::class, "observetation_recommandation"]);
                 });
 
@@ -359,6 +364,14 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/', [NotificationController::class, "index"]);
                     Route::put('/mark_read/{id}', [NotificationController::class, 'markAsRead']);
                     Route::post('/all/mark_read', [NotificationController::class, 'markAllAsRead']);
+                });
+
+                Route::group(['prefix' => 'hiv_aids'], function () {
+
+                    Route::post("/counselling/details/create",  [HivAidsController::class, "createCouncellingDetails"]);
+                    Route::post("/observation/create", [HivAidsController::class, "createObservation"]);
+                    Route::get("/summary/{id}", [HivAidsController::class, "summary"]);
+                    Route::post("/observetation_recommandation", [HivAidsController::class, "observetation_recommandation"]);
                 });
             });
         });

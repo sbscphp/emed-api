@@ -9,19 +9,6 @@ class Laboratory extends Model
     protected $guarded = ['id'];
     protected $connection = 'tenant';
     protected $table = 'patient_visit_lab';
-    protected $fillable = [
-        'patient_id',
-        'admin_id',
-        'consultation_id',
-        'visitno',
-        'lab_dept',
-        'test_name',
-        'ordered_test',
-        'others',
-        'test_status',
-        'payment_status',
-        'status'
-    ];
 
     public function patient()
     {

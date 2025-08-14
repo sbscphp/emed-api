@@ -724,10 +724,9 @@ class RegistrationController extends Controller
 
             // Attempt to find the user in the tenant database
             $user = User::on('tenant')->where('email', $credentials['email'])->first();
-
             if (!$user) {
                 DB::connection('tenant')->rollBack();
-                return JsonResponser::send(false, 'Invalid credentials', [], 401);
+                return JsonResponser::send(false, 'User does not exist', [], 401);
             }
 
             $tenant = $user->tenant;

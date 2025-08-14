@@ -298,6 +298,24 @@ class LabController extends Controller
         }
     }
 
+    public function updateTest(Request $request, $id)
+    {
+        try {
+            DB::beginTransaction();
+            $test = Laboratory::find($id);
+            if (!$test) {
+                return JsonResponser::send(true, 'Lab test not found.', [], 404);
+            }
+            $record = $this->laboratoryService->updateTest($request, $test);
+
+            DB::commit();
+            return JsonResponser::send(false, 'Result updated successfully', $record);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
     public function updateResult(Request $request)
     {
         try {

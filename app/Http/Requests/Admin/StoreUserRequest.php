@@ -21,21 +21,7 @@ class StoreUserRequest extends FormRequest
             'fullname' => 'required|string|max:255',
             'phone_number' => 'required|string|max:15|unique:tenant.users,phone_number',
            // 'email' => 'required|email|unique:tenant.users,email',
-             'email' => [
-                'required',
-                'email',
-                'max:255',
-                function ($attribute, $value, $fail) {
-                    $exists = DB::connection('tenant')
-                        ->table('users')
-                        ->where('email', $value)
-                        ->exists();
-
-                    if ($exists) {
-                        $fail('this email already exist');
-                    }
-                },
-            ],
+             'email' => 'required|email|max:255',
             //'role' => 'required|exists:tenant.roles,name',
               'role' => [
                 'required',
@@ -63,7 +49,7 @@ class StoreUserRequest extends FormRequest
     {
         return [
             'phone_number.unique' => 'The phone number is already in use.',
-            'email.unique' => 'The email address is already registered.',
+            'email' => 'The email address field is required.',
             'date_of_birth.before' => 'Date of birth must be a past date.',
         ];
     }
