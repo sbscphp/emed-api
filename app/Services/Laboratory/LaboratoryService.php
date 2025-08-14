@@ -184,6 +184,16 @@ class LaboratoryService
         return $this->LaboratoryInterface->getStats();
     }
 
+    public function updateTest($data, $test)
+    {
+
+        $test->update([
+            'test_status'   => $data->status
+        ]);
+
+        return $test->refresh();
+    }
+
     public function updateResult($data, $test)
     {
 
@@ -211,7 +221,7 @@ class LaboratoryService
             'specimen_type' => $data->specimen_type,
             'notes'         => $data->notes,
             'requested_by'  => $data->requested_by,
-            'test_status'   => 'completed'
+            // 'test_status'   => 'completed'
         ]);
 
         return $record;

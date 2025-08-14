@@ -9,19 +9,23 @@ use App\Http\Requests\Consultation__Details__Laborartories_Request;
 use App\Http\Requests\Consultation__DetailsRequest;
 use App\Http\Requests\Consultation_Detail_Radiology_Request;
 use App\Http\Requests\Consultation_Details_Treatment_Request;
+use App\Http\Requests\CounsellorDetailRequest;
 use App\Http\Requests\CreateservichospitalRequst;
 use App\Http\Requests\DosageAdminRequest;
 use App\Http\Requests\EditservichospitalRequest;
 use App\Http\Requests\ImmunizationRequest;
 use App\Http\Requests\Observetation_Recommandation_Request;
+use App\Models\BillingLog;
 use App\Models\Consultation_Details;
 use App\Models\Consultation_Details_Laborartory;
 use App\Models\Consultation_Details_Radiology;
 use App\Models\Consultation_Details_Treatment;
+use App\Models\CounsellingDetail;
 use App\Models\DosageAdministration;
 use App\Models\Immunization;
-use App\Models\Observetation_Recommandation;
+use App\Models\ObservationRecommendation;
 use App\Models\Patient;
+use App\Models\PatientVisit;
 use App\Models\Registartion_Service;
 use App\Models\ServiceDepartment;
 use App\Models\ServiceUnit;
@@ -37,7 +41,10 @@ class ImmunizationController extends Controller
     {
         try {
             $validated = $request->validated();
-            $data = Immunization::create($validated);
+            $data = Immunization::updateOrCreate(
+                ['visit_id' => $validated['visit_id']], // Unique key
+                $validated // Data to update/create
+            );
             return JsonResponser::send(false, ' Create successfully.', $data);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Error fetching  .', [], 500, $e);
@@ -48,19 +55,32 @@ class ImmunizationController extends Controller
     {
         try {
             $validated = $request->validated();
-            $data = DosageAdministration::create($validated);
+            $data = DosageAdministration::updateOrCreate(
+                ['visit_id' => $validated['visit_id']], // Unique key
+                $validated // Data to update/create
+            );
             return JsonResponser::send(false, ' created successfully.', $data);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Error fetching  .', [], 500, $e);
         }
     }
 
-    public function summary(Request  $request)
+    public function summary(Request  $request, $id)
     {
         try {
-            $validated = $request->validated();
-            $data = DosageAdministration::create($validated);
-            return JsonResponser::send(false, ' created successfully.', $data);
+            $patientVisit = PatientVisit::find($id);
+            $patient = Patient::with('service', 'triage', 'familyHistory', 'medicalHistory', 'socialHistory', 'drugHistory')->find($patientVisit->patient_id);
+            $immunization = Immunization::where('visit_id', $id)->first();
+            $dosageAdministration = DosageAdministration::where('visit_id', $id)->first();
+            $billingLog = BillingLog::where('visit_id',  $patientVisit->id)->first();
+            $data = [
+                "patient" => $patient,
+                "patientVisit" => $patientVisit,
+                "immunization" => $immunization,
+                "dosageAdministration" => $dosageAdministration,
+                "billingLog" => $billingLog,
+            ];
+            return JsonResponser::send(false, 'Record fetch successfully', $data);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Error fetching  .', [], 500, $e);
         }
@@ -281,11 +301,11 @@ class ImmunizationController extends Controller
     }
 
 
-    public function observetation_recommandation(Observetation_Recommandation_Request $request)
+    public function observetation_recommandation(CounsellorDetailRequest $request)
     {
         try {
             $validated = $request->validated();
-            $data = Observetation_Recommandation::create($validated);
+            $data = CounsellingDetail::create($validated);
             return JsonResponser::send(false, 'successfull.', $data);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'Error  .', [], 500, $th);

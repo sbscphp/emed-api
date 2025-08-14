@@ -20,25 +20,6 @@ class User extends Authenticatable implements JWTSubject
      * @method bool hasRole(string|array $roles)
      */
     use  HasRolesAndPermissions, HasFactory, Notifiable, HasApiTokens, SoftDeletes;
-    protected $fillable = [
-        'uuid',
-        'fullname',
-        'first_name',
-        'last_name',
-        'role',
-        'phone_number',
-        'email',
-        'password',
-        'tenant_id',
-        'is_verified',
-        'is_change_password',
-        'email_verified_at',
-        'status',
-        'can_login',
-        'is_active',
-        'remember_token',
-        'profile_picture',
-    ];
     /**
      * The attributes that are mass assignable.
      *

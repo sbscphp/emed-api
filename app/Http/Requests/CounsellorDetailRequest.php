@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class Observetation_Recommandation_Request extends FormRequest
+class CounsellorDetailRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,18 +23,19 @@ class Observetation_Recommandation_Request extends FormRequest
     {
         return [
             "patient_id" => "required|exists:tenant.patients,id",
+            "visit_id" => "required",
             'patient_name' => 'nullable|string',
-            'patient_card_name' => 'nullable|integer',
-            'date_of_session' => "nullable|date",
-            'time_of_session' => 'nullable|string',
+            'patient_card_no' => 'required',
+            'date' => "nullable|date",
+            'time' => 'nullable|string',
             'counsellor_name' => 'nullable|string',
-            'counsellor_id' => 'nullable|string',
+            'counsellorID' => 'nullable|string',
             'session_type' => 'nullable|string',
             'means_of_session' => 'nullable|string',
-            'schedule_a_follow' => "nullable|boolean",
-            'schedule_date' => "nullable|date",
-            'referral' => "nullable|boolean",
-            'details' => 'nullable|string'
+            "schedule_a_follow_up" => "nullable|boolean",
+            "schedule_a_follow_up_date" => "required_if:schedule_a_follow_up,true|nullable|date",
+            "referral" => "nullable|boolean",
+            "referral_detail" => "required_if:referral,true|nullable|string",
         ];
     }
 }

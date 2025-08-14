@@ -7,6 +7,7 @@ use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreRoleRequest;
 use App\Http\Requests\Admin\UpdateRoleRequest;
+use App\Models\Permission;
 use App\Models\Role;
 use App\Responser\JsonResponser;
 use App\Services\Role\RoleService;
@@ -57,6 +58,28 @@ class RoleController extends Controller
             'roles' => $rolesData,
             'total_roles' => $totalRoles,
         ], 200);
+    }
+
+    public function permissions()
+    {
+        try {
+            DB::connection('tenant')->beginTransaction();
+
+            // Ensure the tenant context is set before querying
+            if (isset($this->tenant) && method_exists($this->tenant, 'makeCurrent')) {
+                $this->tenant->makeCurrent();
+            }
+
+            // Fetch permissions and group by sub_module
+            $records = Permission::all()->groupBy('sub_module');
+
+            DB::connection('tenant')->commit();
+
+            return JsonResponser::send(false, 'Permissions fetched successfully', $records, 200);
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
     }
 
     /**

@@ -36,10 +36,11 @@ class DosageAdminRequest extends FormRequest
             // "injection_site" => "nullable|string",
             // "administering_healthcare_professional" => "nullable|string"
             "patient_id" => "required|exists:tenant.patients,id",
+            "visit_id" => "required",
             "vaccine_name" => "nullable|string",
             "vaccine_code" => "nullable|string",
             "dosage" => "nullable|numeric",
-            "weight" => "nullable|string|in:Milligram,Grams,Microgram,Mis",
+            "weight" => "nullable|string",
             "batch_number" => "nullable|numeric",
             "administration_date" => "nullable|date",
             "manufacturer" => "nullable|string",

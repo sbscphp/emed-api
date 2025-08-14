@@ -18,6 +18,8 @@ class UpdateUserRequest extends FormRequest
     {
         return [
             'fullname' => 'nullable|string|max:255',
+            'first_name' => 'nullable|string|max:255',
+            'last_name' => 'nullable|string|max:255',
             'phone_number' => 'nullable|string|max:15',
             'email' => 'nullable|email',
             'role' => 'nullable|exists:tenant.roles,name',
@@ -32,9 +34,27 @@ class UpdateUserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'phone_number.unique' => 'The phone number is already in use.',
-            'email.unique' => 'The email address is already registered.',
-            'date_of_birth.before' => 'Date of birth must be a past date.',
+            'fullname.string' => 'Full name must be a valid string.',
+            'fullname.max' => 'Full name may not be greater than 255 characters.',
+
+            'first_name.string' => 'First name must be a valid string.',
+            'first_name.max' => 'First name may not be greater than 255 characters.',
+
+            'last_name.string' => 'Last name must be a valid string.',
+            'last_name.max' => 'Last name may not be greater than 255 characters.',
+
+            'phone_number.string' => 'Phone number must be a valid string.',
+            'phone_number.max' => 'Phone number may not be greater than 15 characters.',
+
+            'email.email' => 'Please provide a valid email address.',
+
+            'role.exists' => 'The selected role is invalid.',
+
+            'date_of_birth.date' => 'Date of birth must be a valid date.',
+            'date_of_birth.before' => 'Date of birth must be before today.',
+
+            'password.string' => 'Password must be a valid string.',
+            'password.min' => 'Password must be at least 8 characters long.',
         ];
     }
 }

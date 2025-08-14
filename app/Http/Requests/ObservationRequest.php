@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class ImmunizationRequest extends FormRequest
+class ObservationRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,13 +22,10 @@ class ImmunizationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            "visit_id" => "required",
             "patient_id" => "required|exists:tenant.patients,id",
-            "schedule_a_follow_up" => "nullable|boolean",
-            "schedule_a_follow_up_date" => "required_if:schedule_a_follow_up,true|nullable|date",
-            "referral" => "nullable|boolean",
-            "referral_detail" => "required_if:referral,true|nullable|string",
-            "immunization_type" => "nullable|string"
+            "visit_id" => "required",
+            'observation' => 'nullable|string',
+            'recommendation' => 'required'
         ];
     }
 }
