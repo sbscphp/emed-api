@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\RadiologyController;
+use App\Http\Controllers\v1\Admin\AntenatalController;
 use App\Http\Controllers\v1\Admin\AuditLogController;
 use App\Http\Controllers\v1\Admin\BillingController;
 use App\Http\Controllers\v1\Admin\MedicationInventoryController;
@@ -110,6 +111,17 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/all-records', [TriageController::class, 'getPatientsByService']);
                     Route::get('/investigation-order', [TriageController::class, 'getInvestigationOrders']);
                     Route::post('/export/{format}', [TriageController::class, 'exportTriagePatients']);
+                    Route::get('/view/radiology/investigation/order/{id}', [TriageController::class, "viewRadiologyInvestigationOrders"]);
+                    Route::get('/view/laboratory/investigation/order/{id}', [TriageController::class, "viewLaboratoryInvestigationOrders"]);
+                    Route::get('/view/pharmacy/investigation/order/{id}', [TriageController::class, "viewPharmacyInvestigationOrders"]);
+
+                    Route::group(['prefix' => 'antenatal'], function () {
+                        Route::post("/details/create",  [AntenatalController::class, "createAntenatalRecord"]);
+                        Route::post("/lab/test/create", [AntenatalController::class, "createAntenatalLabTest"]);
+                        Route::post("/delivery/create", [AntenatalController::class, "createDeliveryDetails"]);
+                        Route::post("/new/born/create", [AntenatalController::class, "createNewBorn"]);
+                        Route::get("/summary/{id}", [AntenatalController::class, "summary"]);
+                    });
                 });
 
                 //Consultant routes

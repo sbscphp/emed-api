@@ -312,9 +312,9 @@ class TriageService
         return $query->count();
     }
 
-    public function getAllInvestigationOrders($search = null)
+    public function investigationOrdersQuery($search = null, $patientType = null, $patientStatus = null, $paymentStatus = null)
     {
-        $query = PatientVisit::join('patients', 'patient_visits.patient_id', '=', 'patients.id')
+        $query = PatientVisit::with('billingLogsForPatient')->join('patients', 'patient_visits.patient_id', '=', 'patients.id')
             ->join('services', 'patients.service_id', '=', 'services.id')
             ->leftJoin('triages', 'patient_visits.patient_id', '=', 'triages.patient_id')
             ->select(
@@ -343,19 +343,29 @@ class TriageService
             });
         }
 
-        $patients = $query->paginate(10);
+        if (!empty($patientType)) {
+            $query->where('patients.patient_type',  $patientType);
+        }
 
-        $statsQuery = clone $query;
+        if (!empty($patientStatus)) {
+            // dd($patientStatus);
+            $query->where('patient_visits.stage',  $patientStatus);
+        }
+        if (!empty($paymentStatus)) {
+            $query->whereRelation('billingLogsForPatient', 'payment_status',  $paymentStatus);
+        }
 
-        $stats = [
-            'total_patients' => $statsQuery->count(),
-            'pending_patients' => (clone $statsQuery)->where('patient_visits.stage', 'triaged')->count(),
-            'order_available' => (clone $statsQuery)->where('patient_visits.stage', '!=', 'triaged')->count(),
-        ];
+        return $query;
+    }
+
+    public function getInvestigationStats($search = null)
+    {
+        $baseQuery = $this->investigationOrdersQuery($search);
 
         return [
-            'patients' => $patients,
-            'stats' => $stats
+            'total_patients'    => (clone $baseQuery)->count(),
+            'pending_patients'  => (clone $baseQuery)->where('patient_visits.stage', 'triaged')->count(),
+            'order_available'   => (clone $baseQuery)->where('patient_visits.stage', '!=', 'triaged')->count(),
         ];
     }
 }
