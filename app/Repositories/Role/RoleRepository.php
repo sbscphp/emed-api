@@ -13,7 +13,7 @@ class RoleRepository implements RoleInterface
      */
     public function all()
     {
-        return Role::paginate(20);
+        return Role::query();
     }
 
 

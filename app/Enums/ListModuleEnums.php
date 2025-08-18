@@ -13,6 +13,7 @@ enum ListModuleEnums: string
     case Consultation = 'Consultant';
     case Laboratory = 'Laboratory';
     case Logs = 'Logs';
+    case NURSE = 'Nurse';
 }
 
 

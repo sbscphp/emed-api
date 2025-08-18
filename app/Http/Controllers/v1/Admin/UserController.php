@@ -144,6 +144,8 @@ class UserController extends Controller
             $userData = [
                 'uuid'               => $uuid,
                 'fullname'           => $data['fullname'],
+                'first_name'           => $data['first_name'],
+                'last_name'           => $data['last_name'],
                 'email'              => $data['email'],
                 'role'               => $data['role'],
                 'phone_number'       => $data['phone_number'],
@@ -198,6 +200,7 @@ class UserController extends Controller
     {
         try {
             $user = $this->userService->find($id);
+            $user = $user->load('roles.permissions');
 
             if (!$user) {
                 return JsonResponser::send(true, 'User not found.', null, 200);

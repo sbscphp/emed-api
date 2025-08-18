@@ -15,6 +15,7 @@ use App\Services\User\UserService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
+use Illuminate\Http\Request;
 
 class RoleController extends Controller
 {
@@ -30,35 +31,69 @@ class RoleController extends Controller
     /**
      * Fetch all roles.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $roles = $this->roleService->all()->load('permissions', 'users');
+        $query = $this->roleService->all()->orderBy('id', 'DESC');
 
-        if ($roles->isEmpty()) {
-            return JsonResponser::send(true, 'No roles found.', null, 200);
+        // Count total roles (before pagination)
+        $totalRoles = $query->count();
+
+        // Apply pagination or get all
+        if ($request->paginate) {
+            $rolesRecord = $query->paginate($request->limit ?? 10);
+        } else {
+            $rolesRecord = $query->get();
         }
 
-        $totalRoles = $roles->count();
+        // Eager load related models
+        if (
+            $rolesRecord instanceof \Illuminate\Pagination\LengthAwarePaginator ||
+            $rolesRecord instanceof \Illuminate\Pagination\Paginator
+        ) {
 
-        $rolesData = $roles->map(function ($role) {
-            return [
-                'id' => $role->id ?? "",
-                'name' => $role->name ?? "",
-                'display_name' => $role->display_name ?? "",
-                'description' => $role->description ?? "",
-                'status' => $role->status ?? "",
-                'permissions' => $role->permissions->pluck('name')->toArray() ?? [],
-                'users_count' => $role->users->count() ?? 0,
-                'created_at' => $role->created_at ?? "",
-                'updated_at' => $role->updated_at ?? "",
-            ];
-        });
+            // Load relationships
+            $rolesRecord->getCollection()->load('permissions', 'users');
+
+            // Transform the items while keeping pagination metadata
+            $rolesRecord->setCollection(
+                $rolesRecord->getCollection()->transform(function ($role) {
+                    return [
+                        'id'           => $role->id ?? "",
+                        'name'         => $role->name ?? "",
+                        'display_name' => $role->display_name ?? "",
+                        'description'  => $role->description ?? "",
+                        'status'       => $role->status ?? "",
+                        'permissions'  => $role->permissions->pluck('name')->toArray() ?? [],
+                        'users_count'  => $role->users->count() ?? 0,
+                        'created_at'   => $role->created_at ?? "",
+                        'updated_at'   => $role->updated_at ?? "",
+                    ];
+                })
+            );
+        } else {
+            // If not paginating (just getting all)
+            $rolesRecord->load('permissions', 'users');
+            $rolesRecord = $rolesRecord->map(function ($role) {
+                return [
+                    'id'           => $role->id ?? "",
+                    'name'         => $role->name ?? "",
+                    'display_name' => $role->display_name ?? "",
+                    'description'  => $role->description ?? "",
+                    'status'       => $role->status ?? "",
+                    'permissions'  => $role->permissions->pluck('name')->toArray() ?? [],
+                    'users_count'  => $role->users->count() ?? 0,
+                    'created_at'   => $role->created_at ?? "",
+                    'updated_at'   => $role->updated_at ?? "",
+                ];
+            });
+        }
 
         return JsonResponser::send(false, 'Roles retrieved successfully.', [
-            'roles' => $rolesData,
+            'roles'       => $rolesRecord, // will include pagination data if paginated
             'total_roles' => $totalRoles,
         ], 200);
     }
+
 
     public function permissions()
     {

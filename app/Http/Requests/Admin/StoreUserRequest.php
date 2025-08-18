@@ -19,6 +19,8 @@ class StoreUserRequest extends FormRequest
     {
         return [
             'fullname' => 'required|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
             'phone_number' => 'required|string|max:15|unique:tenant.users,phone_number',
            // 'email' => 'required|email|unique:tenant.users,email',
              'email' => 'required|email|max:255',
