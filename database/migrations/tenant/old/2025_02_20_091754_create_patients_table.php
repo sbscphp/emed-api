@@ -13,40 +13,32 @@ return new class extends Migration
     {
         Schema::create('patients', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('firstname');
-            $table->string('lastname');
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
+            $table->string('patientno')->nullable();
+            $table->string('firstname')->nullable();
+            $table->string('lastname')->nullable();
             $table->string('middlename')->nullable();
             $table->date('dob')->nullable();
+            $table->string('phoneno')->nullable();
             $table->integer('age')->nullable();
             $table->string('gender')->nullable();
-            $table->string('bloodgroup')->nullable();
-            $table->string('genotype')->nullable();
-            $table->string('email')->nullable();
-            $table->string('patient_type')->nullable();
             $table->string('marital_status')->nullable();
-            $table->string('phoneno')->nullable();
-            $table->string('occupation')->nullable();
-            $table->string('homeaddress')->nullable();
-            $table->string('companyaddress')->nullable();
-            $table->string('religion')->nullable();
-            $table->string('stateoforigin')->nullable();
+            $table->string('email')->nullable();
             $table->string('lga')->nullable();
+            $table->string('stateoforigin')->nullable();
+            $table->string('homeaddress')->nullable();
+            $table->string('occupation')->nullable();
+            $table->string('religion')->nullable();
             $table->string('tribe')->nullable();
+            $table->string('bloodgroup')->nullable();
             $table->string('cardno')->nullable();
-            $table->string('recieptno')->nullable();
-            $table->string('status')->nullable();
-            $table->enum('reg_status', [0, 1])->default(1);
-            $table->longText('image')->nullable();
-            $table->string('patientno')->nullable();
-            $table->unsignedBigInteger('service_id')->nullable();
-            $table->integer('follow_up')->default(0);
-            $table->softDeletes();
+            $table->string('genotype')->nullable();
+            $table->string('referral')->nullable();
+            $table->string('status')->default('Non-Admitted')->comment('Not-Admitted, Admitted, Discharged, Deceased');
+            $table->string('reg_status')->default('New Patient')->comment('New Patient, Follow Up');
             $table->timestamps();
-
-            $table->index('id');
-            $table->index('firstname');
-            $table->index('lastname');
-            $table->index('patientno');
+            $table->softDeletes();
         });
     }
 

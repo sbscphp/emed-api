@@ -2,18 +2,22 @@
 
 namespace App\Services\Patient;
 
+use App\Enums\GeneralEnums;
+use App\Enums\ListModuleEnums;
+use App\Enums\PatientVisitStatusEnums;
 use App\Models\Patient;
 use App\Repositories\Patient\PatientInterface;
-use Illuminate\Support\Collection;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon;
 use App\Helpers\ExportHelper;
-use Maatwebsite\Excel\Facades\Excel;
-use Maatwebsite\Excel\Excel as ExcelFormat;
-use App\Http\Resources\PatientResourceExport;
-use App\Exports\PatientExport;
-use App\Exports\PatientReportExport;
+use App\Helpers\GeneralHelper;
+use App\Models\BillingLog;
+use App\Models\EmergencyContact;
+use App\Models\NextOfKin;
 use App\Models\PatientVisit;
+use App\Models\Registration_Service;
+use App\Models\Service;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Auth;
+use Spatie\Multitenancy\Models\Tenant;
 
 /**
  * Class PatientService
@@ -23,25 +27,113 @@ use App\Models\PatientVisit;
  */
 class PatientService
 {
-    protected PatientInterface $PatientInterface;
     /**
      * Patient constructor.
      *
      * @param PatientInterface $PatientInterface
      */
-    public function __construct(PatientInterface $PatientInterface)
-    {
-        $this->PatientInterface = $PatientInterface;
-    }
+    public function __construct(PatientInterface $PatientInterface) {}
 
     /**
      * Retrieve all Patient.
      *
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    public function all()
+    public function overview($request)
     {
-        return $this->PatientInterface->all();
+        $customDate = [];
+        if ($request->period === 'custom date' && $request->start_date && $request->end_date) {
+            $customDate = [$request->start_date, $request->end_date];
+        }
+
+        $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+
+        $records = Patient::query()
+            ->when(!empty($request['search_param']), function ($query) use ($request) {
+                $query->where(function ($q) use ($request) {
+                    $q->where('firstname', 'LIKE', '%' . $request['search_param'] . '%')
+                        ->orWhere('lastname', 'LIKE', '%' . $request['search_param'] . '%')
+                        ->orWhere('patientno', 'LIKE', '%' . $request['search_param'] . '%')
+                        ->orWhere('cardno', 'LIKE', '%' . $request['search_param'] . '%');
+                });
+            })
+            ->when(!empty($request['status']), function ($query) use ($request) {
+                $query->where('status', $request['status']);
+            })
+            ->when($request->startDate && $request->endDate, function ($query) use ($request) {
+                $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+            })
+            ->when($dateFilter, function ($query) use ($dateFilter) {
+                return $query->whereBetween('created_at', $dateFilter);
+            })->when(($request['sort_by'] ?? null) === 'alphabetically', function ($query) {
+                $query->orderBy('firstname', 'ASC');
+            })->when(($request['sort_by'] ?? null) === 'date_ascending', function ($query) {
+                $query->orderBy('created_at', 'ASC');
+            })->when(($request['sort_by'] ?? null) === 'date_descending', function ($query) {
+                $query->orderBy('created_at', 'DESC');
+            })
+            ->with('nextOfKin', 'emergencyContact');
+
+        if (!empty($request['paginate']) && empty($request['export'])) {
+            return $records->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
+        }
+
+        return $records->orderBy('id', 'DESC')->get();
+    }
+
+    public function stats($request)
+    {
+        $customDate = [];
+        if ($request->period === 'custom date' && $request->start_date && $request->end_date) {
+            $customDate = [$request->start_date, $request->end_date];
+        }
+        $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $query = Patient::query();
+        $total = (clone $query)->count();
+        $admitted = (clone $query)->where('status', GeneralEnums::ADMITTED->value)->count();
+        $patientVisit = 0;
+        $notAdmitted = (clone $query)->where('status', GeneralEnums::NOT_ADMITTED->value)->count();
+
+        return [
+            'totalPatient' => $total,
+            'admitted' => $admitted,
+            'totalPatientVisitToday' => $patientVisit,
+            'notAdmitted' => $notAdmitted,
+        ];
+    }
+
+    public function export($records, $format)
+    {
+        $exportData = $records->map(function ($patient) {
+            return [
+                'Patient Card'      => $patient->cardno,
+                'First Name'      => $patient->firstname,
+                'Last Name'       => $patient->lastname,
+                'Patient No'       => $patient->patientno,
+                'Email'           => $patient->email,
+                'Phone Number'    => $patient->phoneno,
+                'Patient Status'  => $patient->status,
+                'Registered Date' => $patient->created_at->format('Y-m-d H:i'),
+            ];
+        })->toArray();
+
+        if (empty($exportData)) {
+            throw new \Exception("No records found for export.");
+        }
+
+        // Choose export format
+        if (strtolower($format) === 'csv') {
+            return ExportHelper::streamCsv($exportData, null, 'patients_export.csv');
+        }
+
+        if (strtolower($format) === 'pdf') {
+            $pdf = PDF::loadView('exports.patients', ['patients' => $exportData])
+                ->setPaper('A1', 'landscape');
+
+            return $pdf->download('patients_export.pdf');
+        }
+
+        throw new \Exception("Invalid export format.");
     }
 
     /**
@@ -50,11 +142,85 @@ class PatientService
      * @param array $data
      * @return \App\Models\Patient
      */
-    public function create(array $data)
+    public function create($request)
     {
-        return $this->PatientInterface->create($data);
-    }
+        try {
 
+            $currentUser = Auth::user();
+
+            $tenant = Tenant::current(); //Retrieve the current tenant
+            $tenantDomain = $tenant ? $tenant->domain : 'emed'; // Current tenant domain name
+            $tenantAcronym = $this->generateAcronym($tenantDomain); //Acronym for the hospital name()
+            // Create Patient
+            $patient = Patient::create([
+                'created_by' => $currentUser->id,
+                'patientno' => 'EMED/' . GeneralHelper::generateUniqueRandomId($request->firstname) . '/' . GeneralHelper::generateUniqueRandomId($request->lastname) . '/' . $tenantAcronym,
+                'firstname' => $request->firstname,
+                'lastname' => $request->lastname,
+                'dob' => $request->dob,
+                'phoneno' => $request->phoneno,
+                'age' => $request->age,
+                'gender' => $request->gender,
+                'marital_status' => $request->marital_status,
+                'email' => $request->email,
+                'lga' => $request->lga,
+                'stateoforigin' => $request->stateoforigin,
+                'homeaddress' => $request->homeaddress,
+                'occupation' => $request->occupation,
+                'religion' => $request->religion,
+                'tribe' => $request->tribe,
+                'bloodgroup' => $request->bloodgroup,
+                'cardno' => $request->cardno,
+                'genotype' => $request->genotype,
+                'referral' => $request->referral,
+            ]);
+
+            // create next of kin
+            $nextOfKin = NextOfKin::create([
+                'patient_id' => $patient->id,
+                'firstname' => $request->nokfirstname,
+                'lastname' => $request->noklastname,
+                'gender' => $request->nokgender,
+                'phoneno' => $request->nokphoneno,
+                'stateoforigin' => $request->nokstateoforigin,
+                'lga' => $request->noklga,
+                'homeaddress' => $request->nokhomeaddress,
+                'relationship' => $request->nokrelationship,
+            ]);
+
+            if (isset($requestrequest->same_nok_emergency) && $request->same_nok_emergency == true) {
+                // create emergency contact same as next of kin
+                $emergencyyContact = EmergencyContact::create([
+                    'patient_id' => $patient->id,
+                    'firstname' => $request->nokfirstname,
+                    'lastname' => $request->noklastname,
+                    'gender' => $request->nokgender,
+                    'phoneno' => $request->nokphoneno,
+                    'stateoforigin' => $request->nokstateoforigin,
+                    'lga' => $request->noklga,
+                    'homeaddress' => $request->nokhomeaddress,
+                    'relationship' => $request->nokrelationship,
+                ]);
+            } else {
+                // create emergency contact
+                $emergencyyContact = EmergencyContact::create([
+                    'patient_id' => $patient->id,
+                    'firstname' => $request->emgfirstname,
+                    'lastname' => $request->emglastname,
+                    'gender' => $request->emggender,
+                    'phoneno' => $request->emgphoneno,
+                    'stateoforigin' => $request->emgstateoforigin,
+                    'lga' => $request->emglga,
+                    'homeaddress' => $request->emghomeaddress,
+                    'relationship' => $request->emgrelationship,
+                ]);
+            }
+
+            return $patient;
+        } catch (\Throwable $th) {
+            throw $th;
+        }
+    }
 
     /**
      * Update an existing Patient with the provided data.
@@ -63,11 +229,185 @@ class PatientService
      * @param int $id
      * @return \App\Models\Patient
      */
-    public function update(array $data, $id)
+    public function update($request, $id)
     {
-        return $this->PatientInterface->update($data, $id);
+        try {
+
+            $currentUser = Auth::user();
+            $patient = Patient::find($id);
+            // Update Patient
+            $patient->update([
+                'updated_by' => $currentUser->id,
+                'phoneno' => $request->phoneno,
+                'email' => $request->email,
+                'dob' => $request->dob,
+                "age" =>  $request->dob,
+                'gender' => $request->gender,
+                'genotype' => $request->genotype,
+                'bloodgroup' => $request->bloodgroup,
+                'marital_status' => $request->marital_status,
+                'tribe' => $request->tribe,
+                'homeaddress' => $request->homeaddress,
+                'occupation' => $request->occupation,
+                'stateoforigin' => $request->stateoforigin,
+                'lga' => $request->lga,
+            ]);
+
+            // Update next of kin
+            $nextOfKin = NextOfKin::where('patient_id', $id)->first();
+            $nextOfKin->update([
+                'firstname' => $request->nokfirstname,
+                'lastname' => $request->noklastname,
+                'gender' => $request->nokgender,
+                'phoneno' => $request->nokphoneno,
+                'stateoforigin' => $request->nokstateoforigin,
+                'lga' => $request->noklga,
+                'homeaddress' => $request->nokhomeaddress,
+                'relationship' => $request->nokrelationship,
+            ]);
+
+            // update emergency contact
+            $emergencyyContact = EmergencyContact::where('patient_id', $id)->first();
+            $emergencyyContact->update([
+                'firstname' => $request->emgfirstname,
+                'lastname' => $request->emglastname,
+                'gender' => $request->emggender,
+                'phoneno' => $request->emgphoneno,
+                'stateoforigin' => $request->emgstateoforigin,
+                'lga' => $request->emglga,
+                'homeaddress' => $request->emghomeaddress,
+                'relationship' => $request->emgrelationship,
+            ]);
+
+            return $patient->refresh();
+        } catch (\Throwable $th) {
+            throw $th;
+        }
     }
 
+    public function patientVisitOverview($request)
+    {
+        $customDate = [];
+        if ($request->period === 'custom date' && $request->start_date && $request->end_date) {
+            $customDate = [$request->start_date, $request->end_date];
+        }
+
+        $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+
+        $records = PatientVisit::query()
+            ->where('patient_id', $request->patient_id)
+            ->when(!empty($request['search_param']), function ($query) use ($request) {
+                $query->where(function ($q) use ($request) {
+                    $q->where('visitno', 'LIKE', '%' . $request['search_param'] . '%')
+                        ->orWhereRelation('service', 'name', 'LIKE', '%' . $request['search_param'] . '%');
+                });
+            })
+            ->when(!empty($request['payment_status']), function ($query) use ($request) {
+                $query->whereRelation('patientBilling', 'payment_status', $request['payment_status']);
+            })
+            ->when(!empty($request['payment_method']), function ($query) use ($request) {
+                $query->whereRelation('patientBilling', 'payment_method', $request['payment_method']);
+            })
+            ->when($request->startDate && $request->endDate, function ($query) use ($request) {
+                $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+            })
+            ->when($dateFilter, function ($query) use ($dateFilter) {
+                return $query->whereBetween('created_at', $dateFilter);
+            })->when(($request['sort_by'] ?? null) === 'date_ascending', function ($query) {
+                $query->orderBy('arrival_date', 'ASC');
+            })->when(($request['sort_by'] ?? null) === 'date_descending', function ($query) {
+                $query->orderBy('arrival_date', 'DESC');
+            })
+            ->with('patient', 'service', 'patientBilling');
+
+        if (!empty($request['paginate']) && empty($request['export'])) {
+            return $records->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
+        }
+
+        return $records->orderBy('id', 'DESC')->get();
+    }
+
+    public function patientVisitExport($records, $format)
+    {
+        $exportData = $records->map(function ($visit) {
+            return [
+                'Date'      => $visit->created_at->format('Y-m-d H:i'),
+                'Visit No'       => $visit->visitno,
+                'Service Type'           => $visit->service->name ?? 'N/A',
+                'Payment Status'    => $visit->patientBilling->payment_status ?? 'N/A',
+                'Payment Type'  => $visit->patientBilling->payment_method ?? 'N/A',
+            ];
+        })->toArray();
+
+        if (empty($exportData)) {
+            throw new \Exception("No records found for export.");
+        }
+
+        // Choose export format
+        if (strtolower($format) === 'csv') {
+            return ExportHelper::streamCsv($exportData, null, 'patients_visits.csv');
+        }
+
+        if (strtolower($format) === 'pdf') {
+            $pdf = PDF::loadView('exports.patients', ['patients' => $exportData])
+                ->setPaper('A1', 'landscape');
+
+            return $pdf->download('patients_visits.pdf');
+        }
+
+        throw new \Exception("Invalid export format.");
+    }
+
+    public function initiateVisit($request)
+    {
+        try {
+
+            $currentUser = Auth::user();
+            $service = Service::find($request->service_id);
+            if (empty($service)) {
+                throw new \Exception("Service not found.");
+            }
+            $patient = Patient::find($request->patient_id);
+            // Initiate Patient visit
+            $patientVisit = PatientVisit::create([
+                'initiated_by' => $currentUser->id,
+                'visitno' => 'VIS' . GeneralHelper::generateUniqueRandomId($patient->firstname),
+                'patient_id' => $patient->id,
+                'service_id' => $request->service_id,
+                'stage' => $request->stage,
+                'arrival_date' => now(),
+                'status' => PatientVisitStatusEnums::VISIT_INITIATED->value,
+            ]);
+
+            $invoiceNumber = GeneralHelper::getModelUniqueOrderlyId([
+                'modelNamespace' => BillingLog::class,
+                'modelField' => 'invoice_number',
+                'prefix' => 'INV-',
+                'idLength' => 6,
+            ]);
+
+            //store billing info
+            $patientBilling = BillingLog::create([
+                'updated_by' => $currentUser->id,
+                'visit_id' => $patientVisit->id,
+                'patient_id' => $patient->id,
+                'invoice_number' => $invoiceNumber,
+                'patient_name' => $patient->firstname . ' ' . $patient->lastname,
+                'billing_date' => now(),
+                'service_type_id' => $request->service_id,
+                'grand_total' => $service->price
+            ]);
+
+            // update patient registaration staus
+            $patient->update([
+                'reg_status' => GeneralEnums::FOLLOWUPPATIENT->value,
+            ]);
+
+            return $patientVisit;
+        } catch (\Throwable $th) {
+            throw $th;
+        }
+    }
 
     /**
      * Delete a Patient by heir ID.
@@ -75,201 +415,29 @@ class PatientService
      * @param int $id
      * @return void
      */
-    public function delete($id)
+    public function delete(Patient $patientExists)
     {
-        return $this->PatientInterface->delete($id);
+        // Delete related patient next of kin details
+        $patientExists->nextOfKin()->delete();
+
+        // Delete related patient emergency contacts
+        $patientExists->emergencyContact()->delete();
+
+        // Finally delete the patient record
+        $patientExists->delete();
     }
 
-
-    /**
-     * Find a Patient by their ID.
-     *
-     * @param int $id
-     * @return \App\Models\Patient
-     */
-    public function find($id)
+    public function generateAcronym($name)
     {
-        return $this->PatientInterface->find($id);
-    }
+        // Trim any leading or trailing spaces
+        $name = trim($name);
 
+        // Get the first two letters of the name
+        $firstTwoLetters = substr($name, 0, 2);
 
-    /**
-     * Find an existing Patient  by their $attr.
-     *
-     * @param string $attr
-     * @param string $value
-     * @return \App\Models\Patient
-     */
-    public function findByAttribute($attr, $value)
-    {
-        return $this->PatientInterface->findByAttribute($attr, $value);
-    }
+        // Convert to uppercase and append 'H'
+        $acronym = strtoupper($firstTwoLetters) . 'H';
 
-    public function findByMultiAttributes(array $attrs)
-    {
-        return $this->PatientInterface->findByMultiAttributes($attrs);
-    }
-
-    public function findMultipleRecordsByMultiAttributes(array $attrs)
-    {
-        return $this->PatientInterface->findMultipleRecordsByMultiAttributes($attrs);
-    }
-
-    public function findUserByFirstnameAndLastname($firstname, $lastname)
-    {
-        return $this->PatientInterface->findUserByFirstnameAndLastname($firstname, $lastname);
-    }
-
-    /**
-     * Retrieve all records
-     *
-     * @return \App\Models\Patient
-     */
-    public function getAllRecords($search, $paginate, $perPage)
-    {
-        return $this->PatientInterface->getAllRecords($search, $paginate, $perPage);
-    }
-
-    /*
-    * Retrieve record stats
-    *
-    * @return \App\Models\Patient
-    */
-    public function getRecordStats()
-    {
-        return $this->PatientInterface->getRecordStats();
-    }
-
-    public function getPatientReport($request)
-    {
-        return $this->PatientInterface->getPatientReport($request);
-    }
-
-    public function getAllRecordFiltered($search = null, $paginate = false, $perPage = 10, $from, $to, $export, $gender, $status, $patient_type)
-    {
-        $query = Patient::query();
-        //with(['service', 'visits_recent']);
-
-        if ($search) {
-            // status
-            $query->where(function ($q) use ($search) {
-                $q->where('firstname', 'like', "%$search%")
-                    ->orWhere('lastname', 'like', "%$search%")
-                    ->orWhere('middlename', 'like', "%$search%")
-                    ->orWhere('email', 'like', "%$search%")
-                    ->orWhere('phoneno', 'like', "%$search%")
-                    ->orWhere('patientno', 'like', "%$search%")
-                    ->orWhere('cardno', 'like', "%$search%")
-                    ->orWhere('occupation', 'like', "%$search%")
-                    ->orWhere('homeaddress', 'like', "%$search%")
-                    ->orWhere('gender', 'like', "%$search%")
-                    ->orWhere('status', 'like', "%$search%");
-            });
-        }
-        if (!empty($gender)) {
-            $query->where('gender', $gender);
-        }
-
-        if (!empty($status)) {
-            $query->where('status',  $status);
-        }
-
-        // patient_type
-
-        if (!empty($patient_type)) {
-            $query->where('patient_type',  $patient_type);
-        }
-
-        if (!empty($export)) {
-            // Get the data with necessary relationships if needed
-            $query = Patient::query();
-
-            // Apply any existing filters
-            if (!empty($from) && !empty($to)) {
-                $query->whereBetween('created_at', [
-                    Carbon::parse($from)->startOfDay(),
-                    Carbon::parse($to)->endOfDay()
-                ]);
-            }
-
-            // Get the data as a collection
-            $data = $query->latest()->get();
-
-            // Convert to array - the ExportHelper will handle the UTF-8 cleaning
-            $exportData = $data->toArray();
-
-
-            // else if ($export == 'csv') {
-            //     //  return ExportHelper::streamCsv($exportData, null, 'patients_' . now()->format('Ymd_His') . '.csv');
-            //     // return ExportHelper::streamCsv($data);
-            //     // $csv = new Csv($data);
-            //     //   PatientExport
-            //     // $data = Patient::get()->toArray();
-            //     //dd(json_encode([$export, $data]));
-            //     // return Excel::download(new PatientExport, 'patients.csv');
-
-            //     //return Excel::download(new PatientExport, 'patients.csv', ExcelFormat::CSV);
-
-
-            //     // return ExportHelper::streamCsv($data, null, 'patient_' . now()->format('Ymd_His') . '.csv');
-            //     // return Excel::download(new PatientExport, 'patients.csv', ExcelFormat::CSV);
-
-            // }
-        }
-
-        $query->when($from && $to, function ($q) use ($from, $to) {
-            $q->whereBetween('created_at', [Carbon::parse($from), Carbon::parse($to)]);
-        });
-
-        if ($paginate) {
-            return $query->latest()->paginate($perPage);
-        }
-
-        return $query->latest()->get();
-    }
-
-    /**
-     * Get patient export data.
-     *
-     * @return \Illuminate\Support\Collection
-     */
-    public function getExportData($search = null, $startDate = null, $endDate = null): array
-    {
-        $query = Patient::select([
-            'firstname',
-            'lastname',
-            'email',
-            'phoneno',
-            'patientno',
-            'created_at',
-        ]);
-
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('firstname', 'like', "%$search%")
-                    ->orWhere('lastname', 'like', "%$search%")
-                    ->orWhere('email', 'like', "%$search%");
-            });
-        }
-
-        if ($startDate && $endDate) {
-            $query->whereBetween('created_at', [$startDate, $endDate]);
-        }
-
-        return $query->latest()->get()->map(function ($patient) {
-            return [
-                'First Name'      => $patient->firstname,
-                'Last Name'       => $patient->lastname,
-                'Email'           => $patient->email,
-                'Phone Number'    => $patient->phoneno,
-                'Patient Number'  => $patient->patientno,
-                'Registered Date' => $patient->created_at->format('Y-m-d H:i'),
-            ];
-        })->toArray();
-    }
-
-    public function updateNewToExisting(): void
-    {
-        Patient::where('patient_type', 'new')->update(['patient_type' => 'existing']);
+        return $acronym;
     }
 }
