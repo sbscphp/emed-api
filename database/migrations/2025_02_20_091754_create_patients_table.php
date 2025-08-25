@@ -13,42 +13,32 @@ return new class extends Migration
     {
         Schema::create('patients', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('firstname');
-            $table->string('lastname');
-            $table->date('dob');
-            $table->integer('age');
-            $table->string('gender');
-            $table->string('bloodgroup');
-            $table->string('bloodgenotype');
-            $table->string('email')->unique();
-            $table->string('patient_type');
-            $table->string('marital_status');
-            $table->string('phoneno');
-            $table->string('occupation');
-            $table->string('homeaddress');
-            $table->string('companyaddress')->nullable();
-            $table->string('religion')->nullable();
-            $table->string('stateoforigin')->nullable();
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
+            $table->string('patientno')->nullable();
+            $table->string('firstname')->nullable();
+            $table->string('lastname')->nullable();
+            $table->string('middlename')->nullable();
+            $table->date('dob')->nullable();
+            $table->string('phoneno')->nullable();
+            $table->integer('age')->nullable();
+            $table->string('gender')->nullable();
+            $table->string('marital_status')->nullable();
+            $table->string('email')->nullable();
             $table->string('lga')->nullable();
+            $table->string('stateoforigin')->nullable();
+            $table->string('homeaddress')->nullable();
+            $table->string('occupation')->nullable();
+            $table->string('religion')->nullable();
             $table->string('tribe')->nullable();
-            $table->string('cardno')->unique();
-            $table->string('recieptno')->unique()->nullable();
-            $table->dateTime('arrival_time')->nullable();
-            $table->dateTime('departure_time')->nullable();
-            $table->enum('status', ['discharged', 'admitted'])->nullable();
-            $table->string('patientno');
-            $table->enum('is_active', [false, true])->default(true);
-            $table->unsignedBigInteger('service_id')->nullable();
-            $table->softDeletes();
+            $table->string('bloodgroup')->nullable();
+            $table->string('cardno')->nullable();
+            $table->string('genotype')->nullable();
+            $table->string('referral')->nullable();
+            $table->string('status')->default('Non-Admitted')->comment('Not-Admitted, Admitted, Discharged, Deceased');
+            $table->string('reg_status')->default('New Patient')->comment('New Patient, Follow Up');
             $table->timestamps();
-
-            $table->index('firstname');
-            $table->index('lastname');
-            $table->index('email');
-            $table->index('phoneno');
-            $table->index('cardno');
-            $table->index('patientno');
-            $table->index('recieptno');
+            $table->softDeletes();
         });
     }
 

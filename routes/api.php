@@ -87,21 +87,34 @@ Route::group(["prefix" => "v1"], function () {
             Route::group(['prefix' => 'admin', "namespace" => "v1\Admin"], function () {
                 //Record routes
                 Route::group(['prefix' => 'record',  'middleware' => 'role.record'], function () {
-                    Route::post('/patient', [RecordManagementController::class, 'store']);
-                    Route::put('/patient-update/{id}', [RecordManagementController::class, 'update']);
-                    Route::post('/next-of-kin/{id}', [RecordManagementController::class, 'addNextOfKin']);
-                    Route::put('/next-of-kin-update/{id}', [RecordManagementController::class, 'updateNextOfKin']);
-                    Route::post('/emergency-contact/{id}', [RecordManagementController::class, 'addEmergencyContact']);
-                    Route::put('/emergency-contact-update/{id}', [RecordManagementController::class, 'updateNextOfKin']);
-                    Route::put('/assign-patient/{id}', [RecordManagementController::class, 'assignServiceToPatient']);
-                    Route::get('/patient/{id}', [RecordManagementController::class, 'show'])->name('record.show');
-                    Route::post('/all-records', [RecordManagementController::class, 'allRecords']);
-                    Route::post('/initiate-visit/{id}', [RecordManagementController::class, 'initiateVisit']);
-                    Route::get('/record-stats', [RecordManagementController::class, 'recordStats']);
-                    Route::post('/export/{format}', [RecordManagementController::class, 'exportPatients']);
-                    Route::post('/visits/all', [RecordManagementController::class, 'allVisitRecords']);
-                    Route::post('/patient/visit/{id}', [RecordManagementController::class, 'patientVisitRecords']);
-                    Route::get('/patient/{patientId}/visit/{visitId}', [RecordManagementController::class, 'patientVisitDetailWithBilling']);
+                    Route::group(['prefix' => 'patient'], function () {
+                        Route::get('/', [RecordManagementController::class, 'index']);
+                        Route::post('/create', [RecordManagementController::class, 'store']);
+                        Route::put('/update/{id}', [RecordManagementController::class, 'update']);
+                        Route::get('/{id}', [RecordManagementController::class, 'show']);
+                        Route::delete('/delete{id}', [RecordManagementController::class, 'delete']);
+                    });
+
+                    Route::group(['prefix' => 'visit'], function () {
+                        Route::get('/', [RecordManagementController::class, 'patientVisitRecords']);
+                        Route::post('/initiate', [RecordManagementController::class, 'initiateVisit']);
+                        Route::get('/{id}', [RecordManagementController::class, 'showVisit']);
+                    });
+
+                    // Route::put('/patient-update/{id}', [RecordManagementController::class, 'update']);
+                    // Route::post('/next-of-kin/{id}', [RecordManagementController::class, 'addNextOfKin']);
+                    // Route::put('/next-of-kin-update/{id}', [RecordManagementController::class, 'updateNextOfKin']);
+                    // Route::post('/emergency-contact/{id}', [RecordManagementController::class, 'addEmergencyContact']);
+                    // Route::put('/emergency-contact-update/{id}', [RecordManagementController::class, 'updateNextOfKin']);
+                    // Route::put('/assign-patient/{id}', [RecordManagementController::class, 'assignServiceToPatient']);
+                    // Route::get('/patient/{id}', [RecordManagementController::class, 'show'])->name('record.show');
+                    // Route::post('/all-records', [RecordManagementController::class, 'allRecords']);
+                    // Route::post('/initiate-visit/{id}', [RecordManagementController::class, 'initiateVisit']);
+                    // Route::get('/record-stats', [RecordManagementController::class, 'recordStats']);
+                    // Route::post('/export/{format}', [RecordManagementController::class, 'exportPatients']);
+                    // Route::post('/visits/all', [RecordManagementController::class, 'allVisitRecords']);
+                    // Route::post('/patient/visit/{id}', [RecordManagementController::class, 'patientVisitRecords']);
+                    // Route::get('/patient/{patientId}/visit/{visitId}', [RecordManagementController::class, 'patientVisitDetailWithBilling']);
                 });
 
                 Route::group(['prefix' => 'nurse', 'middleware' => 'role.nurse'], function () {

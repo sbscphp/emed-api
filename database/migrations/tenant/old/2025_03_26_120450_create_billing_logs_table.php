@@ -14,26 +14,29 @@ return new class extends Migration
         Schema::create('billing_logs', function (Blueprint $table) {
             $table->id();
 
-            $table->unsignedBigInteger('patient_id');
-            $table->string('patient_name');
+            $table->unsignedBigInteger('updated_by')->nullable();
+            $table->unsignedBigInteger('patient_id')->nullable();
+            $table->unsignedBigInteger('visit_id')->nullable();
+            $table->string('invoice_number')->nullable();
+            $table->string('patient_name')->nullable();
 
-            $table->date('billing_date');
+            $table->date('billing_date')->nullable();
 
-            $table->unsignedBigInteger('service_type_id');
-            $table->unsignedBigInteger('service_unit_id');
+            $table->unsignedBigInteger('service_type_id')->nullable();
+            $table->unsignedBigInteger('service_unit_id')->nullable();
 
-            $table->string('item_name');
-            $table->decimal('unit_price', 10, 2);
-            $table->integer('quantity')->default(1);
+            $table->string('item_name')->nullable();
+            $table->decimal('unit_price', 10, 2)->default(0.00);
+            $table->integer('quantity')->default(1)->nullable();
 
-            $table->enum('payment_status', ['paid', 'part_paid', 'pending'])->default('pending');
+            $table->string('payment_status')->default('Pending')->comment('Paid', 'Part Paid', 'Pending');
 
-            $table->decimal('deposit_amount', 10, 2)->nullable();
-            $table->enum('payment_method', ['bank_transfer', 'credit_card', 'cash', 'pos', 'insurance'])->nullable();
+            $table->decimal('deposit_amount', 10, 2)->default(0.00);
+            $table->string('payment_method')->comment('Bank Transfer', 'Credit Card', 'Cash', 'Pos', 'Insurance')->nullable();
 
-            $table->decimal('sub_total', 12, 2);
-            $table->decimal('tax_amount', 10, 2)->nullable();
-            $table->decimal('grand_total', 12, 2);
+            $table->decimal('sub_total', 12, 2)->default(0.00);
+            $table->decimal('tax_amount', 10, 2)->default(0.00);
+            $table->decimal('grand_total', 12, 2)->default(0.00);
 
             $table->timestamps();
             $table->foreign('patient_id')->references('id')->on('patients')->onDelete('cascade');

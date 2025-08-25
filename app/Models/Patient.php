@@ -12,40 +12,10 @@ class Patient extends Model
 
     protected $guarded = ['id'];
     protected $connection = 'tenant';
-    protected $fillable = [
-        'firstname',
-        'lastname',
-        'dob',
-        'age',
-        'gender',
-        'bloodgroup',
-        'genotype',
-        'email',
-        'patient_type',
-        'marital_status',
-        'phoneno',
-        'visitno',
-        'occupation',
-        'homeaddress',
-        'companyaddress',
-        'religion',
-        'stateoforigin',
-        'lga',
-        'tribe',
-        'cardno',
-        'receiptno',
-        'status',
-        'service_id',
-        'arrival_time',
-        'depature_time',
-        'patientno'
-    ];
-
-
 
     public function service()
     {
-        return $this->belongsTo(ServiceDepartment::class, 'service_id');
+        return $this->belongsTo(Service::class, 'service_id');
     }
 
 
