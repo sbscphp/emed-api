@@ -91,14 +91,14 @@ class PatientService
         $query = Patient::query();
         $total = (clone $query)->count();
         $admitted = (clone $query)->where('status', GeneralEnums::ADMITTED->value)->count();
-        $patientVisit = 0;
-        $notAdmitted = (clone $query)->where('status', GeneralEnums::NOT_ADMITTED->value)->count();
+        $patientVisitToday = PatientVisit::whereDate('created_at', now()->toDateString())->count();
+        $followUpPatient = (clone $query)->where('reg_status', GeneralEnums::FOLLOWUPPATIENT->value)->count();
 
         return [
             'totalPatient' => $total,
             'admitted' => $admitted,
-            'totalPatientVisitToday' => $patientVisit,
-            'notAdmitted' => $notAdmitted,
+            'totalPatientVisitToday' => $patientVisitToday,
+            'followUpPatient' => $followUpPatient,
         ];
     }
 
