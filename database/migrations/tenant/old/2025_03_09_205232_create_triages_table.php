@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('patient_id')->constrained()->onDelete('cascade');
             $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('visit_id')->nullable();
             $table->integer('blood_pressure_systolic');
             $table->integer('blood_pressure_diastolic');
             $table->integer('pulse_bpm');

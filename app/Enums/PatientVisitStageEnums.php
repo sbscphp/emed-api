@@ -4,10 +4,11 @@ namespace App\Enums;
 
 enum PatientVisitStageEnums: string
 {
-    case TRIAGE = 'triage';
-    case CONSULTATION = 'consultation';
-    case INVESTIGATION = 'investigation';
-    case ADMITTED = 'admitted';
-    case TREATMENT = 'treatment';
-    case DISCHARGED = 'discharged';
+    case VISIT = 'Visit';
+    case TRIAGE = 'Triage';
+    case CONSULTATION = 'Consultation';
+    case INVESTIGATION = 'Investigation';
+    case ADMITTED = 'Admitted';
+    case TREATMENT = 'Treatment';
+    case DISCHARGED = 'Discharged';
 }

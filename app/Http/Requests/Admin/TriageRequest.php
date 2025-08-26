@@ -14,6 +14,8 @@ class TriageRequest extends FormRequest
     public function rules()
     {
         return [
+            'visit_id' => 'required',
+            'patient_id' => 'required',
             'blood_pressure' => ['required', 'array', 'min:1'],
             'blood_pressure.*.systolic' => ['required', 'integer', 'min:1'],
             'blood_pressure.*.diastolic' => ['required', 'integer', 'min:1'],

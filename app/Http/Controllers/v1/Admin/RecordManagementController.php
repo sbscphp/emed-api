@@ -147,7 +147,7 @@ class RecordManagementController extends Controller
             if (!$patientExists) {
                 return JsonResponser::send(true, 'Patient Record not found.', null, 422);
             }
-
+            $patientExists->visit_date = $patientExists->visits_recent ? Carbon::parse($patientExists->visits_recent->arrival_date) : null;
             return JsonResponser::send(false, 'Record retrieved successfully.', $patientExists, 200);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'An error occurred.', 'Internal server error', 500, $th);
