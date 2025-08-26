@@ -243,7 +243,7 @@ class PatientService
                 'phoneno' => $request->phoneno,
                 'email' => $request->email,
                 'dob' => $request->dob,
-                "age" =>  $request->dob,
+                "age" =>  $request->age,
                 'gender' => $request->gender,
                 'genotype' => $request->genotype,
                 'bloodgroup' => $request->bloodgroup,
@@ -253,6 +253,7 @@ class PatientService
                 'occupation' => $request->occupation,
                 'stateoforigin' => $request->stateoforigin,
                 'lga' => $request->lga,
+                'referral' => $request->referral,
             ]);
 
             // Update next of kin

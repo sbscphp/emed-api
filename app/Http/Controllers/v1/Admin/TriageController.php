@@ -116,7 +116,7 @@ class TriageController extends Controller
     public function show($id)
     {
         try {
-            $triage = Triage::with('patient.nextOfKin', 'patient.emergencyContact')->find($id);
+            $triage = Triage::where('visit_id', $id)->with('patient.nextOfKin', 'patient.emergencyContact')->first();
             if (!$triage) {
                 return JsonResponser::send(true, 'Triage record not found.', null, 200);
             }
