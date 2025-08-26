@@ -18,7 +18,6 @@ class Patient extends Model
         return $this->belongsTo(Service::class, 'service_id');
     }
 
-
     public function nextOfKin()
     {
         return $this->hasOne(NextOfKin::class);
@@ -36,7 +35,7 @@ class Patient extends Model
 
     public function visits_recent()
     {
-        return $this->hasOne(PatientVisit::class, 'visitno', 'visitno')->latest();
+        return $this->hasOne(PatientVisit::class, 'patient_id')->latest();
     }
 
     public function  patient_visits()

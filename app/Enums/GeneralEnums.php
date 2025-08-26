@@ -20,6 +20,7 @@ enum GeneralEnums: string
     case ADMITTED = 'Admitted';
     case DISCHARGED = 'Discharged';
     case DECEASED = 'Deceased';
-    case NEWPATIENT = "New Patient";
+    case NEW = "New";
+    case EXISTING = "Existing";
     case FOLLOWUPPATIENT = "Follow Up";
 }

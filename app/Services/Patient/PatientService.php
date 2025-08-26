@@ -4,6 +4,7 @@ namespace App\Services\Patient;
 
 use App\Enums\GeneralEnums;
 use App\Enums\ListModuleEnums;
+use App\Enums\PatientVisitStageEnums;
 use App\Enums\PatientVisitStatusEnums;
 use App\Models\Patient;
 use App\Repositories\Patient\PatientInterface;
@@ -13,7 +14,6 @@ use App\Models\BillingLog;
 use App\Models\EmergencyContact;
 use App\Models\NextOfKin;
 use App\Models\PatientVisit;
-use App\Models\Registration_Service;
 use App\Models\Service;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
@@ -90,6 +90,7 @@ class PatientService
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
         $query = Patient::query();
         $total = (clone $query)->count();
+        $patientLog = (clone $query)->count();
         $admitted = (clone $query)->where('status', GeneralEnums::ADMITTED->value)->count();
         $patientVisitToday = PatientVisit::whereDate('created_at', now()->toDateString())->count();
         $followUpPatient = (clone $query)->where('reg_status', GeneralEnums::FOLLOWUPPATIENT->value)->count();
@@ -99,6 +100,7 @@ class PatientService
             'admitted' => $admitted,
             'totalPatientVisitToday' => $patientVisitToday,
             'followUpPatient' => $followUpPatient,
+            'patientLog' => $patientLog,
         ];
     }
 
@@ -374,7 +376,7 @@ class PatientService
                 'visitno' => 'VIS' . GeneralHelper::generateUniqueRandomId($patient->firstname),
                 'patient_id' => $patient->id,
                 'service_id' => $request->service_id,
-                'stage' => $request->stage,
+                // 'stage' => PatientVisitStageEnums::VISIT,
                 'arrival_date' => now(),
                 'status' => PatientVisitStatusEnums::VISIT_INITIATED->value,
             ]);
