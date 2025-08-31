@@ -9,6 +9,7 @@ use App\Http\Requests\Consultation__Details__Laborartories_Request;
 use App\Http\Requests\Consultation__DetailsRequest;
 use App\Http\Requests\Consultation_Detail_Radiology_Request;
 use App\Http\Requests\Consultation_Details_Treatment_Request;
+use App\Http\Requests\ConsultationLaborartoryRequest;
 use App\Http\Requests\CounsellorDetailRequest;
 use App\Http\Requests\CreateservichospitalRequst;
 use App\Http\Requests\DosageAdminRequest;
@@ -26,7 +27,7 @@ use App\Models\Immunization;
 use App\Models\ObservationRecommendation;
 use App\Models\Patient;
 use App\Models\PatientVisit;
-use App\Models\Registartion_Service;
+use App\Models\Service;
 use App\Models\ServiceDepartment;
 use App\Models\ServiceUnit;
 use App\Responser\JsonResponser;
@@ -191,7 +192,7 @@ class ImmunizationController extends Controller
         }
     }
 
-    public function  consultation_details_laborartory(Consultation__Details__Laborartories_Request $request)
+    public function  consultation_details_laborartory(ConsultationLaborartoryRequest $request)
     {
         try {
             $validated = $request->validated();
@@ -241,7 +242,7 @@ class ImmunizationController extends Controller
         try {
             $validated = $request->validated();
             $serviceunit = ServiceUnit::where("name", "Radiology")->first() ?? null;
-            $data = Registartion_Service::create([
+            $data = Service::create([
                 "service_unit_id" => $serviceunit->id,
                 "name" => $validated['name'],
                 "price" => $validated['price']
@@ -256,7 +257,7 @@ class ImmunizationController extends Controller
     {
         try {
             $validated = $request->validated();
-            $service = Registartion_Service::find($validated['id']);
+            $service = Service::find($validated['id']);
             if ($service) {
                 $service->update($validated);
                 return JsonResponser::send(false, 'edit successfully.', $service);
@@ -275,7 +276,7 @@ class ImmunizationController extends Controller
             ]);
 
             if (!empty($validated['export'])) {
-                $exportData = Registartion_Service::all()->toArray();
+                $exportData = Service::all()->toArray();
 
                 if ($validated['export'] === 'csv') {
                     return ExportHelper::streamCsv($exportData, null, 'service.csv');
@@ -286,7 +287,7 @@ class ImmunizationController extends Controller
                 }
             }
 
-            $services = Registartion_Service::when(!empty($validated['search']), function ($query) use ($validated) {
+            $services = Service::when(!empty($validated['search']), function ($query) use ($validated) {
                 $search = $validated['search'];
 
                 $query->where(function ($q) use ($search) {

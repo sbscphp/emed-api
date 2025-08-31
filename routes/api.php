@@ -122,13 +122,27 @@ Route::group(["prefix" => "v1"], function () {
                     });
                 });
 
+                Route::group(['prefix' => 'hiv_aids'], function () {
+                    Route::post("/counselling/details/create",  [HivAidsController::class, "createCouncellingDetails"]);
+                    Route::post("/observation/create", [HivAidsController::class, "createObservation"]);
+                    Route::get("/summary/{id}", [HivAidsController::class, "summary"]);
+                });
+
+                Route::group(['prefix' => 'immunization'], function () {
+                    Route::post("/create_immunization",  [ImmunizationController::class, "create_immunization"]);
+                    Route::post("/dosage_admin", [ImmunizationController::class, "dosage_admin"]);
+                    Route::get("/summary/{id}", [ImmunizationController::class, "summary"]);
+                    Route::post("/observetation_recommandation", [ImmunizationController::class, "observetation_recommandation"]);
+                });
+
                 //Consultant routes
-                Route::group(['prefix' => 'consultant',  'middleware' => 'role.consultant'], function () {
+                Route::group(['prefix' => 'consultation',  'middleware' => 'role.consultant'], function () {
+                    Route::post('/', [ConsultationController::class, 'index']);
+                    Route::post('/patient/create', [ConsultationController::class, 'storeConsultationInfo']);
+                    Route::post('/patient/lab/test', [ConsultationController::class, 'createLabTestConsultation']);
                     Route::get("/consultaton_stats", [ConsultationController::class, "consultaton_stats"]);
-                    Route::post('/patients', [ConsultationController::class, 'patientsForConsultation']);
                     Route::get('/patient/{visitNo}', [ConsultationController::class, 'show']);
                     Route::post('/all/patients', [ConsultationController::class, 'getAllVisits']);
-                    Route::post('/patient/{visitNo}/store', [ConsultationController::class, 'storeConsultationInfo']);
                     Route::post('/patient/{visitNo}/lab', [ConsultationController::class, 'storeLabInfo']);
                     Route::post('/patient/{visitNo}/radiology', [ConsultationController::class, 'storeRadiologyInfo']);
                     Route::post('/patient/{visitNo}/treatment', [ConsultationController::class, 'storeTreatmentInfo']);
@@ -341,13 +355,6 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get("/consultation_detail_treatment", [ImmunizationController::class, "consultation_detail_treatment_get"]);
                 });
 
-                Route::group(['prefix' => 'immunization'], function () {
-                    Route::post("/create_immunization",  [ImmunizationController::class, "create_immunization"]);
-                    Route::post("/dosage_admin", [ImmunizationController::class, "dosage_admin"]);
-                    Route::get("/summary/{id}", [ImmunizationController::class, "summary"]);
-                    Route::post("/observetation_recommandation", [ImmunizationController::class, "observetation_recommandation"]);
-                });
-
                 Route::group(['prefix' => 'service'], function () {
                     Route::post("/create_service",  [ImmunizationController::class, "create_service"]);
                     Route::put("/edit_service",  [ImmunizationController::class, "edit_service"]);
@@ -375,13 +382,6 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/', [NotificationController::class, "index"]);
                     Route::put('/mark_read/{id}', [NotificationController::class, 'markAsRead']);
                     Route::post('/all/mark_read', [NotificationController::class, 'markAllAsRead']);
-                });
-
-                Route::group(['prefix' => 'hiv_aids'], function () {
-
-                    Route::post("/counselling/details/create",  [HivAidsController::class, "createCouncellingDetails"]);
-                    Route::post("/observation/create", [HivAidsController::class, "createObservation"]);
-                    Route::get("/summary/{id}", [HivAidsController::class, "summary"]);
                 });
             });
         });

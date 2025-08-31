@@ -2,17 +2,9 @@
 
 namespace App\Services\PatientVisit;
 
-use App\Enums\GeneralEnums;
-use App\Enums\PatientVisitStatusEnums;
-use App\Helpers\ExportHelper;
-use App\Helpers\GeneralHelper;
 use App\Models\PatientVisit;
 use App\Repositories\PatientVisit\PatientVisitInterface;
-use App\Models\BillingLog;
-use App\Models\Patient;
-use App\Models\Triage;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\Auth;
+use App\Http\Resources\PatientVisitResources;
 
 /**
  * Class PatientVisitService
@@ -22,161 +14,25 @@ use Illuminate\Support\Facades\Auth;
  */
 class PatientVisitService
 {
+    protected PatientVisitInterface $PatientVisitInterface;
     /**
      * PatientVisit constructor.
      *
      * @param PatientVisitInterface $PatientVisitInterface
      */
-    public function __construct(PatientVisitInterface $PatientVisitInterface) {}
+    public function __construct(PatientVisitInterface $PatientVisitInterface)
+    {
+        $this->PatientVisitInterface = $PatientVisitInterface;
+    }
 
     /**
      * Retrieve all PatientVisit.
      *
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    public function overview($request)
+    public function all()
     {
-        $customDate = [];
-        if ($request->period === 'custom date' && $request->start_date && $request->end_date) {
-            $customDate = [$request->start_date, $request->end_date];
-        }
-
-        $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
-
-        $records = PatientVisit::query()
-            ->where('service_id', $request->service_id)
-            ->when(!empty($request['search_param']), function ($query) use ($request) {
-                $query->where(function ($q) use ($request) {
-                    $q->whereRelation('patient', 'cardno', 'LIKE', '%' . $request['search_param'] . '%')
-                        ->orWhereRelation('patient', 'patientno', 'LIKE', '%' . $request['search_param'] . '%')
-                        ->orWhereRelation('patient', 'firstname', 'LIKE', '%' . $request['search_param'] . '%')
-                        ->orWhereRelation('patient', 'lastname', 'LIKE', '%' . $request['search_param'] . '%');
-                });
-            })
-            ->when(!empty($request['patient_status']), function ($query) use ($request) {
-                $query->where('status', $request['patient_status']);
-            })
-            ->when(!empty($request['payment_status']), function ($query) use ($request) {
-                $query->whereRelation('patientBilling', 'payment_status', $request['payment_status']);
-            })
-            ->when(!empty($request['payment_method']), function ($query) use ($request) {
-                $query->whereRelation('patientBilling', 'payment_method', $request['payment_method']);
-            })
-            ->when($request->startDate && $request->endDate, function ($query) use ($request) {
-                $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
-            })
-            ->when($dateFilter, function ($query) use ($dateFilter) {
-                return $query->whereBetween('created_at', $dateFilter);
-            })->when(($request['sort_by'] ?? null) === 'date_ascending', function ($query) {
-                $query->orderBy('arrival_date', 'ASC');
-            })->when(($request['sort_by'] ?? null) === 'date_descending', function ($query) {
-                $query->orderBy('arrival_date', 'DESC');
-            })
-            ->with('patient', 'service', 'patientBilling');
-
-        if (!empty($request['paginate']) && empty($request['export'])) {
-            return $records->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
-        }
-
-        return $records->orderBy('id', 'DESC')->get();
-    }
-
-    public function stats($request)
-    {
-        $customDate = [];
-        if ($request->period === 'custom date' && $request->start_date && $request->end_date) {
-            $customDate = [$request->start_date, $request->end_date];
-        }
-        $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
-        $query = PatientVisit::query()->where('service_id', $request->service_id);
-
-        $awaitingTriage = (clone $query)->where('status', PatientVisitStatusEnums::VISIT_INITIATED->value)->count();
-        $awaitingConsultation = (clone $query)->where('status', PatientVisitStatusEnums::TRIAGE->value)->count();
-        $admitted = (clone $query)->where('status', PatientVisitStatusEnums::ADMITTED->value)->count();
-        $discharged = (clone $query)->where('status', PatientVisitStatusEnums::DISCHARGED->value)->count();
-
-        $completedSugery = 0;
-        $cancelled = 0;
-
-        $triagePatient = (clone $query)->where('status', PatientVisitStatusEnums::TRIAGE->value)->count();
-        $emergencyPrescription = 0;
-        $medicationDispensedToday = 0;
-        $routineMedication = 0;
-        $criticalStockAlert = 0;
-
-        $totalTest = 0;
-        $pendingTest = 0;
-        $completedTest = 0;
-        $failedTest = 0;
-
-        $totalDeliveriesToday = 0;
-        $cSection = 0;
-        $normalBirth = 0;
-        $antenatalCheckup = 0;
-
-        $patientLog = (clone $query)->count();
-
-        return [
-            'awaitingTriage' => $awaitingTriage,
-            'awaitingConsultation' => $awaitingConsultation,
-            'admitted' => $admitted,
-            'discharged' => $discharged,
-
-            'completedSugery' => $completedSugery,
-            'cancelled' => $cancelled,
-
-            'triagePatient' => $triagePatient,
-            'emergencyPrescription' => $emergencyPrescription,
-            'medicationDispensedToday' => $medicationDispensedToday,
-            'routineMedication' => $routineMedication,
-            'criticalStockAlert' => $criticalStockAlert,
-
-            'totalTest' => $totalTest,
-            'pendingTest' => $pendingTest,
-            'completedTest' => $completedTest,
-            'failedTest' => $failedTest,
-
-            'totalDeliveriesToday' => $totalDeliveriesToday,
-            'cSection' => $cSection,
-            'normalBirth' => $normalBirth,
-            'antenatalCheckup' => $antenatalCheckup,
-
-            'patientLog' => $patientLog,
-        ];
-    }
-
-    public function export($records, $format)
-    {
-        $exportData = $records->map(function ($visit) {
-            return [
-                'Firstname'      => $visit->patient->firstname ?? '',
-                'Lastname'       => $visit->patient->lastname ?? '',
-                'Card No'        => $visit->patient->cardno ?? '',
-                'Patient No'     => $visit->patient->patientno ?? '',
-                'Arrival Date'   => $visit->arrival_date ?? '',
-                'Patient Status' => $visit->status ?? '',
-                'Payment Method'  => $visit->patientBilling->payment_method ?? 'N/A',
-                'Payment Status'    => $visit->patientBilling->payment_status ?? 'N/A',
-            ];
-        })->toArray();
-
-        if (empty($exportData)) {
-            throw new \Exception("No records found for export.");
-        }
-
-        // Choose export format
-        if (strtolower($format) === 'csv') {
-            return ExportHelper::streamCsv($exportData, null, 'patients.csv');
-        }
-
-        if (strtolower($format) === 'pdf') {
-            $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData])
-                ->setPaper('A1', 'landscape');
-
-            return $pdf->download('patients.pdf');
-        }
-
-        throw new \Exception("Invalid export format.");
+        return $this->PatientVisitInterface->all();
     }
 
     /**
@@ -185,146 +41,249 @@ class PatientVisitService
      * @param array $data
      * @return \App\Models\PatientVisit
      */
-    public function create($request)
+    public function create(array $data)
     {
-        try {
-
-            $currentUser = Auth::user();
-            $patient = Patient::find($request->patient_id);
-            $visit = PatientVisit::find($request->visit_id);
-            // Initiate Patient Triage
-            $triage = Triage::create([
-                'user_id' => $currentUser->id,
-                'patient_id' => $request->patient_id,
-                'visit_id' => $request->visit_id,
-                'blood_pressure' => $request->blood_pressure,
-                'pulse_bpm' => $request->pulse_bpm,
-                'sugar_level' => $request->sugar_level,
-                'weight_kg' => $request->weight_kg,
-                'temperature' => $request->temperature,
-                'severity' => $request->severity,
-            ]);
-
-            $invoiceNumber = GeneralHelper::getModelUniqueOrderlyId([
-                'modelNamespace' => BillingLog::class,
-                'modelField' => 'invoice_number',
-                'prefix' => 'INV-',
-                'idLength' => 6,
-            ]);
-
-            $visit->update([
-                'status' => PatientVisitStatusEnums::TRIAGE->value,
-            ]);
-
-            // update patient registaration staus
-            $patient->update([
-                'reg_status' => GeneralEnums::EXISTING->value,
-            ]);
-
-            return $triage;
-        } catch (\Throwable $th) {
-            throw $th;
-        }
+        return $this->PatientVisitInterface->create($data);
     }
 
-    public function investigationOrdersOverview($request)
+
+    /**
+     * Update an existing PatientVisit with the provided data.
+     *
+     * @param array $data
+     * @param int $id
+     * @return \App\Models\PatientVisit
+     */
+    public function update(array $data, $id)
     {
-        $customDate = [];
-        if ($request->period === 'custom date' && $request->start_date && $request->end_date) {
-            $customDate = [$request->start_date, $request->end_date];
-        }
-
-        $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
-
-        $records = Triage::query()
-            ->when(!empty($request['search_param']), function ($query) use ($request) {
-                $query->where(function ($q) use ($request) {
-                    $q->whereRelation('patient', 'cardno', 'LIKE', '%' . $request['search_param'] . '%')
-                        ->orWhereRelation('patient', 'patientno', 'LIKE', '%' . $request['search_param'] . '%')
-                        ->orWhereRelation('patient', 'firstname', 'LIKE', '%' . $request['search_param'] . '%')
-                        ->orWhereRelation('patient', 'lastname', 'LIKE', '%' . $request['search_param'] . '%');
-                });
-            })
-            ->when(!empty($request['patient_status']), function ($query) use ($request) {
-                $query->whereRelation('visit', 'status', $request['patient_status']);
-            })
-            ->when(!empty($request['payment_status']), function ($query) use ($request) {
-                $query->whereRelation('visit.patientBilling', 'payment_status', $request['payment_status']);
-            })
-            ->when(!empty($request['payment_method']), function ($query) use ($request) {
-                $query->whereRelation('visit.patientBilling', 'payment_method', $request['payment_method']);
-            })
-            ->when($request->startDate && $request->endDate, function ($query) use ($request) {
-                $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
-            })
-            ->when($dateFilter, function ($query) use ($dateFilter) {
-                return $query->whereBetween('created_at', $dateFilter);
-            })->when(($request['sort_by'] ?? null) === 'date_ascending', function ($query) {
-                $query->orderBy('created_at', 'ASC');
-            })->when(($request['sort_by'] ?? null) === 'date_descending', function ($query) {
-                $query->orderBy('created_at', 'DESC');
-            })
-            ->with('patient', 'visit');
-
-        if (!empty($request['paginate']) && empty($request['export'])) {
-            return $records->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
-        }
-
-        return $records->orderBy('id', 'DESC')->get();
+        return $this->PatientVisitInterface->update($data, $id);
     }
 
-    public function investigationOrdersStats($request)
+
+    /**
+     * Delete a PatientVisit by heir ID.
+     *
+     * @param int $id
+     * @return void
+     */
+    public function delete($id)
     {
-        $customDate = [];
-        if ($request->period === 'custom date' && $request->start_date && $request->end_date) {
-            $customDate = [$request->start_date, $request->end_date];
-        }
-        $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
-        $query = Triage::query();
-
-        $totalPatients = Patient::count();
-        $pendingPatients = PatientVisit::where('status', PatientVisitStatusEnums::VISIT_INITIATED->value)->count();
-        $totalOrders = (clone $query)->count();
-        $patientLog = (clone $query)->count();
-
-        return [
-            'totalPatients' => $totalPatients,
-            'pendingPatients' => $pendingPatients,
-            'totalOrders' => $totalOrders,
-            'patientLog' => $patientLog,
-        ];
+        return $this->PatientVisitInterface->delete($id);
     }
 
-    public function investigationOrdersExport($records, $format)
+
+    /**
+     * Find a PatientVisit by their ID.
+     *
+     * @param int $id
+     * @return \App\Models\PatientVisit
+     */
+    public function find($id)
     {
-        $exportData = $records->map(function ($triage) {
-            return [
-                'Patient Name'     => $triage->patient->firstname . ' ' . $triage->patient->lastname,
-                'Card No'          => $triage->patient->cardno,
-                'Patient No'       => $triage->patient->patientno,
-                'Time Of Arrival'  => $triage->visit->arrival_date ?? 'N/A',
-                'Acuity'           => $triage->severity,
-                'Payment Status'   => $triage->visit->patientBilling->payment_method ?? 'N/A',
-                'Patient Status'   => $triage->visit->status ?? 'N/A'
+        return $this->PatientVisitInterface->find($id);
+    }
+
+
+    /**
+     * Find an existing PatientVisit  by their $attr.
+     *
+     * @param string $attr
+     * @param string $value
+     * @return \App\Models\PatientVisit
+     */
+    public function findByAttribute($attr, $value)
+    {
+        return $this->PatientVisitInterface->findByAttribute($attr, $value);
+    }
+
+    public function findByMultiAttributes(array $attrs)
+    {
+        return $this->PatientVisitInterface->findByMultiAttributes($attrs);
+    }
+
+    public function getPatientForConsultation($search, $sortBy, $date, $paginate, $perPage, $patient_type,  $stage, $status)
+    {
+        return $this->PatientVisitInterface->getPatientForConsultation($search, $sortBy, $date, $paginate, $perPage, $patient_type,  $stage, $status);
+    }
+
+    public function getPatientVisits($patientId)
+    {
+        return $this->PatientVisitInterface->getPatientVisits($patientId);
+    }
+
+    public function getPatientPreviousVisits($patientId, $visitNo)
+    {
+        return $this->PatientVisitInterface->getPatientPreviousVisits($patientId, $visitNo);
+    }
+
+    public function getPatients($search, $sortBy, $stage, $status, $date, $paginate, $perPage)
+    {
+        return $this->PatientVisitInterface->getPatients($search, $sortBy, $stage, $status, $date, $paginate, $perPage);
+    }
+
+    public function getByPatientId($patientId): ?PatientVisit
+    {
+        return PatientVisit::where('patient_id', $patientId)->first();
+    }
+
+    public function updateStage(PatientVisit $visit,  $stage): void
+    {
+        $visit->update(['stage' => $stage]);
+    }
+
+    public function getAllFiltered(?string $search, bool $paginate, int $perPage, array $filters = [])
+    {
+        $query = PatientVisit::with([
+            'patient:id,firstname,lastname,patientno,service_id',
+            'patient.service:id,name',
+        ])->orderBy('created_at', 'desc');
+
+        if (!empty($search)) {
+            $query->whereHas('patient', function ($q) use ($search) {
+                $q->where('firstname', 'like', "%$search%")
+                    ->orWhere('lastname', 'like', "%$search%")
+                    ->orWhere('patientno', 'like', "%$search%");
+            });
+        }
+
+        if (!empty($filters['stage'])) {
+            $query->where('stage', $filters['stage']);
+        }
+
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('created_at', '>=', $filters['date_from']);
+        }
+
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('created_at', '<=', $filters['date_to']);
+        }
+
+        return $paginate ? $query->paginate($perPage) : $query->get();
+    }
+
+    public function getVisitRecordsForPatient(
+        int $patientId,
+        ?string $search = null,
+        ?string $filter = null,
+        bool $paginate = false,
+        int $perPage = 20,
+        ?string $export = null
+    ) {
+        $query = PatientVisit::with(['patient.service'])
+            ->where('patient_id', $patientId)
+            ->orderBy('created_at', 'desc');
+
+        if (!empty($search)) {
+            $query->whereHas('patient', function ($q) use ($search) {
+                $q->where('firstname', 'like', "%$search%")
+                    ->orWhere('lastname', 'like', "%$search%")
+                    ->orWhere('patientno', 'like', "%$search%");
+            });
+        }
+
+        if (!empty($filter)) {
+            $query->where('stage', $filter);
+        }
+
+        if ($paginate) {
+            $paginated = $query->paginate($perPage);
+
+            // $paginated->getCollection()->transform(function ($visit) {
+            //     $serviceId = $visit->patient->service_id ?? null;
+
+            //     $billingLog = $visit->billingLogs()
+            //         ->where('service_type_id', $serviceId)
+            //         ->first();
+
+            //     return [
+            //         'id'             => $visit->id,
+            //         'patient_id'     => $visit->patient->id,
+            //         'fullname'       => "{$visit->patient->firstname} {$visit->patient->lastname}",
+            //         'date'           => $visit->created_at->format('Y-m-d'),
+            //         'visit_number'   => $visit->visitno,
+            //         'service_type'   => $visit->patient->service->name ?? 'Nil',
+            //         'referral'       => 'Nil',
+            //         'payment_status' => $billingLog->payment_status ?? 'pending',
+            //         'payment_method' => $billingLog->payment_method ?? 'pending',
+            //     ];
+            // });
+
+            $data = PatientVisitResources::collection($paginated)->toArray(request());
+
+
+            $fetch = [
+                "data" => collect($data),
+                "link" => [
+                    'first' => $paginated->url(1),
+                    'last'  => $paginated->url($paginated->lastPage()),
+                    'prev'  => $paginated->previousPageUrl(),
+                    'next'  => $paginated->nextPageUrl(),
+                ],
+                "pages" => [
+                    'current_page' => $paginated->currentPage(),
+                    'from'         => $paginated->firstItem(),
+                    'last_page'    => $paginated->lastPage(),
+                    'path'         => $paginated->path(),
+                    'per_page'     => $paginated->perPage(),
+                    'to'           => $paginated->lastItem(),
+                    'total'        => $paginated->total(),
+                ]
             ];
-        })->toArray();
 
-        if (empty($exportData)) {
-            throw new \Exception("No records found for export.");
+            return collect($fetch);
         }
 
-        // Choose export format
-        if (strtolower($format) === 'csv') {
-            return ExportHelper::streamCsv($exportData, null, 'investigationorders.csv');
-        }
+        $records = $query->get();
 
-        if (strtolower($format) === 'pdf') {
-            $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData])
-                ->setPaper('A1', 'landscape');
+        $formatted = $records->map(function ($visit) {
+            $serviceId = $visit->patient->service_id ?? null;
 
-            return $pdf->download('investigationorders.pdf');
-        }
+            $billingLog = $visit->billingLogs()
+                ->where('service_type_id', $serviceId)
+                ->first();
 
-        throw new \Exception("Invalid export format.");
+            return [
+                'id'             => $visit->id,
+                'patient_id'     => $visit->patient->id,
+                'fullname'       => "{$visit->patient->firstname} {$visit->patient->lastname}",
+                'date'           => $visit->created_at->format('Y-m-d'),
+                'visit_number'   => $visit->visitno,
+                'service_type'   => $visit->patient->service->name ?? 'Nil',
+                'referral'       => 'Nil',
+                'payment_status' => $billingLog->payment_status ?? 'pending',
+                'payment_method' => $billingLog->payment_method ?? 'pending',
+            ];
+        });
+
+        return $formatted->values()->toArray();
+    }
+
+    // public function getVisitDetailWithBilling(int $patientId, int $visitId)
+    // {
+    //     return PatientVisit::with([
+    //         'patient:id,firstname,lastname,patientno,service_id',
+    //         'patient.service:id,name',
+    //         'billingLogs'
+    //     ])
+    //         ->where('patient_id', $patientId)
+    //         ->where('id', $visitId)
+    //         ->first();
+    // }
+    public function getVisitDetailWithBilling(int $patientId, int $visitId)
+    {
+        $visit = PatientVisit::with([
+            'patient:id,firstname,lastname,patientno,service_id,age',
+            'patient.service:id,name',
+            'billingLogsForPatient',
+        ])
+            ->where('patient_id', $patientId)
+            ->where('id', $visitId)
+            ->first();
+
+        return $visit;
     }
 }

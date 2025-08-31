@@ -8,7 +8,6 @@ use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\PatientInfomationRequest;
 use App\Responser\JsonResponser;
-use App\Services\Patient\PatientService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
@@ -16,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Notification;
 use App\Models\Patient;
 use App\Models\PatientVisit;
+use App\Services\Revamp\PatientService;
 
 class RecordManagementController extends Controller
 {

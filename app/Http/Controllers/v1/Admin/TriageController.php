@@ -15,7 +15,7 @@ use App\Models\Radiology;
 use App\Models\Treatment;
 use App\Models\Triage;
 use App\Responser\JsonResponser;
-use App\Services\PatientVisit\PatientVisitService;
+use App\Services\Revamp\PatientVisitService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
