@@ -14,24 +14,37 @@ return new class extends Migration
         Schema::create('patient_visit_consultation', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->foreignId('patient_id')->constrained('patients')->onDelete('cascade');
-            $table->unsignedBigInteger('admin_id')->nullable();
-            $table->string('visitno');
-            $table->text('complaint')->nullable();
-            $table->text('complaint_history')->nullable();
-            $table->text('review')->nullable();
-            $table->text('diagnosis')->nullable();
-            $table->text('allergy')->nullable();
-            $table->string('disease_pattern')->nullable();
-            $table->string('disease_type')->nullable();
-            $table->enum('investigation',['laboratory','radiology','both'])->nullable();
-            $table->integer('follow_up')->default(0);
-            $table->dateTime('followUp_date')->nullable();
-            $table->integer('referral')->default(0);
-            $table->string('referral_detail')->nullable();
-            $table->integer('admitted')->default(0);
-            $table->timestamps();
+            $table->unsignedBigInteger('consulted_by')->nullable();
+            $table->unsignedBigInteger('visit_id')->nullable();
+            $table->json('complaints')->nullable();
+            $table->string('history_of_present_complaints')->nullable();
+            $table->string('system_view')->nullable();
+            $table->string('provisional_diagnosis')->nullable();
+            $table->string('disease_patterns')->nullable();
+            $table->string('disease_types')->nullable();
+            $table->json('allergies')->nullable();
+            $table->string('final_diog')->nullable();
+            $table->boolean('laboratory')->default(false)->nullable();
+            $table->boolean('radiology')->default(false)->nullable();
+            $table->boolean('schedule_a_follow_up')->default(false)->nullable();
+            $table->boolean('referral')->default(false)->nullable();
 
-            $table->index('visitno');
+            $table->string('relationship_type')->nullable();
+            $table->string('chronic_lllness')->nullable();
+            $table->string('genetic_disorder')->nullable();
+            $table->string('age_of_onset')->nullable();
+            $table->string('causes_of_death_in_family_member')->nullable();
+            $table->string('other_details')->nullable();
+
+            $table->string('occupation')->nullable();
+            $table->string('living_situation')->nullable();
+            $table->string('substance_use')->nullable();
+            $table->string('lifesytle_habits')->nullable();
+            $table->string('sexual_history')->nullable();
+            $table->string('diagnosis')->nullable();
+            $table->longText('note')->nullable();
+            $table->boolean('admit_patient')->default(false)->nullable();
+            $table->timestamps();
         });
     }
 

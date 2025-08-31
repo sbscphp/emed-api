@@ -9,23 +9,9 @@ class Consultation extends Model
     protected $guarded = ['id'];
     protected $connection = 'tenant';
     protected $table = 'patient_visit_consultation';
-    protected $fillable = [
-        'patient_id',
-        'admin_id',
-        'visitno',
-        'complaint',
-        'complaint_history',
-        'review',
-        'diagnosis',
-        'allergy',
-        'disease_pattern',
-        'disease_type',
-        'investigation',
-        'follow_up',
-        'followUp_date',
-        'referral',
-        'referral_detail',
-        'admitted'
+    protected $casts = [
+        'complaints' => 'array',
+        'allergies' => 'array',
     ];
 
     public function patient()

@@ -10,6 +10,7 @@ enum PatientVisitStatusEnums: string
     case INVESTIGATION = 'Investigation';
     case TREATMENT = 'Treatment';
     case ADMITTED = 'Admitted';
+    case NOT_ADMITTED = 'Not Admitted';
     case DISCHARGED = 'Discharged';
     case WAITING = 'Waiting';
     case ONGOING = 'Ongoing';

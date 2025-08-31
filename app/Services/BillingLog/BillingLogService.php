@@ -17,6 +17,7 @@ use App\Models\PharmacyService;
 use App\Models\Radiology;
 use App\Models\Radiology_Service;
 use App\Models\Registartion_Service;
+use App\Models\Service;
 use App\Models\ServiceDepartment;
 use App\Models\ServiceUnit;
 use App\Models\User;
@@ -421,7 +422,7 @@ class BillingLogService
     {
 
         $data = [
-            ["name" => "registration", "total" => Registartion_Service::count()],
+            ["name" => "registration", "total" => Service::count()],
             ["name" => "pharmacy", "total" => PharmacyService::count()],
             ["name" => "laboratory", "total" => Lab_service::count()],
             ["name" => "Radiology", "total" => Radiology_Service::count()],

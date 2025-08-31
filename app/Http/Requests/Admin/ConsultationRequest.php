@@ -22,20 +22,30 @@ class ConsultationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'complaints' => 'required|array',
-            'complaint_history' => 'required|string',
-            'review' => 'required|string',
+            'patient_id' => 'nullable|exists:tenant.patients,id',
+            'visit_id' => 'nullable|numeric|exists:tenant.patient_visits,id',
+            'complaints' => 'required',
+            'history_of_present_complaints' => 'required|string',
+            'system_view' => 'required|string',
+            'provisional_diagnosis' => 'required|string',
+            'disease_patterns' => 'required|string',
+            'disease_types' => 'required|string',
+            'allergies' => 'required',
+            'final_diog' => 'required|string',
+            'relationship_type' => 'required|string',
+            'chronic_lllness' => 'required|string',
+            'genetic_disorder' => 'required|string',
+            'age_of_onset' => 'required|string',
+            'causes_of_death_in_family_member' => 'required|string',
+            'other_details' => 'required|string',
+            'occupation' => 'required|string',
+            'living_situation' => 'required|string',
+            'substance_use' => 'required|string',
+            'lifesytle_habits' => 'required|string',
+            'sexual_history' => 'required|string',
             'diagnosis' => 'required|string',
-            'allergy' => 'nullable|array',
-            'disease_pattern' => 'nullable|string',
-            'disease_type' => 'nullable|string',
-            'investigation' => 'nullable|string|in:laboratory,radiology,both',
-            'follow_up' => 'nullable|integer',
-            // 'followUp_date' => 'nullable|date',
-            'referral' => 'nullable|boolean',
-            'referral_detail' => 'nullable|date',
-            'admitted' => 'nullable|boolean'
+            'note' => 'required',
+            'admit_patient' => 'required|boolean',
         ];
-
     }
 }

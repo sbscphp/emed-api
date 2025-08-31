@@ -33,6 +33,7 @@ use App\Http\Controllers\v1\Admin\ImmunizationController;
 use App\Http\Controllers\v1\Admin\Lab_Service_Controller;
 use App\Http\Controllers\v1\Admin\PharmacyServiceController;
 use App\Http\Controllers\v1\Admin\Radiology_service_Controller;
+use App\Http\Controllers\v1\Admin\Revamp\ConsultationController as RevampConsultationController;
 use App\Services\HivAids\HivAidsService;
 // use App\Models\Immunization;
 use Illuminate\Support\Facades\Route;
@@ -120,6 +121,37 @@ Route::group(["prefix" => "v1"], function () {
                         Route::post("/new/born/create", [AntenatalController::class, "createNewBorn"]);
                         Route::get("/summary/{id}", [AntenatalController::class, "summary"]);
                     });
+                });
+
+                Route::group(['prefix' => 'hiv_aids'], function () {
+                    Route::post("/counselling/details/create",  [HivAidsController::class, "createCouncellingDetails"]);
+                    Route::post("/observation/create", [HivAidsController::class, "createObservation"]);
+                    Route::get("/summary/{id}", [HivAidsController::class, "summary"]);
+                });
+
+                Route::group(['prefix' => 'immunization'], function () {
+                    Route::post("/create_immunization",  [ImmunizationController::class, "create_immunization"]);
+                    Route::post("/dosage_admin", [ImmunizationController::class, "dosage_admin"]);
+                    Route::get("/summary/{id}", [ImmunizationController::class, "summary"]);
+                    Route::post("/observetation_recommandation", [ImmunizationController::class, "observetation_recommandation"]);
+                });
+
+                //Consultant routes
+                Route::group(['prefix' => 'consultation',  'middleware' => 'role.consultant'], function () {
+                    Route::post('/', [RevampConsultationController::class, 'index']);
+                    Route::post('/patient/create', [RevampConsultationController::class, 'storeConsultationInfo']);
+                    Route::post('/patient/lab/test', [RevampConsultationController::class, 'createLabTestConsultation']);
+                    Route::get("/consultaton_stats", [RevampConsultationController::class, "consultaton_stats"]);
+                    Route::get('/patient/{visitNo}', [RevampConsultationController::class, 'show']);
+                    Route::post('/all/patients', [RevampConsultationController::class, 'getAllVisits']);
+                    Route::post('/patient/{visitNo}/lab', [RevampConsultationController::class, 'storeLabInfo']);
+                    Route::post('/patient/{visitNo}/radiology', [RevampConsultationController::class, 'storeRadiologyInfo']);
+                    Route::post('/patient/{visitNo}/treatment', [RevampConsultationController::class, 'storeTreatmentInfo']);
+                    Route::post('/patient/medical/{patientId}', [RevampConsultationController::class, 'storeMedicalHistory']);
+                    Route::post('/patient/family/{patientId}', [RevampConsultationController::class, 'storeFamilyHistory']);
+                    Route::post('/patient/social/{patientId}', [RevampConsultationController::class, 'storeSocialHistory']);
+                    Route::post('/patient/drug/{patientId}', [RevampConsultationController::class, 'storeDrugHistory']);
+                    Route::get('/patient_laboratory/{patientId}', [RevampConsultationController::class, 'patient_laboratory']);
                 });
 
                 //Consultant routes
@@ -341,13 +373,6 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get("/consultation_detail_treatment", [ImmunizationController::class, "consultation_detail_treatment_get"]);
                 });
 
-                Route::group(['prefix' => 'immunization'], function () {
-                    Route::post("/create_immunization",  [ImmunizationController::class, "create_immunization"]);
-                    Route::post("/dosage_admin", [ImmunizationController::class, "dosage_admin"]);
-                    Route::get("/summary/{id}", [ImmunizationController::class, "summary"]);
-                    Route::post("/observetation_recommandation", [ImmunizationController::class, "observetation_recommandation"]);
-                });
-
                 Route::group(['prefix' => 'service'], function () {
                     Route::post("/create_service",  [ImmunizationController::class, "create_service"]);
                     Route::put("/edit_service",  [ImmunizationController::class, "edit_service"]);
@@ -375,13 +400,6 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/', [NotificationController::class, "index"]);
                     Route::put('/mark_read/{id}', [NotificationController::class, 'markAsRead']);
                     Route::post('/all/mark_read', [NotificationController::class, 'markAllAsRead']);
-                });
-
-                Route::group(['prefix' => 'hiv_aids'], function () {
-
-                    Route::post("/counselling/details/create",  [HivAidsController::class, "createCouncellingDetails"]);
-                    Route::post("/observation/create", [HivAidsController::class, "createObservation"]);
-                    Route::get("/summary/{id}", [HivAidsController::class, "summary"]);
                 });
             });
         });
