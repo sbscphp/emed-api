@@ -33,6 +33,7 @@ use App\Http\Controllers\v1\Admin\ImmunizationController;
 use App\Http\Controllers\v1\Admin\Lab_Service_Controller;
 use App\Http\Controllers\v1\Admin\PharmacyServiceController;
 use App\Http\Controllers\v1\Admin\Radiology_service_Controller;
+use App\Http\Controllers\v1\Admin\Revamp\ConsultationController as RevampConsultationController;
 use App\Services\HivAids\HivAidsService;
 // use App\Models\Immunization;
 use Illuminate\Support\Facades\Route;
@@ -137,12 +138,29 @@ Route::group(["prefix" => "v1"], function () {
 
                 //Consultant routes
                 Route::group(['prefix' => 'consultation',  'middleware' => 'role.consultant'], function () {
-                    Route::post('/', [ConsultationController::class, 'index']);
-                    Route::post('/patient/create', [ConsultationController::class, 'storeConsultationInfo']);
-                    Route::post('/patient/lab/test', [ConsultationController::class, 'createLabTestConsultation']);
+                    Route::post('/', [RevampConsultationController::class, 'index']);
+                    Route::post('/patient/create', [RevampConsultationController::class, 'storeConsultationInfo']);
+                    Route::post('/patient/lab/test', [RevampConsultationController::class, 'createLabTestConsultation']);
+                    Route::get("/consultaton_stats", [RevampConsultationController::class, "consultaton_stats"]);
+                    Route::get('/patient/{visitNo}', [RevampConsultationController::class, 'show']);
+                    Route::post('/all/patients', [RevampConsultationController::class, 'getAllVisits']);
+                    Route::post('/patient/{visitNo}/lab', [RevampConsultationController::class, 'storeLabInfo']);
+                    Route::post('/patient/{visitNo}/radiology', [RevampConsultationController::class, 'storeRadiologyInfo']);
+                    Route::post('/patient/{visitNo}/treatment', [RevampConsultationController::class, 'storeTreatmentInfo']);
+                    Route::post('/patient/medical/{patientId}', [RevampConsultationController::class, 'storeMedicalHistory']);
+                    Route::post('/patient/family/{patientId}', [RevampConsultationController::class, 'storeFamilyHistory']);
+                    Route::post('/patient/social/{patientId}', [RevampConsultationController::class, 'storeSocialHistory']);
+                    Route::post('/patient/drug/{patientId}', [RevampConsultationController::class, 'storeDrugHistory']);
+                    Route::get('/patient_laboratory/{patientId}', [RevampConsultationController::class, 'patient_laboratory']);
+                });
+
+                //Consultant routes
+                Route::group(['prefix' => 'consultant',  'middleware' => 'role.consultant'], function () {
                     Route::get("/consultaton_stats", [ConsultationController::class, "consultaton_stats"]);
+                    Route::post('/patients', [ConsultationController::class, 'patientsForConsultation']);
                     Route::get('/patient/{visitNo}', [ConsultationController::class, 'show']);
                     Route::post('/all/patients', [ConsultationController::class, 'getAllVisits']);
+                    Route::post('/patient/{visitNo}/store', [ConsultationController::class, 'storeConsultationInfo']);
                     Route::post('/patient/{visitNo}/lab', [ConsultationController::class, 'storeLabInfo']);
                     Route::post('/patient/{visitNo}/radiology', [ConsultationController::class, 'storeRadiologyInfo']);
                     Route::post('/patient/{visitNo}/treatment', [ConsultationController::class, 'storeTreatmentInfo']);
