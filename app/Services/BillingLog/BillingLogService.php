@@ -6,7 +6,7 @@ use App\Enums\PatientVisitStageEnums;
 use App\Models\BillingLog;
 use App\Models\Consultation;
 use App\Models\Consultation_service;
-use App\Models\Lab_service;
+use App\Models\LabService;
 use App\Models\Laboratory;
 use App\Models\Medication;
 use App\Models\Medicine_Log;
@@ -15,7 +15,7 @@ use App\Models\PatientVisit;
 use App\Models\Pharmacy;
 use App\Models\PharmacyService;
 use App\Models\Radiology;
-use App\Models\Radiology_Service;
+use App\Models\RadiologyService;
 use App\Models\Registartion_Service;
 use App\Models\Service;
 use App\Models\ServiceDepartment;
@@ -424,8 +424,8 @@ class BillingLogService
         $data = [
             ["name" => "registration", "total" => Service::count()],
             ["name" => "pharmacy", "total" => PharmacyService::count()],
-            ["name" => "laboratory", "total" => Lab_service::count()],
-            ["name" => "Radiology", "total" => Radiology_Service::count()],
+            ["name" => "laboratory", "total" => LabService::count()],
+            ["name" => "Radiology", "total" => RadiologyService::count()],
             ["name" => "Consultation", "total" => Consultation_service::count()]
         ];
 

@@ -2,14 +2,24 @@
 
 namespace App\Services\Revamp;
 
+use App\Enums\GeneralEnums;
 use App\Enums\PatientVisitStatusEnums;
 use App\Helpers\ExportHelper;
 use App\Helpers\GeneralHelper;
 use App\Models\BillingLog;
+use App\Models\BillingLogDetail;
 use App\Models\Consultation;
+use App\Models\LabService;
+use App\Models\Laboratory;
+use App\Models\Medication;
 use App\Models\Patient;
 use App\Models\PatientVisit;
+use App\Models\Radiology;
+use App\Models\RadiologyService;
 use App\Models\Service;
+use App\Models\ServiceUnit;
+use App\Models\Surgery;
+use App\Models\Treatment;
 use App\Models\Triage;
 use App\Repositories\Consultation\ConsultationInterface;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -39,7 +49,6 @@ class ConsultationService
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
 
         $records = PatientVisit::query()
-            ->where('status', PatientVisitStatusEnums::VISIT_INITIATED->value)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->whereRelation('patient', 'cardno', 'LIKE', '%' . $request['search_param'] . '%')
@@ -49,13 +58,7 @@ class ConsultationService
                 });
             })
             ->when(!empty($request['patient_status']), function ($query) use ($request) {
-                $query->where('status', $request['patient_status']);
-            })
-            ->when(!empty($request['payment_status']), function ($query) use ($request) {
-                $query->whereRelation('patientBilling', 'payment_status', $request['payment_status']);
-            })
-            ->when(!empty($request['payment_method']), function ($query) use ($request) {
-                $query->whereRelation('patientBilling', 'payment_method', $request['payment_method']);
+                $query->whereRelation('patient', 'status', $request['patient_status']);
             })
             ->when($request->startDate && $request->endDate, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
@@ -67,7 +70,7 @@ class ConsultationService
             })->when(($request['sort_by'] ?? null) === 'date_descending', function ($query) {
                 $query->orderBy('arrival_date', 'DESC');
             })
-            ->with('patient', 'service', 'patientBilling');
+            ->with(['patient', 'triage:id,visit_id,severity']);
 
         if (!empty($request['paginate']) && empty($request['export'])) {
             return $records->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
@@ -87,15 +90,22 @@ class ConsultationService
 
         $awaitingConsultation = (clone $query)->where('status', PatientVisitStatusEnums::TRIAGE->value)->count();
         $completedConsultation = (clone $query)->where('status', PatientVisitStatusEnums::CONSULTATION->value)->count();
-        $awaitingConsultation = (clone $query)->where('status', PatientVisitStatusEnums::CONSULTATION->value)->count();
-        $pendingPatients = PatientVisit::where('status', PatientVisitStatusEnums::VISIT_INITIATED->value)->count();
-        $totalOrders = (clone $query)->count();
-        $patientLog = (clone $query)->count();
+        $awaitingInvestigation = Laboratory::where('status', GeneralEnums::NOT_READY->value)->count();
+        $completedInvestigation = Laboratory::where('status', GeneralEnums::READY->value)->count();
+        $awaitingProcedure = Radiology::where('status', GeneralEnums::NOT_READY->value)->count();
+        $completedProcedure = Radiology::where('status', GeneralEnums::READY->value)->count();
+        $pendingSurgeries = Surgery::where('status', GeneralEnums::PENDING->value)->count();
+        $completedSurgeries = Surgery::where('status', GeneralEnums::COMPLETED->value)->count();
 
         return [
-            'pendingPatients' => $pendingPatients,
-            'totalOrders' => $totalOrders,
-            'patientLog' => $patientLog,
+            'awaitingConsultation' => $awaitingConsultation,
+            'completedConsultation' => $completedConsultation,
+            'awaitingInvestigation' => $awaitingInvestigation,
+            'completedInvestigation' => $completedInvestigation,
+            'awaitingProcedure' => $awaitingProcedure,
+            'completedProcedure' => $completedProcedure,
+            'pendingSurgeries' => $pendingSurgeries,
+            'completedSurgeries' => $completedSurgeries,
         ];
     }
 
@@ -103,14 +113,12 @@ class ConsultationService
     {
         $exportData = $records->map(function ($visit) {
             return [
-                'Firstname'      => $visit->patient->firstname ?? '',
-                'Lastname'       => $visit->patient->lastname ?? '',
-                'Card No'        => $visit->patient->cardno ?? '',
-                'Patient No'     => $visit->patient->patientno ?? '',
-                'Arrival Date'   => $visit->arrival_date ?? '',
-                'Patient Status' => $visit->status ?? '',
-                'Payment Method'  => $visit->patientBilling->payment_method ?? 'N/A',
-                'Payment Status'    => $visit->patientBilling->payment_status ?? 'N/A',
+                'Firstname'      => $visit->patient->firstname ?? 'N/A',
+                'Lastname'       => $visit->patient->lastname ?? 'N/A',
+                'Card No'        => $visit->patient->cardno ?? 'N/A',
+                'Patient No'     => $visit->patient->patientno ?? 'N/A',
+                'Arrival Date'   => $visit->arrival_date ?? 'N/A',
+                'Patient Status' => $visit->patient->status ?? 'N/A',
             ];
         })->toArray();
 
@@ -120,27 +128,17 @@ class ConsultationService
 
         // Choose export format
         if (strtolower($format) === 'csv') {
-            return ExportHelper::streamCsv($exportData, null, 'patients.csv');
+            return ExportHelper::streamCsv($exportData, null, 'patient_consultations.csv');
         }
 
         if (strtolower($format) === 'pdf') {
             $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData])
                 ->setPaper('A1', 'landscape');
 
-            return $pdf->download('patients.pdf');
+            return $pdf->download('patient_consultations.pdf');
         }
 
         throw new \Exception("Invalid export format.");
-    }
-
-    /**
-     * Retrieve all Consultation.
-     *
-     * @return \Illuminate\Database\Eloquent\Collection|static[]
-     */
-    public function all()
-    {
-        return $this->ConsultationInterface->all();
     }
 
     /**
@@ -160,8 +158,8 @@ class ConsultationService
             $request['consulted_by'] = $currentUser->id;
             // Initiate Patient Consultation
             $consultation = Consultation::updateOrCreate(
-                ['visit_id' => $request['visit_id']], // unique key to match on
-                $request->all() // data to update or insert
+                ['visit_id' => $request['visit_id']],
+                $request->all()
             );
 
             $visit->update([
@@ -169,9 +167,11 @@ class ConsultationService
             ]);
 
             $status =    $request['admit_patient'] == 1 ? PatientVisitStatusEnums::ADMITTED->value : PatientVisitStatusEnums::NOT_ADMITTED->value;
+            $req_status =    $request['schedule_a_follow_up'] == true ? GeneralEnums::FOLLOWUPPATIENT->value : $patient->req_status;
             // update patient registaration staus
             $patient->update([
                 'status' => $status,
+                'req_status' => $req_status,
             ]);
 
             return $consultation;
@@ -180,31 +180,329 @@ class ConsultationService
         }
     }
 
-    public function createLabTestConsultation($request)
+    public function createLabTest($request)
+    {
+        try {
+            $currentUser = Auth::user();
+            $visit = PatientVisit::findOrFail($request->visit_id);
+
+            if (empty($request->test) || !is_array($request->test)) {
+                throw new \Exception("No lab tests provided.");
+            }
+
+            // Fetch or create billing log
+            $fetchBilling = BillingLog::firstOrCreate(
+                ['visit_id' => $visit->id],
+                [
+                    'grand_total' => 0,
+                    'patient_id'  => $request->patient_id,
+                ]
+            );
+
+            $labInvestigations = [];
+            $totalPrice = 0;
+
+            foreach ($request->test as $testItem) {
+                $labService = LabService::find($testItem['test_id']);
+                if (!$labService) {
+                    throw new \Exception("Lab test with name {$testItem['test_name']} not found.");
+                }
+
+                // Skip deleting/recreating if already Ready
+                $existingLab = Laboratory::where('visit_id', $visit->id)
+                    ->where('test_id', $labService->id)
+                    ->first();
+
+                if ($existingLab && $existingLab->status === 'Ready') {
+                    $labInvestigations[] = $existingLab;
+                } else {
+                    // delete old lab investigation if not Ready
+                    if ($existingLab) {
+                        $existingLab->delete();
+                    }
+
+                    $labInvestigation = Laboratory::create([
+                        'visit_id'        => $visit->id,
+                        'test_id'         => $labService->id,
+                        'user_id'         => $currentUser->id,
+                        'patient_id'      => $request->patient_id,
+                        'consultation_id' => $request->consultation_id,
+                        'test_name'       => $labService->name,
+                        'department'      => $labService->class,
+                    ]);
+
+                    $labInvestigations[] = $labInvestigation;
+                }
+
+                // Do not touch already Paid items
+                $existingBillingDetail = BillingLogDetail::where('billing_id', $fetchBilling->id)
+                    ->where('lab_service_id', $labService->id)
+                    ->first();
+
+                if (!$existingBillingDetail || $existingBillingDetail->status !== 'Paid') {
+                    // remove old unpaid billing detail if any
+                    if ($existingBillingDetail) {
+                        $fetchBilling->grand_total -= $existingBillingDetail->amount;
+                        $existingBillingDetail->delete();
+                    }
+
+                    // create fresh billing detail
+                    $billingDetail = BillingLogDetail::create([
+                        'billing_id'      => $fetchBilling->id,
+                        'lab_service_id'  => $labService->id,
+                        'service_unit_id' => $labService->service_unit_id,
+                        'item_name'       => $labService->name,
+                        'quantity'        => 1,
+                        'amount'          => $labService->price,
+                    ]);
+
+                    $totalPrice += $labService->price;
+                }
+            }
+
+            // Update billing log with new total (only unpaid tests add up)
+            $fetchBilling->grand_total += $totalPrice;
+            if ($fetchBilling->grand_total < 0) {
+                $fetchBilling->grand_total = 0;
+            }
+            $fetchBilling->save();
+
+            // Update visit status
+            $visit->update([
+                'status' => PatientVisitStatusEnums::INVESTIGATION->value,
+            ]);
+
+            return $labInvestigations;
+        } catch (\Throwable $th) {
+            throw $th;
+        }
+    }
+
+    public function createRadiologyTest($request)
+    {
+        try {
+            $currentUser = Auth::user();
+            $visit = PatientVisit::findOrFail($request->visit_id);
+
+            if (empty($request->test) || !is_array($request->test)) {
+                throw new \Exception("No lab tests provided.");
+            }
+
+            // Fetch or create billing log
+            $fetchBilling = BillingLog::firstOrCreate(
+                ['visit_id' => $visit->id],
+                [
+                    'grand_total' => 0,
+                    'patient_id'  => $request->patient_id,
+                ]
+            );
+
+            $labInvestigations = [];
+            $totalPrice = 0;
+
+            foreach ($request->test as $testItem) {
+                $radService = RadiologyService::find($testItem['test_id']);
+                if (!$radService) {
+                    throw new \Exception("Radiology test with name {$testItem['test_name']} not found.");
+                }
+
+                // Skip deleting/recreating if already Ready
+                $existingLab = Radiology::where('visit_id', $visit->id)
+                    ->where('test_id', $radService->id)
+                    ->first();
+
+                if ($existingLab && $existingLab->status === 'Ready') {
+                    $labInvestigations[] = $existingLab;
+                } else {
+                    // delete old lab investigation if not Ready
+                    if ($existingLab) {
+                        $existingLab->delete();
+                    }
+
+                    $labInvestigation = Radiology::create([
+                        'visit_id'        => $visit->id,
+                        'test_id'         => $radService->id,
+                        'user_id'         => $currentUser->id,
+                        'patient_id'      => $request->patient_id,
+                        'consultation_id' => $request->consultation_id,
+                        'test_name'       => $radService->name,
+                        'department'      => $testItem['department'] ?? $radService->class,
+                    ]);
+
+                    $labInvestigations[] = $labInvestigation;
+                }
+
+                // Do not touch already Paid items
+                $existingBillingDetail = BillingLogDetail::where('billing_id', $fetchBilling->id)
+                    ->where('radiology_service_id', $radService->id)
+                    ->first();
+
+                if (!$existingBillingDetail || $existingBillingDetail->status !== 'Paid') {
+                    // remove old unpaid billing detail if any
+                    if ($existingBillingDetail) {
+                        $fetchBilling->grand_total -= $existingBillingDetail->amount;
+                        $existingBillingDetail->delete();
+                    }
+
+                    // create fresh billing detail
+                    $billingDetail = BillingLogDetail::create([
+                        'billing_id'      => $fetchBilling->id,
+                        'radiology_service_id'  => $radService->id,
+                        'service_unit_id' => $radService->service_unit_id,
+                        'item_name'       => $radService->name,
+                        'quantity'        => 1,
+                        'amount'          => $radService->price,
+                    ]);
+
+                    $totalPrice += $radService->price;
+                }
+            }
+
+            // Update billing log with new total (only unpaid tests add up)
+            $fetchBilling->grand_total += $totalPrice;
+            if ($fetchBilling->grand_total < 0) {
+                $fetchBilling->grand_total = 0;
+            }
+            $fetchBilling->save();
+
+            // Update visit status
+            $visit->update([
+                'status' => PatientVisitStatusEnums::INVESTIGATION->value,
+            ]);
+
+            return $labInvestigations;
+        } catch (\Throwable $th) {
+            throw $th;
+        }
+    }
+
+    public function createTreatment($request)
+    {
+        try {
+            $currentUser = Auth::user();
+            $visit = PatientVisit::findOrFail($request->visit_id);
+
+            if (empty($request->medications) || !is_array($request->medications)) {
+                throw new \Exception("No treatment medications provided.");
+            }
+
+            $serviceUnit = ServiceUnit::where('name', 'Pharmacy')->first();
+            if (empty($serviceUnit)) {
+                throw new \Exception("Pharmacy service unit not found.");
+            }
+
+            // Fetch or create billing log
+            $fetchBilling = BillingLog::firstOrCreate(
+                ['visit_id' => $visit->id],
+                [
+                    'grand_total' => 0,
+                    'patient_id'  => $request->patient_id,
+                ]
+            );
+
+            $drugTreatments = [];
+            $totalPrice = 0;
+
+            foreach ($request->medications as $drugItem) {
+                $drug = Medication::find($drugItem['drug_id']);
+                if (!$drug) {
+                    throw new \Exception("Drug medication with name {$drugItem['drug']} not found.");
+                }
+
+                // Skip deleting/recreating if already Fullfilled
+                $existingDrug = Treatment::where('visit_id', $visit->id)
+                    ->where('drug_id', $drug->id)
+                    ->first();
+
+                if ($existingDrug && $existingDrug->status === 'Fulfilled') {
+                    $drugTreatments[] = $existingDrug;
+                } else {
+                    if ($existingDrug) {
+                        $existingDrug->delete();
+                    }
+
+                    $newTreatment = Treatment::create([
+                        'visit_id'        => $visit->id,
+                        'drug_id'         => $drug->id,
+                        'user_id'         => $currentUser->id,
+                        'patient_id'      => $request->patient_id,
+                        'consultation_id' => $request->consultation_id,
+                        'drug'            => $drugItem['drug'] ?? $drug->medicine_name,
+                        'qualifier'       => $drugItem['qualifier'] ?? null,
+                        'quantity'        => $drugItem['quantity'] ?? 1,
+                        'dosage'          => $drugItem['dosage'] ?? null,
+                        'weight'          => $drugItem['weight'] ?? null,
+                        'period'          => $drugItem['period'] ?? null,
+                        'duration'        => $drugItem['duration'] ?? null,
+                        'route'           => $drugItem['route'] ?? null,
+                        'remark'           => $drugItem['remark'] ?? null,
+                    ]);
+
+                    $drugTreatments[] = $newTreatment;
+                }
+
+                // Do not touch already Paid items
+                $existingBillingDetail = BillingLogDetail::where('billing_id', $fetchBilling->id)
+                    ->where('drug_id', $drug->id)
+                    ->first();
+
+                if (!$existingBillingDetail || $existingBillingDetail->status !== 'Paid') {
+                    // remove old unpaid billing detail if any
+                    if ($existingBillingDetail) {
+                        $fetchBilling->grand_total -= $existingBillingDetail->amount * ($existingBillingDetail->quantity ?? 1);
+                        $existingBillingDetail->delete();
+                    }
+
+                    // create fresh billing detail
+                    $billingDetail = BillingLogDetail::create([
+                        'billing_id'      => $fetchBilling->id,
+                        'drug_id'  => $drug->id,
+                        'service_unit_id' => $serviceUnit->id,
+                        'item_name'       => $drugItem['drug'] ?? $drug->medicine_name,
+                        'quantity'        => $drugItem['quantity'] ?? 1,
+                        'amount'          => $drug->selling_price,
+                    ]);
+
+                    $totalPrice += $drug->selling_price * ($drugItem['quantity'] ?? 1);
+                }
+            }
+
+            // Update billing log with new total (only unpaid treatments add up)
+            $fetchBilling->grand_total += $totalPrice;
+            if ($fetchBilling->grand_total < 0) {
+                $fetchBilling->grand_total = 0;
+            }
+            $fetchBilling->save();
+
+            // Update visit status
+            $visit->update([
+                'status' => PatientVisitStatusEnums::TREATMENT->value,
+            ]);
+
+            return $drugTreatments;
+        } catch (\Throwable $th) {
+            throw $th;
+        }
+    }
+
+    public function createSurgery($request)
     {
         try {
 
             $currentUser = Auth::user();
             $visit = PatientVisit::find($request->visit_id);
-            $patient = Patient::find($request->patient_id);
-            $request['consulted_by'] = $currentUser->id;
-            // Initiate Patient Consultation
-            $consultation = Consultation::updateOrCreate(
-                ['visit_id' => $request['visit_id']], // unique key to match on
-                $request->all() // data to update or insert
+            $request['user_id'] = $currentUser->id;
+            // Initiate Patient surgery
+            $surgery = Surgery::updateOrCreate(
+                ['visit_id' => $request['visit_id']],
+                $request->all()
             );
 
-            $visit->update([
-                'status' => PatientVisitStatusEnums::CONSULTATION->value,
-            ]);
+            // $visit->update([
+            //     'status' => PatientVisitStatusEnums::CONSULTATION->value,
+            // ]);
 
-            $status =    $request['admit_patient'] == 1 ? PatientVisitStatusEnums::ADMITTED->value : PatientVisitStatusEnums::NOT_ADMITTED->value;
-            // update patient registaration staus
-            $patient->update([
-                'status' => $status,
-            ]);
-
-            return $consultation;
+            return $surgery;
         } catch (\Throwable $th) {
             throw $th;
         }

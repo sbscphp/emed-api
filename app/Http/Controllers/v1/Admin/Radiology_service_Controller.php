@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Helpers\ExportHelper;
 use App\Http\Requests\Radiology__Editservice_Request;
 use App\Http\Requests\Radiology_service_Request;
-use App\Models\Radiology_Service;
+use App\Models\RadiologyService;
 use Illuminate\Http\Request;
 use App\Models\ServiceUnit;
 use App\Responser\JsonResponser;
@@ -20,7 +20,7 @@ class Radiology_service_Controller extends Controller
         try {
             $validated = $request->validated();
             $serviceunit = ServiceUnit::where("name", "Radiology")->first() ?? null;
-            $data = Radiology_Service::create([
+            $data = RadiologyService::create([
                 "service_unit_id" => $serviceunit->id,
                 "name" => $validated['name'],
                 "price" => $validated['price']
@@ -37,7 +37,7 @@ class Radiology_service_Controller extends Controller
     {
         try {
             $validated = $request->validated();
-            $service = Radiology_Service::find($validated['id']);
+            $service = RadiologyService::find($validated['id']);
             if ($service) {
                 $service->update($validated);
                 return JsonResponser::send(false, 'edit successfully.', $service);
@@ -57,7 +57,7 @@ class Radiology_service_Controller extends Controller
             ]);
 
             if (!empty($validated['export'])) {
-                $exportData = Radiology_Service::all()->toArray();
+                $exportData = RadiologyService::all()->toArray();
 
                 if ($validated['export'] === 'csv') {
                     return ExportHelper::streamCsv($exportData, null, 'service.csv');
@@ -68,7 +68,7 @@ class Radiology_service_Controller extends Controller
                 }
             }
 
-            $services = Radiology_Service::when(!empty($validated['search']), function ($query) use ($validated) {
+            $services = RadiologyService::when(!empty($validated['search']), function ($query) use ($validated) {
                 $search = $validated['search'];
 
                 $query->where(function ($q) use ($search) {

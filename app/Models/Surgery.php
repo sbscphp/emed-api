@@ -6,19 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class BillingLogDetail extends Model
+class Surgery extends Model
 {
     use HasFactory, SoftDeletes;
     protected $guarded = ['id'];
     protected $connection = 'tenant';
-
-    public function billingLog()
-    {
-        return $this->belongsTo(BillingLog::class, 'billing_id');
-    }
-
-    public function labInvestigation()
-    {
-        return $this->belongsTo(Laboratory::class, 'lab_service_id');
-    }
+    protected $casts = [
+        'team' => 'array',
+    ];
 }

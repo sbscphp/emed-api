@@ -9,10 +9,21 @@ class PatientVisit extends Model
     protected $guarded = ['id'];
     protected $connection = 'tenant';
     protected $table = 'patient_visits';
+    protected $appends = ['acuity'];
 
     public function patient()
     {
         return $this->belongsTo(Patient::class);
+    }
+
+    public function triage()
+    {
+        return $this->hasOne(Triage::class, 'visit_id');
+    }
+
+    public function getAcuityAttribute()
+    {
+        return $this->triage?->severity ?? null;
     }
 
     public function service()

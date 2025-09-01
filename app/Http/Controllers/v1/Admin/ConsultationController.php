@@ -623,9 +623,6 @@ class ConsultationController extends Controller
                 }
             }
 
-
-
-
             foreach ($treatmentIds as $treatmentId) {
                 $dataToLog = [
                     'causer_id' => $user->id,
