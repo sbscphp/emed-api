@@ -13,23 +13,23 @@ return new class extends Migration
     {
         Schema::create('patient_visit_treatment', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->foreignId('patient_id')->constrained('patients')->onDelete('cascade');
-            $table->unsignedBigInteger('admin_id')->nullable();
+            $table->unsignedBigInteger('visit_id')->nullable();
             $table->unsignedBigInteger('consultation_id')->nullable();
-            $table->string('visitno');
+            $table->unsignedBigInteger('drug_id')->nullable();
             $table->string('drug')->nullable();
             $table->string('qualifier')->nullable();
-            $table->string('medication')->nullable();
+            $table->string('quantity')->nullable();
             $table->string('dosage')->nullable();
             $table->string('weight')->nullable();
             $table->string('period')->nullable();
             $table->string('duration')->nullable();
             $table->string('route')->nullable();
             $table->string('remark')->nullable();
-            $table->string('receiptno')->nullable();
+            $table->string('status')->default('Not Fulfilled')->comment('Fulfilled, Not Fulfilled');
             $table->timestamps();
-
-            $table->index('visitno');
+            $table->softDeletes();
         });
     }
 

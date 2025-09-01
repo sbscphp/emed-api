@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Laboratory extends Model
 {
+    use HasFactory, SoftDeletes;
     protected $guarded = ['id'];
     protected $connection = 'tenant';
     protected $table = 'patient_visit_lab';

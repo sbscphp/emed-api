@@ -11,10 +11,12 @@ use App\Repositories\Patient\PatientInterface;
 use App\Helpers\ExportHelper;
 use App\Helpers\GeneralHelper;
 use App\Models\BillingLog;
+use App\Models\BillingLogDetail;
 use App\Models\EmergencyContact;
 use App\Models\NextOfKin;
 use App\Models\PatientVisit;
 use App\Models\Service;
+use App\Models\ServiceUnit;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Spatie\Multitenancy\Models\Tenant;
@@ -370,6 +372,12 @@ class PatientService
             if (empty($service)) {
                 throw new \Exception("Service not found.");
             }
+
+            $serviceUnit = ServiceUnit::where('name', 'Registration')->first();
+            if (empty($service)) {
+                throw new \Exception("Registration service unit not found.");
+            }
+            // Find patient
             $patient = Patient::find($request->patient_id);
             // Initiate Patient visit
             $patientVisit = PatientVisit::create([
@@ -401,10 +409,19 @@ class PatientService
                 'grand_total' => $service->price
             ]);
 
-            // update patient registaration staus
-            $patient->update([
-                'reg_status' => GeneralEnums::FOLLOWUPPATIENT->value,
+            //update billing log details
+            BillingLogDetail::create([
+                'billing_log_id' => $patientBilling->id,
+                'service_unit_id' => $serviceUnit->id,
+                'item_name' => $service->name,
+                'quantity' => 1,
+                'amount' => $service->price
             ]);
+
+            // update patient registaration staus
+            // $patient->update([
+            //     'reg_status' => GeneralEnums::FOLLOWUPPATIENT->value,
+            // ]);
 
             return $patientVisit;
         } catch (\Throwable $th) {

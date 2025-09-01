@@ -2,25 +2,16 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Radiology extends Model
 {
+    use HasFactory, SoftDeletes;
     protected $guarded = ['id'];
     protected $connection = 'tenant';
     protected $table = 'patient_visit_radiology';
-    protected $fillable = [
-        'patient_id',
-        'admin_id',
-        'consultation_id',
-        'visitno',
-        'lab_dept',
-        'test_name',
-        'test_status',
-        'ordered_test',
-        'others',
-        'payment_status',
-    ];
 
     public function patient()
     {

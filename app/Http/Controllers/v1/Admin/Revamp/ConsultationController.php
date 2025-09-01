@@ -9,6 +9,7 @@ use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ConsultationRequest;
 use App\Http\Requests\Admin\LabRequest;
+use App\Http\Requests\Admin\SurgeryRequest;
 use App\Http\Requests\Admin\TreatmentRequest;
 use App\Http\Requests\ConsultationLaborartoryRequest;
 use App\Http\Resources\PatientVistConsultationResource;
@@ -79,7 +80,7 @@ class ConsultationController extends Controller
         }
     }
 
-    public function storeConsultationInfo(ConsultationRequest $request)
+    public function createConsultation(ConsultationRequest $request)
     {
 
         try {
@@ -134,7 +135,7 @@ class ConsultationController extends Controller
         }
     }
 
-    public function createLabTestConsultation(ConsultationLaborartoryRequest $request)
+    public function createLabTest(ConsultationLaborartoryRequest $request)
     {
 
         try {
@@ -152,21 +153,134 @@ class ConsultationController extends Controller
                 return JsonResponser::send(true, 'Patient visit not yet initiated.', null, 200);
             }
 
-            $consultation = $this->consultationService->createLabTestConsultation($request);
+            $labTest = $this->consultationService->createLabTest($request);
 
-            GeneralHelper::storeAuditLog([
-                'causer_id'     => $currentUser->id,
-                'action_id'     => $request->patient_id,
-                'action'        => 'Create',
-                'action_type'   => "Models\Consultation",
-                'log_name'      => "Consultation recorded successfully",
-                'description'   => "{$currentUser->firstname} {$currentUser->lastname} recorded or updated triage details successfully",
-                'module_accessed' => ListModuleEnums::Service
-
-            ]);
-
+            $dataToLog = [
+                'causer_id' => $currentUser->id,
+                'action_id' => $labTest[0]->id,
+                'action' => 'Create',
+                'action_type' => "Models\Laboratory",
+                'log_name' => "Laboratory test created successfully",
+                'description' => "{$currentUser['fullname']} created lab test successfully",
+                'module_accessed' => ListModuleEnums::Laboratory
+            ];
+            GeneralHelper::storeAuditLog($dataToLog);
             DB::connection('tenant')->commit();
-            return JsonResponser::send(false, 'Consultation recorded successfully', $consultation, 201);
+            return JsonResponser::send(false, 'Laboratory test recorded successfully', $labTest, 201);
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+        }
+    }
+
+    public function createRadiologyTest(ConsultationLaborartoryRequest $request)
+    {
+
+        try {
+            DB::connection('tenant')->beginTransaction();
+
+            $currentUser = Auth::user();
+
+            $patient = Patient::find($request->patient_id);
+            if (!$patient) {
+                return JsonResponser::send(true, 'Patient not found.', null, 200);
+            }
+
+            $visit = PatientVisit::find($request->visit_id);
+            if (!$visit) {
+                return JsonResponser::send(true, 'Patient visit not yet initiated.', null, 200);
+            }
+
+            $radiologyTest = $this->consultationService->createRadiologyTest($request);
+
+            $dataToLog = [
+                'causer_id' => $currentUser->id,
+                'action_id' => $radiologyTest[0]->id,
+                'action' => 'Create',
+                'action_type' => "Models\Radiology",
+                'log_name' => "Radiology test created successfully",
+                'description' => "{$currentUser['fullname']} created radiology test successfully",
+                'module_accessed' => ListModuleEnums::Radiology
+            ];
+            GeneralHelper::storeAuditLog($dataToLog);
+            DB::connection('tenant')->commit();
+            return JsonResponser::send(false, 'Radiology test recorded successfully', $radiologyTest, 201);
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+        }
+    }
+
+    public function createTreatment(TreatmentRequest $request)
+    {
+
+        try {
+            DB::connection('tenant')->beginTransaction();
+
+            $currentUser = Auth::user();
+
+            $patient = Patient::find($request->patient_id);
+            if (!$patient) {
+                return JsonResponser::send(true, 'Patient not found.', null, 200);
+            }
+
+            $visit = PatientVisit::find($request->visit_id);
+            if (!$visit) {
+                return JsonResponser::send(true, 'Patient visit not yet initiated.', null, 200);
+            }
+
+            $drugPrescribed = $this->consultationService->createTreatment($request);
+
+            $dataToLog = [
+                'causer_id' => $currentUser->id,
+                'action_id' => $drugPrescribed[0]->id,
+                'action' => 'Create',
+                'action_type' => "Models\Treatment",
+                'log_name' => "Treatment created successfully",
+                'description' => "{$currentUser['fullname']} created treatment successfully",
+                'module_accessed' => ListModuleEnums::PHARMACY
+            ];
+            GeneralHelper::storeAuditLog($dataToLog);
+            DB::connection('tenant')->commit();
+            return JsonResponser::send(false, 'Treatment recorded successfully', $drugPrescribed, 201);
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+        }
+    }
+
+    public function createSurgery(SurgeryRequest $request)
+    {
+
+        try {
+            DB::connection('tenant')->beginTransaction();
+
+            $currentUser = Auth::user();
+
+            $patient = Patient::find($request->patient_id);
+            if (!$patient) {
+                return JsonResponser::send(true, 'Patient not found.', null, 200);
+            }
+
+            $visit = PatientVisit::find($request->visit_id);
+            if (!$visit) {
+                return JsonResponser::send(true, 'Patient visit not yet initiated.', null, 200);
+            }
+
+            $surgery = $this->consultationService->createSurgery($request);
+
+            $dataToLog = [
+                'causer_id' => $currentUser->id,
+                'action_id' => $surgery->id,
+                'action' => 'Create',
+                'action_type' => "Models\Surgery",
+                'log_name' => "Patient surgery created successfully",
+                'description' => "{$currentUser['fullname']} created surgery successfully",
+                'module_accessed' => ListModuleEnums::PHARMACY
+            ];
+            GeneralHelper::storeAuditLog($dataToLog);
+            DB::connection('tenant')->commit();
+            return JsonResponser::send(false, 'Patient surgery recorded successfully', $surgery, 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Internal server error', [], 500, $th);

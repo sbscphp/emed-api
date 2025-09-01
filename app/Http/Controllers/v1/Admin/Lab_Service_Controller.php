@@ -5,7 +5,7 @@ namespace App\Http\Controllers\v1\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Lab_Edit_Service_Request;
 use App\Http\Requests\Lab_Service_Request;
-use App\Models\Lab_service;
+use App\Models\LabService;
 use App\Models\ServiceUnit;
 use Illuminate\Http\Request;
 use App\Responser\JsonResponser;
@@ -19,7 +19,7 @@ class Lab_Service_Controller extends Controller
         try {
             $validated = $request->validated();
             $serviceunit = ServiceUnit::where("name", "Laboratory")->first() ?? null;
-            $data = Lab_service::create([
+            $data = LabService::create([
                 "service_unit_id" => $serviceunit->id,
                 "name" => $validated['name'],
                 "price" => $validated['price'],
@@ -37,7 +37,7 @@ class Lab_Service_Controller extends Controller
     {
         try {
             $validated = $request->validated();
-            $service = Lab_service::find($validated['id']);
+            $service = LabService::find($validated['id']);
             if ($service) {
                 $service->update($validated);
                 return JsonResponser::send(false, 'edit successfully.', $service);
@@ -58,7 +58,7 @@ class Lab_Service_Controller extends Controller
             ]);
 
             if (!empty($validated['export'])) {
-                $exportData = Lab_service::all()->toArray();
+                $exportData = LabService::all()->toArray();
 
                 if ($validated['export'] === 'csv') {
                     return ExportHelper::streamCsv($exportData, null, 'service.csv');
@@ -69,7 +69,7 @@ class Lab_Service_Controller extends Controller
                 }
             }
 
-            $services = Lab_service::when(!empty($validated['search']), function ($query) use ($validated) {
+            $services = LabService::when(!empty($validated['search']), function ($query) use ($validated) {
                 $search = $validated['search'];
 
                 $query->where(function ($q) use ($search) {
@@ -82,7 +82,7 @@ class Lab_Service_Controller extends Controller
 
             return JsonResponser::send(false, 'featch successfully.', [
                 "data" => $services,
-                "total" => Lab_service::sum('price')
+                "total" => LabService::sum('price')
             ]);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'Error  .', [], 500, $th);

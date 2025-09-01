@@ -72,7 +72,7 @@ class PatientVisitService
             })->when(($request['sort_by'] ?? null) === 'date_descending', function ($query) {
                 $query->orderBy('arrival_date', 'DESC');
             })
-            ->with('patient', 'service', 'patientBilling');
+            ->with('patient', 'service', 'patientBilling', 'triage:id,visit_id,severity');
 
         if (!empty($request['paginate']) && empty($request['export'])) {
             return $records->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);

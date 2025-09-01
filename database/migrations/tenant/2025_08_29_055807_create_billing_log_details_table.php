@@ -19,11 +19,12 @@ return new class extends Migration
             $table->unsignedBigInteger('lab_service_id')->nullable();
             $table->unsignedBigInteger('radiology_service_id')->nullable();
             $table->string('item_name')->nullable();
-            $table->integer('quantity')->default(1)->nullable();
+            $table->integer('quantity')->default(1);
             $table->decimal('amount', 10, 2)->default(0.00);
             $table->string('status')->default('Pending')->comment('Paid', 'Part Paid', 'Pending');
             $table->foreign('billing_id')->references('id')->on('billing_logs')->onDelete('cascade');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

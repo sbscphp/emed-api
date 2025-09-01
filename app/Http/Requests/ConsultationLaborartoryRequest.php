@@ -22,16 +22,17 @@ class ConsultationLaborartoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'patient_id' => 'nullable|exists:tenant.patients,id',
-            'patient_visits_id' => 'nullable|exists:tenant.patient_visits,id',
-            // 'laborartory_dept' => 'nullable|string',
-            // 'laborartory_test' => 'nullable|string',
-            'laborartory_dept' => 'nullable|string',
-            // bacteriology,chemical pathology,heamatology,parasitology,anc,other test
-            'laborartory_test' => 'nullable|string',
-            // mircoscopic culture sensitivity,serology,microscopy,widal test,semen analysis,skin snip test
-            'other_laborartory' => 'nullable|string',
-            'order_test' => 'nullable|string',
+            'patient_id' => 'required|exists:tenant.patients,id',
+            'visit_id' => 'required|exists:tenant.patient_visits,id',
+            'consultation_id' => 'required|exists:tenant.patient_visit_consultation,id',
+
+            // test must be an array
+            'test' => 'required|array|min:1',
+
+            // each test item should have an id, name and department
+            'test.*.test_id' => 'required|exists:tenant.lab_services,id',
+            'test.*.test_name' => 'required|string',
+            // 'test.*.department' => 'required|string',
         ];
     }
 }

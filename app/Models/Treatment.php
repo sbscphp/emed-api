@@ -2,33 +2,16 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Treatment extends Model
 {
+    use HasFactory, SoftDeletes;
     protected $guarded = ['id'];
     protected $connection = 'tenant';
     protected $table = 'patient_visit_treatment';
-    protected $fillable = [
-        'patient_id',
-        'admin_id',
-        'consultation_id',
-        // 'pharmacy_id',
-        'visitno',
-        'drug',
-        'qualifier',
-        'medication',
-        'dosage',
-        'weight',
-        'period',
-        'duration',
-        'route',
-        'remark',
-        'receiptno',
-        'drug_id',
-        'is_surgery',
-        'surgery'
-    ];
 
     public function patient()
     {
