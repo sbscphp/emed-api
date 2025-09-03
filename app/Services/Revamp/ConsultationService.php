@@ -16,11 +16,9 @@ use App\Models\Patient;
 use App\Models\PatientVisit;
 use App\Models\Radiology;
 use App\Models\RadiologyService;
-use App\Models\Service;
 use App\Models\ServiceUnit;
 use App\Models\Surgery;
 use App\Models\Treatment;
-use App\Models\Triage;
 use App\Repositories\Consultation\ConsultationInterface;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
@@ -249,7 +247,7 @@ class ConsultationService
                     // create fresh billing detail
                     $billingDetail = BillingLogDetail::create([
                         'billing_id'      => $fetchBilling->id,
-                        'lab_service_id'  => $labService->id,
+                        'lab_test_id'  => $labInvestigation->id,
                         'service_unit_id' => $labService->service_unit_id,
                         'item_name'       => $labService->name,
                         'quantity'        => 1,
@@ -347,7 +345,7 @@ class ConsultationService
                     // create fresh billing detail
                     $billingDetail = BillingLogDetail::create([
                         'billing_id'      => $fetchBilling->id,
-                        'radiology_service_id'  => $radService->id,
+                        'radiology_test_id'  => $labInvestigation->id,
                         'service_unit_id' => $radService->service_unit_id,
                         'item_name'       => $radService->name,
                         'quantity'        => 1,
@@ -456,7 +454,7 @@ class ConsultationService
                     // create fresh billing detail
                     $billingDetail = BillingLogDetail::create([
                         'billing_id'      => $fetchBilling->id,
-                        'drug_id'  => $drug->id,
+                        'treatment_id'  => $newTreatment->id,
                         'service_unit_id' => $serviceUnit->id,
                         'item_name'       => $drugItem['drug'] ?? $drug->medicine_name,
                         'quantity'        => $drugItem['quantity'] ?? 1,

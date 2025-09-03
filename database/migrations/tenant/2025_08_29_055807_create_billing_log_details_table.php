@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('billing_id')->nullable();
             $table->unsignedBigInteger('service_unit_id')->nullable();
-            $table->unsignedBigInteger('drug_id')->nullable();
-            $table->unsignedBigInteger('lab_service_id')->nullable();
-            $table->unsignedBigInteger('radiology_service_id')->nullable();
+            $table->unsignedBigInteger('treatment_id')->nullable();
+            $table->unsignedBigInteger('lab_test_id')->nullable();
+            $table->unsignedBigInteger('radiology_test_id')->nullable();
             $table->string('item_name')->nullable();
             $table->integer('quantity')->default(1);
             $table->decimal('amount', 10, 2)->default(0.00);

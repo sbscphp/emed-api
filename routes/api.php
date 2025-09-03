@@ -34,6 +34,8 @@ use App\Http\Controllers\v1\Admin\Lab_Service_Controller;
 use App\Http\Controllers\v1\Admin\PharmacyServiceController;
 use App\Http\Controllers\v1\Admin\Radiology_service_Controller;
 use App\Http\Controllers\v1\Admin\Revamp\ConsultationController as RevampConsultationController;
+use App\Http\Controllers\v1\Admin\Revamp\PharmacyController as RevampPharmacyController;
+use App\Http\Controllers\v1\GeneralController;
 use App\Services\HivAids\HivAidsService;
 // use App\Models\Immunization;
 use Illuminate\Support\Facades\Route;
@@ -73,8 +75,14 @@ Route::group(["prefix" => "v1"], function () {
         Route::post('/register', [RegistrationController::class, 'onboardTenant']);
     });
 
+
     Route::group(["middleware" => ["auth:api"]], function () {
         Route::group(['middleware' => ["tenant"]], function () {
+            Route::group(['prefix' => 'general'], function () {
+                Route::get('/all/laboratory/test', [GeneralController::class, 'allLabTest']);
+                Route::get('/all/radiology/test', [GeneralController::class, 'allRadiologyTest']);
+                Route::get('/all/medicine', [GeneralController::class, 'allMedicine']);
+            });
             // Route::get('/test_all-records', [RecordManagementController::class, 'allRecords']);
 
 
@@ -144,20 +152,10 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/patient/radiology/test', [RevampConsultationController::class, 'createRadiologyTest']);
                     Route::post('/patient/treatment', [RevampConsultationController::class, 'createTreatment']);
                     Route::post('/patient/surgery', [RevampConsultationController::class, 'createSurgery']);
-                    Route::post('/summary', [RevampConsultationController::class, 'summary']);
-
-                    Route::get("/consultaton_stats", [RevampConsultationController::class, "consultaton_stats"]);
-                    Route::get('/patient/{visitNo}', [RevampConsultationController::class, 'show']);
-                    Route::post('/all/patients', [RevampConsultationController::class, 'getAllVisits']);
-                    Route::post('/patient/{visitNo}/lab', [RevampConsultationController::class, 'storeLabInfo']);
-                    Route::post('/patient/medical/{patientId}', [RevampConsultationController::class, 'storeMedicalHistory']);
-                    Route::post('/patient/family/{patientId}', [RevampConsultationController::class, 'storeFamilyHistory']);
-                    Route::post('/patient/social/{patientId}', [RevampConsultationController::class, 'storeSocialHistory']);
-                    Route::post('/patient/drug/{patientId}', [RevampConsultationController::class, 'storeDrugHistory']);
-                    Route::get('/patient_laboratory/{patientId}', [RevampConsultationController::class, 'patient_laboratory']);
+                    Route::get('/view/{id}', [RevampConsultationController::class, 'viewConsultation']);
                 });
 
-                //Consultant routes
+                // Old Consultant routes
                 Route::group(['prefix' => 'consultant',  'middleware' => 'role.consultant'], function () {
                     Route::get("/consultaton_stats", [ConsultationController::class, "consultaton_stats"]);
                     Route::post('/patients', [ConsultationController::class, 'patientsForConsultation']);
@@ -174,17 +172,41 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/patient_laboratory/{patientId}', [ConsultationController::class, 'patient_laboratory']);
                 });
 
+                // Pharmacy routes
                 Route::group(['prefix' => 'pharmacy', 'middleware' => 'role.pharmacy'], function () {
-                    Route::post('/create', [PharmacyController::class, 'store']);
+                    Route::get('/patient/logs', [RevampPharmacyController::class, 'index']);
+                    Route::get('/patient/treatments', [RevampPharmacyController::class, 'patientTreatments']);
+                    Route::get('/patient/treatment/view/{id}', [RevampPharmacyController::class, 'viewPatientTreatment']);
+                    Route::post('/patient/treatment/fulfill', [RevampPharmacyController::class, 'fulfillTreatment']);
+                    Route::get('/lists', [RevampPharmacyController::class, 'allPharmacies']);
+                    Route::post('/create', [RevampPharmacyController::class, 'createPharmacy']);
+                    Route::get('/view/{id}', [RevampPharmacyController::class, 'viewPharmacy']);
+                    Route::put('/update/{id}', [RevampPharmacyController::class, 'updatePharmacy']);
+                    Route::put('/toggle-status/{id}', [RevampPharmacyController::class, 'togglePharmacyStatus']);
+                    Route::delete('/delete/{id}', [RevampPharmacyController::class, 'destroyPharmacy']);
+
+                    Route::post('/supplies', [PharmacySupplyController::class, 'store']);
+                    Route::post('/all/supplies', [PharmacySupplyController::class, 'index']);
+                    Route::get('/supplies/{id}', [PharmacySupplyController::class, 'show']);
+
+                    Route::post('/request', [PharmacyRequestController::class, 'store']);
+                    Route::post('/all/request', [PharmacyRequestController::class, 'index']);
+                    Route::get('/request/{id}', [PharmacyRequestController::class, 'show']);
+                    Route::get('users/pharmacists', [UserController::class, 'getPharmacists']);
+                });
+
+                // Old Pharmacy routes
+                Route::group(['prefix' => 'pharmacy', 'middleware' => 'role.pharmacy'], function () {
                     Route::post('/lists', [PharmacyController::class, 'index']);
+                    Route::get('/stats', [PharmacyController::class, 'pharmacyDashboardStats']);
+                    Route::post('/create', [PharmacyController::class, 'store']);
                     Route::post('/patient/lists', [PharmacyController::class, 'treatmentLogs']);
                     Route::get('/patient/{patientId}', [PharmacyController::class, 'showPatientTreatment']);
                     Route::post('/patient/fulfill', [PharmacyController::class, 'fulfillTreatment']);
                     Route::get('/list/{id}', [PharmacyController::class, 'show']);
-                    Route::put('/update/{id}', [PharmacyController::class, 'update']);
-                    Route::delete('/delete/{id}', [PharmacyController::class, 'destroy']);
+                    // Route::put('/update/{id}', [PharmacyController::class, 'update']);
+                    // Route::delete('/delete/{id}', [PharmacyController::class, 'destroy']);
                     Route::patch('/{id}/toggle-status', [PharmacyController::class, 'toggleStatus']);
-                    Route::get('/stats', [PharmacyController::class, 'pharmacyDashboardStats']);
                     Route::post('/supplies', [PharmacySupplyController::class, 'store']);
                     Route::post('/all/supplies', [PharmacySupplyController::class, 'index']);
                     Route::get('/supplies/{id}', [PharmacySupplyController::class, 'show']);
