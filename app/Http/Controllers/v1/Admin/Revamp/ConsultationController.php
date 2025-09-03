@@ -3,41 +3,19 @@
 namespace App\Http\Controllers\v1\Admin\Revamp;
 
 use App\Enums\ListModuleEnums;
-use App\Enums\PatientVisitStageEnums;
-use App\Helpers\ExportHelper;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ConsultationRequest;
-use App\Http\Requests\Admin\LabRequest;
 use App\Http\Requests\Admin\SurgeryRequest;
 use App\Http\Requests\Admin\TreatmentRequest;
 use App\Http\Requests\ConsultationLaborartoryRequest;
-use App\Http\Resources\PatientVistConsultationResource;
-use App\Http\Resources\PatientVistResource;
 use App\Models\Consultation;
-use App\Models\DrugHistory;
-use App\Models\FamilyHistory;
-use App\Models\Laboratory;
-use App\Models\MedicalHistory;
-use App\Models\Medicine_Log;
 use App\Models\Notification;
 use App\Models\Patient;
 use App\Models\PatientVisit;
-use App\Models\Radiology;
-use App\Models\SocialHistory;
-use App\Models\Treatment;
 use App\Models\User;
 use App\Responser\JsonResponser;
-use App\Services\Admission\AdmissionService;
-use App\Services\Appointment\AppointmentService;
 use App\Services\Revamp\ConsultationService;
-use App\Services\Laboratory\LaboratoryService;
-use App\Services\Patient\PatientService;
-use App\Services\PatientVisit\PatientVisitService;
-use App\Services\Radiology\RadiologyService;
-use App\Services\Treatment\TreatmentService;
-use App\Services\User\UserService;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -129,6 +107,36 @@ class ConsultationController extends Controller
 
             DB::connection('tenant')->commit();
             return JsonResponser::send(false, 'Consultation recorded successfully', $consultation, 201);
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+        }
+    }
+
+    public function viewConsultation($id)
+    {
+
+        try {
+            DB::connection('tenant')->beginTransaction();
+
+            $consultation = Consultation::where('visit_id', $id)->with(['patient', 'patientVisit', 'labTest', 'radiologyTest', 'treatment', 'consultedDoctor'])->first();
+            if (!$consultation) {
+                return JsonResponser::send(true, 'Record not found.', null, 200);
+            }
+
+            // Manually fetch dispensed user from landlord DB
+            if ($consultation->consulted_by) {
+                $consultedUser = User::on('landlord')
+                    ->select('id', 'fullname', 'email')
+                    ->find($consultation->consulted_by);
+
+                $consultation->setAttribute('consultedBy', $consultedUser);
+            } else {
+                $consultation->setAttribute('consultedBy', null);
+            }
+
+            DB::connection('tenant')->commit();
+            return JsonResponser::send(false, 'Record found successfully', $consultation, 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Internal server error', [], 500, $th);

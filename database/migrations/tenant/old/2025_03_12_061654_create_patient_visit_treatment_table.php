@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('patient_id')->constrained('patients')->onDelete('cascade');
             $table->unsignedBigInteger('visit_id')->nullable();
             $table->unsignedBigInteger('consultation_id')->nullable();
+            $table->unsignedBigInteger('dispensed_by')->nullable();
             $table->unsignedBigInteger('drug_id')->nullable();
             $table->string('drug')->nullable();
             $table->string('qualifier')->nullable();
@@ -27,6 +28,10 @@ return new class extends Migration
             $table->string('duration')->nullable();
             $table->string('route')->nullable();
             $table->string('remark')->nullable();
+            $table->date('dispensing_date');
+            $table->integer('quantity_dispensed');
+            $table->string('batch_number');
+            $table->date('expiry_date');
             $table->string('status')->default('Not Fulfilled')->comment('Fulfilled, Not Fulfilled');
             $table->timestamps();
             $table->softDeletes();

@@ -10,16 +10,6 @@ class PharmacyRequest extends Model
     use HasFactory;
     protected $guarded = ['id'];
     protected $connection = 'tenant';
-    protected $fillable = [
-        'pharmacy_id',
-        'requested_by',
-        'requested_date',
-        'urgency_level',
-        'product',
-        'category',
-        'quantity_requested',
-        'reason_for_request',
-    ];
 
     public function pharmacy()
     {

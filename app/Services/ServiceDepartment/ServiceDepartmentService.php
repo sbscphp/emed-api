@@ -2,6 +2,7 @@
 
 namespace App\Services\ServiceDepartment;
 
+use App\Enums\GeneralEnums;
 use App\Enums\ListModuleEnums;
 use App\Helpers\GeneralHelper;
 use App\Models\BillingLog;
@@ -345,9 +346,9 @@ class ServiceDepartmentService
             $revenue_outcome += $ans;
         }
 
-        $new = Patient::where('patient_type', 'new')->count();
-        $existing = Patient::where('patient_type', 'existing')->count();
-        $referal = Patient::where('patient_type', 'referal')->count();
+        $new = Patient::where('reg_status', GeneralEnums::NEW->value)->count();
+        $existing = Patient::where('reg_status', GeneralEnums::EXISTING->value)->count();
+        $referal = Patient::whereNotNull('referral')->count();
 
         $services = ServiceUnit::all();
         $depart = [];

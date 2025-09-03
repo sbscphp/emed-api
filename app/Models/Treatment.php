@@ -13,9 +13,29 @@ class Treatment extends Model
     protected $connection = 'tenant';
     protected $table = 'patient_visit_treatment';
 
+    public function visit()
+    {
+        return $this->belongsTo(PatientVisit::class, 'visit_id', 'id');
+    }
+
     public function patient()
     {
         return $this->belongsTo(Patient::class, 'patient_id', 'id');
+    }
+
+    public function medication()
+    {
+        return $this->belongsTo(Medication::class, 'drug_id', 'id');
+    }
+
+    public function billingLogDetail()
+    {
+        return $this->belongsTo(BillingLogDetail::class, 'id', 'treatment_id');
+    }
+
+    public function dispensedUser()
+    {
+        return $this->belongsTo(User::class, 'dispensed_by', 'id');
     }
 
     public function pharmacy()
@@ -26,11 +46,6 @@ class Treatment extends Model
     public function fulfillment()
     {
         return $this->hasOne(TreatmentFulfillment::class);
-    }
-
-    public function visit()
-    {
-        return $this->belongsTo(PatientVisit::class, 'visitno', 'visitno');
     }
 
     public function billingLogs()

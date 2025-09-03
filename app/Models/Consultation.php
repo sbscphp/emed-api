@@ -19,9 +19,19 @@ class Consultation extends Model
         return $this->belongsTo(Patient::class);
     }
 
-    public function lab()
+    public function patientVisit()
+    {
+        return $this->belongsTo(PatientVisit::class, 'visit_id');
+    }
+
+    public function labTest()
     {
         return $this->hasMany(Laboratory::class);
+    }
+
+    public function radiologyTest()
+    {
+        return $this->hasMany(Radiology::class);
     }
 
     public function treatment()
@@ -29,17 +39,8 @@ class Consultation extends Model
         return $this->hasMany(Treatment::class);
     }
 
-    // public function patientVisit()
-    // {
-    //     return $this->belongsTo(PatientVisit::class, 'visitno', 'visitno');
-    // }
-
-    public function patientVisit()
+    public function consultedDoctor()
     {
-        return $this->belongsTo(PatientVisit::class, 'visitno', 'visitno');
-    }
-    public function pharmacist()
-    {
-        return $this->belongsTo(User::class, 'admin_id');
+        return $this->belongsTo(User::class, 'consulted_by');
     }
 }
