@@ -82,6 +82,7 @@ Route::group(["prefix" => "v1"], function () {
                 Route::get('/all/laboratory/test', [GeneralController::class, 'allLabTest']);
                 Route::get('/all/radiology/test', [GeneralController::class, 'allRadiologyTest']);
                 Route::get('/all/medicine', [GeneralController::class, 'allMedicine']);
+                Route::get('/all/services', [GeneralController::class, 'allService']);
             });
             // Route::get('/test_all-records', [RecordManagementController::class, 'allRecords']);
 
@@ -192,6 +193,9 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/request', [PharmacyRequestController::class, 'store']);
                     Route::post('/all/request', [PharmacyRequestController::class, 'index']);
                     Route::get('/request/{id}', [PharmacyRequestController::class, 'show']);
+                    Route::put('/request/update/{id}', [PharmacyRequestController::class, 'updateRequest']);
+                    Route::put('/request/supply/{id}', [PharmacyRequestController::class, 'supplyRequest']);
+                    Route::delete('/request/delete/{id}', [PharmacyRequestController::class, 'deleteRequest']);
                     Route::get('users/pharmacists', [UserController::class, 'getPharmacists']);
                 });
 

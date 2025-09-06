@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Admin\Revamp;
 
+use App\Enums\GeneralEnums;
 use App\Enums\ListModuleEnums;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
@@ -13,9 +14,11 @@ use App\Models\Consultation;
 use App\Models\Notification;
 use App\Models\Patient;
 use App\Models\PatientVisit;
+use App\Models\PharmacyRequest;
 use App\Models\User;
 use App\Responser\JsonResponser;
 use App\Services\Revamp\ConsultationService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -235,6 +238,23 @@ class ConsultationController extends Controller
             $visit = PatientVisit::find($request->visit_id);
             if (!$visit) {
                 return JsonResponser::send(true, 'Patient visit not yet initiated.', null, 200);
+            }
+
+            $drug = PharmacyRequest::with('inventory')->find($request->drug_id);
+            if (!$drug) {
+                return JsonResponser::send(true, 'Drug not found.', [], 422);
+            }
+
+            if ($drug->inventory->expiry_date && Carbon::parse($drug->inventory->expiry_date)->isPast()) {
+                return JsonResponser::send(true, 'Drug expired', [], 422);
+            }
+
+            if ($drug->stock_level == GeneralEnums::OUT_OF_STOCK->value) {
+                return JsonResponser::send(true, 'Drug is not available in stock.', [], 422);
+            }
+
+            if ($request->quantity > $drug->quantity_available) {
+                return JsonResponser::send(true, 'Drug prescribed quantity is greater than quantity available', [], 422);
             }
 
             $drugPrescribed = $this->consultationService->createTreatment($request);

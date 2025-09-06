@@ -14,6 +14,7 @@ use App\Models\Laboratory;
 use App\Models\Medication;
 use App\Models\Patient;
 use App\Models\PatientVisit;
+use App\Models\PharmacyRequest;
 use App\Models\Radiology;
 use App\Models\RadiologyService;
 use App\Models\ServiceUnit;
@@ -58,6 +59,9 @@ class ConsultationService
             ->when(!empty($request['patient_status']), function ($query) use ($request) {
                 $query->whereRelation('patient', 'status', $request['patient_status']);
             })
+            ->when(!empty($request['service']), function ($query) use ($request) {
+                $query->where('service_id', $request['service']);
+            })
             ->when($request->startDate && $request->endDate, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
             })
@@ -68,7 +72,7 @@ class ConsultationService
             })->when(($request['sort_by'] ?? null) === 'date_descending', function ($query) {
                 $query->orderBy('arrival_date', 'DESC');
             })
-            ->with(['patient', 'triage:id,visit_id,severity']);
+            ->with(['patient', 'service', 'triage:id,visit_id,severity']);
 
         if (!empty($request['paginate']) && empty($request['export'])) {
             return $records->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
@@ -234,7 +238,7 @@ class ConsultationService
 
                 // Do not touch already Paid items
                 $existingBillingDetail = BillingLogDetail::where('billing_id', $fetchBilling->id)
-                    ->where('lab_service_id', $labService->id)
+                    ->where('lab_test_id', $existingLab->id)
                     ->first();
 
                 if (!$existingBillingDetail || $existingBillingDetail->status !== 'Paid') {
@@ -332,7 +336,7 @@ class ConsultationService
 
                 // Do not touch already Paid items
                 $existingBillingDetail = BillingLogDetail::where('billing_id', $fetchBilling->id)
-                    ->where('radiology_service_id', $radService->id)
+                    ->where('radiology_test_id', $existingLab->id)
                     ->first();
 
                 if (!$existingBillingDetail || $existingBillingDetail->status !== 'Paid') {
@@ -402,9 +406,9 @@ class ConsultationService
             $totalPrice = 0;
 
             foreach ($request->medications as $drugItem) {
-                $drug = Medication::find($drugItem['drug_id']);
+                $drug = PharmacyRequest::find($drugItem['drug_id']);
                 if (!$drug) {
-                    throw new \Exception("Drug medication with name {$drugItem['drug']} not found.");
+                    throw new \Exception("Drug with name {$drugItem['drug']} not found.");
                 }
 
                 // Skip deleting/recreating if already Fullfilled
@@ -425,7 +429,7 @@ class ConsultationService
                         'user_id'         => $currentUser->id,
                         'patient_id'      => $request->patient_id,
                         'consultation_id' => $request->consultation_id,
-                        'drug'            => $drugItem['drug'] ?? $drug->medicine_name,
+                        'drug'            => $drugItem['drug'] ?? $drug->product,
                         'qualifier'       => $drugItem['qualifier'] ?? null,
                         'quantity'        => $drugItem['quantity'] ?? 1,
                         'dosage'          => $drugItem['dosage'] ?? null,
@@ -441,7 +445,7 @@ class ConsultationService
 
                 // Do not touch already Paid items
                 $existingBillingDetail = BillingLogDetail::where('billing_id', $fetchBilling->id)
-                    ->where('drug_id', $drug->id)
+                    ->where('treatment_id', $existingDrug->id)
                     ->first();
 
                 if (!$existingBillingDetail || $existingBillingDetail->status !== 'Paid') {
@@ -456,12 +460,12 @@ class ConsultationService
                         'billing_id'      => $fetchBilling->id,
                         'treatment_id'  => $newTreatment->id,
                         'service_unit_id' => $serviceUnit->id,
-                        'item_name'       => $drugItem['drug'] ?? $drug->medicine_name,
+                        'item_name'       => $drugItem['drug'] ?? $drug->product,
                         'quantity'        => $drugItem['quantity'] ?? 1,
-                        'amount'          => $drug->selling_price,
+                        'amount'          => $drug->inventory->medication ? $drug->inventory->medication->selling_price : 0,
                     ]);
 
-                    $totalPrice += $drug->selling_price * ($drugItem['quantity'] ?? 1);
+                    $totalPrice += $drug->inventory->medication->selling_price * ($drugItem['quantity'] ?? 1);
                 }
             }
 

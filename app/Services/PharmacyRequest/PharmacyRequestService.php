@@ -57,6 +57,11 @@ class PharmacyRequestService
         return $this->PharmacyRequestInterface->update($data, $id);
     }
 
+    public function supply(array $data, $id)
+    {
+        return $this->PharmacyRequestInterface->supply($data, $id);
+    }
+
 
     /**
      * Delete a PharmacyRequest by heir ID.

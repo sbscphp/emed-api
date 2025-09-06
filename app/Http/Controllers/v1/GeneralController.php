@@ -4,8 +4,9 @@ namespace App\Http\Controllers\v1;
 
 use App\Http\Controllers\Controller;
 use App\Models\LabService;
-use App\Models\Medication;
+use App\Models\PharmacyRequest;
 use App\Models\RadiologyService;
+use App\Models\Service;
 use App\Responser\JsonResponser;
 
 class GeneralController extends Controller
@@ -35,7 +36,18 @@ class GeneralController extends Controller
     public function allMedicine()
     {
         try {
-            $record = Medication::orderBy('id', 'DESC')->get();
+            $record = PharmacyRequest::with('pharmacy')->orderBy('id', 'DESC')->get();
+
+            return JsonResponser::send(false, 'Record found successfully', $record, 200);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
+    public function allService()
+    {
+        try {
+            $record = Service::orderBy('id', 'ASC')->get();
 
             return JsonResponser::send(false, 'Record found successfully', $record, 200);
         } catch (\Throwable $th) {

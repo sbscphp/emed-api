@@ -90,7 +90,7 @@ class PharmacyController extends Controller
         try {
             DB::connection('tenant')->beginTransaction();
 
-            $treatment = Treatment::with('medication.pharmacy', 'billingLogDetail')->find($id);
+            $treatment = Treatment::with('pharmacyRequest.pharmacy', 'billingLogDetail')->find($id);
             if (!$treatment) {
                 return JsonResponser::send(true, 'Record not found.', null, 200);
             }
@@ -135,19 +135,26 @@ class PharmacyController extends Controller
                 return JsonResponser::send(true, 'This treatment has not been paid for.', [], 422);
             }
 
-            // $drug = ModelsPharmacyRequest::find($treatment->medication_id);
-            // if (!$drug) {
-            //     return JsonResponser::send(true, 'Medication not found.', [], 422);
-            // }
+            if ($request->quantity_dispensed > $treatment->quantity) {
+                return JsonResponser::send(true, 'Treatment dispensed quantity is greater than quantity prescribed.', [], 422);
+            }
 
-            // if ($drug->medicine_status != GeneralEnums::AVAILABLE->value) {
-            //     return JsonResponser::send(true, 'Drug for this medication is not available in stock.', [], 422);
-            // }
+            $drug = ModelsPharmacyRequest::with('inventory')->find($treatment->drug_id);
+            if (!$drug) {
+                return JsonResponser::send(true, 'Drug not found.', [], 422);
+            }
 
-            // if ($request->quantity_dispensed > $drug->quantity) {
-            //     return JsonResponser::send(true, 'Quantity dispensed is greater than quantity available in stock.', [], 422);
-            // }
+            if ($drug->inventory->expiry_date && Carbon::parse($drug->inventory->expiry_date)->isPast()) {
+                return JsonResponser::send(true, 'Drug expired', [], 422);
+            }
 
+            if ($drug->stock_level == GeneralEnums::OUT_OF_STOCK->value) {
+                return JsonResponser::send(true, 'Drug is not available in stock.', [], 422);
+            }
+
+            if ($request->quantity_dispensed > $drug->quantity_available) {
+                return JsonResponser::send(true, 'Drug dispense quantity is greater than quantity available', [], 422);
+            }
 
             $record = $this->pharmacyService->fulfillTreatment($request);
 

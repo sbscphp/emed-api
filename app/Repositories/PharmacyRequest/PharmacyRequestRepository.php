@@ -2,8 +2,11 @@
 
 namespace App\Repositories\PharmacyRequest;
 
+use App\Enums\GeneralEnums;
+use App\Models\Inventory;
 use App\Models\PharmacyRequest;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class PharmacyRequestRepository implements PharmacyRequestInterface
 {
@@ -45,6 +48,8 @@ class PharmacyRequestRepository implements PharmacyRequestInterface
      */
     public function create(array $data)
     {
+        $currentUser = Auth::user();
+        $data['requested_by'] = $currentUser->id;
         return PharmacyRequest::create($data);
     }
 
@@ -59,6 +64,26 @@ class PharmacyRequestRepository implements PharmacyRequestInterface
     public function update(array $data, $id)
     {
         $record = PharmacyRequest::findOrFail($id);
+        $record->update($data);
+        return $record;
+    }
+
+    public function supply(array $data, $id)
+    {
+        $record = PharmacyRequest::findOrFail($id);
+        $currentUser = Auth::user();
+        $record->supplied_by = $currentUser->id;
+        
+        $inventoryDrug = Inventory::find($record->inventory_id);
+        // Update drug stock
+        $qtyAvailable = max(0, $inventoryDrug->quantity - $data['quantity_supplied']);
+        $inventoryDrug->quantity = $qtyAvailable;
+        if ($qtyAvailable == 0) {
+            $inventoryDrug->status =  GeneralEnums::OUT_OF_STOCK->value;
+        }
+        $inventoryDrug->save();
+        
+        $record->quantity_available = $record->quantity_available + $data['quantity_supplied'];
         $record->update($data);
         return $record;
     }

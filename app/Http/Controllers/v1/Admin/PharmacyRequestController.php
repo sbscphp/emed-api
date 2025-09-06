@@ -3,11 +3,14 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Enums\GeneralEnums;
 use App\Helpers\ExportHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\CreatePharmacyRequest;
+use App\Models\PharmacyRequest;
 use App\Responser\JsonResponser;
 use App\Services\PharmacyRequest\PharmacyRequestService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class PharmacyRequestController extends Controller
@@ -73,5 +76,43 @@ class PharmacyRequestController extends Controller
         config(['database.default' => 'tenant']);
         $data = $this->service->find($id);
         return JsonResponser::send(false, 'Pharmacy request retrieved.', $data);
+    }
+
+    public function supplyRequest(Request $request, $id)
+    {
+        config(['database.default' => 'tenant']);
+        $drug = PharmacyRequest::with('inventory')->find($id);
+        if (!$drug) {
+            return JsonResponser::send(true, 'Drug not found.', [], 422);
+        }
+
+        if ($drug->inventory->expiry_date && Carbon::parse($drug->inventory->expiry_date)->isPast()) {
+            return JsonResponser::send(true, 'Drug expired', [], 422);
+        }
+
+        if ($request->quantity_supplied > $drug->inventory->quantity) {
+            return JsonResponser::send(true, 'Quantity supplied is greater than quantity available in inventory stock', [], 422);
+        }
+
+        if ($request->quantity_supplied > $drug->quantity_requested) {
+            return JsonResponser::send(true, 'Quantity supplied is greater than quantity requested', [], 422);
+        }
+
+        $data = $this->service->supply($request->all(), $id);
+        return JsonResponser::send(false, 'Pharmacy request supplied successfully.', $data);
+    }
+
+    public function updateRequest(Request $request, $id)
+    {
+        config(['database.default' => 'tenant']);
+        $data = $this->service->update($request->all(), $id);
+        return JsonResponser::send(false, 'Pharmacy request updated successfully.', $data);
+    }
+
+    public function deleteRequest($id)
+    {
+        config(['database.default' => 'tenant']);
+        $this->service->delete($id);
+        return JsonResponser::send(false, 'Pharmacy request deleted successfully.');
     }
 }

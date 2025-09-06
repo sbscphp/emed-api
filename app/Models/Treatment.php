@@ -23,9 +23,9 @@ class Treatment extends Model
         return $this->belongsTo(Patient::class, 'patient_id', 'id');
     }
 
-    public function medication()
+    public function pharmacyRequest()
     {
-        return $this->belongsTo(Medication::class, 'drug_id', 'id');
+        return $this->belongsTo(PharmacyRequest::class, 'drug_id', 'id');
     }
 
     public function billingLogDetail()

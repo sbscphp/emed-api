@@ -9,6 +9,9 @@ use App\Services\Inventory\InventoryService;
 use App\Helpers\GeneralHelper;
 use App\Http\Requests\Admin\StoreInventoryRequest;
 use App\Http\Requests\Admin\UpdateInventoryRequest;
+use App\Models\Inventory;
+use App\Models\Medication;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -62,6 +65,20 @@ class InventoryController extends Controller
 
         try {
             $currentUser = Auth::user();
+            if ($request->filled('inventory_id')) {
+                $inventory = Inventory::find($request->inventory_id);
+                if (!$inventory) {
+                    return JsonResponser::send(true, 'Inventory drug not found.', [], 422);
+                }
+
+                if ($inventory->expiry_date && Carbon::parse($inventory->expiry_date)->isPast()) {
+                    return JsonResponser::send(true, 'Inventory drug expired', [], 422);
+                }
+
+                if ($request->quantity_requested > $inventory->quantity) {
+                    return JsonResponser::send(true, 'Quantity requested is greater than quantity available in inventory stock', [], 422);
+                }
+            }
             $validated = array_merge($request->validated(), [
                 'created_by' => $currentUser->id,
             ]);
@@ -93,6 +110,13 @@ class InventoryController extends Controller
 
         try {
             $currentUser = Auth::user();
+
+            if ($request->filled('medication_id')) {
+                $drug = Medication::find($request->medication_id);
+                if (!$drug) {
+                    return JsonResponser::send(true, 'Medication not found.', [], 422);
+                }
+            }
             $validated = array_merge($request->validated(), [
                 'updated_by' => $currentUser->id,
             ]);

@@ -9,7 +9,12 @@ use App\Helpers\GeneralHelper;
 use App\Models\PatientVisit;
 use App\Repositories\PatientVisit\PatientVisitInterface;
 use App\Models\BillingLog;
+use App\Models\CounsellingDetail;
+use App\Models\DeliveryDetail;
+use App\Models\DosageAdministration;
+use App\Models\Immunization;
 use App\Models\Patient;
+use App\Models\Surgery;
 use App\Models\Triage;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
@@ -95,25 +100,19 @@ class PatientVisitService
         $admitted = (clone $query)->where('status', PatientVisitStatusEnums::ADMITTED->value)->count();
         $discharged = (clone $query)->where('status', PatientVisitStatusEnums::DISCHARGED->value)->count();
 
-        $completedSugery = 0;
-        $cancelled = 0;
+        $completedSugery = Surgery::where('status', GeneralEnums::COMPLETED)->count();
+        $cancelledSugery = Surgery::where('status', GeneralEnums::CANCELLED)->count();
 
         $triagePatient = (clone $query)->where('status', PatientVisitStatusEnums::TRIAGE->value)->count();
-        $emergencyPrescription = 0;
-        $medicationDispensedToday = 0;
-        $routineMedication = 0;
-        $criticalStockAlert = 0;
+        $totalImmunization = Immunization::count();
+        $vaccineAdministered = DosageAdministration::count();
 
-        $totalTest = 0;
-        $pendingTest = 0;
-        $completedTest = 0;
-        $failedTest = 0;
+        $awaitingCounselling = (clone $query)->where('status', PatientVisitStatusEnums::TRIAGE->value)->count();
+        $totalCounselled = CounsellingDetail::count();
 
-        $totalDeliveriesToday = 0;
-        $cSection = 0;
-        $normalBirth = 0;
-        $antenatalCheckup = 0;
-
+        $totalDeliveries = DeliveryDetail::count();
+        $totalCSectionDeliveries = DeliveryDetail::where('delivery_mode', 'C-Section')->count();
+        $totalNormalDeliveries = DeliveryDetail::where('delivery_mode', 'Spontanteous Vaginal Delivery')->count();
         $patientLog = (clone $query)->count();
 
         return [
@@ -123,23 +122,18 @@ class PatientVisitService
             'discharged' => $discharged,
 
             'completedSugery' => $completedSugery,
-            'cancelled' => $cancelled,
+            'cancelledSugery' => $cancelledSugery,
 
             'triagePatient' => $triagePatient,
-            'emergencyPrescription' => $emergencyPrescription,
-            'medicationDispensedToday' => $medicationDispensedToday,
-            'routineMedication' => $routineMedication,
-            'criticalStockAlert' => $criticalStockAlert,
+            'totalImmunization' => $totalImmunization,
+            'vaccineAdministered' => $vaccineAdministered,
 
-            'totalTest' => $totalTest,
-            'pendingTest' => $pendingTest,
-            'completedTest' => $completedTest,
-            'failedTest' => $failedTest,
+            'awaitingCounselling' => $awaitingCounselling,
+            'totalCounselled' => $totalCounselled,
 
-            'totalDeliveriesToday' => $totalDeliveriesToday,
-            'cSection' => $cSection,
-            'normalBirth' => $normalBirth,
-            'antenatalCheckup' => $antenatalCheckup,
+            'totalDeliveries' => $totalDeliveries,
+            'totalCSectionDeliveries' => $totalCSectionDeliveries,
+            'totalNormalDeliveries' => $totalNormalDeliveries,
 
             'patientLog' => $patientLog,
         ];

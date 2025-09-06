@@ -22,8 +22,9 @@ class UpdateInventoryRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'medication_id' => 'required_without:item_name|string',
+            'item_name'     => 'required_without:medication_id|string',
             'batch_no' => 'sometimes|required|string',
-            'item_name' => 'sometimes|required|string',
             // 'medicine_type' => 'sometimes|required|string',
             'medicine_type_id' => 'required|exists:tenant.medicine_types,id',
             'quantity' => 'sometimes|required|integer|min:0',
