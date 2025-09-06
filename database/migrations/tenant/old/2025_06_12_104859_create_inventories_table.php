@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('inventories', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('medication_id')->nullable();
             $table->string('batch_no');
             $table->string('item_name');
             $table->foreignId('medicine_type_id')->constrained('medicine_types')->onDelete('cascade');

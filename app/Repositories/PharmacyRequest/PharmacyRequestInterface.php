@@ -37,6 +37,9 @@ interface PharmacyRequestInterface
     public function update(array $data, $id);
 
 
+    public function supply(array $data, $id);
+
+
     /**
      * Delete an existing PharmacyRequest from the database.
      * 

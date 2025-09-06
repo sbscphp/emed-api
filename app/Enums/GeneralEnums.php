@@ -30,4 +30,8 @@ enum GeneralEnums: string
     case AVAILABLE = "Available";
     case PAID = "Paid";
     case PART_PAID = "Part Paid";
+    case IN_STOCK = "In stock";
+    case OUT_OF_STOCK = "Out Of Stock";
+    case LOW_STOCK = "Low Stock";
+    case CANCELLED = "Cancelled";
 }

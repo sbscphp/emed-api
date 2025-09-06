@@ -216,15 +216,22 @@ class RecordManagementController extends Controller
             // Check if the patient already has a visit today
             $patientVisit = PatientVisit::where('patient_id', $request->patient_id)
                 ->where('service_id', $request->service_id)
-                // ->where('stage', $request->stage)
-                ->where('status', '=', PatientVisitStatusEnums::COMPLETED->value)
-                ->whereDate('created_at', Carbon::today())
+                ->where('status', '!=', PatientVisitStatusEnums::COMPLETED->value)
+                // ->whereDate('created_at', Carbon::today())
                 ->first();
 
             if ($patientVisit) {
-                return JsonResponser::send(false, 'A visit is already ongoing for this patient.', null, 422);
+                if ($request->status === PatientVisitStatusEnums::COMPLETED->value) {
+                    // End the current ongoing visit
+                    $patientVisit->update([
+                        'status'         => PatientVisitStatusEnums::COMPLETED->value,
+                        'departure_date' => Carbon::now()->format('Y-m-d H:i:s'),
+                    ]);
+                } else {
+                    // Patient still has an ongoing visit
+                    return JsonResponser::send(false, 'A visit is already ongoing for this patient.', null, 422);
+                }
             }
-
             $visit = $this->patientService->initiateVisit($request);
 
             $dataToLog = [

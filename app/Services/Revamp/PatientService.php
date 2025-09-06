@@ -411,7 +411,7 @@ class PatientService
 
             //update billing log details
             BillingLogDetail::create([
-                'billing_log_id' => $patientBilling->id,
+                'billing_id' => $patientBilling->id,
                 'service_unit_id' => $serviceUnit->id,
                 'item_name' => $service->name,
                 'quantity' => 1,

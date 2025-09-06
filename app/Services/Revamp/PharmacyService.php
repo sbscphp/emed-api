@@ -209,6 +209,7 @@ class PharmacyService
         try {
             $currentUser = Auth::user();
             $treatment = Treatment::find($data['treatment_id']);
+            $drug = PharmacyRequest::find($treatment->drug_id);
 
             $treatment->update([
                 'dispensed_by' => $currentUser->id,
@@ -218,8 +219,16 @@ class PharmacyService
                 'expiry_date' => $data['expiry_date'],
                 'status' => GeneralEnums::FULLFILLED->value
             ]);
+            // Update drug stock
+            $qtyAvailable = max(0, $drug->quantity_available - $data['quantity_dispensed']);
+            $drug->quantity_available = $qtyAvailable;
+            $drug->quantity_dispensed = $drug->quantity_dispensed + $data['quantity_dispensed'];
 
-            // $drug->decrement('quantity_in_stock', $data['quantity_dispensed']);
+            if ($qtyAvailable <= 0) {
+                $drug->stock_level = GeneralEnums::OUT_OF_STOCK->value;
+            }
+
+            $drug->save();
             return $treatment->refresh();
         } catch (\Throwable $th) {
             throw $th;
