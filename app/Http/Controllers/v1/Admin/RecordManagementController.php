@@ -215,9 +215,10 @@ class RecordManagementController extends Controller
 
             // Check if the patient already has a visit today
             $patientVisit = PatientVisit::where('patient_id', $request->patient_id)
-                ->where('service_id', $request->service_id)
+                // ->where('service_id', $request->service_id)
                 ->where('status', '!=', PatientVisitStatusEnums::COMPLETED->value)
                 // ->whereDate('created_at', Carbon::today())
+                ->latest('created_at')
                 ->first();
 
             if ($patientVisit) {
