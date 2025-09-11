@@ -34,7 +34,9 @@ use App\Http\Controllers\v1\Admin\Lab_Service_Controller;
 use App\Http\Controllers\v1\Admin\PharmacyServiceController;
 use App\Http\Controllers\v1\Admin\Radiology_service_Controller;
 use App\Http\Controllers\v1\Admin\Revamp\ConsultationController as RevampConsultationController;
+use App\Http\Controllers\v1\Admin\Revamp\LabController as RevampLabController;
 use App\Http\Controllers\v1\Admin\Revamp\PharmacyController as RevampPharmacyController;
+use App\Http\Controllers\v1\Admin\Revamp\RadiologyController as RevampRadiologyController;
 use App\Http\Controllers\v1\GeneralController;
 use App\Services\HivAids\HivAidsService;
 // use App\Models\Immunization;
@@ -154,6 +156,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/patient/treatment', [RevampConsultationController::class, 'createTreatment']);
                     Route::post('/patient/surgery', [RevampConsultationController::class, 'createSurgery']);
                     Route::get('/view/{id}', [RevampConsultationController::class, 'viewConsultation']);
+                    Route::get('/recent/{id}', [RevampConsultationController::class, 'recentConsultation']);
                 });
 
                 // Old Consultant routes
@@ -299,6 +302,17 @@ Route::group(["prefix" => "v1"], function () {
 
                 //Laboratory Routes
                 Route::prefix('laboratory')->group(function () {
+                    Route::get('/', [RevampLabController::class, 'index']);
+                    Route::get('/all', [RevampLabController::class, 'allTests']);
+                    Route::get('/{id}', [RevampLabController::class, 'show']);
+                    Route::put('/update/result/{id}', [RevampLabController::class, 'updateResult']);
+                    Route::put('/update/test/status/{id}', [RevampLabController::class, 'updateTestStatus']);
+                    Route::get('/summary/{id}', [RevampLabController::class, 'patientVisitSummary']);
+                    Route::get('/patient/{id}', [RevampLabController::class, 'patientDetails']);
+                });
+
+                //Old Laboratory Routes
+                Route::prefix('laboratory')->group(function () {
                     Route::get('/stats', [LabController::class, 'stats']);
                     Route::post('/records', [LabController::class, 'allLabRecords']);
                     Route::get('/single-lab-record', [LabController::class, 'show']);
@@ -306,6 +320,17 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/patient/{id}', [LabController::class, 'patientDetails']);
                     Route::get('/patient/visit/summary/{id}', [LabController::class, 'patientVisitSummary']);
                     Route::post('/result', [LabController::class, 'updateResult']);
+                });
+
+                // Radiology routes
+                Route::group(['prefix' => 'radiology'], function () {
+                    Route::get('/', [RevampRadiologyController::class, 'index']);
+                    Route::get('/all', [RevampRadiologyController::class, 'allTests']);
+                    Route::get('/{id}', [RevampRadiologyController::class, 'show']);
+                    Route::put('/update/result/{id}', [RevampRadiologyController::class, 'updateResult']);
+                    Route::put('/update/test/status/{id}', [RevampRadiologyController::class, 'updateTestStatus']);
+                    Route::get('/summary/{id}', [RevampRadiologyController::class, 'patientVisitSummary']);
+                    Route::get('/patient/{id}', [RevampRadiologyController::class, 'patientDetails']);
                 });
 
                 Route::group(['prefix' => 'auditLog', 'middleware' => 'admin.superadmin'], function () {
@@ -363,16 +388,16 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get("consultation_billingmgt", [BillingController::class, "consultation_billingmgt"]);
                 });
 
-
-                Route::group(['prefix' => 'radiology'], function () {
-                    Route::get('/', [RadiologyController::class, "index"]);
-                    Route::get('/patient', [RadiologyController::class, "patient"]);
-                    Route::post('/result', [RadiologyController::class, "result"]);
-                    Route::put('/update/result/{id}', [RadiologyController::class, "updateResult"]);
-                    Route::put('/update/result/status/{id}', [RadiologyController::class, "updateResultStaus"]);
-                    Route::post('/radiology_examination', [RadiologyController::class, 'radiology_examination']);
-                    Route::get('/radiology_examination', [RadiologyController::class, 'radiology_examination_get']);
-                });
+                // Old Radiology
+                // Route::group(['prefix' => 'radiology'], function () {
+                //     Route::get('/', [RadiologyController::class, "index"]);
+                //     Route::get('/patient', [RadiologyController::class, "patient"]);
+                //     Route::post('/result', [RadiologyController::class, "result"]);
+                //     Route::put('/update/result/{id}', [RadiologyController::class, "updateResult"]);
+                //     Route::put('/update/result/status/{id}', [RadiologyController::class, "updateResultStaus"]);
+                //     Route::post('/radiology_examination', [RadiologyController::class, 'radiology_examination']);
+                //     Route::get('/radiology_examination', [RadiologyController::class, 'radiology_examination_get']);
+                // });
 
                 Route::group(['prefix' => 'main-stats'], function () {
                     Route::get("/main-page", [MainDashBoardStatsController::class, "index"]);

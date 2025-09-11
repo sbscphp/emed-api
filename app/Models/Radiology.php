@@ -18,16 +18,6 @@ class Radiology extends Model
         return $this->belongsTo(Patient::class);
     }
 
-    public function pharmacist()
-    {
-        return $this->belongsTo(User::class, 'admin_id');
-    }
-
-    public function consulted_by()
-    {
-        return $this->belongsTo(User::class, 'admin_id');
-    }
-
     public function consultation()
     {
         return $this->belongsTo(Consultation::class, 'consultation_id');
@@ -35,7 +25,12 @@ class Radiology extends Model
 
     public function visit()
     {
-        return $this->belongsTo(PatientVisit::class, 'visitno', 'visitno');
+        return $this->belongsTo(PatientVisit::class, 'visit_id');
+    }
+
+    public function billingLogDetail()
+    {
+        return $this->belongsTo(BillingLogDetail::class, 'id', 'radiology_test_id');
     }
 
     public function result()

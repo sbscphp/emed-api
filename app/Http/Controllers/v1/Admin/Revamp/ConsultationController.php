@@ -10,15 +10,15 @@ use App\Http\Requests\Admin\ConsultationRequest;
 use App\Http\Requests\Admin\SurgeryRequest;
 use App\Http\Requests\Admin\TreatmentRequest;
 use App\Http\Requests\ConsultationLaborartoryRequest;
+use App\Http\Requests\ConsultationRadiologyRequest;
 use App\Models\Consultation;
 use App\Models\Notification;
 use App\Models\Patient;
 use App\Models\PatientVisit;
-use App\Models\PharmacyRequest;
+use App\Models\Triage;
 use App\Models\User;
 use App\Responser\JsonResponser;
 use App\Services\Revamp\ConsultationService;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -122,7 +122,7 @@ class ConsultationController extends Controller
         try {
             DB::connection('tenant')->beginTransaction();
 
-            $consultation = Consultation::where('visit_id', $id)->with(['patient', 'patientVisit', 'labTest', 'radiologyTest', 'treatment', 'consultedDoctor'])->first();
+            $consultation = Consultation::where('visit_id', $id)->with(['patient', 'patientVisit', 'labTest', 'radiologyTest', 'treatment', 'surgery', 'consultedDoctor'])->first();
             if (!$consultation) {
                 return JsonResponser::send(true, 'Record not found.', null, 200);
             }
@@ -142,6 +142,57 @@ class ConsultationController extends Controller
             return JsonResponser::send(false, 'Record found successfully', $consultation, 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+        }
+    }
+
+    public function recentConsultation($id)
+    {
+        try {
+            $patient = Patient::with(['nextOfKin', 'emergencyContact'])->find($id);
+
+            if (!$patient) {
+                return JsonResponser::send(true, 'Record not found.', null, 200);
+            }
+
+            // Get the most recent completed visit
+            $recentVisit = PatientVisit::where('patient_id', $patient->id)
+                ->where('status', GeneralEnums::COMPLETED->value)
+                ->latest('created_at')
+                ->first();
+
+            if (!$recentVisit) {
+                return JsonResponser::send(true, 'Patient does not have a recent visit.', null, 200);
+            }
+
+            // Recent triage for this visit
+            $recentTriage = Triage::where('patient_id', $patient->id)
+                ->where('visit_id', $recentVisit->id)
+                ->first();
+
+            // Previous 5 completed visits
+            $previousVisits = PatientVisit::where('patient_id', $patient->id)
+                ->where('status', GeneralEnums::COMPLETED->value)
+                ->latest('created_at')
+                ->take(5)
+                ->get();
+
+            // Recent consultation for this visit
+            $recentConsultation = Consultation::where('patient_id', $patient->id)
+                ->where('visit_id', $recentVisit->id)
+                ->with('treatment')
+                ->first();
+
+            $data = [
+                "patient"            => $patient,
+                "recentVisit"        => $recentVisit,
+                "recentTriage"       => $recentTriage,
+                "previousFiveVisits"     => $previousVisits,
+                "recentConsultation" => $recentConsultation,
+            ];
+
+            return JsonResponser::send(false, 'Record found successfully', $data, 200);
+        } catch (\Throwable $th) {
             return JsonResponser::send(true, 'Internal server error', [], 500, $th);
         }
     }
@@ -184,7 +235,7 @@ class ConsultationController extends Controller
         }
     }
 
-    public function createRadiologyTest(ConsultationLaborartoryRequest $request)
+    public function createRadiologyTest(ConsultationRadiologyRequest $request)
     {
 
         try {
@@ -238,23 +289,6 @@ class ConsultationController extends Controller
             $visit = PatientVisit::find($request->visit_id);
             if (!$visit) {
                 return JsonResponser::send(true, 'Patient visit not yet initiated.', null, 200);
-            }
-
-            $drug = PharmacyRequest::with('inventory')->find($request->drug_id);
-            if (!$drug) {
-                return JsonResponser::send(true, 'Drug not found.', [], 422);
-            }
-
-            if ($drug->inventory->expiry_date && Carbon::parse($drug->inventory->expiry_date)->isPast()) {
-                return JsonResponser::send(true, 'Drug expired', [], 422);
-            }
-
-            if ($drug->stock_level == GeneralEnums::OUT_OF_STOCK->value) {
-                return JsonResponser::send(true, 'Drug is not available in stock.', [], 422);
-            }
-
-            if ($request->quantity > $drug->quantity_available) {
-                return JsonResponser::send(true, 'Drug prescribed quantity is greater than quantity available', [], 422);
             }
 
             $drugPrescribed = $this->consultationService->createTreatment($request);

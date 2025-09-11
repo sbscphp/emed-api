@@ -74,7 +74,7 @@ class PatientService
             })->when(($request['sort_by'] ?? null) === 'date_descending', function ($query) {
                 $query->orderBy('created_at', 'DESC');
             })
-            ->with('nextOfKin', 'emergencyContact');
+            ->with('nextOfKin', 'emergencyContact', 'visits_recent');
 
         if (!empty($request['paginate']) && empty($request['export'])) {
             return $records->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);

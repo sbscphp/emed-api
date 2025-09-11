@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('lab_test_results', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->foreignId('patient_visit_lab_id')->constrained('patient_visit_lab')->onDelete('cascade');
-            $table->string('visitno')->nullable();
+            $table->string('visit_id')->nullable();
             $table->string('test');
             $table->string('result')->nullable();
             $table->string('reference_range')->nullable();

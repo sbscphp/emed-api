@@ -22,6 +22,7 @@ use App\Models\Surgery;
 use App\Models\Treatment;
 use App\Repositories\Consultation\ConsultationInterface;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -237,8 +238,11 @@ class ConsultationService
                 }
 
                 // Do not touch already Paid items
+                $labId = $existingLab?->id ?? $labInvestigation->id;
+
+                // Do not touch already Paid items
                 $existingBillingDetail = BillingLogDetail::where('billing_id', $fetchBilling->id)
-                    ->where('lab_test_id', $existingLab->id)
+                    ->where('lab_test_id', $labId)
                     ->first();
 
                 if (!$existingBillingDetail || $existingBillingDetail->status !== 'Paid') {
@@ -335,8 +339,11 @@ class ConsultationService
                 }
 
                 // Do not touch already Paid items
+                $labId = $existingLab?->id ?? $labInvestigation->id;
+
+                // Do not touch already Paid items
                 $existingBillingDetail = BillingLogDetail::where('billing_id', $fetchBilling->id)
-                    ->where('radiology_test_id', $existingLab->id)
+                    ->where('radiology_test_id', $labId)
                     ->first();
 
                 if (!$existingBillingDetail || $existingBillingDetail->status !== 'Paid') {
@@ -406,9 +413,25 @@ class ConsultationService
             $totalPrice = 0;
 
             foreach ($request->medications as $drugItem) {
-                $drug = PharmacyRequest::find($drugItem['drug_id']);
+                $drug = PharmacyRequest::with('inventory')->find($drugItem['drug_id']);
                 if (!$drug) {
                     throw new \Exception("Drug with name {$drugItem['drug']} not found.");
+                }
+
+                if (!$drug->inventory) {
+                    throw new \Exception("No inventory record found for {$drugItem['drug']}.");
+                }
+
+                if ($drug->inventory->expiry_date && Carbon::parse($drug->inventory->expiry_date)->isPast()) {
+                    throw new \Exception("Drug expired.");
+                }
+
+                if ($drug->stock_level == GeneralEnums::OUT_OF_STOCK->value) {
+                    throw new \Exception("Drug is not available in stock.");
+                }
+
+                if ($request->quantity > $drug->quantity_available) {
+                    throw new \Exception("Drug prescribed quantity is greater than quantity available");
                 }
 
                 // Skip deleting/recreating if already Fullfilled
@@ -444,8 +467,11 @@ class ConsultationService
                 }
 
                 // Do not touch already Paid items
+                $drugID = $existingDrug?->id ?? $newTreatment->id;
+
+                // Do not touch already Paid items
                 $existingBillingDetail = BillingLogDetail::where('billing_id', $fetchBilling->id)
-                    ->where('treatment_id', $existingDrug->id)
+                    ->where('treatment_id', $drugID)
                     ->first();
 
                 if (!$existingBillingDetail || $existingBillingDetail->status !== 'Paid') {
