@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('observation_recommendations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('patient_id')->nullable()->constrained('patients')->onDelete('cascade');
+            $table->unsignedBigInteger('patient_id')->nullable();
             $table->unsignedBigInteger('visit_id')->nullable();
             $table->longText('observation')->nullable();
             $table->longText('recommendation')->nullable();

@@ -46,6 +46,7 @@ class RadiologyService
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
 
         $records = PatientVisit::query()
+            // ->where('status', PatientVisitStatusEnums::INVESTIGATION->value)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->where('visitno', 'LIKE', '%' . $request['search_param'] . '%')
@@ -123,20 +124,28 @@ class RadiologyService
         throw new \Exception("Invalid export format.");
     }
 
-    public function updateResult($data, $id)
+    public function updateResult($data, $test)
     {
         $currentUserInstance = UserMgtHelper::userInstance();
         $userId = $currentUserInstance->id;
         $tenant = $currentUserInstance->tenant->domain;
 
-        $resultImage = isset($data->result_img) && !empty($data->result_img)
-            ? FileUploadHelper::singleStringFileUpload($data->result_img, "radiology_results")
-            : null;
+        $resultImage = null;
+
+        if (!empty($data->result_img)) {
+            if (filter_var($data->result_img, FILTER_VALIDATE_URL)) {
+                // It’s already a URL (don’t re-upload)
+                $resultImage = $data->result_img;
+            } else {
+                // Must be base64
+                $resultImage = FileUploadHelper::singleStringFileUpload($data->result_img, "radiology_results");
+            }
+        }
 
         // Update existing or create new radiology result using radiology_id as unique key
         $record = RadiologyResult::updateOrCreate(
             [
-                'radiology_id' => $id, // unique key
+                'radiology_id' => $test->id, // unique key
             ],
             [
                 'tenant_domain'      => $tenant,
@@ -151,7 +160,11 @@ class RadiologyService
             ]
         );
 
-        return $record;
+        $test->update([
+            'user_id'    => $currentUserInstance->id
+        ]);
+
+        return $test->refresh()->load('result');
     }
 
     public function updateTest($data, $test)

@@ -136,7 +136,7 @@ class RadiologyController extends Controller
         try {
             DB::connection('tenant');
 
-            $record = Radiology::with(['patient', 'visit', 'consultation:id,consulted_by', 'billingLogDetail'])->find($id);
+            $record = Radiology::with(['result', 'patient', 'visit', 'consultation:id,consulted_by', 'billingLogDetail'])->find($id);
             if (!$record) {
                 return JsonResponser::send(true, 'Radiology test not found.', [], 404);
             }
@@ -150,6 +150,16 @@ class RadiologyController extends Controller
                 $record->setAttribute('consultedBy', $consultedUser);
             } else {
                 $record->setAttribute('consultedBy', null);
+            }
+
+            if ($record->user_id) {
+                $labUsers = User::on('landlord')
+                    ->select('id', 'fullname', 'email')
+                    ->find($record->user_id);
+
+                $record->setAttribute('attendedBy', $labUsers);
+            } else {
+                $record->setAttribute('attendedBy', null);
             }
 
             return JsonResponser::send(false, 'Record(s) found successfully.', $record, 200);
@@ -170,7 +180,7 @@ class RadiologyController extends Controller
             if (!$test->billingLogDetail || $test->billingLogDetail->status !== GeneralEnums::PAID->value) {
                 return JsonResponser::send(true, 'Please make payment.', [], 402);
             }
-            $record = $this->radiologyService->updateResult($request, $id);
+            $record = $this->radiologyService->updateResult($request, $test);
 
             DB::commit();
             return JsonResponser::send(false, 'Result updated successfully', $record);

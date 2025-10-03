@@ -244,6 +244,6 @@ class AuditLogService
 
 
         $paginate =  $validated['paginate'] ?? false;
-        return intval($paginate) == 1 ? $query->paginate(10) : $query->get();
+        return intval($paginate) == 1 ? $query->orderBy('id', 'DESC')->paginate(10) : $query->orderBy('id', 'DESC')->get();
     }
 }

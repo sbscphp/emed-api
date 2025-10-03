@@ -33,10 +33,14 @@ use App\Http\Controllers\v1\Admin\ImmunizationController;
 use App\Http\Controllers\v1\Admin\Lab_Service_Controller;
 use App\Http\Controllers\v1\Admin\PharmacyServiceController;
 use App\Http\Controllers\v1\Admin\Radiology_service_Controller;
+use App\Http\Controllers\v1\Admin\Revamp\AuthenticationController;
+use App\Http\Controllers\v1\Admin\Revamp\BillingController as RevampBillingController;
 use App\Http\Controllers\v1\Admin\Revamp\ConsultationController as RevampConsultationController;
+use App\Http\Controllers\v1\Admin\Revamp\DashboardController;
 use App\Http\Controllers\v1\Admin\Revamp\LabController as RevampLabController;
 use App\Http\Controllers\v1\Admin\Revamp\PharmacyController as RevampPharmacyController;
 use App\Http\Controllers\v1\Admin\Revamp\RadiologyController as RevampRadiologyController;
+use App\Http\Controllers\v1\Admin\Revamp\ReportController as RevampReportController;
 use App\Http\Controllers\v1\GeneralController;
 use App\Services\HivAids\HivAidsService;
 // use App\Models\Immunization;
@@ -69,14 +73,17 @@ Route::group(["prefix" => "v1"], function () {
         // });
     });
 
-    Route::group(['prefix' => 'admin'], function () {
-        Route::post('/login', [RegistrationController::class, 'adminLogin']);
-    });
+    // Route::group(['prefix' => 'admin'], function () {
+    //     Route::post('/login', [RegistrationController::class, 'adminLogin']);
+    // });
 
     Route::group(['prefix' => 'admin'], function () {
-        Route::post('/register', [RegistrationController::class, 'onboardTenant']);
+        Route::post('/register', [AuthenticationController::class, 'register']);
+        Route::post('/verify/email', [AuthenticationController::class, 'verifyEmail']);
+        Route::post('/find/hospitals', [AuthenticationController::class, 'findHospitals']);
+        Route::post('/login', [AuthenticationController::class, 'login']);
+        // Route::post('/register', [RegistrationController::class, 'onboardTenant']);
     });
-
 
     Route::group(["middleware" => ["auth:api"]], function () {
         Route::group(['middleware' => ["tenant"]], function () {
@@ -85,6 +92,7 @@ Route::group(["prefix" => "v1"], function () {
                 Route::get('/all/radiology/test', [GeneralController::class, 'allRadiologyTest']);
                 Route::get('/all/medicine', [GeneralController::class, 'allMedicine']);
                 Route::get('/all/services', [GeneralController::class, 'allService']);
+                Route::get('/all/services/unit', [GeneralController::class, 'allServiceUnits']);
             });
             // Route::get('/test_all-records', [RecordManagementController::class, 'allRecords']);
 
@@ -97,6 +105,26 @@ Route::group(["prefix" => "v1"], function () {
             Route::post('/logout', [RegistrationController::class, 'logout']);
 
             Route::group(['prefix' => 'admin', "namespace" => "v1\Admin"], function () {
+                // Dashboard stats
+                Route::group(['prefix' => 'dashboard'], function () {
+                    Route::get('/', [DashboardController::class, "index"]);
+                });
+
+                Route::group(['prefix' => 'main-stats'], function () {
+                    Route::get("/main-page", [MainDashBoardStatsController::class, "index"]);
+                    Route::get("/top_drugs", [MainDashBoardStatsController::class, "top_drugs"]);
+                    Route::get("/patient_diagnosis", [MainDashBoardStatsController::class, "patient_diagnosis"]);
+                    Route::get("/recent_patient",   [MainDashBoardStatsController::class, "recent_patient"]);
+                    Route::get("/yearly_patient",   [MainDashBoardStatsController::class, "yearly_patient"]);
+                    Route::get("/patient_age_gender", [MainDashBoardStatsController::class, "patient_age_gender"]);
+                    Route::get('appointment', [MainDashBoardStatsController::class, "appointment"]);
+                    Route::get('lab_test_year', [MainDashBoardStatsController::class, "lab_test_year"]);
+                    Route::get('/revenue', [MainDashBoardStatsController::class, "revenue"]);
+                    Route::get('/in_and_out/patient', [MainDashBoardStatsController::class, "in_and_out_patient"]);
+                    Route::get('/appointments', [MainDashBoardStatsController::class, "appointments"]);
+                    Route::get('/departments/all', [MainDashBoardStatsController::class, "departments"]);
+                });
+
                 //Record routes
                 Route::group(['prefix' => 'record',  'middleware' => 'role.record'], function () {
                     Route::group(['prefix' => 'patient'], function () {
@@ -274,10 +302,15 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/dashboard/stats', [VendorController::class, 'getVendorStats']);
                 });
 
+                // Billing routes
                 Route::group(['prefix' => 'billing', 'middleware' => 'role.billing'], function () {
-                    Route::post('/lists', [BillingController::class, 'index']);
-                    Route::post('/', [BillingController::class, 'store']);
-                    // save_as_daft
+                    Route::get('/', [RevampBillingController::class, 'index']);
+                    Route::get('/view/{id}', [RevampBillingController::class, 'viewBilling']);
+                    Route::post('/make/payment', [RevampBillingController::class, 'makePayment']);
+                    Route::get('/invoice', [RevampBillingController::class, 'invoice']);
+                    Route::get('/invoice/view/{id}', [RevampBillingController::class, 'viewInvoice']);
+                    Route::get('/summary', [RevampBillingController::class, 'summary']);
+                    Route::get('/service', [RevampBillingController::class, 'service']);
                     Route::post('/save_as_daft', [BillingController::class, 'save_as_daft']);
                     Route::get('/{id}', [BillingController::class, 'show']);
                     Route::put('/{id}', [BillingController::class, 'update']);
@@ -290,6 +323,31 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/editservice', [BillingController::class, 'editservice']);
                 });
 
+                // Old Billing routes
+                // Route::group(['prefix' => 'billing', 'middleware' => 'role.billing'], function () {
+                //     Route::post('/lists', [BillingController::class, 'index']);
+                    // Route::post('/', [BillingController::class, 'store']);
+
+                //     // save_as_daft
+                //     Route::post('/save_as_daft', [BillingController::class, 'save_as_daft']);
+                //     Route::get('/{id}', [BillingController::class, 'show']);
+                //     Route::put('/{id}', [BillingController::class, 'update']);
+                //     Route::delete('/{id}', [BillingController::class, 'destroy']);
+                //     Route::get('/dashboard/stats', [BillingController::class, 'getBillingStatistics']);
+                //     Route::get('/all/services', [BillingController::class, 'getAllServiceUnitsAndTypes']);
+                //     Route::get('/service-unit/{id}', [BillingController::class, 'getBillingByServiceUnit']);
+                //     Route::get('/service-type/all', [BillingController::class, 'getBillingByServiceType']);
+                //     Route::post('/createservice', [BillingController::class, 'createservice']);
+                //     Route::post('/editservice', [BillingController::class, 'editservice']);
+                // });
+
+                // Report routes
+                Route::group(['prefix' => 'reports', 'middleware' => 'admin.superadmin'], function () {
+                    Route::get('/', [RevampReportController::class, 'index']);
+                    Route::get('/all', [RevampReportController::class, 'fetchAllReports']);
+                });
+
+                //  Old Report Routes
                 Route::group(['prefix' => 'report', 'middleware' => 'admin.superadmin'], function () {
                     Route::get('/dashboard/stats', [ReportController::class, 'getReportStatistics']);
                     Route::post('/', [ReportController::class, 'index']);
@@ -398,22 +456,6 @@ Route::group(["prefix" => "v1"], function () {
                 //     Route::post('/radiology_examination', [RadiologyController::class, 'radiology_examination']);
                 //     Route::get('/radiology_examination', [RadiologyController::class, 'radiology_examination_get']);
                 // });
-
-                Route::group(['prefix' => 'main-stats'], function () {
-                    Route::get("/main-page", [MainDashBoardStatsController::class, "index"]);
-                    Route::get("/top_drugs", [MainDashBoardStatsController::class, "top_drugs"]);
-                    Route::get("/patient_diagnosis", [MainDashBoardStatsController::class, "patient_diagnosis"]);
-                    Route::get("/recent_patient",   [MainDashBoardStatsController::class, "recent_patient"]);
-                    Route::get("/yearly_patient",   [MainDashBoardStatsController::class, "yearly_patient"]);
-                    Route::get("/patient_age_gender", [MainDashBoardStatsController::class, "patient_age_gender"]);
-                    Route::get('appointment', [MainDashBoardStatsController::class, "appointment"]);
-                    Route::get('lab_test_year', [MainDashBoardStatsController::class, "lab_test_year"]);
-                    Route::get('/revenue', [MainDashBoardStatsController::class, "revenue"]);
-                    Route::get('/in_and_out/patient', [MainDashBoardStatsController::class, "in_and_out_patient"]);
-                    Route::get('/appointments', [MainDashBoardStatsController::class, "appointments"]);
-                    Route::get('/departments/all', [MainDashBoardStatsController::class, "departments"]);
-                });
-
 
                 Route::group(['prefix' => 'patient_consultation_summary'], function () {
                     Route::get('/', [MainDashBoardStatsController::class, "patient_consultation_summary_data"]);

@@ -2,8 +2,11 @@
 
 namespace App\Repositories\MedicationInventory;
 
+use App\Enums\GeneralEnums;
 use App\Helpers\ExportHelper;
+use App\Helpers\FileUploadHelper;
 use App\Helpers\GeneralHelper;
+use App\Helpers\UserMgtHelper;
 use App\Models\MedicationInventory;
 use App\Http\Resources\MedicationInventoryResource;
 use Carbon\Carbon;
@@ -12,8 +15,17 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
 {
     public function create(array $data)
     {
-        $data['current_stock'] = $data['received_qty'];
-        
+        $supportDoc = $data['support_doc'];
+        $supportFile = $data['support_file'];
+        if (!empty($data['support_doc'])) {
+            $supportDoc = FileUploadHelper::singleStringFileUpload($data['support_doc'], 'shipment');
+        }
+        if (!empty($data['support_file'])) {
+            $supportFile = FileUploadHelper::singleStringFileUpload($data['support_file'], 'shipment');
+        }
+        $data['support_doc'] = $supportDoc;
+        $data['support_file'] = $supportFile;
+
         $shipment_no = GeneralHelper::getModelUniqueOrderlyId([
             'modelNamespace' => MedicationInventory::class,
             'modelField' => 'shipment_no',

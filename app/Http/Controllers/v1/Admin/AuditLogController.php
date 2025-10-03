@@ -103,41 +103,52 @@ class AuditLogController extends Controller
         }
     }
 
-    public function downloadAuditLog($downloadType, AuditLogRequest $request)
+    public function downloadAuditLog(AuditLogRequest $request)
     {
         try {
             DB::connection('tenant');
+            $downloadType = $request->downloadType;
+            // $search = $request->search;
+            // $sortBy = $request->sort_by ?? 'oldest';
+            // $startDate = $request->start_date;
+            // $endDate = $request->end_date;
+            // $activityType = $request->activity_type;
+            // $paginate = $request->paginate ?? false;
+            // $export = $request->export;
+            // $action = $request->action;
+            // $module_accessed = $request->module_accessed;
 
-            $search = $request->search;
-            $sortBy = $request->sort_by ?? 'oldest';
-            $startDate = $request->start_date;
-            $endDate = $request->end_date;
-            $activityType = $request->activity_type;
-            $paginate = $request->paginate ?? false;
-            $export = $request->export;
-            $action = $request->action;
-            $module_accessed = $request->module_accessed;
+            // $logs = $this->auditLogService->getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate, $downloadType, $export, $action, $module_accessed);
 
-            $logs = $this->auditLogService->getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate, $downloadType, $export, $action, $module_accessed);
+            // if ($logs->isEmpty()) {
+            //     return JsonResponser::send(true, 'Record(s) not found for download.', null, 200);
+            // }
 
-            if ($logs->isEmpty()) {
-                return JsonResponser::send(true, 'Record(s) not found for download.', null, 200);
+            $overview = $this->auditLogService->activityOverview($request);
+            $exportData = $overview->map(function ($log) {
+                return [
+                    'User ID'         => $log->causer?->id ?? 'System',
+                    'User Name'       => $log->causer?->fullname ?? 'System',
+                    'User Role'       => $log->causer?->role ?? 'System',
+                    'Timestamp'       => $log->created_at->toDateTimeString(),
+                    'Action Taken'    => $log->action,
+                    'Module Accessed' => $log->module_accessed,
+                ];
+            })->toArray();
+
+            if ($downloadType === 'csv') {
+                return ExportHelper::streamCsv($exportData, null, 'logs.csv');
             }
 
-            switch (strtolower($downloadType)) {
-                case 'csv':
-                    return $this->exportCsv($logs);
-                    break;
-
-                case 'pdf':
-                    return $this->exportPdf($logs);
-                    break;
-
-                default:
-                    return JsonResponser::send(true, 'Invalid download type.', null, 400);
+            if ($downloadType === 'pdf') {
+                $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData])
+                    ->setPaper('A1', 'landscape');
+                return $pdf->download('logs.pdf');
             }
 
-            return JsonResponser::send(true, 'Record(s) found successfully.', $logs);
+            // return JsonResponser::send(true, 'Invalid download type.', null, 400);
+
+            return JsonResponser::send(true, 'Record(s) found successfully.', $overview);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'Internal Server error.', [], 500, $th);
         }

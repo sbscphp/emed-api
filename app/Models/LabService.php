@@ -9,10 +9,4 @@ class LabService extends Model
 
     protected $guarded = ['id'];
     protected $connection = 'tenant';
-    protected $fillable = [
-        "service_unit_id",
-        "class",
-        "name",
-        "price"
-    ];
 }

@@ -39,6 +39,7 @@ use App\Models\Patient;
 use App\Models\PatientVisit;
 use App\Models\Pharmacy;
 use App\Models\Radiology;
+use App\Models\Service as ModelsService;
 use App\Models\ServiceDepartment;
 use App\Models\ServiceUnit;
 use App\Models\Treatment;
@@ -748,7 +749,7 @@ class BillingController extends Controller
             if (!empty($validated['export'])) {
                 $export =  $validated['export'];
                 // $exportData = PharmacyResourceList::collection($pharm)->resolve(); MedicationResource
-                $service = ServiceDepartment::with('patients.visits_recent.billingLogsForPatient')->get();
+                $service = ModelsService::with('patients.visits_recent.billingLogsForPatient')->get();
                 if (count($service) == 0) {
                     return JsonResponser::send(true, 'No Data.', [], 500);
                 }
@@ -904,7 +905,7 @@ class BillingController extends Controller
                 $treatment = $consultation ? Treatment::where('consultation_id', $consultation->id)->first() : null;
                 $billingLogsForPatient = BillingLog::where('visit_id', $data->id)->first();
                 $patient = $data ? Patient::find($data->patient_id) : null;
-                $service =  $billingLogsForPatient ? ServiceDepartment::find($billingLogsForPatient->service_type_id) : null;
+                $service =  $billingLogsForPatient ? ModelsService::find($billingLogsForPatient->service_type_id) : null;
                 $serviceunit  = $billingLogsForPatient ? ServiceUnit::find($billingLogsForPatient->service_unit_id) : null;
                 $arr = [
                     "patient" => $patient,

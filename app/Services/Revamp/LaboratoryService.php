@@ -43,6 +43,7 @@ class LaboratoryService
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
 
         $records = PatientVisit::query()
+            // ->where('status', PatientVisitStatusEnums::INVESTIGATION->value)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->where('visitno', 'LIKE', '%' . $request['search_param'] . '%')
@@ -124,7 +125,6 @@ class LaboratoryService
     {
 
         $currentUserInstance = UserMgtHelper::userInstance();
-        $tenant = $currentUserInstance->tenant->domain;
 
         // Create lab result
         foreach ($data->results as $item) {
@@ -134,7 +134,6 @@ class LaboratoryService
                     'test' => $item['test'],
                 ],
                 [
-                    'tenant_domain'    => $tenant,
                     'visit_id'          => $test->visit_id,
                     'result'           => $item['result'],
                     'reference_range'  => $item['reference_range'],
@@ -146,11 +145,12 @@ class LaboratoryService
         $test->update([
             'specimen_type' => $data->specimen_type,
             'notes'         => $data->notes,
+            'user_id'    => $currentUserInstance->id,
             // 'requested_by'  => $data->requested_by,
             // 'test_status'   => 'completed'
         ]);
 
-        return $record;
+        return $test->refresh()->load('results');
     }
 
     public function updateTest($data, $test)

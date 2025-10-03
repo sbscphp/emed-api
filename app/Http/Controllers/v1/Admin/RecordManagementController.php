@@ -56,10 +56,8 @@ class RecordManagementController extends Controller
 
     public function store(PatientInfomationRequest $request)
     {
-
         try {
             DB::connection('tenant')->beginTransaction();
-
             $currentUser = Auth::user();
             $patientExists = Patient::where('firstname', $request->firstname)->where('lastname', $request->lastname)->first();
             if ($patientExists) {
@@ -86,7 +84,7 @@ class RecordManagementController extends Controller
             GeneralHelper::storeAuditLog($dataToLog);
 
             // Create notification
-            $tenant = $currentUser->tenant;
+            $tenant = $currentUser->currentTenant->first();
             $notificationData = [
                 'user_id' => $currentUser->id,
                 'tenant_domain' => $tenant->domain,

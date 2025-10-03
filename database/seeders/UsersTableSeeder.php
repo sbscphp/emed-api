@@ -3,11 +3,8 @@
 namespace Database\Seeders;
 
 use App\Enums\GeneralEnums;
-use App\Enums\RegistrationStepEnum;
 use App\Models\Role;
-use App\Models\Tenant;
 use App\Models\User;
-use App\Services\UserInformation\UserInformationService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -15,80 +12,76 @@ class UsersTableSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     *
-     * @return void
      */
-    protected UserInformationService $userInformationService;
-
-    public function __construct(
-        UserInformationService $userInformationService,
-    ) {
-        $this->userInformationService = $userInformationService;
-    }
-
-    public function run()
+    public function run(): void
     {
+        // Fetch roles once
         $superAdminRole = Role::where('name', 'super_admin')->first();
-        $adminRole = Role::where('name', 'admin')->first();
-        $nurseRole = Role::where('name', 'nurse')->first();
+        $adminRole      = Role::where('name', 'admin')->first();
+        $nurseRole      = Role::where('name', 'nurse')->first();
         $consultantRole = Role::where('name', 'consultant')->first();
         $laboratoryRole = Role::where('name', 'laboratory')->first();
-        $pharmacyRole = Role::where('name', 'pharmacy')->first();
-        $billingRole = Role::where('name', 'billing')->first();
-        $recordRole = Role::where('name', 'record')->first();
+        $pharmacyRole   = Role::where('name', 'pharmacy')->first();
+        $billingRole    = Role::where('name', 'billing')->first();
+        $recordRole     = Role::where('name', 'record')->first();
 
-        /*
-     * Add Users for each role
-     */
         $users = [
             [
-                'role' => $superAdminRole,
-                'email' => 'superadmin@' . Str::slug(env('APP_NAME')) . '.com',
-                'fullname' => 'Super Admin',
-                'role_name' => 'Super Admin'
+                'role'       => $superAdminRole,
+                'email'      => 'superadmin@' . Str::slug(env('APP_NAME')) . '.com',
+                'fullname'   => 'Super Admin',
+                'first_name' => 'Super',
+                'last_name'  => 'Admin',
             ],
             [
-                'role' => $adminRole,
-                'email' => 'admin@' . Str::slug(env('APP_NAME')) . '.com',
-                'fullname' => 'Admin',
-                'role_name' => 'Admin'
+                'role'       => $adminRole,
+                'email'      => 'admin@' . Str::slug(env('APP_NAME')) . '.com',
+                'fullname'   => 'Admin',
+                'first_name' => 'Admin',
+                'last_name'  => '',
             ],
             [
-                'role' => $nurseRole,
-                'email' => 'nurse@' . Str::slug(env('APP_NAME')) . '.com',
-                'fullname' => 'Nurse',
-                'role_name' => 'Nurse'
+                'role'       => $nurseRole,
+                'email'      => 'nurse@' . Str::slug(env('APP_NAME')) . '.com',
+                'fullname'   => 'Nurse',
+                'first_name' => 'Nurse',
+                'last_name'  => '',
             ],
             [
-                'role' => $consultantRole,
-                'email' => 'consultant@' . Str::slug(env('APP_NAME')) . '.com',
-                'fullname' => 'Consultant',
-                'role_name' => 'Consultant'
+                'role'       => $consultantRole,
+                'email'      => 'consultant@' . Str::slug(env('APP_NAME')) . '.com',
+                'fullname'   => 'Consultant',
+                'first_name' => 'Consultant',
+                'last_name'  => '',
             ],
             [
-                'role' => $laboratoryRole,
-                'email' => 'laboratory@' . Str::slug(env('APP_NAME')) . '.com',
-                'fullname' => 'Laboratory',
-                'role_name' => 'Laboratory'
+                'role'       => $laboratoryRole,
+                'email'      => 'laboratory@' . Str::slug(env('APP_NAME')) . '.com',
+                'fullname'   => 'Laboratory',
+                'first_name' => 'Laboratory',
+                'last_name'  => '',
             ],
             [
-                'role' => $pharmacyRole,
-                'email' => 'pharmacy@' . Str::slug(env('APP_NAME')) . '.com',
-                'fullname' => 'Pharmacy',
-                'role_name' => 'Pharmacy'
+                'role'       => $pharmacyRole,
+                'email'      => 'pharmacy@' . Str::slug(env('APP_NAME')) . '.com',
+                'fullname'   => 'Pharmacy',
+                'first_name' => 'Pharmacy',
+                'last_name'  => '',
             ],
             [
-                'role' => $billingRole,
-                'email' => 'billing@' . Str::slug(env('APP_NAME')) . '.com',
-                'fullname' => 'Billing',
-                'role_name' => 'Billing'
+                'role'       => $billingRole,
+                'email'      => 'billing@' . Str::slug(env('APP_NAME')) . '.com',
+                'fullname'   => 'Billing',
+                'first_name' => 'Billing',
+                'last_name'  => '',
             ],
             [
-                'role' => $recordRole,
-                'email' => 'record@' . Str::slug(env('APP_NAME')) . '.com',
-                'fullname' => 'Record',
-                'role_name' => 'Record'
-            ]
+                'role'       => $recordRole,
+                'email'      => 'record@' . Str::slug(env('APP_NAME')) . '.com',
+                'fullname'   => 'Record',
+                'first_name' => 'Record',
+                'last_name'  => '',
+            ],
         ];
 
         foreach ($users as $userData) {
@@ -96,22 +89,23 @@ class UsersTableSeeder extends Seeder
                 $newUser = User::updateOrCreate(
                     ['email' => $userData['email']],
                     [
-                        'uuid' => Str::uuid(),
-                        'fullname' => $userData['fullname'],
-                        'role' => $userData['role_name'],
-                        'password' => bcrypt('password'),
+                        'uuid'        => Str::uuid(),
+                        'fullname'    => $userData['fullname'],
+                        'first_name'  => $userData['first_name'],
+                        'last_name'   => $userData['last_name'],
+                        'password'    => bcrypt('password'),
                         'phone_number' => fake()->phoneNumber,
-                        'status' => GeneralEnums::ACTIVE->value,
-                        'can_login' => true,
-                        'is_active' => true,
+                        'can_login'   => true,
                         'is_verified' => true,
                         'is_completed' => true,
-                        '2fa' => true
-                    ]);
+                        '2fa'         => true,
+                        // 'is_active'   => true,
+                        // 'status'      => GeneralEnums::ACTIVE->value,
+                    ]
+                );
 
-                // Assign role and permissions
                 $newUser->roles()->sync([$userData['role']->id]);
-                $newUser->permissions()->sync($userData['role']->permissions);
+                $newUser->permissions()->sync($userData['role']->permissions->pluck('id')->toArray());
             }
         }
     }

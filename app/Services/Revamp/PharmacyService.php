@@ -15,6 +15,7 @@ use App\Models\PharmacySupply;
 use App\Models\Radiology;
 use App\Models\Surgery;
 use App\Models\Treatment;
+use App\Models\User;
 use App\Repositories\Pharmacy\PharmacyInterface;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
@@ -49,6 +50,7 @@ class PharmacyService
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
 
         $records = PatientVisit::query()
+        // ->where('status', PatientVisitStatusEnums::TREATMENT->value)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->whereRelation('patient', 'cardno', 'LIKE', '%' . $request['search_param'] . '%')
@@ -138,7 +140,8 @@ class PharmacyService
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
 
-        $records = Treatment::query()
+        $query = Treatment::query()
+            ->where('visit_id', $request->visit_id)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->whereRelation('medication.pharmacy', 'name', 'LIKE', '%' . $request['search_param'] . '%')
@@ -152,23 +155,41 @@ class PharmacyService
             ->when(!empty($request['payment_status']), function ($query) use ($request) {
                 $query->whereRelation('billingLogDetail', 'status', $request['payment_status']);
             })
-            ->when($request->startDate && $request->endDate, function ($query) use ($request) {
+            ->when($request->start_date && $request->end_date, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
             })
             ->when($dateFilter, function ($query) use ($dateFilter) {
-                return $query->whereBetween('created_at', $dateFilter);
-            })->when(($request['sort_by'] ?? null) === 'date_ascending', function ($query) {
+                $query->whereBetween('created_at', $dateFilter);
+            })
+            ->when(($request['sort_by'] ?? null) === 'date_ascending', function ($query) {
                 $query->orderBy('created_at', 'ASC');
-            })->when(($request['sort_by'] ?? null) === 'date_descending', function ($query) {
+            })
+            ->when(($request['sort_by'] ?? null) === 'date_descending', function ($query) {
                 $query->orderBy('created_at', 'DESC');
             })
-            ->with(['medication.pharmacy', 'billingLogDetail']);
+            ->with(['pharmacyRequest.pharmacy', 'billingLogDetail']);
 
+        // Handle pagination vs export
         if (!empty($request['paginate']) && empty($request['export'])) {
-            return $records->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
+            $records = $query->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
+        } else {
+            $records = $query->orderBy('id', 'DESC')->get();
         }
 
-        return $records->orderBy('id', 'DESC')->get();
+        // Attach consulted user from landlord DB
+        $records->each(function ($item) {
+            if ($item->consultation && $item->consultation->consulted_by) {
+                $consultedUser = User::on('landlord')
+                    ->select('id', 'fullname', 'email')
+                    ->find($item->consultation->consulted_by);
+
+                $item->consultedBy = $consultedUser;
+            } else {
+                $item->consultedBy = null;
+            }
+        });
+
+        return $records;
     }
 
     public function patientTreatmentsExport($records, $format)

@@ -23,21 +23,7 @@ class ResetPasswordLinkRequest extends FormRequest
     public function rules()
     {
         return [
-            'email' => 'required|email|exists:tenant.users,email',
-            // 'email' => [
-            //     'required',
-            //     'max:255',
-            //     function ($attribute, $value, $fail) {
-            //         $exists = DB::connection('tenant')
-            //             ->table('users')
-            //             ->where('email', $value)
-            //             ->exists();
-
-            //         if ($exists) {
-            //             $fail('this email already exist');
-            //         }
-            //     },
-            // ],
+            'email' => 'required|email|exists:users,email',
         ];
     }
 

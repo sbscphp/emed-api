@@ -12,6 +12,7 @@ use Laratrust\Traits\HasRolesAndPermissions;
 // use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Sanctum\HasApiTokens;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use Spatie\Multitenancy\Models\Tenant;
 
 class User extends Authenticatable implements JWTSubject
 {
@@ -26,8 +27,8 @@ class User extends Authenticatable implements JWTSubject
      * @var array<int, string>
      */
     protected $guarded = ['id'];
-    // protected $connection = 'tenant';
-    protected $appends = ['role_names'];
+    protected $connection = 'landlord';
+    // protected $appends = ['role_names'];
 
 
     /**
@@ -78,16 +79,6 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasOne(UserInformation::class);
     }
 
-    public function register()
-    {
-        return $this->belongsTo(Registration::class, 'domain', 'domain');
-    }
-
-    public function tenant()
-    {
-        return $this->belongsTo(Tenant::class, 'tenant_id', 'id');
-    }
-
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class, 'role_user', 'user_id', 'role_id');
@@ -102,5 +93,25 @@ class User extends Authenticatable implements JWTSubject
     public function getRoleNamesAttribute()
     {
         return $this->roles->pluck('name');
+    }
+
+    // User.php
+    // public function tenants()
+    // {
+    //     return $this->belongsToMany(Tenant::class, 'tenant_user')
+    //         ->withPivot(['profile_picture', 'status'])
+    //         ->withTimestamps();
+    // }
+
+    public function tenants()
+    {
+        return $this->belongsToMany(Tenant::class, 'tenant_users');
+    }
+
+    public function currentTenant()
+    {
+        $currentTenant = Tenant::current();
+
+        return $this->tenants()->where('tenant_id', $currentTenant?->id);
     }
 }

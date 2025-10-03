@@ -145,32 +145,6 @@ class UserService
         return $this->userRepositoryInterface->getSystemReport($request);
     }
 
-    public function fetch_country_state_city($request)
-    {
-        $city_name = $request->get('city_name');
-        $state_name = $request->get('state_name');
-        $country_name = $request->get('country_name');
-
-        $data = City::with(['state', 'country'])
-            ->when($city_name, function ($query, $city_name) {
-                $query->where('cities.name', $city_name);
-            })
-            ->when($state_name, function ($query, $state_name) {
-                $query->whereHas('state', function ($q) use ($state_name) {
-                    $q->where('name', $state_name);
-                });
-            })
-            ->when($country_name, function ($query, $country_name) {
-                $query->whereHas('country', function ($q) use ($country_name) {
-                    $q->where('name', $country_name);
-                });
-            })
-            ->limit(100)
-            ->get();
-
-        return $data;
-    }
-
     public function user_activity($validate)
     {
         //AuditLog  AuditLogTransaction

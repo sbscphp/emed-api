@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('counselling_details', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('patient_id')->nullable()->constrained('patients')->onDelete('cascade');
+            $table->unsignedBigInteger('patient_id')->nullable();
             $table->unsignedBigInteger('visit_id')->nullable();
             $table->string('patient_name')->nullable();
             $table->string('patient_card_no')->nullable()->unique();

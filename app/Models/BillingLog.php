@@ -11,6 +11,11 @@ class BillingLog extends Model
     protected $guarded = ['id'];
     protected $connection = 'tenant';
 
+    public function billingLogDetails()
+    {
+        return $this->hasMany(BillingLogDetail::class, 'billing_id');
+    }
+
     public function service()
     {
         return $this->belongsTo(Service::class, 'service_type_id');
@@ -24,6 +29,11 @@ class BillingLog extends Model
     public function patient()
     {
         return $this->belongsTo(Patient::class, 'patient_id');
+    }
+
+    public function visits()
+    {
+        return $this->belongsTo(PatientVisit::class, 'visit_id');
     }
 
     public function visits_recent()
