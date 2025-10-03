@@ -17,10 +17,10 @@ class MedicationRequest extends FormRequest
     {
         return [
             'generic_name' => 'required|string|max:255',
-            'brand_name' => 'required|string|max:255',
-            'medicine_name' => 'required|string|max:255',
+            // 'brand_name' => 'required|string|max:255',
+            // 'medicine_name' => 'required|string|max:255',
             'medicine_type' => 'required|string|max:255',
-            'cost_price' => 'required|numeric|min:0',
+            // 'cost_price' => 'required|numeric|min:0',
             'selling_price' => 'required|numeric|min:0',
             'reg_no' => [
                 'required',
@@ -53,11 +53,11 @@ class MedicationRequest extends FormRequest
     {
         return [
             'generic_name.required' => 'Generic name is required.',
-            'brand_name.required' => 'Brand name is required.',
-            'medicine_name.required' => 'Medicine name is required.',
+            // 'brand_name.required' => 'Brand name is required.',
+            // 'medicine_name.required' => 'Medicine name is required.',
             'medicine_type.required' => 'Medicine type is required.',
-            'cost_price.required' => 'Cost price is required.',
-            'cost_price.numeric' => 'Cost price must be a number.',
+            // 'cost_price.required' => 'Cost price is required.',
+            // 'cost_price.numeric' => 'Cost price must be a number.',
             'selling_price.required' => 'Selling price is required.',
             'selling_price.numeric' => 'Selling price must be a number.',
             'reg_no.required' => 'Registration number is required.',

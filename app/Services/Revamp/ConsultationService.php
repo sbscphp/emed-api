@@ -227,7 +227,6 @@ class ConsultationService
                     $labInvestigation = Laboratory::create([
                         'visit_id'        => $visit->id,
                         'test_id'         => $labService->id,
-                        'user_id'         => $currentUser->id,
                         'patient_id'      => $request->patient_id,
                         'consultation_id' => $request->consultation_id,
                         'test_name'       => $labService->name,
@@ -328,7 +327,6 @@ class ConsultationService
                     $labInvestigation = Radiology::create([
                         'visit_id'        => $visit->id,
                         'test_id'         => $radService->id,
-                        'user_id'         => $currentUser->id,
                         'patient_id'      => $request->patient_id,
                         'consultation_id' => $request->consultation_id,
                         'test_name'       => $radService->name,

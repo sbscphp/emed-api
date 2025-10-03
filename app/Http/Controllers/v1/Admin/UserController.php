@@ -57,7 +57,7 @@ class UserController extends Controller
 
             $filters = [
                 'status' => $request->status,
-                'role'   => $request->role,
+                'role'   => $request->department,
             ];
 
             $search   = $request->search;

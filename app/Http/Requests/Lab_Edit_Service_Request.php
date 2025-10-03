@@ -26,6 +26,7 @@ class Lab_Edit_Service_Request extends FormRequest
             "name" => "required|string",
             "price" => "required|integer",
             "class" => "required|string",
+            "type" => "required|string",
         ];
     }
 }

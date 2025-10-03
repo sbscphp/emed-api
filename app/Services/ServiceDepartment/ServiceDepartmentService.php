@@ -11,6 +11,7 @@ use App\Models\Laboratory;
 use App\Models\Medication;
 use App\Models\Patient;
 use App\Models\PatientVisit;
+use App\Models\Service;
 use App\Models\ServiceDepartment;
 use App\Models\ServiceUnit;
 use App\Models\Treatment;
@@ -123,7 +124,7 @@ class ServiceDepartmentService
 
     public function getTypes(array $columns = ['*'], $service_types_name, $from, $to)
     {
-        return ServiceDepartment::select($columns)->when($service_types_name, function ($query, $service_types_name) {
+        return Service::select($columns)->when($service_types_name, function ($query, $service_types_name) {
             return $query->where('name', $service_types_name);
         })
             ->when(!empty($from) && !empty($to), function ($query) use ($from, $to) {

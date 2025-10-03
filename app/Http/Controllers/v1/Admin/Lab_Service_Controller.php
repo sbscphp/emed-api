@@ -23,7 +23,8 @@ class Lab_Service_Controller extends Controller
                 "service_unit_id" => $serviceunit->id,
                 "name" => $validated['name'],
                 "price" => $validated['price'],
-                "class" => $validated['class']
+                "class" => $validated['class'],
+                "type" => $validated['type'],
             ]);
             return JsonResponser::send(false, ' created successfully.', $data);
         } catch (\Throwable $th) {

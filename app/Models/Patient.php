@@ -47,10 +47,6 @@ class Patient extends Model
     {
         return $this->hasOne(PatientVisit::class, 'patient_id', 'id')->latest();
     }
-    public function appointments()
-    {
-        return $this->hasMany(Appointment::class);
-    }
 
     public function consultations()
     {
@@ -75,11 +71,6 @@ class Patient extends Model
     public function socialHistory()
     {
         return $this->hasMany(SocialHistory::class);
-    }
-
-    public function drugHistory()
-    {
-        return $this->hasMany(DrugHistory::class);
     }
 
     public function billingLogs()

@@ -7,9 +7,15 @@ use Laratrust\Models\Role as RoleModel;
 
 class Role extends RoleModel
 {
-    public $guarded = [];
+    protected $guarded = ['id'];
     protected $connection = 'tenant';
-    protected $fillable = ['name', 'display_name', 'description', 'status'];
+    protected $fillable = [
+        'tenant_id',
+        'name',
+        'display_name',
+        'description',
+        'status',
+    ];
 
     /**
      * @property \Illuminate\Database\Eloquent\Collection|\App\Models\User[] $users

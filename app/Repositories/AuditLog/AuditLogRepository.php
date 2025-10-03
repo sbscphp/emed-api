@@ -156,6 +156,6 @@ class AuditLogRepository implements AuditLogInterface
         }
 
         // Paginated or full result
-        return $paginate ? $query->paginate(10) : $query->get();
+        return $paginate ? $query->orderBy('id', 'DESC')->paginate(10) : $query->orderBy('id', 'DESC')->get();
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Tasks\ConditionalSwitchTenantDatabaseTask;
 use Illuminate\Broadcasting\BroadcastEvent;
 use Illuminate\Events\CallQueuedListener;
 use Illuminate\Mail\SendQueuedMailable;
@@ -27,6 +28,7 @@ return [
      */
     'tenant_artisan_search_fields' => [
         'id',
+        'uuid'
     ],
 
     'switch_tenant_database' => true,
@@ -38,8 +40,9 @@ return [
      */
     'switch_tenant_tasks' => [
         // \Spatie\Multitenancy\Tasks\PrefixCacheTask::class,
-        \Spatie\Multitenancy\Tasks\SwitchTenantDatabaseTask::class,
+        // \Spatie\Multitenancy\Tasks\SwitchTenantDatabaseTask::class,
         // \Spatie\Multitenancy\Tasks\SwitchRouteCacheTask::class,
+        ConditionalSwitchTenantDatabaseTask::class,
     ],
 
     /*
@@ -122,5 +125,10 @@ return [
      */
     'not_tenant_aware_jobs' => [
         // ...
+    ],
+
+    'landlord_domains' => [
+        'your-single-domain.com',
+
     ],
 ];

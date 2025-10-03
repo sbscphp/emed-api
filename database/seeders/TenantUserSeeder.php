@@ -5,9 +5,8 @@ namespace Database\Seeders;
 use App\Models\Tenant;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class TenantUserSeeder extends Seeder
 {
@@ -16,18 +15,41 @@ class TenantUserSeeder extends Seeder
      */
     public function run(): void
     {
-        $tenants = [
-            [
-                'name' => "SBSC UK",
-                'domain' => "sbscuk.co.uk",
-                'database' => "tenant_sbscuk",
-            ],
-            [
-                'name' => "SBSC NGN",
-                'domain' => "sbscuk.com",
-                'database' => "tenant_sbscngn",
-            ]
-        ];
+        if (env('APP_ENV') == 'local') {
+            $tenants = [
+                [
+                    'name' => "SBSC Hospital",
+                    'uuid' => (string) Str::uuid(),
+                    'domain' => "sbscuk.co.hospital",
+                    'database' => "tenant_sbsc_hospital",
+                    'state_city' => 'Lagos State',
+                    'registration_number' => '123456789',
+                    'email' => 'emed@gamil.com',
+                    'phone_number' => '08067799281',
+                    'address' => 'No 11, Emed street, Lagos',
+                    'theme_color' => '#0d6efd',
+                    'logo' => NULL,
+                    'license' => NULL,
+                ],
+            ];
+        } else {
+            $tenants = [
+                [
+                    'name' => "Emed Tenant",
+                    'uuid' => (string) Str::uuid(),
+                    'domain' => "emed_tenant.co.uk",
+                    'database' => 'jkpmjemy_emed_tenant_dev',
+                    'state_city' => 'Lagos State',
+                    'registration_number' => '123456789',
+                    'email' => 'emed@gamil.com',
+                    'phone_number' => '08067799281',
+                    'address' => 'No 11, Emed street, Lagos',
+                    'theme_color' => '#0d6efd',
+                    'logo' => NULL,
+                    'license' => NULL,
+                ],
+            ];
+        }
 
         foreach ($tenants as $tenantData) {
             DB::beginTransaction();
@@ -44,36 +66,39 @@ class TenantUserSeeder extends Seeder
 
                 $this->command->info("Created tenant: {$tenant->name}");
 
-                DB::statement("CREATE DATABASE IF NOT EXISTS {$tenant->database}");
-                $this->command->info("Database {$tenant->database} created successfully.");
+                if (env('APP_ENV') == 'local') {
+                    DB::statement("CREATE DATABASE IF NOT EXISTS {$tenant->database}");
+                    $this->command->info("Database {$tenant->database} created successfully.");
 
-                $tenant->makeCurrent();
 
-                Artisan::call('migrate', [
-                    '--database' => 'tenant',
-                    '--path' => 'database/migrations/tenant',
-                    '--force' => true
-                ]);
-                $this->command->info("Migrations executed for tenant: {$tenant->name}");
+                    $tenant->makeCurrent();
 
-                $seedingExitCode = Artisan::call('db:seed', [
-                    '--database' => 'tenant',
-                    '--class' => 'DatabaseSeeder',
-                    '--force' => true,
-                    '--verbose' => true,
-                ]);
+                    Artisan::call('migrate', [
+                        '--database' => 'tenant',
+                        '--path' => 'database/migrations/tenant',
+                        '--force' => true
+                    ]);
+                    $this->command->info("Migrations executed for tenant: {$tenant->name}");
 
-                $output = Artisan::output();
-                $this->command->info("Seeding output for {$tenant->name}: $output");
+                    $seedingExitCode = Artisan::call('db:seed', [
+                        '--database' => 'tenant',
+                        '--class' => 'DatabaseSeeder',
+                        '--force' => true,
+                        '--verbose' => true,
+                    ]);
 
-                if ($seedingExitCode !== 0) {
-                    $this->command->error("Seeding failed for tenant: {$tenant->name}");
-                    throw new \Exception("Seeding failed for tenant: {$tenant->name}");
+                    $output = Artisan::output();
+                    $this->command->info("Seeding output for {$tenant->name}: $output");
+
+                    if ($seedingExitCode !== 0) {
+                        $this->command->error("Seeding failed for tenant: {$tenant->name}");
+                        throw new \Exception("Seeding failed for tenant: {$tenant->name}");
+                    }
+
+                    $this->command->info("Seeded default data for tenant: {$tenant->name}");
+
+                    $tenant->forget();
                 }
-
-                $this->command->info("Seeded default data for tenant: {$tenant->name}");
-
-                $tenant->forget();
 
                 DB::commit();
             } catch (\Exception $e) {

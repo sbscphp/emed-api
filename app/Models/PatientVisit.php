@@ -38,7 +38,7 @@ class PatientVisit extends Model
 
     public function consultation()
     {
-        return $this->hasOne(Consultation::class, 'visitno');
+        return $this->hasOne(Consultation::class, 'visit_id', 'id');
     }
 
     public function billingLogs()

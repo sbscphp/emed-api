@@ -465,7 +465,7 @@ class BillingLogService
     public function regstration_billingmgt($validated)
     {
         // ServiceDepartment
-        $service = ServiceDepartment::with('patients.visits_recent.billingLogsForPatient')
+        $service = Service::with('patients.visits_recent.billingLogsForPatient')
             ->when(!empty($validated['search']), function ($query) use ($validated) {
                 $query->where(function ($q) use ($validated) {
                     $q->where('name', 'like', '%' . $validated['search'] . '%')

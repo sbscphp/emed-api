@@ -57,10 +57,22 @@ class MedicationInventoryService
         $supportDoc = $shipment->support_doc;
         $supportFile = $shipment->support_file;
         if (!empty($data['support_doc'])) {
-            $supportDoc = FileUploadHelper::singleStringFileUpload($data['support_doc'], 'shipment');
+            if (filter_var($data['support_doc'], FILTER_VALIDATE_URL)) {
+                // Already a URL (don’t upload again)
+                $supportDoc = $data['support_doc'];
+            } else {
+                // Base64 string – upload
+                $supportDoc = FileUploadHelper::singleStringFileUpload($data['support_doc'], 'shipment');
+            }
         }
         if (!empty($data['support_file'])) {
-            $supportFile = FileUploadHelper::singleStringFileUpload($data['support_file'], 'shipment');
+            if (filter_var($data['support_file'], FILTER_VALIDATE_URL)) {
+                // Already a URL (don’t upload again)
+                $supportFile = $data['support_file'];
+            } else {
+                // Base64 string – upload
+                $supportFile = FileUploadHelper::singleStringFileUpload($data['support_file'], 'shipment');
+            }
         }
         // Update shipment fields
         $shipment->update([

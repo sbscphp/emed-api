@@ -106,6 +106,16 @@ class PharmacyController extends Controller
                 $treatment->setAttribute('dispensedBy', null);
             }
 
+            if ($treatment->consultation->consulted_by) {
+                $consultedUser = User::on('landlord')
+                    ->select('id', 'fullname', 'email')
+                    ->find($treatment->consultation->consulted_by);
+
+                $treatment->setAttribute('consultedBy', $consultedUser);
+            } else {
+                $treatment->setAttribute('consultedBy', null);
+            }
+
             DB::connection('tenant')->commit();
             return JsonResponser::send(false, 'Record found successfully', $treatment, 201);
         } catch (\Exception $e) {

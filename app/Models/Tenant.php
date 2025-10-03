@@ -7,11 +7,7 @@ use Illuminate\Support\Str;
 
 class Tenant extends BaseTenant
 {
-    protected $fillable = [
-        'name',
-        'domain',
-        'database',
-    ];
+    protected $guarded = ['id'];
 
     // public static function booted()
     // {
@@ -31,18 +27,20 @@ class Tenant extends BaseTenant
         // });
     }
 
-    public function register()
-    {
-        return $this->hasMany(Registration::class, 'domain', 'domain');
-    }
+    // public function users()
+    // {
+    //     return $this->hasMany(User::class);
+    // }
 
-    public function registration()
-    {
-        return $this->belongsTo(Registration::class, 'domain', 'domain');
-    }
+    // public function users()
+    // {
+    //     return $this->belongsToMany(User::class, 'tenant_user')
+    //         ->withPivot(['profile_picture', 'status'])
+    //         ->withTimestamps();
+    // }
 
     public function users()
     {
-        return $this->hasMany(User::class);
+        return $this->belongsToMany(User::class, 'tenant_user');
     }
 }

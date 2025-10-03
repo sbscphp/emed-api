@@ -176,7 +176,7 @@ class GeneralHelper
         } elseif ($period === "Last Year") {
             $carbonDateFilter = [Carbon::now()->subYear()->startOfYear(), Carbon::now()->subYear()->endOfYear()];
         } elseif ($period === "All Time") {
-            $carbonDateFilter = [Carbon::minValue(), Carbon::now()];
+            return false;
         } elseif ($period === "3 days") {
             $carbonDateFilter = [Carbon::now()->subDays(3)->startOfDay(), Carbon::now()->endOfDay()];
         } elseif ($period === "7 days") {

@@ -136,7 +136,7 @@ class LabController extends Controller
         try {
             DB::connection('tenant');
 
-            $record = Laboratory::with(['patient', 'visit', 'consultation:id,consulted_by', 'billingLogDetail'])->find($id);
+            $record = Laboratory::with(['results', 'patient', 'visit', 'consultation:id,consulted_by', 'billingLogDetail'])->find($id);
             if (!$record) {
                 return JsonResponser::send(true, 'Lab test not found.', [], 404);
             }
@@ -150,6 +150,16 @@ class LabController extends Controller
                 $record->setAttribute('consultedBy', $consultedUser);
             } else {
                 $record->setAttribute('consultedBy', null);
+            }
+
+            if ($record->user_id) {
+                $labUsers = User::on('landlord')
+                    ->select('id', 'fullname', 'email')
+                    ->find($record->user_id);
+
+                $record->setAttribute('attendedBy', $labUsers);
+            } else {
+                $record->setAttribute('attendedBy', null);
             }
 
             return JsonResponser::send(false, 'Record(s) found successfully.', $record, 200);
