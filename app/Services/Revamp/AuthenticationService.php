@@ -49,7 +49,8 @@ class AuthenticationService
             $user = $this->createUser($tenant, $data);
 
             $verificationCode = $user->remember_token;
-            $verificationUrl = $data['verify_url'] . '?token=' . $verificationCode . '&email=' . urlencode($data['admin_email']);
+            $baseUrl = env('APP_URL') . '/api/v1/admin/verify/email';
+            $verificationUrl = $baseUrl . '?token=' . $verificationCode . '&email=' . urlencode($data['admin_email']);
             $user->save();
 
             Mail::to($user->email)->send(new TenantEmailVerification($verificationUrl, [
@@ -194,9 +195,32 @@ class AuthenticationService
         return $user;
     }
 
-    public function verifyEmail($data)
+    public function resendEmailVerification($email)
     {
-        $user = User::where('email', $data['email'])->where('remember_token', $data['token'])->first();
+        $user = User::where('email', $email)->first();
+        if (!$user) {
+            throw new \Exception("User with email {$email} not found.");
+        }
+
+        if ($user->is_verified) {
+            throw new \Exception("Email already verified.");
+        }
+
+        $verificationCode = $user->remember_token;
+        $baseUrl = env('APP_URL') . '/api/v1/admin/verify/email';
+        $verificationUrl = $baseUrl . '?token=' . $verificationCode . '&email=' . urlencode($user->email);
+        Mail::to($user->email)->send(new TenantEmailVerification($verificationUrl, [
+            'firstname' => $user->first_name . ' ' . $user->last_name,
+            'email' => $user->email,
+            'verification_code' => $verificationCode,
+        ]));
+
+        return $user;
+    }
+
+    public function verifyEmail($token, $email)
+    {
+        $user = User::where('email', $email)->where('remember_token', $token)->first();
         if (!$user) {
             throw new \Exception("Invalid verification token or email.");
         }
@@ -208,6 +232,7 @@ class AuthenticationService
         $user->email_verified_at = Carbon::now();
         $user->remember_token = null;
         $user->is_verified = 1;
+        $user->is_completed = 1;
         $user->save();
 
         return $user;
