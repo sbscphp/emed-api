@@ -79,7 +79,8 @@ Route::group(["prefix" => "v1"], function () {
 
     Route::group(['prefix' => 'admin'], function () {
         Route::post('/register', [AuthenticationController::class, 'register']);
-        Route::post('/verify/email', [AuthenticationController::class, 'verifyEmail']);
+        Route::get('/resend/email', [AuthenticationController::class, 'resendEmailVerification']);
+        Route::get('/verify/email/{toke}/{email}', [AuthenticationController::class, 'verifyEmail']);
         Route::post('/find/hospitals', [AuthenticationController::class, 'findHospitals']);
         Route::post('/login', [AuthenticationController::class, 'login']);
         // Route::post('/register', [RegistrationController::class, 'onboardTenant']);

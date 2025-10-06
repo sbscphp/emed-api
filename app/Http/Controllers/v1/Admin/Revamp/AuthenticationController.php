@@ -8,6 +8,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Responser\JsonResponser;
 use App\Services\Revamp\AuthenticationService;
+use App\Services\Revamp\PermissionAccessService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -37,11 +38,24 @@ class AuthenticationController extends Controller
         }
     }
 
-    public function verifyEmail(Request $request)
+    public function resendEmailVerification(Request $request)
     {
         try {
             DB::beginTransaction();
-            $record = $this->authenticationService->verifyEmail($request->all());
+            $record = $this->authenticationService->resendEmailVerification($request);
+            DB::commit();
+            return JsonResponser::send(false, "Verification email resent to {$record->email}.", 200);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
+    public function verifyEmail(Request $request, $token, $email)
+    {
+        try {
+            DB::beginTransaction();
+            $record = $this->authenticationService->verifyEmail($token, $email);
 
             DB::commit();
             return JsonResponser::send(false, 'Email verified successfully.', $record, 200);
@@ -124,6 +138,7 @@ class AuthenticationController extends Controller
             if ($tenant) {
                 $roles = $currentUser->roles()
                     ->where('roles.tenant_id', $tenant->uuid)
+                    // ->with('permissions')
                     ->get(['id', 'name', 'display_name']);
 
                 // Tenant user pivot from landlord DB
@@ -150,6 +165,12 @@ class AuthenticationController extends Controller
                 $user['current_tenant_user']  = null;
                 $user['roles'] = $roles;
             }
+
+            // --- Inject Permissions ---
+            $permissionService = app(PermissionAccessService::class);
+            $permissions = $permissionService->allPermissions();
+
+            $user['permissions'] = $permissions;
 
             return JsonResponser::send(false, 'Login successful.', [
                 'user'        => $user,

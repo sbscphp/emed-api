@@ -5,176 +5,89 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email Verification</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-        }
-
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 20px;
-            background-color: #fff;
-            padding: 10px;
-            border-radius: 8px;
-        }
-
-        header img {
-            max-width: 100px;
-        }
-
-        h1 {
-            color: #333;
-        }
-
-        p {
-            color: #555;
-        }
-
-        .button-container {
-            text-align: center;
-        }
-
-        .button {
-            display: inline-block;
-            padding: 10px 20px;
-            margin: 20px 0;
-            font-size: 16px;
-            text-align: center;
-            text-decoration: none;
-            background-color: #4caf50;
-            color: #fff;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-
-        .button:hover {
-            background-color: #45a049;
-        }
-
-        .password-pic {
-            display: block;
-            margin: 20px auto;
-            max-width: 100%;
-            height: auto;
-        }
-
-        .footer {
-            margin-top: 20px;
-            padding-top: 10px;
-            border-top: 1px solid #ddd;
-            color: #777;
-            font-size: 12px;
-            text-align: center;
-        }
-
-        .footer a {
-            color: #4caf50;
-            text-decoration: none;
-        }
-    </style>
 </head>
 
-<body>
-    <div class="container">
-        <div class="u-row" style="margin: 0 auto;max-width: 600px;background-color: #18407c;">
-            <div style="display: table;width: 100%;height: 100%;">
-                <div class="u-col u-col-100" style="min-width: 600px;display: table-cell;vertical-align: top;">
-                    <div style="height: 100%;width: 100%;">
-                        <div style="height: 100%; padding: 0px;">
-                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-                                <tbody>
-                                    <tr>
-                                        <td style="padding:40px 10px 10px;" align="center">
-                                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                                                <tr>
-                                                    <td align="center">
-                                                        <img src="{{ asset('assets/img/logo.jpeg') }}" alt="Logo">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="1em"
-                                                            height="1em" viewBox="0 0 24 24">
-                                                            <path fill="currentColor"
-                                                                d="M12.14 2a10 10 0 1 0 10 10a10 10 0 0 0-10-10m0 18a8 8 0 1 1 8-8a8 8 0 0 1-8 8" />
-                                                            <path fill="currentColor"
-                                                                d="M16.14 10a3 3 0 0 0-3-3h-5v10h2v-4h1.46l2.67 4h2.4l-2.75-4.12A3 3 0 0 0 16.14 10m-3 1h-3V9h3a1 1 0 0 1 0 2" />
-                                                        </svg>
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+<body style="margin:0; padding:0; background-color:#f4f4f4; font-family: Arial, sans-serif;">
 
-                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-                                <tbody>
-                                    <tr>
-                                        <td style="padding:10px;" align="center">
-                                            <div style="font-size: 14px; color: #e5eaf5; line-height: 140%;">
-                                                <p style="font-size: 14px; color: #fff;">
-                                                    <strong>EMED</strong>
-                                                </p>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+            <td align="center">
 
-                            <table role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
-                                <tbody>
-                                    <tr>
-                                        <td style="padding:0px 10px 31px;" align="center">
-                                            <div style="font-size: 14px; color: #e5eaf5; line-height: 140%;">
-                                                <p style="font-size: 28px; color: #fff;">
-                                                    <strong>EMAIL VERIFICATION</strong>
-                                                </p>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                <!-- Container -->
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
 
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                    <!-- Header Image -->
+                    <tr>
+                        <td align="center">
+                            <img src="https://via.placeholder.com/600x150.png?text=Header+Image" 
+                                 alt="Header" width="600" style="display:block; max-width:100%;">
+                        </td>
+                    </tr>
 
-        <h4>Dear {{ $data['firstname'] }},</h4>
-        <p>Welcome to EMED!</p>
-        <p>We are delighted to have you onboard. Our platform is designed to streamline hospital operations and enhance patient care. To get started, we need to verify your email address to ensure secure communication.</p>
-        <p>Please click the link below to verify your email address</p>
+                    <!-- EMED Title -->
+                    <tr>
+                        <td align="center" style="padding: 15px 20px 0px; font-size:22px; font-weight:bold; color:#6c3ee7;">
+                            EMED
+                        </td>
+                    </tr>
 
+                    <!-- Heading -->
+                    <tr>
+                        <td align="center" style="padding: 10px 20px 20px; font-size:20px; font-weight:bold; color:#6c3ee7;">
+                            Verify Your Email to Access Your Account
+                        </td>
+                    </tr>
 
-        <div class="button-container">
-            <a href="{{ $verificationUrl }}" class="button">
-                Verify your Email
-            </a>
-        </div>
+                    <!-- Body Content -->
+                    <tr>
+                        <td align="left" style="padding: 0 30px 20px; color:#555555; font-size:14px; line-height:22px;">
+                            <p>Hello {{ $data['firstname'] }},</p>
 
-        <!-- <img src="{{ asset('assets/img/verify-email.png') }}" style="height: 200px;" alt="Email Verification"
-            class="password-pic"> <br> -->
+                            <p>Thank you for signing up with EMED. To complete your registration and log in, please verify your email address by clicking the button below:</p>
 
-        <p>Once your email is verified, you'll be able to access your account and start exploring our services.</p>
-        <p>If you have any questions or need further assistance, feel free to reach out to our customer support team at EMED.</p>
-        <p>We're excited to have you on board and we can't wait to share our amazing products with you. Welcome to the EMED family!</p>
+                            <p>If the button doesn’t work, copy and paste this link into your browser:<br>
+                                <a href="{{ $verificationUrl }}" style="color:#6c3ee7;">{{ $verificationUrl }}</a>
+                            </p>
 
-        <div class="footer">
-            <p>This email was sent from {{ env('APP_NAME') }}. &copy; {{ date('Y') }} {{ env('APP_NAME') }}. All rights reserved. |
-                <a href="#">Terms and Conditions</a>
-            </p>
-        </div>
-    </div>
+                            <p>For security reasons, this link will expire in 24 hours. If you didn’t create an account, you can safely ignore this email.</p>
+
+                            <p>Best regards,<br>
+                                The EMR Team</p>
+                        </td>
+                    </tr>
+
+                    <!-- Button -->
+                    <tr>
+                        <td align="center" style="padding: 10px 30px 40px;">
+                            <a href="{{ $verificationUrl }}" 
+                               style="background-color:#9d6efc; color:#ffffff; text-decoration:none; 
+                                      padding:12px 40px; border-radius:6px; display:inline-block; 
+                                      font-size:16px; font-weight:bold;">
+                                Verify Email
+                            </a>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center" style="padding: 20px 30px; font-size:12px; color:#999999; line-height:18px; border-top:1px solid #eee;">
+                            This email was sent to <a href="mailto:superadmin@emed.com" style="color:#6c3ee7; text-decoration:none;">superadmin@emed.com</a>. 
+                            If you'd rather not receive this kind of email, you can unsubscribe or manage your email preferences.<br><br>
+                            © 2024 EMED, Lagos State, Nigeria.
+                            <br><br>
+                            <!-- Social icons -->
+                            <a href="#" style="margin:0 5px;"><img src="https://cdn-icons-png.flaticon.com/512/733/733579.png" width="20"></a>
+                            <a href="#" style="margin:0 5px;"><img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" width="20"></a>
+                            <a href="#" style="margin:0 5px;"><img src="https://cdn-icons-png.flaticon.com/512/733/733558.png" width="20"></a>
+                        </td>
+                    </tr>
+
+                </table>
+                <!-- End Container -->
+
+            </td>
+        </tr>
+    </table>
+
 </body>
-
 </html>

@@ -12,7 +12,7 @@ use Laratrust\Traits\HasRolesAndPermissions;
 // use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Sanctum\HasApiTokens;
 use Tymon\JWTAuth\Contracts\JWTSubject;
-use Spatie\Multitenancy\Models\Tenant;
+use App\Models\Tenant;
 
 class User extends Authenticatable implements JWTSubject
 {
@@ -113,5 +113,14 @@ class User extends Authenticatable implements JWTSubject
         $currentTenant = Tenant::current();
 
         return $this->tenants()->where('tenant_id', $currentTenant?->id);
+    }
+
+    public function getCurrentTenant()
+    {
+        $currentTenant = Tenant::current();
+
+        return $this->tenants()
+            ->where('tenant_id', $currentTenant?->id)
+            ->first();
     }
 }
