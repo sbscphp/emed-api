@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('patient_visits', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->string('tenant_id')->nullable();
             $table->unsignedBigInteger('initiated_by')->nullable();
             $table->foreignId('patient_id')->constrained('patients')->onDelete('cascade');
             $table->unsignedBigInteger('service_id')->nullable();

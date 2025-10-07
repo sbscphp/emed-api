@@ -47,8 +47,10 @@ class PatientVisitService
         }
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
         $records = PatientVisit::query()
+            ->where('tenant_id', $tenantId)
             ->where('service_id', $request->service_id)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
@@ -93,26 +95,27 @@ class PatientVisitService
             $customDate = [$request->start_date, $request->end_date];
         }
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
-        $query = PatientVisit::query()->where('service_id', $request->service_id);
+        $tenantId = $request->header('X-Tenant-ID');
+        $query = PatientVisit::query()->where('tenant_id', $tenantId)->where('service_id', $request->service_id);
 
         $awaitingTriage = (clone $query)->where('status', PatientVisitStatusEnums::VISIT_INITIATED->value)->count();
         $awaitingConsultation = (clone $query)->where('status', PatientVisitStatusEnums::TRIAGE->value)->count();
         $admitted = (clone $query)->where('status', PatientVisitStatusEnums::ADMITTED->value)->count();
         $discharged = (clone $query)->where('status', PatientVisitStatusEnums::DISCHARGED->value)->count();
 
-        $completedSugery = Surgery::where('status', GeneralEnums::COMPLETED)->count();
-        $cancelledSugery = Surgery::where('status', GeneralEnums::CANCELLED)->count();
+        $completedSugery = Surgery::where('tenant_id', $tenantId)->where('status', GeneralEnums::COMPLETED)->count();
+        $cancelledSugery = Surgery::where('tenant_id', $tenantId)->where('status', GeneralEnums::CANCELLED)->count();
 
         $triagePatient = (clone $query)->where('status', PatientVisitStatusEnums::TRIAGE->value)->count();
-        $totalImmunization = Immunization::count();
-        $vaccineAdministered = DosageAdministration::count();
+        $totalImmunization = Immunization::where('tenant_id', $tenantId)->count();
+        $vaccineAdministered = DosageAdministration::where('tenant_id', $tenantId)->count();
 
         $awaitingCounselling = (clone $query)->where('status', PatientVisitStatusEnums::TRIAGE->value)->count();
-        $totalCounselled = CounsellingDetail::count();
+        $totalCounselled = CounsellingDetail::where('tenant_id', $tenantId)->count();
 
-        $totalDeliveries = DeliveryDetail::count();
-        $totalCSectionDeliveries = DeliveryDetail::where('delivery_mode', 'C-Section')->count();
-        $totalNormalDeliveries = DeliveryDetail::where('delivery_mode', 'Spontanteous Vaginal Delivery')->count();
+        $totalDeliveries = DeliveryDetail::where('tenant_id', $tenantId)->count();
+        $totalCSectionDeliveries = DeliveryDetail::where('tenant_id', $tenantId)->where('delivery_mode', 'C-Section')->count();
+        $totalNormalDeliveries = DeliveryDetail::where('tenant_id', $tenantId)->where('delivery_mode', 'Spontanteous Vaginal Delivery')->count();
         $patientLog = (clone $query)->count();
 
         return [
@@ -186,8 +189,10 @@ class PatientVisitService
             $currentUser = Auth::user();
             $patient = Patient::find($request->patient_id);
             $visit = PatientVisit::find($request->visit_id);
+            $tenantId = $request->header('X-Tenant-ID');
             // Initiate Patient Triage
             $triage = Triage::create([
+                'tenant_id' => $tenantId,
                 'user_id' => $currentUser->id,
                 'patient_id' => $request->patient_id,
                 'visit_id' => $request->visit_id,
@@ -229,8 +234,9 @@ class PatientVisitService
         }
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
-        $records = Triage::query()
+        $records = Triage::query()->where('tenant_id', $tenantId)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->whereRelation('patient', 'cardno', 'LIKE', '%' . $request['search_param'] . '%')
@@ -274,10 +280,12 @@ class PatientVisitService
             $customDate = [$request->start_date, $request->end_date];
         }
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
-        $query = Triage::query();
+        $tenantId = $request->header('X-Tenant-ID');
+        $query = Triage::query()->where('tenant_id', $tenantId);
 
-        $totalPatients = Patient::count();
-        $pendingPatients = PatientVisit::where('status', PatientVisitStatusEnums::VISIT_INITIATED->value)->count();
+        $totalPatients = Patient::where('tenant_id', $tenantId)->count();
+        $pendingPatients = PatientVisit::where('tenant_id', $tenantId)
+            ->where('status', PatientVisitStatusEnums::VISIT_INITIATED->value)->count();
         $totalOrders = (clone $query)->count();
         $patientLog = (clone $query)->count();
 

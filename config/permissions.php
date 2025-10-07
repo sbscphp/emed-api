@@ -7,37 +7,37 @@ return [
     'truncate_tables' => true,
 
     'apps' => [
-        'Dashboard' => [
+        'dashboard' => [
             'management' => ['view'],
         ],
-        'Record' => [
+        'record' => [
             'management' => ['create', 'view', 'modify'],
         ],
-        'Nurse' => [
+        'nurse' => [
             'management' => ['create', 'view', 'modify'],
         ],
-        'Consultant' => [
+        'consultant' => [
             'management' => ['create', 'view', 'modify'],
         ],
-        'Pharmacy' => [
+        'pharmacy' => [
             'management' => ['create', 'view', 'modify'],
         ],
-        'Laboratory' => [
+        'laboratory' => [
             'management' => ['create', 'view', 'modify'],
         ],
-        'Radiology' => [
+        'radiology' => [
             'management' => ['create', 'view', 'modify'],
         ],
-        'Billing' => [
+        'billing' => [
             'management' => ['create', 'view', 'modify'],
         ],
-        'Logs' => [
+        'logs' => [
             'management' => ['view'],
         ],
-        'Reports' => [
+        'reports' => [
             'management' => ['view'],
         ],
-        'User' => [
+        'user' => [
             'management' => ['create', 'view', 'modify'],
         ],
     ],

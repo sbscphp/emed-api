@@ -14,6 +14,7 @@ return new class extends Migration
 
         Schema::create('immunizations', function (Blueprint $table) {
             $table->id();
+            $table->string('tenant_id')->nullable();
             $table->unsignedBigInteger('patient_id')->nullable();
             $table->unsignedBigInteger('visit_id')->nullable();
             $table->boolean('schedule_a_follow_up')->default(false);

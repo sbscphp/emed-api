@@ -11,22 +11,31 @@ class TenantEmailVerification extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $verificationUrl;
-    public $data;
+    public $email;
+    public $name;
+    public $token;
 
-    public function __construct($verificationUrl, $data)
+    /**
+     * Create a new message instance.
+     */
+    public function __construct(array $maildata)
     {
-        $this->verificationUrl = $verificationUrl;
-        $this->data = $data;
+        $this->email = $maildata['email'];
+        $this->name = $maildata['name'];
+        $this->token = $maildata['token'];
     }
 
+    /**
+     * Build the message.
+     */
     public function build()
     {
-        return $this->subject('Email Verification Required')
+        return $this->subject('Verify Your Email Address')
             ->view('emails.tenant_verification')
             ->with([
-                'verificationUrl' => $this->verificationUrl,
-                'data' => $this->data,
+                'name'  => $this->name,
+                'email' => $this->email,
+                'token' => $this->token,
             ]);
     }
 }

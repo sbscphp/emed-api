@@ -47,7 +47,10 @@ class DashboardService
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
 
+        $tenantId = $request->header('X-Tenant-ID');
+
         $records = Patient::query()
+            ->where('tenant_id', $tenantId)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->where('firstname', 'LIKE', '%' . $request['search_param'] . '%')
@@ -83,16 +86,18 @@ class DashboardService
             $customDate = [$request->start_date, $request->end_date];
         }
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
-        $patientQuery = Patient::query();
+        $patientQuery = Patient::query()->where('tenant_id', $tenantId);
         $totalPatient = (clone $patientQuery)->count();
         $totalAdmittedPatient = (clone $patientQuery)->where('status', GeneralEnums::ADMITTED->value)->count();
 
-        $consultationQuery = Consultation::query();
+        $consultationQuery = Consultation::query()->where('tenant_id', $tenantId);
         $totalConsultation = (clone $consultationQuery)->count();
-        $totalPendingConsultation = PatientVisit::where('status', PatientVisitStatusEnums::VISIT_INITIATED->value)->count();
+        $totalPendingConsultation = PatientVisit::where('status', PatientVisitStatusEnums::VISIT_INITIATED->value)
+            ->where('tenant_id', $tenantId)->count();
 
-        $billingQuery = BillingLog::query();
+        $billingQuery = BillingLog::query()->where('tenant_id', $tenantId);
         $totalRevenue = (clone $billingQuery)->sum('grand_total');
         $outstandingPayment = (clone $billingQuery)->sum('amount_outstanding');
 
@@ -108,7 +113,8 @@ class DashboardService
             })->sum('grand_total');
 
         // Top earning department for selected date range
-        $topDepartment = BillingLogDetail::with('serviceUnit')
+        $topDepartment = BillingLogDetail::whereRelation('billingLog', 'tenant_id', $tenantId)
+            ->with('serviceUnit')
             ->select('service_unit_id', DB::raw('SUM(amount) as total'))
             ->when($request->startDate && $request->endDate, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
@@ -140,22 +146,24 @@ class DashboardService
         ];
         // End Statistics
 
-        $totalDepartmentRevenue = BillingLogDetail::when(!empty($request['department_id']), function ($query) use ($request) {
-            $query->where('service_unit_id', $request['department_id']);
-        })->when($request->startDate && $request->endDate, function ($query) use ($request) {
-            $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
-        })
+        $totalDepartmentRevenue = BillingLogDetail::whereRelation('billingLog', 'tenant_id', $tenantId)
+            ->when(!empty($request['department_id']), function ($query) use ($request) {
+                $query->where('service_unit_id', $request['department_id']);
+            })->when($request->startDate && $request->endDate, function ($query) use ($request) {
+                $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+            })
             ->when($dateFilter, function ($query) use ($dateFilter) {
                 return $query->whereBetween('created_at', $dateFilter);
             })->sum('amount');
 
         // Top 5 Drugs
-        $medications = Medication::all();
+        $medications = Medication::where('tenant_id', $tenantId)->get();
         $topDrugs = [];
 
         foreach ($medications as $medication) {
             // Count treatments within the date range
             $treatmentQuery = Treatment::where('drug_id', $medication->id)
+                ->where('tenant_id', $tenantId)
                 ->when($request->startDate && $request->endDate, function ($query) use ($request) {
                     $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
                 })
@@ -182,9 +190,10 @@ class DashboardService
         $referralPatientPercentage = $total > 0 ? round(($totalReferrals / $total) * 100, 2) : 0;
 
         // Number of in and out patients
-        $consultations = Consultation::when($request->start_date && $request->end_date, function ($query) use ($request) {
-            $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
-        })
+        $consultations = Consultation::where('tenant_id', $tenantId)
+            ->when($request->start_date && $request->end_date, function ($query) use ($request) {
+                $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+            })
             ->when($dateFilter, function ($query) use ($dateFilter) {
                 return $query->whereBetween('created_at', $dateFilter);
             })
@@ -238,9 +247,10 @@ class DashboardService
         $female = (clone $patientQuery)->whereIn('gender', ['female', 'Female', 'FEMALE'])->count();
 
         // visits trends
-        $visits = PatientVisit::when($request->start_date && $request->end_date, function ($query) use ($request) {
-            $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
-        })
+        $visits = PatientVisit::where('tenant_id', $tenantId)
+            ->when($request->start_date && $request->end_date, function ($query) use ($request) {
+                $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+            })
             ->when($dateFilter, function ($query) use ($dateFilter) {
                 return $query->whereBetween('created_at', $dateFilter);
             })
@@ -276,7 +286,7 @@ class DashboardService
             ];
         }
 
-        $laboratoryQuery = Laboratory::query()
+        $laboratoryQuery = Laboratory::query()->where('tenant_id', $tenantId)
             ->when($request->start_date && $request->end_date, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
             })

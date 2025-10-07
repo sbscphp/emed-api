@@ -48,16 +48,29 @@ class AuthenticationService
             // Create User (Hospital Admin)
             $user = $this->createUser($tenant, $data);
 
-            $verificationCode = $user->remember_token;
-            $baseUrl = env('APP_URL') . '/api/v1/admin/verify/email';
-            $verificationUrl = $baseUrl . '?token=' . $verificationCode . '&email=' . urlencode($data['admin_email']);
-            $user->save();
+            $otp = random_int(100000, 999999);
+            $expiresAt = Carbon::now()->addMinutes(30);
 
-            Mail::to($user->email)->send(new TenantEmailVerification($verificationUrl, [
-                'firstname' => $user->first_name . ' ' . $user->last_name,
+            // Store token in landlord DB
+            DB::connection('landlord')->table('password_reset_tokens')->updateOrInsert(
+                ['email' => $user->email],
+                [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'otp' => $otp,
+                    'created_at' => now(),
+                    'expires_at' => $expiresAt
+                ]
+            );
+
+            // Prepare password setup mail
+            $maildata = [
                 'email' => $user->email,
-                'verification_code' => $verificationCode,
-            ]));
+                'name' => $user->first_name . ' ' . $user->last_name,
+                'token' => $otp,
+            ];
+
+            Mail::to($user->email)->send(new TenantEmailVerification($maildata));
 
             return [
                 'user' => $user->load('roles', 'permissions'),
@@ -195,28 +208,28 @@ class AuthenticationService
         return $user;
     }
 
-    public function resendEmailVerification($email)
-    {
-        $user = User::where('email', $email)->first();
-        if (!$user) {
-            throw new \Exception("User with email {$email} not found.");
-        }
+    // public function resendEmailVerification($email)
+    // {
+    //     $user = User::where('email', $email)->first();
+    //     if (!$user) {
+    //         throw new \Exception("User with email {$email} not found.");
+    //     }
 
-        if ($user->is_verified) {
-            throw new \Exception("Email already verified.");
-        }
+    //     if ($user->is_verified) {
+    //         throw new \Exception("Email already verified.");
+    //     }
 
-        $verificationCode = $user->remember_token;
-        $baseUrl = env('APP_URL') . '/api/v1/admin/verify/email';
-        $verificationUrl = $baseUrl . '?token=' . $verificationCode . '&email=' . urlencode($user->email);
-        Mail::to($user->email)->send(new TenantEmailVerification($verificationUrl, [
-            'firstname' => $user->first_name . ' ' . $user->last_name,
-            'email' => $user->email,
-            'verification_code' => $verificationCode,
-        ]));
+    //     $verificationCode = $user->remember_token;
+    //     $baseUrl = env('APP_URL') . '/api/v1/admin/verify/email';
+    //     $verificationUrl = $baseUrl . '?token=' . $verificationCode . '&email=' . urlencode($user->email);
+    //     Mail::to($user->email)->send(new TenantEmailVerification($verificationUrl, [
+    //         'firstname' => $user->first_name . ' ' . $user->last_name,
+    //         'email' => $user->email,
+    //         'verification_code' => $verificationCode,
+    //     ]));
 
-        return $user;
-    }
+    //     return $user;
+    // }
 
     public function verifyEmail($token, $email)
     {

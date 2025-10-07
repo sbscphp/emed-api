@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('counselling_details', function (Blueprint $table) {
             $table->id();
+            $table->string('tenant_id')->nullable();
             $table->unsignedBigInteger('patient_id')->nullable();
             $table->unsignedBigInteger('visit_id')->nullable();
             $table->string('patient_name')->nullable();
