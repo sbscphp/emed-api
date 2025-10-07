@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('triages', function (Blueprint $table) {
             $table->id();
+            $table->string('tenant_id')->nullable();
             $table->unsignedBigInteger('user_id')->nullable();
             $table->unsignedBigInteger('patient_id')->nullable();
             $table->unsignedBigInteger('visit_id')->nullable();

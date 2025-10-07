@@ -49,8 +49,10 @@ class PatientService
         }
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
         $records = Patient::query()
+            ->where('tenant_id', $tenantId)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->where('firstname', 'LIKE', '%' . $request['search_param'] . '%')
@@ -90,7 +92,8 @@ class PatientService
             $customDate = [$request->start_date, $request->end_date];
         }
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
-        $query = Patient::query();
+        $tenantId = $request->header('X-Tenant-ID');
+        $query = Patient::query()->where('tenant_id', $tenantId);
         $total = (clone $query)->count();
         $patientLog = (clone $query)->count();
         $admitted = (clone $query)->where('status', GeneralEnums::ADMITTED->value)->count();
@@ -155,8 +158,10 @@ class PatientService
             $tenant = Tenant::current(); //Retrieve the current tenant
             $tenantDomain = $tenant ? $tenant->domain : 'emed'; // Current tenant domain name
             $tenantAcronym = $this->generateAcronym($tenantDomain); //Acronym for the hospital name()
+            $tenantId = $request->header('X-Tenant-ID');
             // Create Patient
             $patient = Patient::create([
+                'tenant_id' => $tenantId,
                 'created_by' => $currentUser->id,
                 'patientno' => 'EMED/' . GeneralHelper::generateUniqueRandomId($request->firstname) . '/' . GeneralHelper::generateUniqueRandomId($request->lastname) . '/' . $tenantAcronym,
                 'firstname' => $request->firstname,
@@ -298,8 +303,10 @@ class PatientService
         }
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
         $records = PatientVisit::query()
+            ->where('tenant_id', $tenantId)
             ->where('patient_id', $request->patient_id)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
@@ -368,6 +375,7 @@ class PatientService
         try {
 
             $currentUser = Auth::user();
+            $tenantId = $request->header('X-Tenant-ID');
             $service = Service::find($request->service_id);
             if (empty($service)) {
                 throw new \Exception("Service not found.");
@@ -381,6 +389,7 @@ class PatientService
             $patient = Patient::find($request->patient_id);
             // Initiate Patient visit
             $patientVisit = PatientVisit::create([
+                'tenant_id' => $tenantId,
                 'initiated_by' => $currentUser->id,
                 'visitno' => 'VIS' . GeneralHelper::generateUniqueRandomId($patient->firstname),
                 'patient_id' => $patient->id,
@@ -399,6 +408,7 @@ class PatientService
 
             //store billing info
             $patientBilling = BillingLog::create([
+                'tenant_id' => $tenantId,
                 'updated_by' => $currentUser->id,
                 'visit_id' => $patientVisit->id,
                 'patient_id' => $patient->id,

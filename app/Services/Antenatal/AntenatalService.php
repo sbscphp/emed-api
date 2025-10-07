@@ -19,27 +19,32 @@ use App\Models\NewBornDetail;
 class AntenatalService
 {
 
-
-    public function createAntenatalRecord(array $request)
+    public function createAntenatalRecord($request)
     {
-        $currentUserInstance = UserMgtHelper::userInstance();
-        $userId = $currentUserInstance->id;
-        $data = $request;
+        $currentUser = UserMgtHelper::userInstance();
+        $userId = $currentUser->id;
+        $tenantId = $request->header('X-Tenant-ID');
+
+        $data = $request->validated();
 
         $antenatal = Antenatal::updateOrCreate(
-            ['visit_id' => $data['visit_id']], // Unique key
-            $data // Data to update/create
+            [
+                'visit_id' => $data['visit_id'],
+                'tenant_id' => $tenantId,
+            ],
+            $data
         );
 
         $dataToLog = [
-            'causer_id' => $userId,
-            'action_id' => $antenatal->id,
-            'action' => 'Create',
-            'action_type' => "Models\Antenatal",
-            'log_name' => "Antenatal created successfully",
-            'description' => "{$currentUserInstance->firstname} {$currentUserInstance->lastname} created a new antenatal record",
-            'module_accessed' => ListModuleEnums::NURSE
+            'causer_id'       => $userId,
+            'action_id'       => $antenatal->id,
+            'action'          => 'Create',
+            'action_type'     => "Models\\Antenatal",
+            'log_name'        => "Antenatal record created successfully",
+            'description'     => "{$currentUser->firstname} {$currentUser->lastname} created a new antenatal record",
+            'module_accessed' => ListModuleEnums::NURSE,
         ];
+
         GeneralHelper::storeAuditLog($dataToLog);
 
         return $antenatal;

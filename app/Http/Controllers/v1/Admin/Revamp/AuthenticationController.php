@@ -4,13 +4,18 @@ namespace App\Http\Controllers\v1\Admin\Revamp;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Mail\TenantEmailVerification;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Responser\JsonResponser;
 use App\Services\Revamp\AuthenticationService;
 use App\Services\Revamp\PermissionAccessService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Validator;
 use Throwable;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -38,18 +43,125 @@ class AuthenticationController extends Controller
         }
     }
 
-    public function resendEmailVerification(Request $request)
+    public function resendOtp(Request $request)
     {
         try {
             DB::beginTransaction();
-            $record = $this->authenticationService->resendEmailVerification($request);
+
+            $validateRequest = Validator::make($request->all(), [
+                'email' => 'required|email',
+            ]);
+
+            if ($validateRequest->fails()) {
+                return JsonResponser::send(true, $validateRequest->errors()->first(), $validateRequest->errors()->all(), 400);
+            }
+
+            $user = User::where('email', $request->email)->first();
+
+            if (!$user) {
+                return JsonResponser::send(true, 'Email address not found.', [], 400);
+            }
+
+            DB::connection('landlord')->table('password_reset_tokens')->where('email', $request->email)->delete();
+
+            $otp = random_int(100000, 999999);
+            $expiresAt = Carbon::now()->addMinutes(30);
+
+            DB::connection('landlord')->table('password_reset_tokens')->updateOrInsert(
+                ['email' => $user->email],
+                [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'otp' => $otp,
+                    'created_at' => now(),
+                    'expires_at' => $expiresAt
+                ]
+            );
+
+            $maildata = [
+                'email' => $user->email,
+                'name' => $user->first_name . ' ' . $user->last_name,
+                'token' => $otp,
+            ];
+
+            Mail::to($request->email)->send(new TenantEmailVerification($maildata));
+
             DB::commit();
-            return JsonResponser::send(false, "Verification email resent to {$record->email}.", 200);
+            return JsonResponser::send(false, 'Requested otp has been sent to the email associated with your account.', 200);
         } catch (\Throwable $th) {
             DB::rollBack();
-            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+            return JsonResponser::send(true, 'Internal server error', $th->getMessage(), 500, $th);
         }
     }
+
+    public function verifyOtp(Request $request)
+    {
+        try {
+            $validateRequest = Validator::make($request->all(), [
+                'otp' => 'required|numeric',
+            ]);
+
+            if ($validateRequest->fails()) {
+                return JsonResponser::send(true, $validateRequest->errors()->first(), $validateRequest->errors()->all(), 400);
+            }
+
+            DB::beginTransaction();
+
+            $tokenRecord = DB::connection('landlord')
+                ->table('password_reset_tokens')
+                ->where('otp', $request->otp)
+                ->where('expires_at', '>', Carbon::now())
+                ->first();
+
+            if (!$tokenRecord) {
+                DB::rollBack();
+                return JsonResponser::send(true, 'Invalid or expired OTP.', [], 400);
+            }
+
+            $user = User::find($tokenRecord->user_id);
+            if (!$user) {
+                DB::rollBack();
+                return JsonResponser::send(true, 'User not found.', [], 404);
+            }
+
+            $user->email_verified_at = Carbon::now();
+            $user->remember_token = null;
+            $user->is_verified = 1;
+            $user->is_completed = 1;
+            $user->save();
+
+            DB::connection('landlord')
+                ->table('password_reset_tokens')
+                ->where('email', $tokenRecord->email)
+                ->update([
+                    'status' => 'Verified',
+                    'verified_at' => Carbon::now(),
+                ]);
+
+            DB::commit();
+
+            return JsonResponser::send(false, 'OTP verified successfully.', [
+                'email' => $user->email,
+                'verified_at' => $user->email_verified_at,
+            ], 200);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return JsonResponser::send(true, 'Internal server error', $th->getMessage(), 500);
+        }
+    }
+
+    // public function resendEmailVerification(Request $request)
+    // {
+    //     try {
+    //         DB::beginTransaction();
+    //         $record = $this->authenticationService->resendEmailVerification($request);
+    //         DB::commit();
+    //         return JsonResponser::send(false, "Verification email resent to {$record->email}.", 200);
+    //     } catch (\Throwable $th) {
+    //         DB::rollBack();
+    //         return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+    //     }
+    // }
 
     public function verifyEmail(Request $request, $token, $email)
     {

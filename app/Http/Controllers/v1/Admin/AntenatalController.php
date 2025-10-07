@@ -36,9 +36,11 @@ class AntenatalController extends Controller
     {
         try {
             DB::beginTransaction();
-            $record = $this->antenatalService->createAntenatalRecord($request->validated());
+
+            $record = $this->antenatalService->createAntenatalRecord($request);
 
             DB::commit();
+
             return JsonResponser::send(false, 'Antenatal record created successfully', $record);
         } catch (\Throwable $th) {
             DB::rollBack();

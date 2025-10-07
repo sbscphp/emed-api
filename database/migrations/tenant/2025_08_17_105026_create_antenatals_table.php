@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('antenatals', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->string('tenant_id')->nullable();
             $table->unsignedBigInteger('patient_id')->nullable();
             $table->unsignedBigInteger('visit_id')->nullable();
             $table->date('booking_date')->nullable();
