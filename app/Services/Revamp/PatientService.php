@@ -64,7 +64,7 @@ class PatientService
             ->when(!empty($request['status']), function ($query) use ($request) {
                 $query->where('status', $request['status']);
             })
-            ->when($request->startDate && $request->endDate, function ($query) use ($request) {
+            ->when($request->start_date && $request->end_date, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
             })
             ->when($dateFilter, function ($query) use ($dateFilter) {
@@ -416,6 +416,7 @@ class PatientService
                 'patient_name' => $patient->firstname . ' ' . $patient->lastname,
                 'billing_date' => now(),
                 'service_type_id' => $request->service_id,
+                'service_unit_id' => $serviceUnit->id,
                 'grand_total' => $service->price
             ]);
 

@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
-use Spatie\Multitenancy\Models\Tenant;
+//use Spatie\Multitenancy\Models\Tenant;
+use App\Models\Tenant;
 use Spatie\Multitenancy\Http\Middleware\NeedsTenant;
 
 class CurrentTenantMiddleware

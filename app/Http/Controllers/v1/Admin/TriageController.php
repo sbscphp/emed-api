@@ -90,10 +90,11 @@ class TriageController extends Controller
             ]);
 
             // Create notification
-            $tenant = $currentUser->tenant;
+            //$tenant = $currentUser->tenant;
+            $tenant = \App\Models\Tenant::current();
             $notificationData = [
                 'user_id' => $currentUser->id,
-                'tenant_domain' => $tenant->domain,
+                'tenant_domain' => $tenant?->domain,
                 'title' => 'New Patient Case Assigned',
                 'message' => "Triage for the assigned patient has been successfully completed.
                             You are now expected to proceed with the next clinical step. The following information is available for your review:
