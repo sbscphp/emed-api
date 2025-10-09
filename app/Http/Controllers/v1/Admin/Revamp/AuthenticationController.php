@@ -253,6 +253,8 @@ class AuthenticationController extends Controller
                     // ->with('permissions')
                     ->get(['id', 'name', 'display_name']);
 
+                $currentRole = $roles->first();
+
                 // Tenant user pivot from landlord DB
                 $tenantUser = DB::connection('landlord')->table('tenant_users')
                     ->where('tenant_id', $tenant->id)
@@ -266,6 +268,11 @@ class AuthenticationController extends Controller
                 ];
                 $user['current_tenant_user']  = $tenantUser;
                 $user['roles'] = $roles;
+                $user['current_role'] = $currentRole ? [
+                    'id'           => $currentRole->id,
+                    'name'         => $currentRole->name,
+                    'display_name' => $currentRole->display_name,
+                ] : null;
             } else {
                 // SUPER ADMIN LOGIN (landlord only)
                 $roles = DB::connection('landlord')->table('roles')
