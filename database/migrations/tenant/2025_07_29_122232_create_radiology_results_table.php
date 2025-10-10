@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('radiology_results', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->unsignedBigInteger('tenant_domain')->nullable();
+            $table->string('tenant_id')->nullable();
             $table->unsignedBigInteger('user_id')->nullable();
             $table->unsignedBigInteger('updated_by')->nullable();
             $table->unsignedBigInteger('radiology_id')->nullable();

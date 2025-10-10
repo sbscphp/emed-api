@@ -73,19 +73,21 @@ class MedicationController extends Controller
             $currentUser = Auth::user();
             // $user = $this->userService->find($currentUser->id);
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
+            $tenantId = $request->header('X-Tenant-ID');
             $validated = array_merge($request->validated(), [
                 'created_by' => $currentUser->id,
+                'tenant_id'        => $tenantId,
             ]);
 
             $med = $this->medicationService->create($validated);
 
             $dataToLog = [
-                'causer_id' => $user->id,
+                'causer_id' => $currentUser->id,
                 'action_id' => $med->id,
                 'action' => 'Create',
                 'action_type' => "Models\Medicine",
                 'log_name' => "Medicine created successfully",
-                'description' => "{$user->firstname} {$user->lastname} created a new Medicine: {$med->name}",
+                'description' => "{$currentUser->firstname} {$currentUser->lastname} created a new Medicine: {$med->name}",
                 'module_accessed' => ListModuleEnums::PHARMACY
             ];
             //   PatientVisitStageEnums
@@ -185,10 +187,10 @@ class MedicationController extends Controller
         return JsonResponser::send(false, 'medicine deleted successfully', null, 200);
     }
 
-    public function listVendors()
+    public function listVendors(Request $request)
     {
         try {
-            $vendors = $this->medicationService->getAllVendors();
+            $vendors = $this->medicationService->getAllVendors($request);
             return JsonResponser::send(false, 'Vendors retrieved successfully', $vendors);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Error retrieving vendors', [], 500, $e);
@@ -234,10 +236,10 @@ class MedicationController extends Controller
         }
     }
 
-    public function medicineDashboardStats()
+    public function medicineDashboardStats(Request $request)
     {
         try {
-            $stats = $this->medicationService->getMedicineDashboardStats();
+            $stats = $this->medicationService->getMedicineDashboardStats($request);
 
             return JsonResponser::send(false, 'Medicine dashboard stats fetched successfully', $stats);
         } catch (\Exception $e) {

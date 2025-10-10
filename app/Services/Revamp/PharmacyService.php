@@ -48,9 +48,11 @@ class PharmacyService
         }
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
         $records = PatientVisit::query()
-        // ->where('status', PatientVisitStatusEnums::TREATMENT->value)
+            ->where('tenant_id', $tenantId)
+            // ->where('status', PatientVisitStatusEnums::TREATMENT->value)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->whereRelation('patient', 'cardno', 'LIKE', '%' . $request['search_param'] . '%')
@@ -83,12 +85,13 @@ class PharmacyService
 
     public function stats($request)
     {
-        $totalMedicationInStock = Medication::count();
-        $availableMedication = Medication::where('medicine_status', GeneralEnums::AVAILABLE->value)->count();
-        $fulfilledPrescriptions = Treatment::where('status', GeneralEnums::FULLFILLED->value)->count();
-        $totalSupply = PharmacySupply::count();
-        $totalRequest = PharmacyRequest::count();
-        $totalPharmacy = Pharmacy::count();
+        $tenantId = $request->header('X-Tenant-ID');
+        $totalMedicationInStock = Medication::where('tenant_id', $tenantId)->count();
+        $availableMedication = Medication::where('tenant_id', $tenantId)->where('medicine_status', GeneralEnums::AVAILABLE->value)->count();
+        $fulfilledPrescriptions = Treatment::where('tenant_id', $tenantId)->where('status', GeneralEnums::FULLFILLED->value)->count();
+        $totalSupply = PharmacySupply::where('tenant_id', $tenantId)->count();
+        $totalRequest = PharmacyRequest::where('tenant_id', $tenantId)->count();
+        $totalPharmacy = Pharmacy::where('tenant_id', $tenantId)->count();
         return [
             'totalMedicationInStock' => $totalMedicationInStock,
             'availableMedication' => $availableMedication,
@@ -139,8 +142,10 @@ class PharmacyService
         }
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
         $query = Treatment::query()
+            ->where('tenant_id', $tenantId)
             ->where('visit_id', $request->visit_id)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
@@ -262,7 +267,9 @@ class PharmacyService
             $currentUser = Auth::user();
 
             $data = $request->validated();
+            $tenantId = $request->header('X-Tenant-ID');
             $data['created_by']  = $currentUser->id;
+            $data['tenant_id']  = $tenantId;
             $data['pharmacy_id'] = $this->generatePharmacyId();
 
             // Create pharmacy record
@@ -282,8 +289,9 @@ class PharmacyService
         }
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
-        $records = Pharmacy::query()
+        $records = Pharmacy::query()->where('tenant_id', $tenantId)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->where('name', 'LIKE', '%' . $request['search_param'] . '%')

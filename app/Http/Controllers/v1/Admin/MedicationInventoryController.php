@@ -143,10 +143,11 @@ class MedicationInventoryController extends Controller
         }
     }
 
-    public function shipmentStat()
+    public function shipmentStat(Request $request)
     {
         try {
-            $data = $this->inventoryService->getShipmentStats();
+            $tenantId = $request->header('X-Tenant-ID');
+            $data = $this->inventoryService->getShipmentStats($tenantId);
             return JsonResponser::send(false, 'Shipment stats fetched successfully', $data);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Error fetching shipment stats', [], 500, $e);

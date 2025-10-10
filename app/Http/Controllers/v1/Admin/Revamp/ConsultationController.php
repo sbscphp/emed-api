@@ -93,7 +93,7 @@ class ConsultationController extends Controller
             ]);
 
             // Create notification
-            $tenant = $currentUser->tenant;
+            $tenant = $currentUser->currentTenant->first();
             $notificationData = [
                 'user_id' => $currentUser->id,
                 'tenant_domain' => $tenant->domain,

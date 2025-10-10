@@ -15,9 +15,11 @@ class MedicationRepository implements MedicationRepositoryInterface
     public function all($request)
     {
         $filters = $request;
+        $tenantId = $request->header('X-Tenant-ID');
 
         $query = Medication::on('tenant')
-            ->with('pharmacy:id,name', 'medicationInventories:id,medication_id,active_ingredient')
+            ->where('tenant_id', $tenantId)
+            ->with('pharmacy:id,name')
             ->when(!empty($request['search']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->where('generic_name', 'like', "%{$request['search']}%")
@@ -121,7 +123,7 @@ class MedicationRepository implements MedicationRepositoryInterface
 
     public function find($id)
     {
-        return Medication::with('pharmacy', 'medicationInventories:id,medication_id,active_ingredient')->find($id);
+        return Medication::with('pharmacy')->find($id);
     }
 
 

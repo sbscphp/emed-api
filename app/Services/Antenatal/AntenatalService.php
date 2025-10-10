@@ -75,15 +75,19 @@ class AntenatalService
         return $antenatalLabTest;
     }
 
-    public function createDeliveryDetails(array $request)
+    public function createDeliveryDetails($request)
     {
         $currentUserInstance = UserMgtHelper::userInstance();
         $userId = $currentUserInstance->id;
-        $data = $request;
+        $tenantId = $request->header('X-Tenant-ID');
+        $data = $request->validated();
 
         $deliveryDetails = DeliveryDetail::updateOrCreate(
-            ['visit_id' => $data['visit_id']], // Unique key
-            $data // Data to update/create
+            [
+                'visit_id' => $data['visit_id'],
+                'tenant_id' => $tenantId,
+            ],
+            $data
         );
 
         $dataToLog = [
@@ -100,15 +104,19 @@ class AntenatalService
         return $deliveryDetails;
     }
 
-    public function createNewBorn(array $request)
+    public function createNewBorn($request)
     {
         $currentUserInstance = UserMgtHelper::userInstance();
         $userId = $currentUserInstance->id;
-        $data = $request;
+        $tenantId = $request->header('X-Tenant-ID');
+        $data = $request->validated();
 
-        $newBornDetail = NewBornDetail::updateOrCreate(
-            ['visit_id' => $data['visit_id']], // Unique key
-            $data // Data to update/create
+        $newBornDetail = DeliveryDetail::updateOrCreate(
+            [
+                'visit_id' => $data['visit_id'],
+                'tenant_id' => $tenantId,
+            ],
+            $data
         );
 
         $dataToLog = [

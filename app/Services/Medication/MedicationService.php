@@ -41,23 +41,27 @@ class MedicationService
         return $this->medicationRepo->delete($id);
     }
 
-    public function getAllVendors()
+    public function getAllVendors($request)
     {
+        $tenantId = $request->header('X-Tenant-ID');
         return Medication::select('brand_name')
+            ->where('tenant_id', $tenantId)
             ->distinct()
             ->orderBy('brand_name')
             ->pluck('brand_name');
     }
 
-    public function getMedicineDashboardStats(): array
+    public function getMedicineDashboardStats($request)
     {
+        $tenantId = $request->header('X-Tenant-ID');
         return [
-            'total_medications' => Medication::count(),
-            'total_supply_today' => PharmacySupply::whereDate('supplied_date', now())->count(),
-            'near_expiry_medications' => MedicationInventory::whereBetween('expiry_date', [now(), now()->addDays(30)])
-                ->distinct('medication_id')
-                ->count('medication_id'),
-            'low_stock_alert' => MedicationInventory::where('current_stock', '<', 10)->count(),
+            'total_medications' => Medication::where('tenant_id', $tenantId)->count(),
+            'total_supply_today' => PharmacySupply::where('tenant_id', $tenantId)->whereDate('supplied_date', now())->count(),
+            'near_expiry_medications' => 0,
+            // 'near_expiry_medications' => MedicationInventory::where('tenant_id', $tenantId)->whereBetween('expiry_date', [now(), now()->addDays(30)])
+            //     ->distinct('medication_id')
+            //     ->count('medication_id'),
+            'low_stock_alert' => MedicationInventory::where('tenant_id', $tenantId)->where('current_stock', '<', 10)->count(),
         ];
     }
 }

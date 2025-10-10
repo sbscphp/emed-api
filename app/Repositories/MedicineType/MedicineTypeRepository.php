@@ -12,9 +12,10 @@ class MedicineTypeRepository implements MedicineTypeInterface
      * 
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    public function all($filters)
+    public function all($filters, $request)
     {
-        $query = MedicineType::query();
+        $tenantId = $request->header('X-Tenant-ID');
+        $query = MedicineType::query()->where('tenant_id', $tenantId);
 
         if (!empty($filters['search'])) {
             $query->where('type_name', 'like', '%' . $filters['search'] . '%');

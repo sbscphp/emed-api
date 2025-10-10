@@ -202,8 +202,9 @@ class BillingController extends Controller
     {
         try {
             DB::connection('tenant');
-
+            $tenantId = $request->header('X-Tenant-ID');
             $labTestQuery = Laboratory::query()
+                ->where('tenant_id', $tenantId)
                 ->where('visit_id', $request->visit_id)
                 ->when($request->search_param, function ($query) use ($request) {
                     $query->where(function ($subQuery) use ($request) {
@@ -356,9 +357,9 @@ class BillingController extends Controller
     public function patientVisitSummary($id)
     {
         try {
-
+            $tenantId = $request->header('X-Tenant-ID');
             $patientVisit = PatientVisit::find($id);
-            $patient = Patient::with('service', 'triage', 'familyHistory', 'medicalHistory', 'socialHistory', 'drugHistory')->find($patientVisit->patient_id);
+            $patient = Patient::with('service', 'triage', 'familyHistory', 'medicalHistory', 'socialHistory')->find($patientVisit->patient_id);
             $consultation_Details =  Consultation::where('visit_id',  $patientVisit->visit_id)->first();
             $laboratoryDetail = Laboratory::where('visit_id',  $patientVisit->visit_id)->first();
             $radiologyDetail = Radiology::where('visit_id',  $patientVisit->visit_id)->first();

@@ -62,8 +62,10 @@ class LabController extends Controller
     {
         try {
             DB::connection('tenant');
+            $tenantId = $request->header('X-Tenant-ID');
 
             $labTestQuery = Laboratory::query()
+                ->where('tenant_id', $tenantId)
                 ->where('visit_id', $request->visit_id)
                 ->when($request->search_param, function ($query) use ($request) {
                     $query->where(function ($subQuery) use ($request) {
@@ -213,17 +215,17 @@ class LabController extends Controller
         }
     }
 
-    public function patientVisitSummary($id)
+    public function patientVisitSummary(Request $request, $id)
     {
         try {
-
-            $patientVisit = PatientVisit::find($id);
-            $patient = Patient::with('service', 'triage', 'familyHistory', 'medicalHistory', 'socialHistory', 'drugHistory')->find($patientVisit->patient_id);
-            $consultation_Details =  Consultation::where('visit_id',  $patientVisit->visit_id)->first();
-            $laboratoryDetail = Laboratory::where('visit_id',  $patientVisit->visit_id)->first();
-            $radiologyDetail = Radiology::where('visit_id',  $patientVisit->visit_id)->first();
-            $treatmentDetail = Treatment::where('visit_id',  $patientVisit->visit_id)->orderBy('id', 'DESC')->get();
-            $billingLog = BillingLog::where('visit_id',  $patientVisit->id)->first();
+            $tenantId = $request->header('X-Tenant-ID');
+            $patientVisit = PatientVisit::where('tenant_id', $tenantId)->where('id', $id)->first();
+            $patient = Patient::where('tenant_id', $tenantId)->with('service', 'triage', 'familyHistory', 'medicalHistory', 'socialHistory')->find($patientVisit->patient_id);
+            $consultation_Details =  Consultation::where('tenant_id', $tenantId)->where('visit_id',  $patientVisit->visit_id)->first();
+            $laboratoryDetail = Laboratory::where('tenant_id', $tenantId)->where('visit_id',  $patientVisit->visit_id)->first();
+            $radiologyDetail = Radiology::where('tenant_id', $tenantId)->where('visit_id',  $patientVisit->visit_id)->first();
+            $treatmentDetail = Treatment::where('tenant_id', $tenantId)->where('visit_id',  $patientVisit->visit_id)->orderBy('id', 'DESC')->get();
+            $billingLog = BillingLog::where('tenant_id', $tenantId)->where('visit_id',  $patientVisit->id)->first();
             $data = [
                 "patient" => $patient,
                 "patientVisit" => $patientVisit,

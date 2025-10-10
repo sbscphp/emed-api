@@ -34,20 +34,22 @@ class MedicationInventoryService
         return $this->inventoryRepository->find($id);
     }
 
-    public function getShipmentStats(): array
+    public function getShipmentStats($tenantId): array
     {
+
         return [
-            'total_shipments' => MedicationInventory::count(),
+            'total_shipments' => MedicationInventory::where('tenant_id', $tenantId)->count(),
 
-            'pending_shipments' => MedicationInventory::where('shipment_status', 'pending')->count(),
+            'pending_shipments' => MedicationInventory::where('tenant_id', $tenantId)->where('shipment_status', 'pending')->count(),
 
-            'received_shipments' => MedicationInventory::where('shipment_status', 'received')->count(),
+            'received_shipments' => MedicationInventory::where('tenant_id', $tenantId)->where('shipment_status', 'received')->count(),
 
-            'total_quantity_supplied' => MedicationInventory::sum('received_qty'),
+            'total_quantity_supplied' => MedicationInventory::where('tenant_id', $tenantId)->sum('received_qty'),
 
-            'shipment_value' => MedicationInventory::join('medications', 'medications.id', '=', 'medication_inventory.medication_id')
-                ->select(DB::raw('SUM(medication_inventory.received_qty * medications.cost_price) as total_value'))
-                ->value('total_value'),
+            'shipment_value' => 0,
+            // 'shipment_value' => MedicationInventory::where('tenant_id', $tenantId)->join('medications', 'medications.id', '=', 'medication_inventory.medication_id')
+            //     ->select(DB::raw('SUM(medication_inventory.received_qty * medications.cost_price) as total_value'))
+            //     ->value('total_value'),
         ];
     }
 

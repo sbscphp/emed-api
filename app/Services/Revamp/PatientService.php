@@ -97,7 +97,7 @@ class PatientService
         $total = (clone $query)->count();
         $patientLog = (clone $query)->count();
         $admitted = (clone $query)->where('status', GeneralEnums::ADMITTED->value)->count();
-        $patientVisitToday = PatientVisit::whereDate('created_at', now()->toDateString())->count();
+        $patientVisitToday = PatientVisit::where('tenant_id', $tenantId)->whereDate('created_at', now()->toDateString())->count();
         $followUpPatient = (clone $query)->where('reg_status', GeneralEnums::FOLLOWUPPATIENT->value)->count();
 
         return [
@@ -422,6 +422,7 @@ class PatientService
 
             //update billing log details
             BillingLogDetail::create([
+                'tenant_id'        => $tenantId,
                 'billing_id' => $patientBilling->id,
                 'service_unit_id' => $serviceUnit->id,
                 'item_name' => $service->name,

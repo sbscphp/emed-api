@@ -22,7 +22,7 @@ class Radiology__Editservice_Request extends FormRequest
     public function rules(): array
     {
         return [
-            "id" => "required|exists:tenant.radiology__services,id",
+            "id" => "required|exists:tenant.radiology_services,id",
             "name" => "required|string",
             "price" => "required|integer",
         ];

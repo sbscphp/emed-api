@@ -70,7 +70,7 @@ class ImmunizationController extends Controller
     {
         try {
             $patientVisit = PatientVisit::find($id);
-            $patient = Patient::with('service', 'triage', 'familyHistory', 'medicalHistory', 'socialHistory', 'drugHistory')->find($patientVisit->patient_id);
+            $patient = Patient::with('service', 'triage', 'familyHistory', 'medicalHistory', 'socialHistory')->find($patientVisit->patient_id);
             $immunization = Immunization::where('visit_id', $id)->first();
             $dosageAdministration = DosageAdministration::where('visit_id', $id)->first();
             $billingLog = BillingLog::where('visit_id',  $patientVisit->id)->first();
@@ -241,8 +241,10 @@ class ImmunizationController extends Controller
     {
         try {
             $validated = $request->validated();
+            $tenantId = $request->header('X-Tenant-ID');
             $serviceunit = ServiceUnit::where("name", "Radiology")->first() ?? null;
             $data = Service::create([
+                'tenant_id'        => $tenantId,
                 "service_unit_id" => $serviceunit->id,
                 "name" => $validated['name'],
                 "price" => $validated['price']
@@ -286,15 +288,17 @@ class ImmunizationController extends Controller
                     return ExportHelper::downloadPdf($exportData, 'service.pdf');
                 }
             }
+            $tenantId = $request->header('X-Tenant-ID');
 
-            $services = Service::when(!empty($validated['search']), function ($query) use ($validated) {
-                $search = $validated['search'];
+            $services = Service::where('tenant_id', $tenantId)
+                ->when(!empty($validated['search']), function ($query) use ($validated) {
+                    $search = $validated['search'];
 
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'LIKE', "%{$search}%")
-                        ->orWhere('price', 'LIKE', "%{$search}%");
-                });
-            })->paginate(10);
+                    $query->where(function ($q) use ($search) {
+                        $q->where('name', 'LIKE', "%{$search}%")
+                            ->orWhere('price', 'LIKE', "%{$search}%");
+                    });
+                })->paginate(10);
             return JsonResponser::send(false, 'featch successfully.', $services);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'Error  .', [], 500, $th);

@@ -66,7 +66,7 @@ class AntenatalController extends Controller
     {
         try {
             DB::beginTransaction();
-            $record = $this->antenatalService->createDeliveryDetails($request->validated());
+            $record = $this->antenatalService->createDeliveryDetails($request);
 
             DB::commit();
             return JsonResponser::send(false, 'Delivery details created successfully', $record);
@@ -80,7 +80,7 @@ class AntenatalController extends Controller
     {
         try {
             DB::beginTransaction();
-            $record = $this->antenatalService->createNewBorn($request->validated());
+            $record = $this->antenatalService->createNewBorn($request);
 
             DB::commit();
             return JsonResponser::send(false, 'New born details created successfully', $record);
@@ -96,7 +96,7 @@ class AntenatalController extends Controller
             $patientVisit = PatientVisit::find($id);
             $patient = Patient::with('service', 'triage', 'familyHistory', 'medicalHistory', 'socialHistory', 'drugHistory')->find($patientVisit->patient_id);
             $antenatalDetail = Antenatal::where('visit_id', $id)->first();
-            $antenatalLabTest = AntenatalLabTest::where('visit_id', $id)->first();
+            // $antenatalLabTest = AntenatalLabTest::where('visit_id', $id)->first();
             $deliveryDetail = DeliveryDetail::where('visit_id',  $patientVisit->id)->first();
             $newBornDetails = NewBornDetail::where('visit_id',  $patientVisit->id)->first();
             $billingLog = BillingLog::where('visit_id',  $patientVisit->id)->first();
@@ -104,7 +104,7 @@ class AntenatalController extends Controller
                 "patient" => $patient,
                 "patientVisit" => $patientVisit,
                 "antenatalDetail" => $antenatalDetail,
-                "antenatalLabTest" => $antenatalLabTest,
+                // "antenatalLabTest" => $antenatalLabTest,
                 "deliveryDetail" => $deliveryDetail,
                 "newBornDetails" => $newBornDetails,
                 "billingLog" => $billingLog,

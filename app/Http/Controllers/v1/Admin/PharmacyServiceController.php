@@ -28,9 +28,11 @@ class PharmacyServiceController extends Controller
 
         try {
             $validated = $request->validated();
+            $tenantId = $request->header('X-Tenant-ID');
             $serviceunit = ServiceUnit::where("name", "Pharmacy")->first() ?? null;
 
             $data =  PharmacyService::create([
+                'tenant_id'        => $tenantId,
                 "name" => $validated['name'],
                 "active_ingredent" => $validated['active_ingredent'],
                 "price" => $validated['price'],
@@ -79,16 +81,18 @@ class PharmacyServiceController extends Controller
                     return ExportHelper::downloadPdf($exportData, 'service.pdf');
                 }
             }
+            $tenantId = $request->header('X-Tenant-ID');
 
-            $services = PharmacyService::when(!empty($validated['search']), function ($query) use ($validated) {
-                $search = $validated['search'];
+            $services = PharmacyService::where('tenant_id', $tenantId)
+                ->when(!empty($validated['search']), function ($query) use ($validated) {
+                    $search = $validated['search'];
 
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'LIKE', "%{$search}%")
-                        ->orWhere('active_ingredent', 'LIKE', "%{$search}%")
-                        ->orWhere('registration_number', 'LIKE', "%{$search}%");
-                });
-            })->paginate(10);
+                    $query->where(function ($q) use ($search) {
+                        $q->where('name', 'LIKE', "%{$search}%")
+                            ->orWhere('active_ingredent', 'LIKE', "%{$search}%")
+                            ->orWhere('registration_number', 'LIKE', "%{$search}%");
+                    });
+                })->paginate(10);
 
 
             return JsonResponser::send(false, 'featch successfully.', [

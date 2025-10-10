@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('medication_inventory', function (Blueprint $table) {
             $table->id();
+            $table->string('tenant_id')->nullable();
             $table->unsignedBigInteger('vendor_id')->nullable();
             $table->string('shipment_no')->nullable();
             $table->string('batch_no')->nullable();

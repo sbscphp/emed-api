@@ -41,8 +41,10 @@ class LaboratoryService
         }
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
         $records = PatientVisit::query()
+            ->where('tenant_id', $tenantId)
             // ->where('status', PatientVisitStatusEnums::INVESTIGATION->value)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
@@ -74,12 +76,13 @@ class LaboratoryService
 
     public function stats($request)
     {
-        $query = PatientVisit::query();
+        $tenantId = $request->header('X-Tenant-ID');
+        $query = PatientVisit::query()->where('tenant_id', $tenantId);
         $totalPatientsToday = (clone $query)->where('status', PatientVisitStatusEnums::INVESTIGATION->value)
             ->whereDate('created_at', now()->toDateString())->count();
-        $testResultToday = Laboratory::whereDate('created_at', now()->toDateString())
+        $testResultToday = Laboratory::where('tenant_id', $tenantId)->whereDate('created_at', now()->toDateString())
             ->where('status', GeneralEnums::READY->value)->count();
-        $testResultPendingToday = Laboratory::whereDate('created_at', now()->toDateString())
+        $testResultPendingToday = Laboratory::where('tenant_id', $tenantId)->whereDate('created_at', now()->toDateString())
             ->where('status', GeneralEnums::NOT_READY->value)->count();
 
         return [
@@ -125,6 +128,7 @@ class LaboratoryService
     {
 
         $currentUserInstance = UserMgtHelper::userInstance();
+        $tenantId = $data->header('X-Tenant-ID');
 
         // Create lab result
         foreach ($data->results as $item) {
@@ -134,6 +138,7 @@ class LaboratoryService
                     'test' => $item['test'],
                 ],
                 [
+                    'tenant_id' => $tenantId,
                     'visit_id'          => $test->visit_id,
                     'result'           => $item['result'],
                     'reference_range'  => $item['reference_range'],

@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('lab_test_results', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->string('tenant_id')->nullable();
             $table->unsignedBigInteger('patient_visit_lab_id')->nullable();
             $table->string('visit_id')->nullable();
             $table->string('test');

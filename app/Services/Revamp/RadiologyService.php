@@ -44,8 +44,10 @@ class RadiologyService
         }
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
         $records = PatientVisit::query()
+            ->where('tenant_id', $tenantId)
             // ->where('status', PatientVisitStatusEnums::INVESTIGATION->value)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
@@ -77,12 +79,13 @@ class RadiologyService
 
     public function stats($request)
     {
-        $query = PatientVisit::query();
+        $tenantId = $request->header('X-Tenant-ID');
+        $query = PatientVisit::query()->where('tenant_id', $tenantId);
         $totalPatientsToday = (clone $query)->where('status', PatientVisitStatusEnums::INVESTIGATION->value)
             ->whereDate('created_at', now()->toDateString())->count();
-        $testResultToday = Radiology::whereDate('created_at', now()->toDateString())
+        $testResultToday = Radiology::where('tenant_id', $tenantId)->whereDate('created_at', now()->toDateString())
             ->where('status', GeneralEnums::READY->value)->count();
-        $testResultPendingToday = Radiology::whereDate('created_at', now()->toDateString())
+        $testResultPendingToday = Radiology::where('tenant_id', $tenantId)->whereDate('created_at', now()->toDateString())
             ->where('status', GeneralEnums::NOT_READY->value)->count();
 
         return [
@@ -128,7 +131,7 @@ class RadiologyService
     {
         $currentUserInstance = UserMgtHelper::userInstance();
         $userId = $currentUserInstance->id;
-        $tenant = $currentUserInstance->tenant->domain;
+        $tenantId = $data->header('X-Tenant-ID');;
 
         $resultImage = null;
 
@@ -148,7 +151,7 @@ class RadiologyService
                 'radiology_id' => $test->id, // unique key
             ],
             [
-                'tenant_domain'      => $tenant,
+                'tenant_id'      => $tenantId,
                 'user_id'            => $userId,
                 'patient_id'         => $data->patient_id,
                 'examination_type'   => $data->examination_type,

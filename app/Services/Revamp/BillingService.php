@@ -11,9 +11,9 @@ use App\Models\BillingLog;
 use App\Models\BillingLogDetail;
 use App\Models\Laboratory;
 use App\Models\LaboratoryResult;
-use App\Models\Landlord\User;
 use App\Models\PatientVisit;
 use App\Models\ServiceUnit;
+use App\Models\User;
 use App\Repositories\Laboratory\LaboratoryInterface;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -45,8 +45,10 @@ class BillingService
         }
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
         $records = BillingLog::query()
+            ->where('tenant_id', $tenantId)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->where('invoice_number', 'LIKE', '%' . $request['search_param'] . '%')
@@ -88,8 +90,10 @@ class BillingService
             $customDate = [$request->start_date, $request->end_date];
         }
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
         $query = BillingLog::query()
+            ->where('tenant_id', $tenantId)
             ->when($request->start_date && $request->end_date, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
             })
@@ -137,6 +141,7 @@ class BillingService
 
         $monthlyRevenue = BillingLog::selectRaw('MONTH(created_at) as month, SUM(grand_total) as total')
             ->whereYear('created_at', $year)
+            ->where('tenant_id', $tenantId)
             ->groupBy('month')
             ->orderBy('month')
             ->pluck('total', 'month')
@@ -203,8 +208,10 @@ class BillingService
         }
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
         $records = BillingLog::query()
+            ->where('tenant_id', $tenantId)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->where('invoice_number', 'LIKE', '%' . $request['search_param'] . '%')
@@ -284,8 +291,10 @@ class BillingService
         }
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
         $records = BillingLogDetail::query()
+            ->where('tenant_id', $tenantId)
             ->selectRaw('
             service_unit_id,
             COUNT(*) as total_invoices,
@@ -348,8 +357,10 @@ class BillingService
         }
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
         $query = BillingLogDetail::query()
+            ->where('tenant_id', $tenantId)
             ->where('service_unit_id', $request['service_unit_id'])
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
@@ -402,8 +413,10 @@ class BillingService
             $customDate = [$request->start_date, $request->end_date];
         }
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
         $query = BillingLogDetail::query()
+            ->where('tenant_id', $tenantId)
             ->where('service_unit_id', $request['service_unit_id'])
             ->when($request->start_date && $request->end_date, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
