@@ -24,8 +24,14 @@ class PharmacyRequestController extends Controller
 
     public function store(CreatePharmacyRequest $request)
     {
+        $tenantId = $request->header('X-Tenant-ID');
         config(['database.default' => 'tenant']);
-        $data = $this->service->create($request->validated());
+        // Merge validated data with tenant_id
+        $validated = array_merge($request->validated(), [
+            'tenant_id' => $tenantId,
+        ]);
+
+        $data = $this->service->create($validated);
         return JsonResponser::send(false, 'Pharmacy request submitted successfully.', $data);
     }
 
@@ -36,8 +42,9 @@ class PharmacyRequestController extends Controller
             $search = $request->input('search');
             $from = $request->from;
             $to = $request->to;
+            $tenantId = $request->header('X-Tenant-ID');
             $paginate = $request->paginate;
-            $data = $this->service->all($search, $from, $to, $paginate);
+            $data = $this->service->all($search, $from, $to, $paginate, $tenantId);
 
             if ($request->has('export')) {
                 $exportData = $data->map(function ($item) {
@@ -81,6 +88,7 @@ class PharmacyRequestController extends Controller
     public function supplyRequest(Request $request, $id)
     {
         config(['database.default' => 'tenant']);
+        $tenantId = $request->header('X-Tenant-ID');
         $drug = PharmacyRequest::with('inventory')->find($id);
         if (!$drug) {
             return JsonResponser::send(true, 'Drug not found.', [], 422);

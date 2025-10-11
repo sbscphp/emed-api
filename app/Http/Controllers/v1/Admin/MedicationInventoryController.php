@@ -40,12 +40,12 @@ class MedicationInventoryController extends Controller
             $med = $this->inventoryService->create($validated);
 
             $dataToLog = [
-                'causer_id' => $user->id,
+                'causer_id' => $currentUser->id,
                 'action_id' => $med->id,
                 'action' => 'Create',
                 'action_type' => "Models\MedicineInventory",
                 'log_name' => "Medicine Inventory created successfully",
-                'description' => "{$user->firstname} {$user->lastname} created a new Medicine: {$med->name}",
+                'description' => "{$currentUser->firstname} {$currentUser->lastname} created a new Medicine: {$med->name}",
                 'module_accessed' => ListModuleEnums::PHARMACY
             ];
 

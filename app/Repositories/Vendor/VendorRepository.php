@@ -19,9 +19,9 @@ class VendorRepository implements VendorInterface
      */
 
 
-    public function all(array $filters = [], ?string $export = null, $from, $to)
+    public function all(array $filters = [], ?string $export = null, $from, $to, $tenantId)
     {
-        $query = Vendor::query();
+        $query = Vendor::query()->where('tenant_id', $tenantId);
 
         if (!empty($filters['search'])) {
             $query->where(function ($q) use ($filters) {

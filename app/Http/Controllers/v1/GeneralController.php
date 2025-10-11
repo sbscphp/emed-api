@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\v1;
 
 use App\Http\Controllers\Controller;
+use App\Models\Inventory;
 use App\Models\LabService;
 use App\Models\PharmacyRequest;
 use App\Models\RadiologyService;
@@ -69,6 +70,18 @@ class GeneralController extends Controller
         try {
             $tenantId = $request->header('X-Tenant-ID');
             $record = ServiceUnit::where('tenant_id', $tenantId)->orderBy('id', 'ASC')->get();
+
+            return JsonResponser::send(false, 'Record found successfully', $record, 200);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
+    public function allInventoryDrugs(Request $request)
+    {
+        try {
+            $tenantId = $request->header('X-Tenant-ID');
+            $record = Inventory::where('tenant_id', $tenantId)->orderBy('id', 'ASC')->get();
 
             return JsonResponser::send(false, 'Record found successfully', $record, 200);
         } catch (\Throwable $th) {

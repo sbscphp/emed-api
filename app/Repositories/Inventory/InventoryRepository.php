@@ -18,9 +18,9 @@ class InventoryRepository implements InventoryInterface
         return Inventory::all();
     }
 
-    public function getAllWithFilters(array $filters = [], ?string $export = null, $from, $to)
+    public function getAllWithFilters(array $filters = [], ?string $export = null, $from, $to, $tenantId)
     {
-        $query = Inventory::with('medicineType');
+        $query = Inventory::where('tenant_id', $tenantId)->with('medicineType');
         if (!empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {

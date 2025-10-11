@@ -96,6 +96,7 @@ Route::group(["prefix" => "v1"], function () {
                 Route::get('/all/medicine', [GeneralController::class, 'allMedicine']);
                 Route::get('/all/services', [GeneralController::class, 'allService']);
                 Route::get('/all/services/unit', [GeneralController::class, 'allServiceUnits']);
+                Route::get('/all/inventory/drug', [GeneralController::class, 'allInventoryDrugs']);
             });
             // Route::get('/test_all-records', [RecordManagementController::class, 'allRecords']);
 

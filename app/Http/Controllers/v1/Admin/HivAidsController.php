@@ -53,7 +53,10 @@ class HivAidsController extends Controller
     {
         try {
             $patientVisit = PatientVisit::find($id);
-            $patient = Patient::with('service', 'triage', 'familyHistory', 'medicalHistory', 'socialHistory', 'drugHistory')->find($patientVisit->patient_id);
+            if (!$patientVisit) {
+                return JsonResponser::send(true, 'Visit record not found.', null, 422);
+            }
+            $patient = Patient::with('service', 'triage', 'familyHistory', 'medicalHistory', 'socialHistory')->find($patientVisit->patient_id);
             $counsellingDetail = CounsellingDetail::where('visit_id', $id)->first();
             $observation = ObservationRecommendation::where('visit_id', $id)->first();
             $billingLog = BillingLog::where('visit_id',  $patientVisit->id)->first();

@@ -15,7 +15,7 @@ interface VendorInterface
      * 
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    public function all(array $filters = [], ?string $export = null, $from, $to);
+    public function all(array $filters = [], ?string $export = null, $from, $to, $tenantId);
 
 
     /**

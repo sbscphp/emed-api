@@ -31,9 +31,9 @@ class VendorService
      * 
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    public function all(array $filters = [], ?string $export = null, $from, $to)
+    public function all(array $filters = [], ?string $export = null, $from, $to, $tenantId)
     {
-        return $this->VendorInterface->all($filters, $export, $from, $to);
+        return $this->VendorInterface->all($filters, $export, $from, $to, $tenantId);
     }
 
     /**
@@ -97,7 +97,7 @@ class VendorService
         return $this->VendorInterface->findByAttribute($attr, $value);
     }
 
-    public function getVendorStats()
+    public function getVendorStats($tenantId)
     {
         // $totalVendors = Vendor::count();
 
@@ -121,15 +121,17 @@ class VendorService
         // ];
 
 
-        $totalVendors = Vendor::count();
+        $totalVendors = Vendor::where('tenant_id', $tenantId)->count();
 
-        $totalSpend = MedicationInventory::sum(DB::raw('received_qty * price'));
+        $totalSpend = MedicationInventory::where('tenant_id', $tenantId)->sum(DB::raw('received_qty * price'));
 
-        $pendingSupplyOrders = MedicationInventory::whereHas('vendor', function ($q) {
-            $q->where('status', 'active');
-        })->where('shipment_status', 'pending')->count();
+        $pendingSupplyOrders = MedicationInventory::where('tenant_id', $tenantId)
+            ->whereHas('vendor', function ($q) {
+                $q->where('status', 'active');
+            })->where('shipment_status', 'pending')->count();
 
         $mostSuppliedItem = MedicationInventory::select('brand_name', DB::raw('SUM(received_qty) as total'))
+            ->where('tenant_id', $tenantId)
             ->groupBy('brand_name')
             ->orderByDesc('total')
             ->first();

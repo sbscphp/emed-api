@@ -22,7 +22,7 @@ class UpdateMedicineTypeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'type_name' => 'required|string|max:255|unique:tenant.medicine_types,type_name,' . $this->route('id'),
+            'type_name' => 'required|string|max:255',
         ];
     }
 }
