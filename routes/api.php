@@ -97,6 +97,8 @@ Route::group(["prefix" => "v1"], function () {
                 Route::get('/all/services', [GeneralController::class, 'allService']);
                 Route::get('/all/services/unit', [GeneralController::class, 'allServiceUnits']);
                 Route::get('/all/inventory/drug', [GeneralController::class, 'allInventoryDrugs']);
+                Route::get('/all/medication', [GeneralController::class, 'allMedication']);
+                Route::get('/all/pharmacy', [GeneralController::class, 'allPharmacy']);
             });
             // Route::get('/test_all-records', [RecordManagementController::class, 'allRecords']);
 
@@ -153,9 +155,9 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/show/{id}', [TriageController::class, 'show']);
                     Route::get('/investigation/order', [TriageController::class, 'investigationOrders']);
                     Route::post('/export/{format}', [TriageController::class, 'exportTriagePatients']);
-                    Route::get('/view/radiology/investigation/order/{id}', [TriageController::class, "viewRadiologyInvestigationOrders"]);
-                    Route::get('/view/laboratory/investigation/order/{id}', [TriageController::class, "viewLaboratoryInvestigationOrders"]);
-                    Route::get('/view/pharmacy/investigation/order/{id}', [TriageController::class, "viewPharmacyInvestigationOrders"]);
+                    Route::get('/view/radiology/investigation/order/{id}/{visit}', [TriageController::class, "viewRadiologyInvestigationOrders"]);
+                    Route::get('/view/laboratory/investigation/order/{id}/{visit}', [TriageController::class, "viewLaboratoryInvestigationOrders"]);
+                    Route::get('/view/pharmacy/investigation/order/{id}/{visit}', [TriageController::class, "viewPharmacyInvestigationOrders"]);
 
                     Route::group(['prefix' => 'antenatal'], function () {
                         Route::post("/details/create",  [AntenatalController::class, "createAntenatalRecord"]);
@@ -226,7 +228,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/supplies/{id}', [PharmacySupplyController::class, 'show']);
 
                     Route::post('/request', [PharmacyRequestController::class, 'store']);
-                    Route::post('/all/request', [PharmacyRequestController::class, 'index']);
+                    Route::get('/all/request', [PharmacyRequestController::class, 'index']);
                     Route::get('/request/{id}', [PharmacyRequestController::class, 'show']);
                     Route::put('/request/update/{id}', [PharmacyRequestController::class, 'updateRequest']);
                     Route::put('/request/supply/{id}', [PharmacyRequestController::class, 'supplyRequest']);
@@ -259,7 +261,7 @@ Route::group(["prefix" => "v1"], function () {
 
                 Route::group(['prefix' => 'medicine', 'middleware' => 'role.pharmacy'], function () {
                     Route::post('/create', [MedicationController::class, 'store']);
-                    Route::post('/lists', [MedicationController::class, 'index']);
+                    Route::get('/lists', [MedicationController::class, 'index']);
                     Route::get('/list/{id}', [MedicationController::class, 'show']);
                     Route::put('/update/{id}', [MedicationController::class, 'update']);
                     Route::delete('/delete/{id}', [MedicationController::class, 'destroy']);
@@ -286,7 +288,7 @@ Route::group(["prefix" => "v1"], function () {
                 });
 
                 Route::group(['prefix' => 'inventory', 'middleware' => 'role.pharmacy'], function () {
-                    Route::post('/lists', [InventoryController::class, 'index']);
+                    Route::get('/lists', [InventoryController::class, 'index']);
                     Route::get('/{id}', [InventoryController::class, 'show']);
                     Route::post('/', [InventoryController::class, 'store']);
                     Route::delete('/delete/{id}', [InventoryController::class, 'destroy']);
@@ -297,7 +299,7 @@ Route::group(["prefix" => "v1"], function () {
 
                 Route::group(['prefix' => 'vendor', 'middleware' => 'role.pharmacy'], function () {
                     Route::get('/fetch/all', [VendorController::class, 'all']);
-                    Route::post('/lists', [VendorController::class, 'index']);
+                    Route::get('/lists', [VendorController::class, 'index']);
                     Route::get('/{id}', [VendorController::class, 'show']);
                     Route::post('/', [VendorController::class, 'store']);
                     Route::delete('/delete/{id}', [VendorController::class, 'delete']);

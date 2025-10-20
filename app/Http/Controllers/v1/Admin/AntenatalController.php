@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Enums\ListModuleEnums;
+use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\AntenatalLabTestRequest;
 use App\Http\Requests\Admin\AntenatalRequest;
 use App\Http\Requests\Admin\DeliveryDetailsRequest;
 use App\Http\Requests\Admin\NewBornDetailsRequest;
+use App\Http\Requests\ConsultationLaborartoryRequest;
 use App\Models\Antenatal;
 use App\Models\AntenatalLabTest;
 use App\Models\BillingLog;
@@ -17,6 +20,7 @@ use App\Models\PatientVisit;
 use App\Responser\JsonResponser;
 use App\Services\Antenatal\AntenatalService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class AntenatalController extends Controller
@@ -48,17 +52,41 @@ class AntenatalController extends Controller
         }
     }
 
-    public function createAntenatalLabTest(AntenatalLabTestRequest $request)
+    public function createAntenatalLabTest(ConsultationLaborartoryRequest $request)
     {
-        try {
-            DB::beginTransaction();
-            $record = $this->antenatalService->createAntenatalLabTest($request->validated());
 
-            DB::commit();
-            return JsonResponser::send(false, 'Antenatal lab test record created successfully', $record);
+        try {
+            DB::connection('tenant')->beginTransaction();
+
+            $currentUser = Auth::user();
+
+            $patient = Patient::find($request->patient_id);
+            if (!$patient) {
+                return JsonResponser::send(true, 'Patient not found.', null, 200);
+            }
+
+            $visit = PatientVisit::find($request->visit_id);
+            if (!$visit) {
+                return JsonResponser::send(true, 'Patient visit not yet initiated.', null, 200);
+            }
+
+            $labTest = $this->antenatalService->createLabTest($request);
+
+            $dataToLog = [
+                'causer_id' => $currentUser->id,
+                'action_id' => $labTest[0]->id,
+                'action' => 'Create',
+                'action_type' => "Models\Laboratory",
+                'log_name' => "Laboratory test created successfully",
+                'description' => "{$currentUser['fullname']} created lab test successfully",
+                'module_accessed' => ListModuleEnums::Laboratory
+            ];
+            GeneralHelper::storeAuditLog($dataToLog);
+            DB::connection('tenant')->commit();
+            return JsonResponser::send(false, 'Laboratory test recorded successfully', $labTest, 201);
         } catch (\Throwable $th) {
-            DB::rollBack();
-            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
         }
     }
 
@@ -94,7 +122,7 @@ class AntenatalController extends Controller
     {
         try {
             $patientVisit = PatientVisit::find($id);
-            $patient = Patient::with('service', 'triage', 'familyHistory', 'medicalHistory', 'socialHistory', 'drugHistory')->find($patientVisit->patient_id);
+            $patient = Patient::with('service', 'triage', 'familyHistory', 'medicalHistory', 'socialHistory')->find($patientVisit->patient_id);
             $antenatalDetail = Antenatal::where('visit_id', $id)->first();
             // $antenatalLabTest = AntenatalLabTest::where('visit_id', $id)->first();
             $deliveryDetail = DeliveryDetail::where('visit_id',  $patientVisit->id)->first();

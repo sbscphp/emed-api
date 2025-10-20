@@ -3,12 +3,18 @@
 namespace App\Services\Antenatal;
 
 use App\Enums\ListModuleEnums;
+use App\Enums\PatientVisitStatusEnums;
 use App\Helpers\GeneralHelper;
 use App\Helpers\UserMgtHelper;
 use App\Models\Antenatal;
 use App\Models\AntenatalLabTest;
+use App\Models\BillingLog;
+use App\Models\BillingLogDetail;
 use App\Models\DeliveryDetail;
+use App\Models\Laboratory;
+use App\Models\LabService;
 use App\Models\NewBornDetail;
+use App\Models\PatientVisit;
 
 /**
  * Class AntenatalService
@@ -50,29 +56,109 @@ class AntenatalService
         return $antenatal;
     }
 
-    public function createAntenatalLabTest(array $request)
+    public function createLabTest($request)
     {
-        $currentUserInstance = UserMgtHelper::userInstance();
-        $userId = $currentUserInstance->id;
-        $data = $request;
+        try {
+            $tenantId = $request->header('X-Tenant-ID');
+            $visit = PatientVisit::findOrFail($request->visit_id);
 
-        $antenatalLabTest = AntenatalLabTest::updateOrCreate(
-            ['visit_id' => $data['visit_id']], // Unique key
-            $data // Data to update/create
-        );
+            if (empty($request->test) || !is_array($request->test)) {
+                throw new \Exception("No lab tests provided.");
+            }
 
-        $dataToLog = [
-            'causer_id' => $userId,
-            'action_id' => $antenatalLabTest->id,
-            'action' => 'Create',
-            'action_type' => "Models\AntenatalLabTest",
-            'log_name' => "Antenatal lab test created successfully",
-            'description' => "{$currentUserInstance->firstname} {$currentUserInstance->lastname} created a new antenatal lab test record",
-            'module_accessed' => ListModuleEnums::NURSE
-        ];
-        GeneralHelper::storeAuditLog($dataToLog);
+            // Fetch or create billing log
+            $fetchBilling = BillingLog::firstOrCreate(
+                [
+                    'visit_id' => $visit->id,
+                    'tenant_id' => $tenantId
+                ],
+                [
+                    'grand_total' => 0,
+                    'patient_id'  => $request->patient_id,
+                ]
+            );
 
-        return $antenatalLabTest;
+            $labInvestigations = [];
+            $totalPrice = 0;
+
+            foreach ($request->test as $testItem) {
+                $labService = LabService::find($testItem['test_id']);
+                if (!$labService) {
+                    throw new \Exception("Lab test with name {$testItem['test_name']} not found.");
+                }
+
+                // Skip deleting/recreating if already Ready
+                $existingLab = Laboratory::where('visit_id', $visit->id)
+                    ->where('test_id', $labService->id)
+                    ->first();
+
+                if ($existingLab && $existingLab->status === 'Ready') {
+                    $labInvestigations[] = $existingLab;
+                } else {
+                    // delete old lab investigation if not Ready
+                    if ($existingLab) {
+                        $existingLab->delete();
+                    }
+
+                    $labInvestigation = Laboratory::create([
+                        'tenant_id'        => $tenantId,
+                        'visit_id'        => $visit->id,
+                        'test_id'         => $labService->id,
+                        'patient_id'      => $request->patient_id,
+                        'consultation_id' => $request->consultation_id,
+                        'test_name'       => $labService->name,
+                        'department'      => $labService->class,
+                    ]);
+
+                    $labInvestigations[] = $labInvestigation;
+                }
+
+                // Do not touch already Paid items
+                $labId = $existingLab?->id ?? $labInvestigation->id;
+
+                // Do not touch already Paid items
+                $existingBillingDetail = BillingLogDetail::where('billing_id', $fetchBilling->id)
+                    ->where('lab_test_id', $labId)
+                    ->first();
+
+                if (!$existingBillingDetail || $existingBillingDetail->status !== 'Paid') {
+                    // remove old unpaid billing detail if any
+                    if ($existingBillingDetail) {
+                        $fetchBilling->grand_total -= $existingBillingDetail->amount;
+                        $existingBillingDetail->delete();
+                    }
+
+                    // create fresh billing detail
+                    $billingDetail = BillingLogDetail::create([
+                        'tenant_id'        => $tenantId,
+                        'billing_id'      => $fetchBilling->id,
+                        'lab_test_id'  => $labInvestigation->id,
+                        'service_unit_id' => $labService->service_unit_id,
+                        'item_name'       => $labService->name,
+                        'quantity'        => 1,
+                        'amount'          => $labService->price,
+                    ]);
+
+                    $totalPrice += $labService->price;
+                }
+            }
+
+            // Update billing log with new total (only unpaid tests add up)
+            $fetchBilling->grand_total += $totalPrice;
+            if ($fetchBilling->grand_total < 0) {
+                $fetchBilling->grand_total = 0;
+            }
+            $fetchBilling->save();
+
+            // Update visit status
+            $visit->update([
+                'status' => PatientVisitStatusEnums::INVESTIGATION->value,
+            ]);
+
+            return $labInvestigations;
+        } catch (\Throwable $th) {
+            throw $th;
+        }
     }
 
     public function createDeliveryDetails($request)

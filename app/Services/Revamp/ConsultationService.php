@@ -455,6 +455,12 @@ class ConsultationService
                     throw new \Exception("Drug prescribed quantity is greater than quantity available");
                 }
 
+                $medication = $drug->inventory->medication;
+
+                if (!$medication) {
+                    throw new \Exception("Medication record not found for drug {$drugItem['drug']}.");
+                }
+
                 // Skip deleting/recreating if already Fullfilled
                 $existingDrug = Treatment::where('visit_id', $visit->id)
                     ->where('drug_id', $drug->id)
@@ -469,6 +475,7 @@ class ConsultationService
 
                     $newTreatment = Treatment::create([
                         'tenant_id'        => $tenantId,
+                        'pharmacy_id'        => $request->pharmacy_id,
                         'visit_id'        => $visit->id,
                         'drug_id'         => $drug->id,
                         'user_id'         => $currentUser->id,
@@ -503,6 +510,8 @@ class ConsultationService
                         $existingBillingDetail->delete();
                     }
 
+                    $price = $drug->inventory->medication?->selling_price ?? 0;
+
                     // create fresh billing detail
                     $billingDetail = BillingLogDetail::create([
                         'tenant_id'        => $tenantId,
@@ -511,10 +520,12 @@ class ConsultationService
                         'service_unit_id' => $serviceUnit->id,
                         'item_name'       => $drugItem['drug'] ?? $drug->product,
                         'quantity'        => $drugItem['quantity'] ?? 1,
-                        'amount'          => $drug->inventory->medication ? $drug->inventory->medication->selling_price : 0,
+                        // 'amount'          => $drug->inventory->medication ? $drug->inventory->medication->selling_price : 0,
+                        'amount'          => $price,
                     ]);
 
-                    $totalPrice += $drug->inventory->medication->selling_price * ($drugItem['quantity'] ?? 1);
+                    $totalPrice += $price * ($drugItem['quantity'] ?? 1);
+                    // $totalPrice += $drug->inventory->medication->selling_price * ($drugItem['quantity'] ?? 1);
                 }
             }
 

@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Notification;
 use App\Models\Patient;
 use App\Models\PatientVisit;
+use App\Models\User;
 use App\Services\Revamp\PatientService;
 
 class RecordManagementController extends Controller
@@ -256,9 +257,21 @@ class RecordManagementController extends Controller
     {
         try {
 
-            $patientVisit = PatientVisit::with('patient', 'service', 'patientBilling')->find($id);
+            $patientVisit = PatientVisit::with('patient', 'service', 'patientBilling', 'consultation')->find($id);
             if (!$patientVisit) {
                 return JsonResponser::send(true, 'Patient visit not found.', null, 422);
+            }
+
+            if ($patientVisit->consultation && $patientVisit->consultation->consulted_by) {
+                $consultedUser = User::on('landlord')
+                    ->select('id', 'first_name', 'last_name', 'email')
+                    ->find($patientVisit->consultation->consulted_by);
+
+                $patientVisit->consultation->setAttribute('consultedBy', $consultedUser);
+            } elseif ($patientVisit->consultation) {
+                $patientVisit->consultation->setAttribute('consultedBy', null);
+            } else {
+                $patientVisit->setAttribute('consultation', null);
             }
 
             return JsonResponser::send(false, 'Record retrieved successfully.', $patientVisit, 200);

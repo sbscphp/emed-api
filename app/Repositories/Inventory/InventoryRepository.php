@@ -144,21 +144,7 @@ class InventoryRepository implements InventoryInterface
             return null;
         }
 
-        return [
-            'id' => $inventory->id,
-            'batch_no' => $inventory->batch_no,
-            'item_name' => $inventory->item_name,
-            'medicine_type_id' => $inventory->medicine_type_id,
-            'medicine_type' => $inventory->medicineType->type_name ?? null,
-            'quantity' => $inventory->quantity,
-            'reorder_level' => $inventory->reorder_level,
-            'supplier' => $inventory->supplier,
-            'expiry_date' => $inventory->expiry_date,
-            'note' => $inventory->note,
-            'status' => $inventory->status,
-            'created_at' => $inventory->created_at,
-            'updated_at' => $inventory->updated_at,
-        ];
+        return $inventory;
     }
 
 

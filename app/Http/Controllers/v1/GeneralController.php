@@ -5,6 +5,8 @@ namespace App\Http\Controllers\v1;
 use App\Http\Controllers\Controller;
 use App\Models\Inventory;
 use App\Models\LabService;
+use App\Models\Medication;
+use App\Models\Pharmacy;
 use App\Models\PharmacyRequest;
 use App\Models\RadiologyService;
 use App\Models\Service;
@@ -45,7 +47,9 @@ class GeneralController extends Controller
     {
         try {
             $tenantId = $request->header('X-Tenant-ID');
-            $record = PharmacyRequest::where('tenant_id', $tenantId)->with('pharmacy')->orderBy('id', 'DESC')->get();
+            $record = PharmacyRequest::where('tenant_id', $tenantId)
+                ->where('pharmacy_id', $request->pharmacy_id)
+                ->with('pharmacy')->orderBy('id', 'DESC')->get();
 
             return JsonResponser::send(false, 'Record found successfully', $record, 200);
         } catch (\Throwable $th) {
@@ -82,6 +86,30 @@ class GeneralController extends Controller
         try {
             $tenantId = $request->header('X-Tenant-ID');
             $record = Inventory::where('tenant_id', $tenantId)->orderBy('id', 'ASC')->get();
+
+            return JsonResponser::send(false, 'Record found successfully', $record, 200);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
+    public function allMedication(Request $request)
+    {
+        try {
+            $tenantId = $request->header('X-Tenant-ID');
+            $record = Medication::where('tenant_id', $tenantId)->orderBy('id', 'ASC')->get();
+
+            return JsonResponser::send(false, 'Record found successfully', $record, 200);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
+    public function allPharmacy(Request $request)
+    {
+        try {
+            $tenantId = $request->header('X-Tenant-ID');
+            $record = Pharmacy::where('tenant_id', $tenantId)->orderBy('id', 'ASC')->get();
 
             return JsonResponser::send(false, 'Record found successfully', $record, 200);
         } catch (\Throwable $th) {
