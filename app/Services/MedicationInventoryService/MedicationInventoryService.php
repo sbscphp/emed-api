@@ -90,6 +90,9 @@ class MedicationInventoryService
             'delivery_note' => $data['delivery_note'],
             'support_doc' => $supportDoc,
             'support_file' => $supportFile,
+            'brand_name' => $data['brand_name'],
+            'active_ingredient' => $data['active_ingredient'],
+
         ]);
 
 
