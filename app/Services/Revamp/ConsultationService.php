@@ -121,8 +121,11 @@ class ConsultationService
             return [
                 'Firstname'      => $visit->patient->firstname ?? 'N/A',
                 'Lastname'       => $visit->patient->lastname ?? 'N/A',
+                'Service'        => $visit->service->name ?? 'N/A',
                 'Card No'        => $visit->patient->cardno ?? 'N/A',
                 'Patient No'     => $visit->patient->patientno ?? 'N/A',
+                'Referral'     => $visit->patient->referral ? 'Yes' : 'No',
+                'Acuity'     => $visit->triage->severity ?? 'N/A',
                 'Arrival Date'   => $visit->arrival_date ?? 'N/A',
                 'Patient Status' => $visit->patient->status ?? 'N/A',
             ];

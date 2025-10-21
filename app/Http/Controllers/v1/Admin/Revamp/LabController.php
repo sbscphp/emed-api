@@ -93,7 +93,7 @@ class LabController extends Controller
             $labTest->each(function ($item) {
                 if ($item->consultation && $item->consultation->consulted_by) {
                     $consultedUser = User::on('landlord')
-                        ->select('id', 'fullname', 'email')
+                        ->select('id', 'first_name', 'last_name', 'email')
                         ->find($item->consultation->consulted_by);
 
                     $item->consultedBy = $consultedUser;

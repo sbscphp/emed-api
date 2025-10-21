@@ -240,7 +240,7 @@ class BillingService
             })->when(($request['sort_by'] ?? null) === 'date_descending', function ($query) {
                 $query->orderBy('created_at', 'DESC');
             })
-            ->with('patient', 'service');
+            ->with('patient', 'service', 'visits');
 
         if (!empty($request['paginate']) && empty($request['export'])) {
             return $records->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);

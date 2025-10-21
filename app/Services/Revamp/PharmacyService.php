@@ -109,9 +109,11 @@ class PharmacyService
                 'Firstname'      => $visit->patient->firstname ?? 'N/A',
                 'Lastname'       => $visit->patient->lastname ?? 'N/A',
                 'Card No'        => $visit->patient->cardno ?? 'N/A',
+                'Patient Type'        => $visit->patient->reg_status ?? 'N/A',
                 'Patient No'     => $visit->patient->patientno ?? 'N/A',
+                'Visit Number'     => $visit->visitno ?? 'N/A',
                 // 'Arrival Date'   => $visit->arrival_date ?? 'N/A',
-                'Patient Status' => $visit->status ?? 'N/A',
+                // 'Patient Status' => $visit->status ?? 'N/A',
             ];
         })->toArray();
 
@@ -149,9 +151,8 @@ class PharmacyService
             ->where('visit_id', $request->visit_id)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
-                    $q->whereRelation('medication.pharmacy', 'name', 'LIKE', '%' . $request['search_param'] . '%')
-                        ->orWhereRelation('medication', 'medicine_name', 'LIKE', '%' . $request['search_param'] . '%')
-                        ->orWhereRelation('medication', 'generic_name', 'LIKE', '%' . $request['search_param'] . '%');
+                    $q->whereRelation('pharmacy', 'name', 'LIKE', '%' . $request['search_param'] . '%')
+                        ->orWhere('drug', 'LIKE', '%' . $request['search_param'] . '%');
                 });
             })
             ->when(!empty($request['status']), function ($query) use ($request) {
@@ -185,7 +186,7 @@ class PharmacyService
         $records->each(function ($item) {
             if ($item->consultation && $item->consultation->consulted_by) {
                 $consultedUser = User::on('landlord')
-                    ->select('id', 'fullname', 'email')
+                    ->select('id', 'first_name', 'last_name', 'email')
                     ->find($item->consultation->consulted_by);
 
                 $item->consultedBy = $consultedUser;
