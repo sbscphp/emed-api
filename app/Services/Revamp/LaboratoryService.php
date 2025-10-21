@@ -78,11 +78,12 @@ class LaboratoryService
     {
         $tenantId = $request->header('X-Tenant-ID');
         $query = PatientVisit::query()->where('tenant_id', $tenantId);
+        $labQuery = Laboratory::query()->where('tenant_id', $tenantId);
         $totalPatientsToday = (clone $query)->where('status', PatientVisitStatusEnums::INVESTIGATION->value)
             ->whereDate('created_at', now()->toDateString())->count();
-        $testResultToday = Laboratory::where('tenant_id', $tenantId)->whereDate('created_at', now()->toDateString())
+        $testResultToday = (clone $labQuery)->whereDate('created_at', now()->toDateString())
             ->where('status', GeneralEnums::READY->value)->count();
-        $testResultPendingToday = Laboratory::where('tenant_id', $tenantId)->whereDate('created_at', now()->toDateString())
+        $testResultPendingToday = (clone $labQuery)->whereDate('created_at', now()->toDateString())
             ->where('status', GeneralEnums::NOT_READY->value)->count();
 
         return [

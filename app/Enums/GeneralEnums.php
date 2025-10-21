@@ -23,8 +23,8 @@ enum GeneralEnums: string
     case NEW = "New";
     case EXISTING = "Existing";
     case FOLLOWUPPATIENT = "Follow Up";
-    case NOT_READY = "Ready";
-    case READY = "Not Ready";
+    case NOT_READY = "Not Ready";
+    case READY = "Ready";
     case FULLFILLED = "Fulfilled";
     case NOT_FULLFILLED = "Not Fulfilled";
     case AVAILABLE = "Available";

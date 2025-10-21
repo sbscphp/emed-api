@@ -14,7 +14,7 @@ class VendorRepository implements VendorInterface
 {
     /**
      * Retrieve a collection of Vendor from the database.
-     * 
+     *
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
 
@@ -96,7 +96,17 @@ class VendorRepository implements VendorInterface
 
         // Handle export
         if ($export) {
-            $data = $query->latest()->get()->map($transform);
+            // $data = $query->latest()->get()->map($transform);
+            $data = $query->get()->map(function ($vendor) {
+                return [
+                    'Category' => $vendor->category,
+                    'Contact Person' => $vendor->contact_person,
+                    'Phone' => $vendor->phone_number,
+                    'Vendor Name' => $vendor->vendor_name,
+                    'Email' => $vendor->email,
+                    'Status' => ucfirst($vendor->status),
+                ];
+            });
 
             if ($export === 'csv') {
                 return ExportHelper::streamCsv($data->toArray(), null, 'vendors.csv');
@@ -126,7 +136,7 @@ class VendorRepository implements VendorInterface
 
     /**
      * Create new Vendor in the database.
-     * 
+     *
      * @param array $data
      * @return \App\Models\Vendor
      */
@@ -138,7 +148,7 @@ class VendorRepository implements VendorInterface
 
     /**
      * Update an existing Vendor in the database.
-     * 
+     *
      * @param array $data
      * @param int $id
      * @return \App\Models\Vendor
@@ -190,7 +200,7 @@ class VendorRepository implements VendorInterface
 
     /**
      * Delete an existing Vendor from the database.
-     * 
+     *
      * @param int $id
      * @return void
      */
@@ -203,7 +213,7 @@ class VendorRepository implements VendorInterface
 
     /**
      * Find an existing Vendor in the database by their ID.
-     * 
+     *
      * @param int $id
      * @return \App\Models\Vendor
      */
@@ -215,7 +225,7 @@ class VendorRepository implements VendorInterface
 
     /**
      * Find an existing Vendor in the database by their $attr.
-     * 
+     *
      * @param string $attr
      * @param string $value
      * @return \App\Models\Vendor

@@ -31,10 +31,12 @@ class MedicationInventoryController extends Controller
         try {
             config(['database.default' => 'tenant']);
             $currentUser = Auth::user();
+            $tenantId = $request->header('X-Tenant-ID');
             //$user = $this->userService->find($currentUser->id);
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
             $validated = array_merge($request->validated(), [
                 'created_by' => $currentUser->id,
+                'tenant_id' => $tenantId,
             ]);
 
             $med = $this->inventoryService->create($validated);
@@ -58,7 +60,7 @@ class MedicationInventoryController extends Controller
         }
     }
 
-    public function updateShipment(Request $request, $id)
+    public function updateShipment(StoreMedicationInventoryRequest $request, $id)
     {
         try {
             DB::beginTransaction();
@@ -69,7 +71,7 @@ class MedicationInventoryController extends Controller
                 return JsonResponser::send(false, 'Shipment not found.');
             }
 
-            $record = $this->inventoryService->updateShipment($request, $shipment);
+            $record = $this->inventoryService->updateShipment($request->validated(), $shipment);
 
             DB::commit();
             return JsonResponser::send(false, 'Shipment updated successfully', $record);

@@ -92,7 +92,10 @@ class MedicationInventoryService
             'support_file' => $supportFile,
             'brand_name' => $data['brand_name'],
             'active_ingredient' => $data['active_ingredient'],
-
+            'batch_no' => $data['batch_no'],
+            'expiry_date' => $data['expiry_date'],
+            'received_qty' => $data['received_qty'],
+            'price' => $data['price'],
         ]);
 
 

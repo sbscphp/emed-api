@@ -299,7 +299,7 @@ Route::group(["prefix" => "v1"], function () {
 
                 Route::group(['prefix' => 'vendor', 'middleware' => 'role.pharmacy'], function () {
                     Route::get('/fetch/all', [VendorController::class, 'all']);
-                    Route::get('/lists', [VendorController::class, 'index']);
+                    Route::post('/lists', [VendorController::class, 'index']);
                     Route::get('/{id}', [VendorController::class, 'show']);
                     Route::post('/', [VendorController::class, 'store']);
                     Route::delete('/delete/{id}', [VendorController::class, 'delete']);

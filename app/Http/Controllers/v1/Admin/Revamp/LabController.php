@@ -65,14 +65,21 @@ class LabController extends Controller
             $tenantId = $request->header('X-Tenant-ID');
 
             $labTestQuery = Laboratory::query()
+                ->with('billingLogDetail.billingLog')
                 ->where('tenant_id', $tenantId)
                 ->where('visit_id', $request->visit_id)
                 ->when($request->search_param, function ($query) use ($request) {
                     $query->where(function ($subQuery) use ($request) {
                         $subQuery->where('test_name', 'LIKE', '%' . $request->search_param . '%')
-                            ->orWhere('lab_dept', 'LIKE', '%' . $request->search_param . '%')
-                            ->orWhere('ordered_test', 'LIKE', '%' . $request->search_param . '%')
-                            ->orWhere('others', 'LIKE', '%' . $request->search_param . '%');
+                            ->orWhere('department', 'LIKE', '%' . $request->search_param . '%')
+                            ->orWhere('status', 'LIKE', '%' . $request->search_param . '%')
+                            ->orWhereHas('consultation.consultedDoctor', function ($doctorQuery) use ($request) {
+                                $doctorQuery->where('fullname', 'LIKE', $request->search_param)
+                                    ->orWhere('email', 'LIKE', $request->search_param);
+                            });
+                        // ->orWhere('ordered_test', 'LIKE', '%' . $request->search_param . '%')
+                        // ->orWhere('others', 'LIKE', '%' . $request->search_param . '%');
+
                     });
                 })
                 ->when($request->payment_status, function ($query) use ($request) {
@@ -108,7 +115,7 @@ class LabController extends Controller
                 $exportData = $labTest->map(function ($item) {
                     return [
                         'Date'           => $item->created_at->toDateTimeString(),
-                        'Consulted By'   => $item->consultedBy->fullname ?? 'N/A',
+                        'Consulted By'   => optional($item->consultedBy)->first_name . ' ' . optional($item->consultedBy)->last_name ?? 'N/A',
                         'Type Of Test'   => $item->test_name,
                         'Price'          => $item->billingLogDetail->amount ?? 0,
                         'Payment Status' => $item->billingLogDetail->status ?? 'N/A',

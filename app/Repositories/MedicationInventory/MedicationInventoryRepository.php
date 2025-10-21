@@ -127,13 +127,24 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
 
         if ($export) {
             // $items = $query->latest()->get()->map($transformItem);
+            $items = $query->get()->map(function ($item) {
+                return [
+                    'Shipment No' => $item->shipment_no,
+                    'Drug/Product' => $item->brand_name,
+                    'Quantity' => $item->received_qty,
+                    'Price' => '₦' . number_format($item->price, 2),
+                    'Vendor' => optional($item->vendor)->vendor_name,
+                    'Date' => optional($item->created_at)->toDateString(),
+                    'Shipment Status' => ucfirst($item->shipment_status),
+                ];
+            });
 
             if ($export === 'csv') {
-                return ExportHelper::streamCsv($medical, null, 'medication_inventory.csv');
+                return ExportHelper::streamCsv($items->toArray(), null, 'medication_inventory.csv');
             }
 
             if ($export === 'pdf') {
-                return ExportHelper::downloadPdf($medical, 'medication_inventory.pdf');
+                return ExportHelper::downloadPdf($items->toArray(), 'medication_inventory.pdf');
             }
 
             throw new \InvalidArgumentException('Invalid export format specified');
