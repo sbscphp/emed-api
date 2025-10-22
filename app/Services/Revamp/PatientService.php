@@ -12,7 +12,10 @@ use App\Helpers\ExportHelper;
 use App\Helpers\GeneralHelper;
 use App\Models\BillingLog;
 use App\Models\BillingLogDetail;
+use App\Models\Consultation;
+use App\Models\CounsellingDetail;
 use App\Models\EmergencyContact;
+use App\Models\Immunization;
 use App\Models\NextOfKin;
 use App\Models\PatientVisit;
 use App\Models\Service;
@@ -98,7 +101,10 @@ class PatientService
         $patientLog = (clone $query)->count();
         $admitted = (clone $query)->where('status', GeneralEnums::ADMITTED->value)->count();
         $patientVisitToday = PatientVisit::where('tenant_id', $tenantId)->whereDate('created_at', now()->toDateString())->count();
-        $followUpPatient = (clone $query)->where('reg_status', GeneralEnums::FOLLOWUPPATIENT->value)->count();
+        $consultantFollowUpPatient = Consultation::where('schedule_a_follow_up', 1)->count();
+        $hivFollowUpPatient = CounsellingDetail::where('schedule_a_follow_up', 1)->count();
+        $immunizationFollowUpPatient = Immunization::where('schedule_a_follow_up', 1)->count();
+        $followUpPatient = $consultantFollowUpPatient + $hivFollowUpPatient + $immunizationFollowUpPatient;
 
         return [
             'totalPatient' => $total,

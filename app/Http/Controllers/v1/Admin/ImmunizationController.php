@@ -41,9 +41,13 @@ class ImmunizationController extends Controller
     public function create_immunization(ImmunizationRequest $request)
     {
         try {
+            $tenantId = $request->header('X-Tenant-ID');
             $validated = $request->validated();
             $data = Immunization::updateOrCreate(
-                ['visit_id' => $validated['visit_id']], // Unique key
+                [
+                    'visit_id' => $validated['visit_id'],
+                    'tenant_id' => $tenantId,
+                ], // Unique key
                 $validated // Data to update/create
             );
             return JsonResponser::send(false, ' Create successfully.', $data);
@@ -55,9 +59,13 @@ class ImmunizationController extends Controller
     public function dosage_admin(DosageAdminRequest  $request)
     {
         try {
+            $tenantId = $request->header('X-Tenant-ID');
             $validated = $request->validated();
             $data = DosageAdministration::updateOrCreate(
-                ['visit_id' => $validated['visit_id']], // Unique key
+                [
+                    'visit_id' => $validated['visit_id'],
+                    'tenant_id' => $tenantId,
+                ], // Unique key
                 $validated // Data to update/create
             );
             return JsonResponser::send(false, ' created successfully.', $data);
