@@ -34,6 +34,7 @@ class AuditLogService
         $period = $request->input('period');
         $startDateInput = $request->input('start_date');
         $endDateInput = $request->input('end_date');
+        $tenantId = $request->header('X-Tenant-ID');
 
         $customDate = [];
         if ($period === 'custom date' && $startDateInput && $endDateInput) {
@@ -42,23 +43,23 @@ class AuditLogService
 
         $dateFilter = GeneralHelper::dateFilter($period, $customDate);
         $records = AuditLog::query()
+            // ->where('tenant_id', $tenantId)
             ->whereIn('module_accessed', ['Billing', 'Records', 'Pharmacy'])
             ->when(!empty($request->search), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->where('action', 'LIKE', '%' . $request->search . '%')
                         ->orWhere('log_name', 'LIKE', '%' . $request->search . '%')
                         ->orWhere('module_accessed', 'LIKE', '%' . $request->search . '%')
-                        ->orWhere('action', 'LIKE', '%' . $request->search . '%')
-
                         ->orWhereHas('causer', function ($q2) use ($request) {
                             $q2->where('fullname', 'LIKE', '%' . $request->search . '%')
-                                ->orWhere('id',  intval($request->search));
+                                ->orWhere('id', intval($request->search));
                         });
                 });
             })
-
             ->when(!empty($request['role']), function ($query) use ($request) {
-                $query->whereRelation('causer', 'role', $request['role']);
+                $query->whereHas('causer.roles', function ($q) use ($request) {
+                    $q->where('name', $request['role']);
+                });
             })
             ->when(!empty($request['module_accessed']), function ($query) use ($request) {
                 $query->where('module_accessed', $request['module_accessed']);
@@ -68,12 +69,21 @@ class AuditLogService
             })
             ->when($dateFilter, function ($query) use ($dateFilter) {
                 $query->whereBetween('created_at', $dateFilter);
-            })->when(($request['sortBy'] ?? null) === 'date_ascending', function ($query) {
+            })
+            ->when(($request['sortBy'] ?? null) === 'date_ascending', function ($query) {
                 $query->orderBy('created_at', 'ASC');
-            })->when(($request['sortBy'] ?? null) === 'date_descending', function ($query) {
+            })
+            ->when(($request['sortBy'] ?? null) === 'date_descending', function ($query) {
                 $query->orderBy('created_at', 'DESC');
             })
-            ->with(['audit_log_transactions', 'causer']);
+            ->with([
+                'audit_log_transactions',
+                'causer.roles' => function ($q) use ($tenantId) {
+                    // Only load roles belonging to the current tenant
+                    $q->where('roles.tenant_id', $tenantId)
+                        ->select('roles.id', 'roles.name', 'roles.display_name', 'roles.tenant_id');
+                },
+            ]);
 
         if (!empty($request['paginate']) && empty($request['export'])) {
             return $records->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
