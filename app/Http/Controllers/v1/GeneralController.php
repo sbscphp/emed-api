@@ -21,6 +21,14 @@ class GeneralController extends Controller
         try {
             $tenantId = $request->header('X-Tenant-ID');
             $record = LabService::where('tenant_id', $tenantId)
+                ->when(!empty($request['search_param']), function ($query) use ($request) {
+                    $query->where(function ($q) use ($request) {
+                        $q->orWhere('name', 'LIKE', '%' . $request['search_param'] . '%')
+                            ->orWhere('class', 'LIKE', '%' . $request['search_param'] . '%')
+                            ->orWhere('price', 'LIKE', '%' . $request['search_param'] . '%')
+                            ->orWhere('type', 'LIKE', '%' . $request['search_param'] . '%');
+                    });
+                })
                 ->when(!empty($request->type), function ($query) use ($request) {
                     $query->where('type', $request->type);
                 })->orderBy('id', 'DESC')->get();
@@ -73,7 +81,8 @@ class GeneralController extends Controller
     {
         try {
             $tenantId = $request->header('X-Tenant-ID');
-            $record = ServiceUnit::where('tenant_id', $tenantId)->orderBy('id', 'ASC')->get();
+            //$record = ServiceUnit::where('tenant_id', $tenantId)->orderBy('id', 'ASC')->get();
+            $record = ServiceUnit::all();
 
             return JsonResponser::send(false, 'Record found successfully', $record, 200);
         } catch (\Throwable $th) {

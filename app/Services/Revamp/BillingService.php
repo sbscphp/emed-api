@@ -108,7 +108,7 @@ class BillingService
             'Pharmacy'      => 'Pharmacy',
             'Laboratory'    => 'Laboratory',
             'Radiology'     => 'Radiology',
-            'Consultant'    => 'Consultant',
+            'Consultation'    => 'Consultation',
         ];
 
         $stats = [];
@@ -373,6 +373,9 @@ class BillingService
             ->when(!empty($request['status']), function ($query) use ($request) {
                 $query->where('status', $request['status']);
             })
+            ->when(!empty(strtolower($request['gender'])), function ($query) use ($request) {
+                $query->whereRelation('billingLog.patient','gender', $request['gender']);
+            })
             ->when($request->startDate && $request->endDate, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
             })
@@ -396,7 +399,7 @@ class BillingService
 
             if ($consultation && $consultation->consulted_by) {
                 $item->consultedBy = User::on('landlord')
-                    ->select('id', 'fullname', 'email')
+                    ->select('id', 'first_name', 'last_name', 'email')
                     ->find($consultation->consulted_by);
             } else {
                 $item->consultedBy = null;
@@ -444,12 +447,12 @@ class BillingService
 
             return [
                 'Patient Name'   => trim(($patient->firstname ?? 'N/A') . ' ' . ($patient->lastname ?? 'N/A')),
-                'Registration No' => $patient->cardno ?? 'N/A',
-                'Consulted By'   => $consultedBy->fullname ?? 'N/A',
+                'Registration No' => $patient->patientno ?? 'N/A',
+                'Consulted By'   => $consultedBy->first_name ?? 'N/A',
                 'Age'            => $patient->age ?? 'N/A',
-                'Gender'         => $patient->gender ?? 'N/A',
-                'Date Joined'    => $patient->created_at ? Carbon::parse($patient->created_at)->toDateString() : 'N/A',
-                'Date Billed'    => $service->created_at ? Carbon::parse($service->created_at)->toDateString() : 'N/A',
+                // 'Gender'         => $patient->gender ?? 'N/A',
+                // 'Date Joined'    => $patient->created_at ? Carbon::parse($patient->created_at)->toDateString() : 'N/A',
+                'Date Billed'    => $billingLog->billing_date ? Carbon::parse($service->created_at)->toDateString() : 'N/A',
                 'Amount'         => $service->amount ?? 0,
                 'Payment Status' => $service->status ?? 'N/A',
             ];
