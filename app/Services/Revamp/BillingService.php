@@ -256,7 +256,7 @@ class BillingService
                 'Patient Name'      => $billing->patient->firstname . ' ' . $billing->patient->lastname,
                 'Invoice No'       => $billing->invoice_number,
                 'Service'       => $billing->service->name ?? 'N/A',
-                'Payment Method'       => $billing->grand_total,
+                'Payment Method'       => $billing->payment_method ?? 'N/A',
                 'Total Amount'       => $billing->grand_total,
                 'Amount Paid'       => $billing->amount_paid,
                 'Date Billed'      => $billing->created_at->format('Y-m-d H:i'),
