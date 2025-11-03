@@ -258,7 +258,6 @@ Route::group(["prefix" => "v1"], function () {
                 //     Route::get('users/pharmacists', [UserController::class, 'getPharmacists']);
                 // });
 
-
                 Route::group(['prefix' => 'medicine', 'middleware' => 'role.pharmacy'], function () {
                     Route::post('/create', [MedicationController::class, 'store']);
                     Route::get('/lists', [MedicationController::class, 'index']);
@@ -299,7 +298,7 @@ Route::group(["prefix" => "v1"], function () {
 
                 Route::group(['prefix' => 'vendor', 'middleware' => 'role.pharmacy'], function () {
                     Route::get('/fetch/all', [VendorController::class, 'all']);
-                    Route::post('/lists', [VendorController::class, 'index']);
+                    Route::get('/lists', [VendorController::class, 'index']);
                     Route::get('/{id}', [VendorController::class, 'show']);
                     Route::post('/', [VendorController::class, 'store']);
                     Route::delete('/delete/{id}', [VendorController::class, 'delete']);

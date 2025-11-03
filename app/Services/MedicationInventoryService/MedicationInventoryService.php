@@ -46,10 +46,8 @@ class MedicationInventoryService
 
             'total_quantity_supplied' => MedicationInventory::where('tenant_id', $tenantId)->sum('received_qty'),
 
-            'shipment_value' => 0,
-            // 'shipment_value' => MedicationInventory::where('tenant_id', $tenantId)->join('medications', 'medications.id', '=', 'medication_inventory.medication_id')
-            //     ->select(DB::raw('SUM(medication_inventory.received_qty * medications.cost_price) as total_value'))
-            //     ->value('total_value'),
+            // 'shipment_value' => 0,
+            'shipment_value' => MedicationInventory::where('tenant_id', $tenantId)->sum('price'),
         ];
     }
 

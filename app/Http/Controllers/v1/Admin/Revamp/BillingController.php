@@ -357,7 +357,6 @@ class BillingController extends Controller
     public function patientVisitSummary($id)
     {
         try {
-            $tenantId = $request->header('X-Tenant-ID');
             $patientVisit = PatientVisit::find($id);
             $patient = Patient::with('service', 'triage', 'familyHistory', 'medicalHistory', 'socialHistory')->find($patientVisit->patient_id);
             $consultation_Details =  Consultation::where('visit_id',  $patientVisit->visit_id)->first();

@@ -30,7 +30,7 @@ class InventoryController extends Controller
         try {
             config(['database.default' => 'tenant']);
             $tenantId = $request->header('X-Tenant-ID');
-            $filters = $request->only(['search', 'type_name', 'status']);
+            $filters = $request->only(['search', 'type_name', 'status', 'is_expired']);
             $export = $request->input('export');
             $from = $request->from;
             $to = $request->to;
@@ -66,6 +66,13 @@ class InventoryController extends Controller
 
         try {
             $currentUser = Auth::user();
+            $tenantId = $request->header('X-Tenant-ID');
+            if ($request->filled('item_name')) {
+                $checkInventoryItemName = Inventory::where('item_name', $request->item_name)->where('tenant_id', $tenantId)->first();
+                if ($checkInventoryItemName) {
+                    return JsonResponser::send(true, 'Item name already exist.', [], 422);
+                }
+            }
             if ($request->filled('inventory_id')) {
                 $inventory = Inventory::find($request->inventory_id);
                 if (!$inventory) {

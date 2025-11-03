@@ -387,7 +387,7 @@ class PatientService
                 throw new \Exception("Service not found.");
             }
 
-            $serviceUnit = ServiceUnit::where('name', 'Registration')->first();
+            $serviceUnit = ServiceUnit::where('name', 'Registration')->where('tenant_id', $tenantId)->first();
             if (empty($service)) {
                 throw new \Exception("Registration service unit not found.");
             }

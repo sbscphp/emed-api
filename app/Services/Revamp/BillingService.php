@@ -374,7 +374,7 @@ class BillingService
                 $query->where('status', $request['status']);
             })
             ->when(!empty(strtolower($request['gender'])), function ($query) use ($request) {
-                $query->whereRelation('billingLog.patient','gender', $request['gender']);
+                $query->whereRelation('billingLog.patient', 'gender', $request['gender']);
             })
             ->when($request->startDate && $request->endDate, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
@@ -477,7 +477,7 @@ class BillingService
         throw new \Exception("Invalid export format.");
     }
 
-    public function makePayment($request, $billing)
+    public function oldmakePayment($request, $billing)
     {
         try {
             if ($billing->payment_status === 'Paid') {
@@ -534,6 +534,103 @@ class BillingService
             }
 
             $billing->amount_paid += $totalPaymentApplied;
+            if ($billing->amount_paid > $billing->grand_total) {
+                $billing->amount_paid = $billing->grand_total;
+            }
+
+            $billing->amount_outstanding = max(0, $billing->grand_total - $billing->amount_paid);
+
+            if ($billing->amount_paid == 0) {
+                $billing->payment_status = 'Pending';
+            } elseif ($billing->amount_paid < $billing->grand_total) {
+                $billing->payment_status = 'Part Paid';
+            } else {
+                $billing->payment_status = 'Paid';
+            }
+
+            $billing->payment_method = $request->payment_method;
+            $billing->save();
+
+            return $billing->fresh([
+                'patient',
+                'service',
+                'billingLogDetails.treatment',
+                'billingLogDetails.labInvestigation',
+                'billingLogDetails.radiologyInvestigation',
+                'billingLogDetails.serviceUnit'
+            ]);
+        } catch (\Throwable $th) {
+            throw $th;
+        }
+    }
+
+    public function makePayment($request, $billing)
+    {
+        try {
+            if ($billing->payment_status === 'Paid') {
+                throw new \Exception("This billing is already fully paid.");
+            }
+
+            $billingDetails = collect($request->billingDetails);
+            $totalPaymentApplied = 0;
+
+            foreach ($billingDetails as $detail) {
+                $logDetail = $billing->billingLogDetails()
+                    ->where('id', $detail['billing_log_id'])
+                    ->first();
+
+                if (!$logDetail) {
+                    throw new \Exception("Billing detail not found for ID {$detail['billing_log_id']}");
+                }
+
+                // Already fully paid? Skip
+                if ($logDetail->status === 'Paid') {
+                    continue;
+                }
+
+                $amountPaid  = $detail['amount'] ?? 0;
+                $alreadyPaid = $logDetail->amount_paid ?? 0;
+                $outstanding = $logDetail->amount - $alreadyPaid;
+                $applied     = min($amountPaid, $outstanding);
+
+                $logDetail->amount_paid = $alreadyPaid + $applied;
+
+                if ($logDetail->amount_paid >= $logDetail->amount) {
+                    $logDetail->status = 'Paid';
+                    $logDetail->amount_paid = $logDetail->amount;
+                } elseif ($logDetail->amount_paid > 0) {
+                    $logDetail->status = 'Part Paid';
+                } else {
+                    $logDetail->status = 'Pending';
+                }
+
+                $logDetail->save();
+                $totalPaymentApplied += $applied;
+            }
+
+            // --- ✅ Tax and Discount Handling ---
+            $billing->discount = $request->discount ?? $billing->discount ?? 0;
+
+            // Calculate items total
+            $itemsTotal = $billing->billingLogDetails()->sum('amount');
+
+            // Determine tax amount (Nigerian VAT 7.5%)
+            if ($request->filled('tax_amount')) {
+                // Use frontend value if provided
+                $billing->tax_amount = $request->tax_amount;
+            } else {
+                // Auto-calculate VAT if not provided and not already stored
+                if (empty($billing->tax_amount) || $billing->tax_amount == 0) {
+                    $billing->tax_amount = round($itemsTotal * 0.075, 2);
+                }
+            }
+
+            // Grand total = (items - discount) + tax
+            $billing->grand_total = max(0, ($itemsTotal - $billing->discount) + $billing->tax_amount);
+
+            // --- ✅ Payment Progression ---
+            $billing->amount_paid += $totalPaymentApplied;
+
             if ($billing->amount_paid > $billing->grand_total) {
                 $billing->amount_paid = $billing->grand_total;
             }

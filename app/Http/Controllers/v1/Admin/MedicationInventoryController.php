@@ -129,7 +129,7 @@ class MedicationInventoryController extends Controller
                 return JsonResponser::send(true, 'Shipment record not found.', [], 200);
             }
 
-            $allowedStatuses = ['pending', 'incomplete', 'complete', 'received'];
+            $allowedStatuses = ['pending', 'incomplete', 'complete', 'received', 'cancel'];
             $newStatus = request()->input('shipment_status');
 
             if (!in_array($newStatus, $allowedStatuses)) {

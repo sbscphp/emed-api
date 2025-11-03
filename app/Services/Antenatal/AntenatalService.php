@@ -32,6 +32,7 @@ class AntenatalService
         $tenantId = $request->header('X-Tenant-ID');
 
         $data = $request->validated();
+        $data['user_id'] = $userId;
 
         $antenatal = Antenatal::updateOrCreate(
             [

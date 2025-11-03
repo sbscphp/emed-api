@@ -17,7 +17,7 @@ class CreatePharmacyRequest extends FormRequest
         return [
             'pharmacy_id' => 'required|exists:tenant.pharmacies,id',
             'inventory_id' => 'required',
-            // 'requested_by' => 'required|string|max:255',
+            'requested_by' => 'required|string|max:255',
             'requested_date' => 'required|date',
             'urgency_level' => 'required|string|in:low,medium,high',
             'product' => 'required|string|max:255',

@@ -131,19 +131,27 @@ class LaboratoryService
         $currentUserInstance = UserMgtHelper::userInstance();
         $tenantId = $data->header('X-Tenant-ID');
 
-        // Create lab result
+        // Collect test names sent from frontend
+        $incomingTests = collect($data->results)->pluck('test')->toArray();
+
+        // Delete results that are no longer present in the request
+        LaboratoryResult::where('patient_visit_lab_id', $test->id)
+            ->whereNotIn('test', $incomingTests)
+            ->delete();
+
+        // Create or update results for the current set
         foreach ($data->results as $item) {
-            $record = LaboratoryResult::updateOrCreate(
+            LaboratoryResult::updateOrCreate(
                 [
-                    'patient_visit_lab_id' => $test->id, // Unique match key
+                    'patient_visit_lab_id' => $test->id,
                     'test' => $item['test'],
                 ],
                 [
-                    'tenant_id' => $tenantId,
-                    'visit_id'          => $test->visit_id,
+                    'tenant_id'        => $tenantId,
+                    'visit_id'         => $test->visit_id,
                     'result'           => $item['result'],
                     'reference_range'  => $item['reference_range'],
-                    'status'           => 'Ready'
+                    'status'           => 'Ready',
                 ]
             );
         }

@@ -49,7 +49,7 @@ class PharmacyRequestRepository implements PharmacyRequestInterface
     public function create(array $data)
     {
         $currentUser = Auth::user();
-        $data['requested_by'] = $currentUser->id;
+        // $data['requested_by'] = $currentUser->id;
         return PharmacyRequest::create($data);
     }
 

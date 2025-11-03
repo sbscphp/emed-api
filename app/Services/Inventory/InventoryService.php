@@ -103,7 +103,9 @@ class InventoryService
         return [
             'total_inventory_items' => Inventory::where('tenant_id', $tenantId)->count(),
             'stock_below_minimum' => Inventory::where('tenant_id', $tenantId)->whereColumn('quantity', '<', 'reorder_level')->count(),
-            'expired_medicine' => Inventory::where('tenant_id', $tenantId)->whereDate('expiry_date', '<', Carbon::now())->count(),
+            'expired_medicine' => Inventory::where('tenant_id', $tenantId)
+                ->whereDate('expiry_date', '<=', now())
+                ->count(),
             'pending_restock_requests' => Inventory::where('tenant_id', $tenantId)->where(function ($query) {
                 $query->whereColumn('quantity', '<', 'reorder_level')
                     ->orWhereDate('expiry_date', '<', now());

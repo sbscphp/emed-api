@@ -13,10 +13,12 @@ use App\Http\Requests\ConsultationLaborartoryRequest;
 use App\Models\Antenatal;
 use App\Models\AntenatalLabTest;
 use App\Models\BillingLog;
+use App\Models\Consultation;
 use App\Models\DeliveryDetail;
 use App\Models\NewBornDetail;
 use App\Models\Patient;
 use App\Models\PatientVisit;
+use App\Models\User;
 use App\Responser\JsonResponser;
 use App\Services\Antenatal\AntenatalService;
 use Illuminate\Http\Request;
@@ -123,11 +125,13 @@ class AntenatalController extends Controller
         try {
             $patientVisit = PatientVisit::find($id);
             $patient = Patient::with('service', 'triage', 'familyHistory', 'medicalHistory', 'socialHistory')->find($patientVisit->patient_id);
-            $antenatalDetail = Antenatal::where('visit_id', $id)->first();
+            $antenatalDetail = Antenatal::where('visit_id', $id)->with('consultedBy')->first();
             // $antenatalLabTest = AntenatalLabTest::where('visit_id', $id)->first();
             $deliveryDetail = DeliveryDetail::where('visit_id',  $patientVisit->id)->first();
             $newBornDetails = NewBornDetail::where('visit_id',  $patientVisit->id)->first();
             $billingLog = BillingLog::where('visit_id',  $patientVisit->id)->first();
+            $consultation = Consultation::where('visit_id', $id)->with('consultedDoctor')->first();
+
             $data = [
                 "patient" => $patient,
                 "patientVisit" => $patientVisit,

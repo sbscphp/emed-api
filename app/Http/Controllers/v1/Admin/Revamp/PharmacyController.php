@@ -78,7 +78,7 @@ class PharmacyController extends Controller
                 $records = $overview;
             }
 
-            return JsonResponser::send(false, 'Record(s) found successfully', $records);
+            return JsonResponser::send(false, 'Record(s) found successfully', $records, 200);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
         }
@@ -98,7 +98,7 @@ class PharmacyController extends Controller
             // Manually fetch dispensed user from landlord DB
             if ($treatment->dispensed_by) {
                 $dispensedUser = User::on('landlord')
-                    ->select('id', 'fullname', 'email')
+                    ->select('id', 'first_name', 'last_name', 'email')
                     ->find($treatment->dispensed_by);
 
                 $treatment->setAttribute('dispensedBy', $dispensedUser);
@@ -108,7 +108,7 @@ class PharmacyController extends Controller
 
             if ($treatment->consultation->consulted_by) {
                 $consultedUser = User::on('landlord')
-                    ->select('id', 'fullname', 'email')
+                    ->select('id', 'first_name', 'last_name', 'email')
                     ->find($treatment->consultation->consulted_by);
 
                 $treatment->setAttribute('consultedBy', $consultedUser);

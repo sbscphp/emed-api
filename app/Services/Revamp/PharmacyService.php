@@ -18,6 +18,7 @@ use App\Models\Treatment;
 use App\Models\User;
 use App\Repositories\Pharmacy\PharmacyInterface;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -202,13 +203,12 @@ class PharmacyService
     {
         $exportData = $records->map(function ($treatment) {
             return [
-                'Pharmacy Name'      => $treatment->medication->pharmacy->name ?? 'N/A',
-                'Medicine Name'      => $treatment->medication->medicine_name ?? 'N/A',
-                'Quantity'        => $treatment->quantity ?? 'N/A',
-                'Dosage'     => $treatment->dosage ?? 'N/A',
+                'Drug Name'      => $treatment->pharmacyRequest->product ?? 'N/A',
+                'Consulted By'      => $treatment->consultedBy->first_name . ' ' . $treatment->consultedBy->last_name ?? 'N/A',
+                'Price'        => $treatment->billing_log_detail->amount ?? 'N/A',
+                'Date'     => Carbon::parse($treatment->created_at) ?? 'N/A',
                 'Payment Status'     => $treatment->billingLogDetail->status ?? 'N/A',
-                'Prescribed On'   => $treatment->created_at ?? 'N/A',
-                'Status'   => $treatment->status ?? 'N/A',
+                'Test Status'   => $treatment->status ?? 'N/A',
             ];
         })->toArray();
 

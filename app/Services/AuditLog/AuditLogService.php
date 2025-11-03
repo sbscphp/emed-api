@@ -124,7 +124,7 @@ class AuditLogService
         $records = $records->map(function ($record) {
             return [
                 $record->causer->id ?? 'N/A',
-                $record->causer->role ?? 'N/A',
+                $record->causer->role_names ?? 'N/A',
                 $record->created_at->toDateTimeString(),
                 $record->action,
                 $record->module_accessed,

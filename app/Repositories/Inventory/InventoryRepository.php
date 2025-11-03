@@ -40,10 +40,13 @@ class InventoryRepository implements InventoryInterface
         }
 
         if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+            $query->where('status', $filters['status'])
+                ->whereDate('expiry_date', '>', now());
         }
 
-
+        if (isset($filters['is_expired']) && filter_var($filters['is_expired'], FILTER_VALIDATE_BOOLEAN)) {
+            $query->whereDate('expiry_date', '<=', now());
+        }
 
         if (!empty($from) && !empty($to)) {
             $query->whereBetween('expiry_date', [

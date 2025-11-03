@@ -153,7 +153,7 @@ class LabController extends Controller
             // Manually fetch dispensed user from landlord DB
             if ($record->consultation->consulted_by) {
                 $consultedUser = User::on('landlord')
-                    ->select('id', 'fullname', 'email')
+                    ->select('id', 'first_name', 'last_name', 'email')
                     ->find($record->consultation->consulted_by);
 
                 $record->setAttribute('consultedBy', $consultedUser);
@@ -163,7 +163,7 @@ class LabController extends Controller
 
             if ($record->user_id) {
                 $labUsers = User::on('landlord')
-                    ->select('id', 'fullname', 'email')
+                    ->select('id', 'first_name', 'last_name', 'email')
                     ->find($record->user_id);
 
                 $record->setAttribute('attendedBy', $labUsers);
