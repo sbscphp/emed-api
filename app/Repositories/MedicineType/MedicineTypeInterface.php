@@ -15,7 +15,7 @@ interface MedicineTypeInterface
      * 
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    public function all($filters);
+    public function all($filters, $request);
 
 
     /**

@@ -22,7 +22,7 @@ class StoreMedicineTypeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'type_name' => 'required|string|max:255|unique:tenant.medicine_types,type_name',
+            'type_name' => 'required|string|max:255',
         ];
     }
 }

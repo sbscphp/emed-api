@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\v1;
 
 use App\Http\Controllers\Controller;
+use App\Models\Inventory;
 use App\Models\LabService;
+use App\Models\Medication;
+use App\Models\Pharmacy;
 use App\Models\PharmacyRequest;
 use App\Models\RadiologyService;
 use App\Models\Service;
@@ -16,9 +19,19 @@ class GeneralController extends Controller
     public function allLabTest(Request $request)
     {
         try {
-            $record = LabService::when(!empty($request->type), function ($query) use ($request) {
-                $query->where('type', $request->type);
-            })->orderBy('id', 'DESC')->get();
+            $tenantId = $request->header('X-Tenant-ID');
+            $record = LabService::where('tenant_id', $tenantId)
+                ->when(!empty($request['search_param']), function ($query) use ($request) {
+                    $query->where(function ($q) use ($request) {
+                        $q->orWhere('name', 'LIKE', '%' . $request['search_param'] . '%')
+                            ->orWhere('class', 'LIKE', '%' . $request['search_param'] . '%')
+                            ->orWhere('price', 'LIKE', '%' . $request['search_param'] . '%')
+                            ->orWhere('type', 'LIKE', '%' . $request['search_param'] . '%');
+                    });
+                })
+                ->when(!empty($request->type), function ($query) use ($request) {
+                    $query->where('type', $request->type);
+                })->orderBy('id', 'DESC')->get();
 
             return JsonResponser::send(false, 'Record found successfully', $record, 200);
         } catch (\Throwable $th) {
@@ -26,10 +39,11 @@ class GeneralController extends Controller
         }
     }
 
-    public function allRadiologyTest()
+    public function allRadiologyTest(Request $request)
     {
         try {
-            $record = RadiologyService::orderBy('id', 'DESC')->get();
+            $tenantId = $request->header('X-Tenant-ID');
+            $record = RadiologyService::where('tenant_id', $tenantId)->orderBy('id', 'DESC')->get();
 
             return JsonResponser::send(false, 'Record found successfully', $record, 200);
         } catch (\Throwable $th) {
@@ -37,10 +51,13 @@ class GeneralController extends Controller
         }
     }
 
-    public function allMedicine()
+    public function allMedicine(Request $request)
     {
         try {
-            $record = PharmacyRequest::with('pharmacy')->orderBy('id', 'DESC')->get();
+            $tenantId = $request->header('X-Tenant-ID');
+            $record = PharmacyRequest::where('tenant_id', $tenantId)
+                ->where('pharmacy_id', $request->pharmacy_id)
+                ->with('pharmacy')->orderBy('id', 'DESC')->get();
 
             return JsonResponser::send(false, 'Record found successfully', $record, 200);
         } catch (\Throwable $th) {
@@ -48,10 +65,11 @@ class GeneralController extends Controller
         }
     }
 
-    public function allService()
+    public function allService(Request $request)
     {
         try {
-            $record = Service::orderBy('id', 'ASC')->get();
+            $tenantId = $request->header('X-Tenant-ID');
+            $record = Service::where('tenant_id', $tenantId)->orderBy('id', 'ASC')->get();
 
             return JsonResponser::send(false, 'Record found successfully', $record, 200);
         } catch (\Throwable $th) {
@@ -59,11 +77,48 @@ class GeneralController extends Controller
         }
     }
 
-    public function allServiceUnits()
+    public function allServiceUnits(Request $request)
     {
         try {
-            
-            $record = ServiceUnit::orderBy('id', 'ASC')->get();
+            $tenantId = $request->header('X-Tenant-ID');
+            //$record = ServiceUnit::where('tenant_id', $tenantId)->orderBy('id', 'ASC')->get();
+            $record = ServiceUnit::all();
+
+            return JsonResponser::send(false, 'Record found successfully', $record, 200);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
+    public function allInventoryDrugs(Request $request)
+    {
+        try {
+            $tenantId = $request->header('X-Tenant-ID');
+            $record = Inventory::where('tenant_id', $tenantId)->orderBy('id', 'ASC')->get();
+
+            return JsonResponser::send(false, 'Record found successfully', $record, 200);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
+    public function allMedication(Request $request)
+    {
+        try {
+            $tenantId = $request->header('X-Tenant-ID');
+            $record = Medication::where('tenant_id', $tenantId)->orderBy('id', 'ASC')->get();
+
+            return JsonResponser::send(false, 'Record found successfully', $record, 200);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
+    public function allPharmacy(Request $request)
+    {
+        try {
+            $tenantId = $request->header('X-Tenant-ID');
+            $record = Pharmacy::where('tenant_id', $tenantId)->orderBy('id', 'ASC')->get();
 
             return JsonResponser::send(false, 'Record found successfully', $record, 200);
         } catch (\Throwable $th) {

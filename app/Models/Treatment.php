@@ -47,12 +47,7 @@ class Treatment extends Model
     {
         return $this->belongsTo(Pharmacy::class);
     }
-
-    public function fulfillment()
-    {
-        return $this->hasOne(TreatmentFulfillment::class);
-    }
-
+    
     public function billingLogs()
     {
         return $this->hasOneThrough(

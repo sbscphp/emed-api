@@ -8,9 +8,4 @@ class RadiologyService extends Model
 {
     protected $guarded = ['id'];
     protected $connection = 'tenant';
-    protected $fillable = [
-        "service_unit_id",
-        "name",
-        "price"
-    ];
 }

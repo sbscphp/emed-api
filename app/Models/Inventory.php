@@ -12,9 +12,9 @@ class Inventory extends Model
 
     public function calculateStatus()
     {
-        if (Carbon::parse($this->expiry_date)->isPast()) {
-            return 'Expired';
-        }
+        // if (Carbon::parse($this->expiry_date)->isPast()) {
+        //     return 'Expired';
+        // }
 
         return $this->quantity < $this->reorder_level ? 'Low Stock' : 'Sufficient';
     }

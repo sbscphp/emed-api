@@ -8,37 +8,37 @@ return [
 
     'apps' => [
         'dashboard' => [
-            'management' => ['view'],
+            'dashboard' => ['view'],
         ],
         'record' => [
-            'management' => ['create', 'view', 'modify'],
+            'record' => ['create', 'view', 'modify'],
         ],
         'nurse' => [
-            'management' => ['create', 'view', 'modify'],
+            'nurse' => ['create', 'view', 'modify'],
         ],
         'consultant' => [
-            'management' => ['create', 'view', 'modify'],
+            'consultant' => ['create', 'view', 'modify'],
         ],
         'pharmacy' => [
-            'management' => ['create', 'view', 'modify'],
+            'pharmacy' => ['create', 'view', 'modify'],
         ],
         'laboratory' => [
-            'management' => ['create', 'view', 'modify'],
+            'laboratory' => ['create', 'view', 'modify'],
         ],
         'radiology' => [
-            'management' => ['create', 'view', 'modify'],
+            'radiology' => ['create', 'view', 'modify'],
         ],
         'billing' => [
-            'management' => ['create', 'view', 'modify'],
+            'billing' => ['create', 'view', 'modify'],
         ],
         'logs' => [
-            'management' => ['view'],
+            'logs' => ['view'],
         ],
         'reports' => [
-            'management' => ['view'],
+            'reports' => ['view'],
         ],
         'user' => [
-            'management' => ['create', 'view', 'modify'],
+            'user' => ['create', 'view', 'modify'],
         ],
     ],
 

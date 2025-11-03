@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('pharmacy_requests', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('requested_by')->nullable();
+            $table->string('tenant_id')->nullable();
+            $table->string('requested_by')->nullable();
             $table->unsignedBigInteger('supplied_by')->nullable();
             $table->unsignedBigInteger('pharmacy_id')->nullable();
             $table->unsignedBigInteger('inventory_id')->nullable();

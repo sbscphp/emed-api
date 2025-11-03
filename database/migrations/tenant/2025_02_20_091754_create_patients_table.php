@@ -36,7 +36,7 @@ return new class extends Migration
             $table->string('cardno')->nullable();
             $table->string('genotype')->nullable();
             $table->string('referral')->nullable();
-            $table->string('status')->default('Non-Admitted')->comment('Not Admitted, Admitted, Discharged, Deceased');
+            $table->string('status')->default('Not-Admitted')->comment('Not Admitted, Admitted, Discharged, Deceased');
             $table->string('reg_status')->default('New')->comment('New, Follow Up');
             $table->timestamps();
             $table->softDeletes();

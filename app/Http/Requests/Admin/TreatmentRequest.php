@@ -25,6 +25,7 @@ class TreatmentRequest extends FormRequest
         return [
 
             'patient_id' => 'required|exists:tenant.patients,id',
+            'pharmacy_id' => 'required',
             'visit_id' => 'required|exists:tenant.patient_visits,id',
             'consultation_id' => 'required|exists:tenant.patient_visit_consultation,id',
 
@@ -43,6 +44,7 @@ class TreatmentRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'pharmacy_id.required' => 'The pharmacy field is required.',
             'patient_id.required' => 'The patient field is required.',
             'patient_id.exists'   => 'The selected patient does not exist in the system.',
 

@@ -12,7 +12,10 @@ use App\Helpers\ExportHelper;
 use App\Helpers\GeneralHelper;
 use App\Models\BillingLog;
 use App\Models\BillingLogDetail;
+use App\Models\Consultation;
+use App\Models\CounsellingDetail;
 use App\Models\EmergencyContact;
+use App\Models\Immunization;
 use App\Models\NextOfKin;
 use App\Models\PatientVisit;
 use App\Models\Service;
@@ -64,7 +67,7 @@ class PatientService
             ->when(!empty($request['status']), function ($query) use ($request) {
                 $query->where('status', $request['status']);
             })
-            ->when($request->startDate && $request->endDate, function ($query) use ($request) {
+            ->when($request->start_date && $request->end_date, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
             })
             ->when($dateFilter, function ($query) use ($dateFilter) {
@@ -97,8 +100,11 @@ class PatientService
         $total = (clone $query)->count();
         $patientLog = (clone $query)->count();
         $admitted = (clone $query)->where('status', GeneralEnums::ADMITTED->value)->count();
-        $patientVisitToday = PatientVisit::whereDate('created_at', now()->toDateString())->count();
-        $followUpPatient = (clone $query)->where('reg_status', GeneralEnums::FOLLOWUPPATIENT->value)->count();
+        $patientVisitToday = PatientVisit::where('tenant_id', $tenantId)->whereDate('created_at', now()->toDateString())->count();
+        $consultantFollowUpPatient = Consultation::where('schedule_a_follow_up', 1)->count();
+        $hivFollowUpPatient = CounsellingDetail::where('schedule_a_follow_up', 1)->count();
+        $immunizationFollowUpPatient = Immunization::where('schedule_a_follow_up', 1)->count();
+        $followUpPatient = $consultantFollowUpPatient + $hivFollowUpPatient + $immunizationFollowUpPatient;
 
         return [
             'totalPatient' => $total,
@@ -330,7 +336,7 @@ class PatientService
             })->when(($request['sort_by'] ?? null) === 'date_descending', function ($query) {
                 $query->orderBy('arrival_date', 'DESC');
             })
-            ->with('patient', 'service', 'patientBilling');
+            ->with('patient', 'service', 'patientBilling', 'consultation');
 
         if (!empty($request['paginate']) && empty($request['export'])) {
             return $records->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
@@ -381,7 +387,7 @@ class PatientService
                 throw new \Exception("Service not found.");
             }
 
-            $serviceUnit = ServiceUnit::where('name', 'Registration')->first();
+            $serviceUnit = ServiceUnit::where('name', 'Registration')->where('tenant_id', $tenantId)->first();
             if (empty($service)) {
                 throw new \Exception("Registration service unit not found.");
             }
@@ -416,11 +422,13 @@ class PatientService
                 'patient_name' => $patient->firstname . ' ' . $patient->lastname,
                 'billing_date' => now(),
                 'service_type_id' => $request->service_id,
+                'service_unit_id' => $serviceUnit->id,
                 'grand_total' => $service->price
             ]);
 
             //update billing log details
             BillingLogDetail::create([
+                'tenant_id'        => $tenantId,
                 'billing_id' => $patientBilling->id,
                 'service_unit_id' => $serviceUnit->id,
                 'item_name' => $service->name,

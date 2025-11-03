@@ -41,8 +41,10 @@ class LaboratoryService
         }
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
         $records = PatientVisit::query()
+            ->where('tenant_id', $tenantId)
             // ->where('status', PatientVisitStatusEnums::INVESTIGATION->value)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
@@ -74,12 +76,14 @@ class LaboratoryService
 
     public function stats($request)
     {
-        $query = PatientVisit::query();
+        $tenantId = $request->header('X-Tenant-ID');
+        $query = PatientVisit::query()->where('tenant_id', $tenantId);
+        $labQuery = Laboratory::query()->where('tenant_id', $tenantId);
         $totalPatientsToday = (clone $query)->where('status', PatientVisitStatusEnums::INVESTIGATION->value)
             ->whereDate('created_at', now()->toDateString())->count();
-        $testResultToday = Laboratory::whereDate('created_at', now()->toDateString())
+        $testResultToday = (clone $labQuery)->whereDate('created_at', now()->toDateString())
             ->where('status', GeneralEnums::READY->value)->count();
-        $testResultPendingToday = Laboratory::whereDate('created_at', now()->toDateString())
+        $testResultPendingToday = (clone $labQuery)->whereDate('created_at', now()->toDateString())
             ->where('status', GeneralEnums::NOT_READY->value)->count();
 
         return [
@@ -125,19 +129,29 @@ class LaboratoryService
     {
 
         $currentUserInstance = UserMgtHelper::userInstance();
+        $tenantId = $data->header('X-Tenant-ID');
 
-        // Create lab result
+        // Collect test names sent from frontend
+        $incomingTests = collect($data->results)->pluck('test')->toArray();
+
+        // Delete results that are no longer present in the request
+        LaboratoryResult::where('patient_visit_lab_id', $test->id)
+            ->whereNotIn('test', $incomingTests)
+            ->delete();
+
+        // Create or update results for the current set
         foreach ($data->results as $item) {
-            $record = LaboratoryResult::updateOrCreate(
+            LaboratoryResult::updateOrCreate(
                 [
-                    'patient_visit_lab_id' => $test->id, // Unique match key
+                    'patient_visit_lab_id' => $test->id,
                     'test' => $item['test'],
                 ],
                 [
-                    'visit_id'          => $test->visit_id,
+                    'tenant_id'        => $tenantId,
+                    'visit_id'         => $test->visit_id,
                     'result'           => $item['result'],
                     'reference_range'  => $item['reference_range'],
-                    'status'           => 'Ready'
+                    'status'           => 'Ready',
                 ]
             );
         }

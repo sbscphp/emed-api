@@ -1047,22 +1047,12 @@ class RegistrationController extends Controller
         DB::connection('landlord')->beginTransaction();
         try {
             $user = Auth::user();
-            $user_information =  $user->load('tenant.registration');
-            return JsonResponser::send(
-                true,
-                'Your email has been verified. You can now log in.',
-                $user_information,
-                200
-            );
+            $user_information =  $user->load('currentTenant');
+            return JsonResponser::send(true, 'Your email has been verified. You can now log in.', $user_information, 200);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
             DB::connection('landlord')->rollBack();
-            return JsonResponser::send(
-                false,
-                'An error occurred while retrieving user information: ' . $th->getMessage(),
-                null,
-                500
-            );
+            return JsonResponser::send(false, 'An error occurred while retrieving user information: ' . $th->getMessage(), null, 500);
         }
     }
 

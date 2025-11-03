@@ -47,8 +47,10 @@ class ConsultationService
         }
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
         $records = PatientVisit::query()
+            ->where('tenant_id', $tenantId)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->whereRelation('patient', 'cardno', 'LIKE', '%' . $request['search_param'] . '%')
@@ -89,16 +91,17 @@ class ConsultationService
             $customDate = [$request->start_date, $request->end_date];
         }
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
-        $query = PatientVisit::query();
+        $tenantId = $request->header('X-Tenant-ID');
+        $query = PatientVisit::query()->where('tenant_id', $tenantId);
 
         $awaitingConsultation = (clone $query)->where('status', PatientVisitStatusEnums::TRIAGE->value)->count();
         $completedConsultation = (clone $query)->where('status', PatientVisitStatusEnums::CONSULTATION->value)->count();
-        $awaitingInvestigation = Laboratory::where('status', GeneralEnums::NOT_READY->value)->count();
-        $completedInvestigation = Laboratory::where('status', GeneralEnums::READY->value)->count();
-        $awaitingProcedure = Radiology::where('status', GeneralEnums::NOT_READY->value)->count();
-        $completedProcedure = Radiology::where('status', GeneralEnums::READY->value)->count();
-        $pendingSurgeries = Surgery::where('status', GeneralEnums::PENDING->value)->count();
-        $completedSurgeries = Surgery::where('status', GeneralEnums::COMPLETED->value)->count();
+        $awaitingInvestigation = Laboratory::where('tenant_id', $tenantId)->where('status', GeneralEnums::NOT_READY->value)->count();
+        $completedInvestigation = Laboratory::where('tenant_id', $tenantId)->where('status', GeneralEnums::READY->value)->count();
+        $awaitingProcedure = Radiology::where('tenant_id', $tenantId)->where('status', GeneralEnums::NOT_READY->value)->count();
+        $completedProcedure = Radiology::where('tenant_id', $tenantId)->where('status', GeneralEnums::READY->value)->count();
+        $pendingSurgeries = Surgery::where('tenant_id', $tenantId)->where('status', GeneralEnums::PENDING->value)->count();
+        $completedSurgeries = Surgery::where('tenant_id', $tenantId)->where('status', GeneralEnums::COMPLETED->value)->count();
 
         return [
             'awaitingConsultation' => $awaitingConsultation,
@@ -118,8 +121,11 @@ class ConsultationService
             return [
                 'Firstname'      => $visit->patient->firstname ?? 'N/A',
                 'Lastname'       => $visit->patient->lastname ?? 'N/A',
+                'Service'        => $visit->service->name ?? 'N/A',
                 'Card No'        => $visit->patient->cardno ?? 'N/A',
                 'Patient No'     => $visit->patient->patientno ?? 'N/A',
+                'Referral'     => $visit->patient->referral ? 'Yes' : 'No',
+                'Acuity'     => $visit->triage->severity ?? 'N/A',
                 'Arrival Date'   => $visit->arrival_date ?? 'N/A',
                 'Patient Status' => $visit->patient->status ?? 'N/A',
             ];
@@ -159,9 +165,13 @@ class ConsultationService
             $visit = PatientVisit::find($request->visit_id);
             $patient = Patient::find($request->patient_id);
             $request['consulted_by'] = $currentUser->id;
+            $tenantId = $request->header('X-Tenant-ID');
             // Initiate Patient Consultation
             $consultation = Consultation::updateOrCreate(
-                ['visit_id' => $request['visit_id']],
+                [
+                    'visit_id' => $request['visit_id'],
+                    'tenant_id' => $tenantId
+                ],
                 $request->all()
             );
 
@@ -187,6 +197,7 @@ class ConsultationService
     {
         try {
             $currentUser = Auth::user();
+            $tenantId = $request->header('X-Tenant-ID');
             $visit = PatientVisit::findOrFail($request->visit_id);
 
             if (empty($request->test) || !is_array($request->test)) {
@@ -195,7 +206,10 @@ class ConsultationService
 
             // Fetch or create billing log
             $fetchBilling = BillingLog::firstOrCreate(
-                ['visit_id' => $visit->id],
+                [
+                    'visit_id' => $visit->id,
+                    'tenant_id' => $tenantId
+                ],
                 [
                     'grand_total' => 0,
                     'patient_id'  => $request->patient_id,
@@ -225,6 +239,7 @@ class ConsultationService
                     }
 
                     $labInvestigation = Laboratory::create([
+                        'tenant_id'        => $tenantId,
                         'visit_id'        => $visit->id,
                         'test_id'         => $labService->id,
                         'patient_id'      => $request->patient_id,
@@ -253,6 +268,7 @@ class ConsultationService
 
                     // create fresh billing detail
                     $billingDetail = BillingLogDetail::create([
+                        'tenant_id'        => $tenantId,
                         'billing_id'      => $fetchBilling->id,
                         'lab_test_id'  => $labInvestigation->id,
                         'service_unit_id' => $labService->service_unit_id,
@@ -287,6 +303,7 @@ class ConsultationService
     {
         try {
             $currentUser = Auth::user();
+            $tenantId = $request->header('X-Tenant-ID');
             $visit = PatientVisit::findOrFail($request->visit_id);
 
             if (empty($request->test) || !is_array($request->test)) {
@@ -295,7 +312,10 @@ class ConsultationService
 
             // Fetch or create billing log
             $fetchBilling = BillingLog::firstOrCreate(
-                ['visit_id' => $visit->id],
+                [
+                    'visit_id' => $visit->id,
+                    'tenant_id' => $tenantId
+                ],
                 [
                     'grand_total' => 0,
                     'patient_id'  => $request->patient_id,
@@ -325,6 +345,7 @@ class ConsultationService
                     }
 
                     $labInvestigation = Radiology::create([
+                        'tenant_id'        => $tenantId,
                         'visit_id'        => $visit->id,
                         'test_id'         => $radService->id,
                         'patient_id'      => $request->patient_id,
@@ -353,6 +374,7 @@ class ConsultationService
 
                     // create fresh billing detail
                     $billingDetail = BillingLogDetail::create([
+                        'tenant_id'        => $tenantId,
                         'billing_id'      => $fetchBilling->id,
                         'radiology_test_id'  => $labInvestigation->id,
                         'service_unit_id' => $radService->service_unit_id,
@@ -387,6 +409,7 @@ class ConsultationService
     {
         try {
             $currentUser = Auth::user();
+            $tenantId = $request->header('X-Tenant-ID');
             $visit = PatientVisit::findOrFail($request->visit_id);
 
             if (empty($request->medications) || !is_array($request->medications)) {
@@ -400,7 +423,10 @@ class ConsultationService
 
             // Fetch or create billing log
             $fetchBilling = BillingLog::firstOrCreate(
-                ['visit_id' => $visit->id],
+                [
+                    'visit_id' => $visit->id,
+                    'tenant_id' => $tenantId
+                ],
                 [
                     'grand_total' => 0,
                     'patient_id'  => $request->patient_id,
@@ -432,6 +458,12 @@ class ConsultationService
                     throw new \Exception("Drug prescribed quantity is greater than quantity available");
                 }
 
+                $medication = $drug->inventory->medication;
+
+                if (!$medication) {
+                    throw new \Exception("Medication record not found for drug {$drugItem['drug']}.");
+                }
+
                 // Skip deleting/recreating if already Fullfilled
                 $existingDrug = Treatment::where('visit_id', $visit->id)
                     ->where('drug_id', $drug->id)
@@ -445,6 +477,8 @@ class ConsultationService
                     }
 
                     $newTreatment = Treatment::create([
+                        'tenant_id'        => $tenantId,
+                        'pharmacy_id'        => $request->pharmacy_id,
                         'visit_id'        => $visit->id,
                         'drug_id'         => $drug->id,
                         'user_id'         => $currentUser->id,
@@ -479,17 +513,22 @@ class ConsultationService
                         $existingBillingDetail->delete();
                     }
 
+                    $price = $drug->inventory->medication?->selling_price ?? 0;
+
                     // create fresh billing detail
                     $billingDetail = BillingLogDetail::create([
+                        'tenant_id'        => $tenantId,
                         'billing_id'      => $fetchBilling->id,
                         'treatment_id'  => $newTreatment->id,
                         'service_unit_id' => $serviceUnit->id,
                         'item_name'       => $drugItem['drug'] ?? $drug->product,
                         'quantity'        => $drugItem['quantity'] ?? 1,
-                        'amount'          => $drug->inventory->medication ? $drug->inventory->medication->selling_price : 0,
+                        // 'amount'          => $drug->inventory->medication ? $drug->inventory->medication->selling_price : 0,
+                        'amount'          => $price,
                     ]);
 
-                    $totalPrice += $drug->inventory->medication->selling_price * ($drugItem['quantity'] ?? 1);
+                    $totalPrice += $price * ($drugItem['quantity'] ?? 1);
+                    // $totalPrice += $drug->inventory->medication->selling_price * ($drugItem['quantity'] ?? 1);
                 }
             }
 
@@ -518,9 +557,13 @@ class ConsultationService
             $currentUser = Auth::user();
             $visit = PatientVisit::find($request->visit_id);
             $request['user_id'] = $currentUser->id;
+            $tenantId = $request->header('X-Tenant-ID');
             // Initiate Patient surgery
             $surgery = Surgery::updateOrCreate(
-                ['visit_id' => $request['visit_id']],
+                [
+                    'visit_id' => $request['visit_id'],
+                    'tenant_id' => $tenantId
+                ],
                 $request->all()
             );
 

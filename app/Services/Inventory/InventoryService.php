@@ -31,9 +31,9 @@ class InventoryService
      * 
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    public function all(array $filters = [], ?string $export = null, $from, $to)
+    public function all(array $filters = [], ?string $export = null, $from, $to, $tenantId)
     {
-        return $this->InventoryInterface->getAllWithFilters($filters, $export, $from, $to);
+        return $this->InventoryInterface->getAllWithFilters($filters, $export, $from, $to, $tenantId);
     }
 
 
@@ -98,13 +98,15 @@ class InventoryService
         return $this->InventoryInterface->findByAttribute($attr, $value);
     }
 
-    public function getInventoryStats(): array
+    public function getInventoryStats($tenantId): array
     {
         return [
-            'total_inventory_items' => Inventory::count(),
-            'stock_below_minimum' => Inventory::whereColumn('quantity', '<', 'reorder_level')->count(),
-            'expired_medicine' => Inventory::whereDate('expiry_date', '<', Carbon::now())->count(),
-            'pending_restock_requests' => Inventory::where(function ($query) {
+            'total_inventory_items' => Inventory::where('tenant_id', $tenantId)->count(),
+            'stock_below_minimum' => Inventory::where('tenant_id', $tenantId)->whereColumn('quantity', '<', 'reorder_level')->count(),
+            'expired_medicine' => Inventory::where('tenant_id', $tenantId)
+                ->whereDate('expiry_date', '<=', now())
+                ->count(),
+            'pending_restock_requests' => Inventory::where('tenant_id', $tenantId)->where(function ($query) {
                 $query->whereColumn('quantity', '<', 'reorder_level')
                     ->orWhereDate('expiry_date', '<', now());
             })->count(),

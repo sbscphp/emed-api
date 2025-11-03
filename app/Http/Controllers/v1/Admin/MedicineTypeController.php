@@ -29,7 +29,7 @@ class MedicineTypeController extends Controller
     {
         try {
             $filters = $request->only(['search', 'type', 'export', 'from', 'to']);
-            $types = $this->medicineTypeService->all($filters);
+            $types = $this->medicineTypeService->all($filters, $request);
 
             if (isset($filters['export'])) {
                 $exportData = $types->map(function ($type) {
@@ -62,14 +62,18 @@ class MedicineTypeController extends Controller
             $currentUser = Auth::user();
             //$user = $this->userService->find($currentUser->id);
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
-            $created = $this->medicineTypeService->create($request->validated());
+            $tenantId = $request->header('X-Tenant-ID');
+            $validated = array_merge($request->validated(), [
+                'tenant_id'        => $tenantId,
+            ]);
+            $created = $this->medicineTypeService->create($validated);
             $dataToLog = [
-                'causer_id' => $user->id,
+                'causer_id' => $currentUser->id,
                 'action_id' => $created->id,
                 'action' => 'Create',
                 'action_type' => "Models\MedicineType",
                 'log_name' => "Medicine Type created successfully",
-                'description' => "{$user->firstname} {$user->lastname} created a new Medicine: {$created->name}",
+                'description' => "{$currentUser->firstname} {$currentUser->lastname} created a new Medicine: {$created->name}",
                 'module_accessed' => ListModuleEnums::PHARMACY
             ];
 

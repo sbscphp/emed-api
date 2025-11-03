@@ -29,11 +29,12 @@ class InventoryController extends Controller
     {
         try {
             config(['database.default' => 'tenant']);
-            $filters = $request->only(['search', 'type_name', 'status']);
+            $tenantId = $request->header('X-Tenant-ID');
+            $filters = $request->only(['search', 'type_name', 'status', 'is_expired']);
             $export = $request->input('export');
             $from = $request->from;
             $to = $request->to;
-            $data = $this->service->all($filters, $export, $from, $to);
+            $data = $this->service->all($filters, $export, $from, $to, $tenantId);
 
             if ($data instanceof \Symfony\Component\HttpFoundation\Response) {
                 return $data;
@@ -65,6 +66,13 @@ class InventoryController extends Controller
 
         try {
             $currentUser = Auth::user();
+            $tenantId = $request->header('X-Tenant-ID');
+            if ($request->filled('item_name')) {
+                $checkInventoryItemName = Inventory::where('item_name', $request->item_name)->where('tenant_id', $tenantId)->first();
+                if ($checkInventoryItemName) {
+                    return JsonResponser::send(true, 'Item name already exist.', [], 422);
+                }
+            }
             if ($request->filled('inventory_id')) {
                 $inventory = Inventory::find($request->inventory_id);
                 if (!$inventory) {
@@ -79,8 +87,10 @@ class InventoryController extends Controller
                     return JsonResponser::send(true, 'Quantity requested is greater than quantity available in inventory stock', [], 422);
                 }
             }
+            $tenantId = $request->header('X-Tenant-ID');
             $validated = array_merge($request->validated(), [
                 'created_by' => $currentUser->id,
+                'tenant_id' => $tenantId,
             ]);
 
             $inventory = $this->service->create($validated);
@@ -148,11 +158,12 @@ class InventoryController extends Controller
         return JsonResponser::send(false, 'Inventory deleted successfully', $deleted);
     }
 
-    public function getInventoryStats()
+    public function getInventoryStats(Request $request)
     {
         try {
             config(['database.default' => 'tenant']);
-            $stats = $this->service->getInventoryStats();
+            $tenantId = $request->header('X-Tenant-ID');
+            $stats = $this->service->getInventoryStats($tenantId);
 
             return JsonResponser::send(
                 false,

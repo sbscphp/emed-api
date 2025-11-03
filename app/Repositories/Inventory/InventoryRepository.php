@@ -18,9 +18,9 @@ class InventoryRepository implements InventoryInterface
         return Inventory::all();
     }
 
-    public function getAllWithFilters(array $filters = [], ?string $export = null, $from, $to)
+    public function getAllWithFilters(array $filters = [], ?string $export = null, $from, $to, $tenantId)
     {
-        $query = Inventory::with('medicineType');
+        $query = Inventory::where('tenant_id', $tenantId)->with('medicineType');
         if (!empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
@@ -40,10 +40,13 @@ class InventoryRepository implements InventoryInterface
         }
 
         if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+            $query->where('status', $filters['status'])
+                ->whereDate('expiry_date', '>', now());
         }
 
-
+        if (isset($filters['is_expired']) && filter_var($filters['is_expired'], FILTER_VALIDATE_BOOLEAN)) {
+            $query->whereDate('expiry_date', '<=', now());
+        }
 
         if (!empty($from) && !empty($to)) {
             $query->whereBetween('expiry_date', [
@@ -144,21 +147,7 @@ class InventoryRepository implements InventoryInterface
             return null;
         }
 
-        return [
-            'id' => $inventory->id,
-            'batch_no' => $inventory->batch_no,
-            'item_name' => $inventory->item_name,
-            'medicine_type_id' => $inventory->medicine_type_id,
-            'medicine_type' => $inventory->medicineType->type_name ?? null,
-            'quantity' => $inventory->quantity,
-            'reorder_level' => $inventory->reorder_level,
-            'supplier' => $inventory->supplier,
-            'expiry_date' => $inventory->expiry_date,
-            'note' => $inventory->note,
-            'status' => $inventory->status,
-            'created_at' => $inventory->created_at,
-            'updated_at' => $inventory->updated_at,
-        ];
+        return $inventory;
     }
 
 

@@ -15,9 +15,9 @@ class PharmacyRequestRepository implements PharmacyRequestInterface
      * 
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    public function all($search, $from, $to, $paginate)
+    public function all($search, $from, $to, $paginate, $tenantId)
     {
-        $query = PharmacyRequest::query();
+        $query = PharmacyRequest::query()->where('tenant_id', $tenantId);
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('product', 'like', "%$search%")
@@ -49,7 +49,7 @@ class PharmacyRequestRepository implements PharmacyRequestInterface
     public function create(array $data)
     {
         $currentUser = Auth::user();
-        $data['requested_by'] = $currentUser->id;
+        // $data['requested_by'] = $currentUser->id;
         return PharmacyRequest::create($data);
     }
 

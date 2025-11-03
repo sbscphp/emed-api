@@ -31,21 +31,23 @@ class MedicationInventoryController extends Controller
         try {
             config(['database.default' => 'tenant']);
             $currentUser = Auth::user();
+            $tenantId = $request->header('X-Tenant-ID');
             //$user = $this->userService->find($currentUser->id);
             $user = User::on('tenant')->where('email', $currentUser['email'])->first();
             $validated = array_merge($request->validated(), [
                 'created_by' => $currentUser->id,
+                'tenant_id' => $tenantId,
             ]);
 
             $med = $this->inventoryService->create($validated);
 
             $dataToLog = [
-                'causer_id' => $user->id,
+                'causer_id' => $currentUser->id,
                 'action_id' => $med->id,
                 'action' => 'Create',
                 'action_type' => "Models\MedicineInventory",
                 'log_name' => "Medicine Inventory created successfully",
-                'description' => "{$user->firstname} {$user->lastname} created a new Medicine: {$med->name}",
+                'description' => "{$currentUser->firstname} {$currentUser->lastname} created a new Medicine: {$med->name}",
                 'module_accessed' => ListModuleEnums::PHARMACY
             ];
 
@@ -58,7 +60,7 @@ class MedicationInventoryController extends Controller
         }
     }
 
-    public function updateShipment(Request $request, $id)
+    public function updateShipment(StoreMedicationInventoryRequest $request, $id)
     {
         try {
             DB::beginTransaction();
@@ -69,7 +71,7 @@ class MedicationInventoryController extends Controller
                 return JsonResponser::send(false, 'Shipment not found.');
             }
 
-            $record = $this->inventoryService->updateShipment($request, $shipment);
+            $record = $this->inventoryService->updateShipment($request->validated(), $shipment);
 
             DB::commit();
             return JsonResponser::send(false, 'Shipment updated successfully', $record);
@@ -127,7 +129,7 @@ class MedicationInventoryController extends Controller
                 return JsonResponser::send(true, 'Shipment record not found.', [], 200);
             }
 
-            $allowedStatuses = ['pending', 'incomplete', 'complete', 'received'];
+            $allowedStatuses = ['pending', 'incomplete', 'complete', 'received', 'cancel'];
             $newStatus = request()->input('shipment_status');
 
             if (!in_array($newStatus, $allowedStatuses)) {
@@ -143,10 +145,11 @@ class MedicationInventoryController extends Controller
         }
     }
 
-    public function shipmentStat()
+    public function shipmentStat(Request $request)
     {
         try {
-            $data = $this->inventoryService->getShipmentStats();
+            $tenantId = $request->header('X-Tenant-ID');
+            $data = $this->inventoryService->getShipmentStats($tenantId);
             return JsonResponser::send(false, 'Shipment stats fetched successfully', $data);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Error fetching shipment stats', [], 500, $e);

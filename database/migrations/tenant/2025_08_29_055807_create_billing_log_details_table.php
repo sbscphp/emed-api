@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('billing_log_details', function (Blueprint $table) {
             $table->id();
+            $table->string('tenant_id')->nullable();
             $table->unsignedBigInteger('billing_id')->nullable();
             $table->unsignedBigInteger('service_unit_id')->nullable();
             $table->unsignedBigInteger('treatment_id')->nullable();

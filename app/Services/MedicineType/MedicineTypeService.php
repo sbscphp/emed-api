@@ -28,9 +28,9 @@ class MedicineTypeService
      * 
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    public function all($filters)
+    public function all($filters, $request)
     {
-        return $this->MedicineTypeInterface->all($filters);
+        return $this->MedicineTypeInterface->all($filters, $request);
     }
 
     /**

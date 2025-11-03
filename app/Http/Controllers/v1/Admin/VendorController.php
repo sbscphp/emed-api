@@ -28,6 +28,7 @@ class VendorController extends Controller
     public function index(Request $request)
     {
         try {
+            $tenantId = $request->header('X-Tenant-ID');
             config(['database.default' => 'tenant']);
             $filters = $request->only(['search', 'type', 'export', 'vendor_name', 'contact_person', 'email', 'phone_number', 'status', 'category']);
             // vendor_name,  contact_person, email,  phone_number
@@ -35,7 +36,7 @@ class VendorController extends Controller
             $from = $request->from;
             $to = $request->to;
 
-            $data = $this->service->all($filters, $filters['export'] ?? null, $from, $to);
+            $data = $this->service->all($filters, $filters['export'] ?? null, $from, $to, $tenantId);
 
             if ($data instanceof \Symfony\Component\HttpFoundation\Response) {
                 return $data;
@@ -57,7 +58,8 @@ class VendorController extends Controller
     {
         try {
             // config(['database.default' => 'tenant']);
-            $records = Vendor::orderBy('created_at', 'desc')->get();
+            $tenantId = $request->header('X-Tenant-ID');
+            $records = Vendor::where('tenant_id', $tenantId)->orderBy('created_at', 'desc')->get();
 
             return JsonResponser::send(false, 'Vendors fetched successfully.', $records);
         } catch (\InvalidArgumentException $e) {
@@ -92,8 +94,10 @@ class VendorController extends Controller
         try {
             DB::connection('tenant')->beginTransaction();
             $currentUser = auth()->user();
+            $tenantId = $request->header('X-Tenant-ID');
             $validated = array_merge($request->validated(), [
                 'created_by' => $currentUser->id,
+                'tenant_id' => $tenantId,
             ]);
 
             $checkVendorName = Vendor::where('vendor_name', $validated['vendor_name'])->first();
@@ -105,7 +109,7 @@ class VendorController extends Controller
             $vendor = $this->service->create($validated);
             $main_user = User::on("tenant")->where("email",  $currentUser->email)->first() ?? null;
             GeneralHelper::storeAuditLog([
-                'causer_id' => $main_user->id,
+                'causer_id' => $currentUser->id,
                 'action_id' => $vendor->id,
                 'action' => 'Create',
                 'action_type' => "Models\\Vendor",
@@ -170,12 +174,13 @@ class VendorController extends Controller
         }
     }
 
-    public function getVendorStats()
+    public function getVendorStats(Request $request)
     {
 
         try {
             DB::connection('tenant')->beginTransaction();
-            $stats = $this->service->getVendorStats();
+            $tenantId = $request->header('X-Tenant-ID');
+            $stats = $this->service->getVendorStats($tenantId);
             DB::connection('tenant')->commit();
             return JsonResponser::send(false, 'Vendor stats fetched successfully', $stats);
         } catch (\Exception $e) {

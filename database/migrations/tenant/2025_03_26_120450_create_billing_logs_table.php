@@ -19,6 +19,7 @@ return new class extends Migration
             $table->unsignedBigInteger('patient_id')->nullable();
             $table->unsignedBigInteger('visit_id')->nullable();
             $table->unsignedBigInteger('service_type_id')->nullable();
+            $table->unsignedBigInteger('service_unit_id')->nullable();
             $table->string('invoice_number')->nullable();
             $table->string('patient_name')->nullable();
             $table->date('billing_date')->nullable();

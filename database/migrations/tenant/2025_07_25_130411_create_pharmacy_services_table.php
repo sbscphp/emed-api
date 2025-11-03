@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('pharmacy_services', function (Blueprint $table) {
             $table->id();
+            $table->string('tenant_id')->nullable();
             $table->unsignedBigInteger('service_unit_id')->nullable();
             $table->string('registration_number')->nullable();
             $table->string('name')->nullable();

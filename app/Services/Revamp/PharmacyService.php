@@ -18,6 +18,7 @@ use App\Models\Treatment;
 use App\Models\User;
 use App\Repositories\Pharmacy\PharmacyInterface;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -48,9 +49,11 @@ class PharmacyService
         }
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
         $records = PatientVisit::query()
-        // ->where('status', PatientVisitStatusEnums::TREATMENT->value)
+            ->where('tenant_id', $tenantId)
+            // ->where('status', PatientVisitStatusEnums::TREATMENT->value)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->whereRelation('patient', 'cardno', 'LIKE', '%' . $request['search_param'] . '%')
@@ -83,12 +86,13 @@ class PharmacyService
 
     public function stats($request)
     {
-        $totalMedicationInStock = Medication::count();
-        $availableMedication = Medication::where('medicine_status', GeneralEnums::AVAILABLE->value)->count();
-        $fulfilledPrescriptions = Treatment::where('status', GeneralEnums::FULLFILLED->value)->count();
-        $totalSupply = PharmacySupply::count();
-        $totalRequest = PharmacyRequest::count();
-        $totalPharmacy = Pharmacy::count();
+        $tenantId = $request->header('X-Tenant-ID');
+        $totalMedicationInStock = Medication::where('tenant_id', $tenantId)->count();
+        $availableMedication = Medication::where('tenant_id', $tenantId)->where('medicine_status', GeneralEnums::AVAILABLE->value)->count();
+        $fulfilledPrescriptions = Treatment::where('tenant_id', $tenantId)->where('status', GeneralEnums::FULLFILLED->value)->count();
+        $totalSupply = PharmacySupply::where('tenant_id', $tenantId)->count();
+        $totalRequest = PharmacyRequest::where('tenant_id', $tenantId)->count();
+        $totalPharmacy = Pharmacy::where('tenant_id', $tenantId)->count();
         return [
             'totalMedicationInStock' => $totalMedicationInStock,
             'availableMedication' => $availableMedication,
@@ -106,9 +110,11 @@ class PharmacyService
                 'Firstname'      => $visit->patient->firstname ?? 'N/A',
                 'Lastname'       => $visit->patient->lastname ?? 'N/A',
                 'Card No'        => $visit->patient->cardno ?? 'N/A',
+                'Patient Type'        => $visit->patient->reg_status ?? 'N/A',
                 'Patient No'     => $visit->patient->patientno ?? 'N/A',
+                'Visit Number'     => $visit->visitno ?? 'N/A',
                 // 'Arrival Date'   => $visit->arrival_date ?? 'N/A',
-                'Patient Status' => $visit->status ?? 'N/A',
+                // 'Patient Status' => $visit->status ?? 'N/A',
             ];
         })->toArray();
 
@@ -139,14 +145,15 @@ class PharmacyService
         }
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
         $query = Treatment::query()
+            ->where('tenant_id', $tenantId)
             ->where('visit_id', $request->visit_id)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
-                    $q->whereRelation('medication.pharmacy', 'name', 'LIKE', '%' . $request['search_param'] . '%')
-                        ->orWhereRelation('medication', 'medicine_name', 'LIKE', '%' . $request['search_param'] . '%')
-                        ->orWhereRelation('medication', 'generic_name', 'LIKE', '%' . $request['search_param'] . '%');
+                    $q->whereRelation('pharmacy', 'name', 'LIKE', '%' . $request['search_param'] . '%')
+                        ->orWhere('drug', 'LIKE', '%' . $request['search_param'] . '%');
                 });
             })
             ->when(!empty($request['status']), function ($query) use ($request) {
@@ -180,7 +187,7 @@ class PharmacyService
         $records->each(function ($item) {
             if ($item->consultation && $item->consultation->consulted_by) {
                 $consultedUser = User::on('landlord')
-                    ->select('id', 'fullname', 'email')
+                    ->select('id', 'first_name', 'last_name', 'email')
                     ->find($item->consultation->consulted_by);
 
                 $item->consultedBy = $consultedUser;
@@ -196,13 +203,12 @@ class PharmacyService
     {
         $exportData = $records->map(function ($treatment) {
             return [
-                'Pharmacy Name'      => $treatment->medication->pharmacy->name ?? 'N/A',
-                'Medicine Name'      => $treatment->medication->medicine_name ?? 'N/A',
-                'Quantity'        => $treatment->quantity ?? 'N/A',
-                'Dosage'     => $treatment->dosage ?? 'N/A',
+                'Drug Name'      => $treatment->pharmacyRequest->product ?? 'N/A',
+                'Consulted By'      => $treatment->consultedBy->first_name . ' ' . $treatment->consultedBy->last_name ?? 'N/A',
+                'Price'        => $treatment->billing_log_detail->amount ?? 'N/A',
+                'Date'     => Carbon::parse($treatment->created_at) ?? 'N/A',
                 'Payment Status'     => $treatment->billingLogDetail->status ?? 'N/A',
-                'Prescribed On'   => $treatment->created_at ?? 'N/A',
-                'Status'   => $treatment->status ?? 'N/A',
+                'Test Status'   => $treatment->status ?? 'N/A',
             ];
         })->toArray();
 
@@ -262,7 +268,9 @@ class PharmacyService
             $currentUser = Auth::user();
 
             $data = $request->validated();
+            $tenantId = $request->header('X-Tenant-ID');
             $data['created_by']  = $currentUser->id;
+            $data['tenant_id']  = $tenantId;
             $data['pharmacy_id'] = $this->generatePharmacyId();
 
             // Create pharmacy record
@@ -282,8 +290,9 @@ class PharmacyService
         }
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
-        $records = Pharmacy::query()
+        $records = Pharmacy::query()->where('tenant_id', $tenantId)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->where('name', 'LIKE', '%' . $request['search_param'] . '%')

@@ -93,7 +93,7 @@ class ConsultationController extends Controller
             ]);
 
             // Create notification
-            $tenant = $currentUser->tenant;
+            $tenant = $currentUser->currentTenant->first();
             $notificationData = [
                 'user_id' => $currentUser->id,
                 'tenant_domain' => $tenant->domain,
@@ -130,7 +130,7 @@ class ConsultationController extends Controller
             // Manually fetch dispensed user from landlord DB
             if ($consultation->consulted_by) {
                 $consultedUser = User::on('landlord')
-                    ->select('id', 'fullname', 'email')
+                    ->select('id', 'first_name', 'last_name', 'email')
                     ->find($consultation->consulted_by);
 
                 $consultation->setAttribute('consultedBy', $consultedUser);

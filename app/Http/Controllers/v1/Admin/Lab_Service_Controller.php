@@ -18,8 +18,10 @@ class Lab_Service_Controller extends Controller
     {
         try {
             $validated = $request->validated();
+            $tenantId = $request->header('X-Tenant-ID');
             $serviceunit = ServiceUnit::where("name", "Laboratory")->first() ?? null;
             $data = LabService::create([
+                'tenant_id'        => $tenantId,
                 "service_unit_id" => $serviceunit->id,
                 "name" => $validated['name'],
                 "price" => $validated['price'],
@@ -69,16 +71,18 @@ class Lab_Service_Controller extends Controller
                     return ExportHelper::downloadPdf($exportData, 'service.pdf');
                 }
             }
+            $tenantId = $request->header('X-Tenant-ID');
 
-            $services = LabService::when(!empty($validated['search']), function ($query) use ($validated) {
-                $search = $validated['search'];
+            $services = LabService::where('tenant_id', $tenantId)
+                ->when(!empty($validated['search']), function ($query) use ($validated) {
+                    $search = $validated['search'];
 
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'LIKE', "%{$search}%")
-                        ->orWhere('class', 'LIKE', "%{$search}%")
-                        ->orWhere('price', 'LIKE', "%{$search}%");
-                });
-            })->paginate(10);
+                    $query->where(function ($q) use ($search) {
+                        $q->where('name', 'LIKE', "%{$search}%")
+                            ->orWhere('class', 'LIKE', "%{$search}%")
+                            ->orWhere('price', 'LIKE', "%{$search}%");
+                    });
+                })->paginate(10);
 
 
             return JsonResponser::send(false, 'featch successfully.', [

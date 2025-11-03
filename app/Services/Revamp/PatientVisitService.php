@@ -9,6 +9,7 @@ use App\Helpers\GeneralHelper;
 use App\Models\PatientVisit;
 use App\Repositories\PatientVisit\PatientVisitInterface;
 use App\Models\BillingLog;
+use App\Models\Consultation;
 use App\Models\CounsellingDetail;
 use App\Models\DeliveryDetail;
 use App\Models\DosageAdministration;
@@ -100,7 +101,8 @@ class PatientVisitService
 
         $awaitingTriage = (clone $query)->where('status', PatientVisitStatusEnums::VISIT_INITIATED->value)->count();
         $awaitingConsultation = (clone $query)->where('status', PatientVisitStatusEnums::TRIAGE->value)->count();
-        $admitted = (clone $query)->where('status', PatientVisitStatusEnums::ADMITTED->value)->count();
+        // $admitted = Consultation::where('admit_patient', 1)->whereDate('created_at', now()->toDateString())->count();
+        $admitted = Patient::where('status', PatientVisitStatusEnums::ADMITTED->value)->whereDate('created_at', now()->toDateString())->count();
         $discharged = (clone $query)->where('status', PatientVisitStatusEnums::DISCHARGED->value)->count();
 
         $completedSugery = Surgery::where('tenant_id', $tenantId)->where('status', GeneralEnums::COMPLETED)->count();
@@ -114,8 +116,8 @@ class PatientVisitService
         $totalCounselled = CounsellingDetail::where('tenant_id', $tenantId)->count();
 
         $totalDeliveries = DeliveryDetail::where('tenant_id', $tenantId)->count();
-        $totalCSectionDeliveries = DeliveryDetail::where('tenant_id', $tenantId)->where('delivery_mode', 'C-Section')->count();
-        $totalNormalDeliveries = DeliveryDetail::where('tenant_id', $tenantId)->where('delivery_mode', 'Spontanteous Vaginal Delivery')->count();
+        $totalCSectionDeliveries = DeliveryDetail::where('tenant_id', $tenantId)->where('delivery_mode', 'cs')->count();
+        $totalNormalDeliveries = DeliveryDetail::where('tenant_id', $tenantId)->where('delivery_mode', 'normal')->count();
         $patientLog = (clone $query)->count();
 
         return [
@@ -264,7 +266,7 @@ class PatientVisitService
             })->when(($request['sort_by'] ?? null) === 'date_descending', function ($query) {
                 $query->orderBy('created_at', 'DESC');
             })
-            ->with('patient', 'visit');
+            ->with('patient', 'visit.billingLogsForPatient');
 
         if (!empty($request['paginate']) && empty($request['export'])) {
             return $records->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);

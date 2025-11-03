@@ -683,11 +683,12 @@ class BillingController extends Controller
     }
 
 
-    public function billingmgt()
+    public function billingmgt(Request $request)
     {
         try {
             DB::connection('tenant')->beginTransaction();
-            $data  = $this->billingService->billingmgt();
+            $tenantId = $request->header('X-Tenant-ID');
+            $data  = $this->billingService->billingmgt($tenantId);
             return JsonResponser::send(false, ' fetched successfully.',  $data);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();

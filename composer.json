@@ -18,6 +18,7 @@
         "laravel/tinker": "^2.9",
         "maatwebsite/excel": "^3.1",
         "openspout/openspout": "^4.28",
+        "phpoffice/phpspreadsheet": "*",
         "santigarcor/laratrust": "^8.3",
         "spatie/laravel-multitenancy": "^4.0",
         "stancl/tenancy": "^3.9",

@@ -22,15 +22,15 @@ class UpdateInventoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'medication_id' => 'required_without:item_name|string',
-            'item_name'     => 'required_without:medication_id|string',
-            'batch_no' => 'sometimes|required|string',
-            // 'medicine_type' => 'sometimes|required|string',
+            'medication_id' => 'required_without:item_name',
+            'item_name'     => 'required_without:medication_id',
+            'batch_no' => 'required|string',
+            // 'medicine_type' => 'required|string',
             'medicine_type_id' => 'required|exists:tenant.medicine_types,id',
-            'quantity' => 'sometimes|required|integer|min:0',
-            'reorder_level' => 'sometimes|required|integer|min:0',
+            'quantity' => 'required|integer|min:0',
+            'reorder_level' => 'required|integer|min:0',
             'supplier' => 'nullable|string',
-            'expiry_date' => 'sometimes|required|date',
+            'expiry_date' => 'required|date',
             'note' => 'nullable|string',
         ];
     }

@@ -20,7 +20,9 @@ class Radiology_service_Controller extends Controller
         try {
             $validated = $request->validated();
             $serviceunit = ServiceUnit::where("name", "Radiology")->first() ?? null;
+            $tenantId = $request->header('X-Tenant-ID');
             $data = RadiologyService::create([
+                'tenant_id'        => $tenantId,
                 "service_unit_id" => $serviceunit->id,
                 "name" => $validated['name'],
                 "price" => $validated['price']
@@ -68,14 +70,17 @@ class Radiology_service_Controller extends Controller
                 }
             }
 
-            $services = RadiologyService::when(!empty($validated['search']), function ($query) use ($validated) {
-                $search = $validated['search'];
+            $tenantId = $request->header('X-Tenant-ID');
 
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'LIKE', "%{$search}%")
-                        ->orWhere('price', 'LIKE', "%{$search}%");
-                });
-            })->paginate(10);
+            $services = RadiologyService::where('tenant_id', $tenantId)
+                ->when(!empty($validated['search']), function ($query) use ($validated) {
+                    $search = $validated['search'];
+
+                    $query->where(function ($q) use ($search) {
+                        $q->where('name', 'LIKE', "%{$search}%")
+                            ->orWhere('price', 'LIKE', "%{$search}%");
+                    });
+                })->paginate(10);
             return JsonResponser::send(false, 'featch successfully.', $services);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'Error  .', [], 500, $th);

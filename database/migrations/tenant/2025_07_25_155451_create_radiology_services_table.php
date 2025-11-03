@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('radiology_services', function (Blueprint $table) {
             $table->id();
+            $table->string('tenant_id')->nullable();
             $table->unsignedBigInteger('service_unit_id')->nullable();
             $table->string('name')->nullable();
             $table->decimal('price', 10, 2)->default(0.00);

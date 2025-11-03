@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('patient_visit_treatment', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('tenant_id')->nullable();
+            $table->unsignedBigInteger('pharmacy_id')->nullable();
             $table->unsignedBigInteger('user_id')->nullable();
             $table->unsignedBigInteger('patient_id')->nullable();
             $table->unsignedBigInteger('visit_id')->nullable();

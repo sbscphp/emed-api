@@ -62,15 +62,24 @@ class LabController extends Controller
     {
         try {
             DB::connection('tenant');
+            $tenantId = $request->header('X-Tenant-ID');
 
             $labTestQuery = Laboratory::query()
+                ->with('billingLogDetail.billingLog')
+                ->where('tenant_id', $tenantId)
                 ->where('visit_id', $request->visit_id)
                 ->when($request->search_param, function ($query) use ($request) {
                     $query->where(function ($subQuery) use ($request) {
                         $subQuery->where('test_name', 'LIKE', '%' . $request->search_param . '%')
-                            ->orWhere('lab_dept', 'LIKE', '%' . $request->search_param . '%')
-                            ->orWhere('ordered_test', 'LIKE', '%' . $request->search_param . '%')
-                            ->orWhere('others', 'LIKE', '%' . $request->search_param . '%');
+                            ->orWhere('department', 'LIKE', '%' . $request->search_param . '%')
+                            ->orWhere('status', 'LIKE', '%' . $request->search_param . '%')
+                            ->orWhereHas('consultation.consultedDoctor', function ($doctorQuery) use ($request) {
+                                $doctorQuery->where('fullname', 'LIKE', $request->search_param)
+                                    ->orWhere('email', 'LIKE', $request->search_param);
+                            });
+                        // ->orWhere('ordered_test', 'LIKE', '%' . $request->search_param . '%')
+                        // ->orWhere('others', 'LIKE', '%' . $request->search_param . '%');
+
                     });
                 })
                 ->when($request->payment_status, function ($query) use ($request) {
@@ -91,7 +100,7 @@ class LabController extends Controller
             $labTest->each(function ($item) {
                 if ($item->consultation && $item->consultation->consulted_by) {
                     $consultedUser = User::on('landlord')
-                        ->select('id', 'fullname', 'email')
+                        ->select('id', 'first_name', 'last_name', 'email')
                         ->find($item->consultation->consulted_by);
 
                     $item->consultedBy = $consultedUser;
@@ -106,7 +115,7 @@ class LabController extends Controller
                 $exportData = $labTest->map(function ($item) {
                     return [
                         'Date'           => $item->created_at->toDateTimeString(),
-                        'Consulted By'   => $item->consultedBy->fullname ?? 'N/A',
+                        'Consulted By'   => optional($item->consultedBy)->first_name . ' ' . optional($item->consultedBy)->last_name ?? 'N/A',
                         'Type Of Test'   => $item->test_name,
                         'Price'          => $item->billingLogDetail->amount ?? 0,
                         'Payment Status' => $item->billingLogDetail->status ?? 'N/A',
@@ -144,7 +153,7 @@ class LabController extends Controller
             // Manually fetch dispensed user from landlord DB
             if ($record->consultation->consulted_by) {
                 $consultedUser = User::on('landlord')
-                    ->select('id', 'fullname', 'email')
+                    ->select('id', 'first_name', 'last_name', 'email')
                     ->find($record->consultation->consulted_by);
 
                 $record->setAttribute('consultedBy', $consultedUser);
@@ -154,7 +163,7 @@ class LabController extends Controller
 
             if ($record->user_id) {
                 $labUsers = User::on('landlord')
-                    ->select('id', 'fullname', 'email')
+                    ->select('id', 'first_name', 'last_name', 'email')
                     ->find($record->user_id);
 
                 $record->setAttribute('attendedBy', $labUsers);
@@ -213,17 +222,17 @@ class LabController extends Controller
         }
     }
 
-    public function patientVisitSummary($id)
+    public function patientVisitSummary(Request $request, $id)
     {
         try {
-
-            $patientVisit = PatientVisit::find($id);
-            $patient = Patient::with('service', 'triage', 'familyHistory', 'medicalHistory', 'socialHistory', 'drugHistory')->find($patientVisit->patient_id);
-            $consultation_Details =  Consultation::where('visit_id',  $patientVisit->visit_id)->first();
-            $laboratoryDetail = Laboratory::where('visit_id',  $patientVisit->visit_id)->first();
-            $radiologyDetail = Radiology::where('visit_id',  $patientVisit->visit_id)->first();
-            $treatmentDetail = Treatment::where('visit_id',  $patientVisit->visit_id)->orderBy('id', 'DESC')->get();
-            $billingLog = BillingLog::where('visit_id',  $patientVisit->id)->first();
+            $tenantId = $request->header('X-Tenant-ID');
+            $patientVisit = PatientVisit::where('tenant_id', $tenantId)->where('id', $id)->first();
+            $patient = Patient::where('tenant_id', $tenantId)->with('service', 'triage', 'familyHistory', 'medicalHistory', 'socialHistory')->find($patientVisit->patient_id);
+            $consultation_Details =  Consultation::where('tenant_id', $tenantId)->where('visit_id',  $patientVisit->visit_id)->first();
+            $laboratoryDetail = Laboratory::where('tenant_id', $tenantId)->where('visit_id',  $patientVisit->visit_id)->first();
+            $radiologyDetail = Radiology::where('tenant_id', $tenantId)->where('visit_id',  $patientVisit->visit_id)->first();
+            $treatmentDetail = Treatment::where('tenant_id', $tenantId)->where('visit_id',  $patientVisit->visit_id)->orderBy('id', 'DESC')->get();
+            $billingLog = BillingLog::where('tenant_id', $tenantId)->where('visit_id',  $patientVisit->id)->first();
             $data = [
                 "patient" => $patient,
                 "patientVisit" => $patientVisit,

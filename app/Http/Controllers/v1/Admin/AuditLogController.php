@@ -259,11 +259,10 @@ class AuditLogController extends Controller
 
                 $exportData = $logs->map(function ($log) {
                     return [
-                        'Action Type' => $log->action_type,
-                        'Description' => $log->description,
-                        'Log Name' => $log->log_name,
-                        'Causer' => optional($log->causer)->fullname ?? 'System',
-                        'Created At' => $log->created_at->toDateTimeString(),
+                        'User ID' => $log->causer->id ?? 'N/A',
+                        'Module' => $log->log_name,
+                        'Timestamp' => $log->created_at->toDateTimeString(),
+                        'Reason for update' => $log->description
                     ];
                 });
 

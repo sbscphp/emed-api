@@ -10,5 +10,4 @@ class MedicineType extends Model
     use HasFactory;
     protected $connection = 'tenant';
     protected $guarded = ['id'];
-    protected $fillable = ['type_name', 'date_added'];
 }

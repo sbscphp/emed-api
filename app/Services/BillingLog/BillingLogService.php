@@ -23,6 +23,7 @@ use App\Models\ServiceUnit;
 use App\Models\User;
 use App\Repositories\BillingLog\BillingLogRepositoryInterface;
 use Carbon\Carbon;
+use GuzzleHttp\Psr7\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class BillingLogService
@@ -418,15 +419,15 @@ class BillingLogService
     }
 
 
-    public function billingmgt()
+    public function billingmgt($tenantId)
     {
-
+        
         $data = [
-            ["name" => "registration", "total" => Service::count()],
-            ["name" => "pharmacy", "total" => PharmacyService::count()],
-            ["name" => "laboratory", "total" => LabService::count()],
-            ["name" => "Radiology", "total" => RadiologyService::count()],
-            ["name" => "Consultation", "total" => Consultation_service::count()]
+            ["name" => "registration", "total" => Service::where('tenant_id', $tenantId)->count()],
+            ["name" => "pharmacy", "total" => PharmacyService::where('tenant_id', $tenantId)->count()],
+            ["name" => "laboratory", "total" => LabService::where('tenant_id', $tenantId)->count()],
+            ["name" => "Radiology", "total" => RadiologyService::where('tenant_id', $tenantId)->count()],
+            ["name" => "Consultation", "total" => Service::where('tenant_id', $tenantId)->count()]
         ];
 
         return $data;

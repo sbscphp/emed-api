@@ -11,4 +11,9 @@ class Antenatal extends Model
     use HasFactory, SoftDeletes;
     protected $connection = 'tenant';
     protected $guarded = ["id"];
+
+    public function consultedBy()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 }

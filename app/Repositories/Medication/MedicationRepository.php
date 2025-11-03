@@ -15,9 +15,11 @@ class MedicationRepository implements MedicationRepositoryInterface
     public function all($request)
     {
         $filters = $request;
+        $tenantId = $request->header('X-Tenant-ID');
 
         $query = Medication::on('tenant')
-            ->with('pharmacy:id,name', 'medicationInventories:id,medication_id,active_ingredient')
+            ->where('tenant_id', $tenantId)
+            ->with('pharmacy:id,name')
             ->when(!empty($request['search']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->where('generic_name', 'like', "%{$request['search']}%")
@@ -83,17 +85,17 @@ class MedicationRepository implements MedicationRepositoryInterface
             $exportData = $medications->map(function ($med) {
                 return [
                     'Generic Name' => $med->generic_name,
-                    'Brand Name' => $med->brand_name,
-                    'Medicine Name' => $med->medicine_name,
-                    'Medicine Type' => $med->medicine_type,
-                    'Cost Price' => $med->cost_price,
-                    'Selling Price' => $med->selling_price,
-                    'Registration No' => $med->reg_no,
-                    'Manufacturer' => $med->manufacturer,
-                    'Medicine Status' => $med->medicine_status,
-                    'Pharmacy' => $med->pharmacy->name ?? '',
                     'Active Ingredient' => $med->active_ingredient,
-                    'Created At' => $med->created_at,
+                    'Medicine Type' => $med->medicine_type,
+                    'Selling Price' => $med->selling_price,
+                    'Medicine Status' => $med->medicine_status,
+                    // 'Brand Name' => $med->brand_name,
+                    // 'Medicine Name' => $med->medicine_name,
+                    // 'Cost Price' => $med->cost_price,
+                    // 'Registration No' => $med->reg_no,
+                    // 'Manufacturer' => $med->manufacturer,
+                    // 'Pharmacy' => $med->pharmacy->name ?? '',
+                    // 'Created At' => $med->created_at,
                 ];
             });
 
@@ -121,7 +123,7 @@ class MedicationRepository implements MedicationRepositoryInterface
 
     public function find($id)
     {
-        return Medication::with('pharmacy', 'medicationInventories:id,medication_id,active_ingredient')->find($id);
+        return Medication::with('pharmacy')->find($id);
     }
 
 

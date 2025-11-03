@@ -11,9 +11,9 @@ use App\Models\BillingLog;
 use App\Models\BillingLogDetail;
 use App\Models\Laboratory;
 use App\Models\LaboratoryResult;
-use App\Models\Landlord\User;
 use App\Models\PatientVisit;
 use App\Models\ServiceUnit;
+use App\Models\User;
 use App\Repositories\Laboratory\LaboratoryInterface;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -45,8 +45,10 @@ class BillingService
         }
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
         $records = BillingLog::query()
+            ->where('tenant_id', $tenantId)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->where('invoice_number', 'LIKE', '%' . $request['search_param'] . '%')
@@ -88,8 +90,10 @@ class BillingService
             $customDate = [$request->start_date, $request->end_date];
         }
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
         $query = BillingLog::query()
+            ->where('tenant_id', $tenantId)
             ->when($request->start_date && $request->end_date, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
             })
@@ -104,7 +108,7 @@ class BillingService
             'Pharmacy'      => 'Pharmacy',
             'Laboratory'    => 'Laboratory',
             'Radiology'     => 'Radiology',
-            'Consultant'    => 'Consultant',
+            'Consultation'    => 'Consultation',
         ];
 
         $stats = [];
@@ -137,6 +141,7 @@ class BillingService
 
         $monthlyRevenue = BillingLog::selectRaw('MONTH(created_at) as month, SUM(grand_total) as total')
             ->whereYear('created_at', $year)
+            ->where('tenant_id', $tenantId)
             ->groupBy('month')
             ->orderBy('month')
             ->pluck('total', 'month')
@@ -203,8 +208,10 @@ class BillingService
         }
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
         $records = BillingLog::query()
+            ->where('tenant_id', $tenantId)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->where('invoice_number', 'LIKE', '%' . $request['search_param'] . '%')
@@ -233,7 +240,7 @@ class BillingService
             })->when(($request['sort_by'] ?? null) === 'date_descending', function ($query) {
                 $query->orderBy('created_at', 'DESC');
             })
-            ->with('patient', 'service');
+            ->with('patient', 'service', 'visits');
 
         if (!empty($request['paginate']) && empty($request['export'])) {
             return $records->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
@@ -249,7 +256,7 @@ class BillingService
                 'Patient Name'      => $billing->patient->firstname . ' ' . $billing->patient->lastname,
                 'Invoice No'       => $billing->invoice_number,
                 'Service'       => $billing->service->name ?? 'N/A',
-                'Payment Method'       => $billing->grand_total,
+                'Payment Method'       => $billing->payment_method ?? 'N/A',
                 'Total Amount'       => $billing->grand_total,
                 'Amount Paid'       => $billing->amount_paid,
                 'Date Billed'      => $billing->created_at->format('Y-m-d H:i'),
@@ -284,8 +291,10 @@ class BillingService
         }
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
         $records = BillingLogDetail::query()
+            ->where('tenant_id', $tenantId)
             ->selectRaw('
             service_unit_id,
             COUNT(*) as total_invoices,
@@ -348,8 +357,10 @@ class BillingService
         }
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
         $query = BillingLogDetail::query()
+            ->where('tenant_id', $tenantId)
             ->where('service_unit_id', $request['service_unit_id'])
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
@@ -361,6 +372,9 @@ class BillingService
             })
             ->when(!empty($request['status']), function ($query) use ($request) {
                 $query->where('status', $request['status']);
+            })
+            ->when(!empty(strtolower($request['gender'])), function ($query) use ($request) {
+                $query->whereRelation('billingLog.patient', 'gender', $request['gender']);
             })
             ->when($request->startDate && $request->endDate, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
@@ -385,7 +399,7 @@ class BillingService
 
             if ($consultation && $consultation->consulted_by) {
                 $item->consultedBy = User::on('landlord')
-                    ->select('id', 'fullname', 'email')
+                    ->select('id', 'first_name', 'last_name', 'email')
                     ->find($consultation->consulted_by);
             } else {
                 $item->consultedBy = null;
@@ -402,8 +416,10 @@ class BillingService
             $customDate = [$request->start_date, $request->end_date];
         }
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $tenantId = $request->header('X-Tenant-ID');
 
         $query = BillingLogDetail::query()
+            ->where('tenant_id', $tenantId)
             ->where('service_unit_id', $request['service_unit_id'])
             ->when($request->start_date && $request->end_date, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
@@ -431,12 +447,12 @@ class BillingService
 
             return [
                 'Patient Name'   => trim(($patient->firstname ?? 'N/A') . ' ' . ($patient->lastname ?? 'N/A')),
-                'Registration No' => $patient->cardno ?? 'N/A',
-                'Consulted By'   => $consultedBy->fullname ?? 'N/A',
+                'Registration No' => $patient->patientno ?? 'N/A',
+                'Consulted By'   => $consultedBy->first_name ?? 'N/A',
                 'Age'            => $patient->age ?? 'N/A',
-                'Gender'         => $patient->gender ?? 'N/A',
-                'Date Joined'    => $patient->created_at ? Carbon::parse($patient->created_at)->toDateString() : 'N/A',
-                'Date Billed'    => $service->created_at ? Carbon::parse($service->created_at)->toDateString() : 'N/A',
+                // 'Gender'         => $patient->gender ?? 'N/A',
+                // 'Date Joined'    => $patient->created_at ? Carbon::parse($patient->created_at)->toDateString() : 'N/A',
+                'Date Billed'    => $billingLog->billing_date ? Carbon::parse($service->created_at)->toDateString() : 'N/A',
                 'Amount'         => $service->amount ?? 0,
                 'Payment Status' => $service->status ?? 'N/A',
             ];
@@ -461,7 +477,7 @@ class BillingService
         throw new \Exception("Invalid export format.");
     }
 
-    public function makePayment($request, $billing)
+    public function oldmakePayment($request, $billing)
     {
         try {
             if ($billing->payment_status === 'Paid') {
@@ -518,6 +534,103 @@ class BillingService
             }
 
             $billing->amount_paid += $totalPaymentApplied;
+            if ($billing->amount_paid > $billing->grand_total) {
+                $billing->amount_paid = $billing->grand_total;
+            }
+
+            $billing->amount_outstanding = max(0, $billing->grand_total - $billing->amount_paid);
+
+            if ($billing->amount_paid == 0) {
+                $billing->payment_status = 'Pending';
+            } elseif ($billing->amount_paid < $billing->grand_total) {
+                $billing->payment_status = 'Part Paid';
+            } else {
+                $billing->payment_status = 'Paid';
+            }
+
+            $billing->payment_method = $request->payment_method;
+            $billing->save();
+
+            return $billing->fresh([
+                'patient',
+                'service',
+                'billingLogDetails.treatment',
+                'billingLogDetails.labInvestigation',
+                'billingLogDetails.radiologyInvestigation',
+                'billingLogDetails.serviceUnit'
+            ]);
+        } catch (\Throwable $th) {
+            throw $th;
+        }
+    }
+
+    public function makePayment($request, $billing)
+    {
+        try {
+            if ($billing->payment_status === 'Paid') {
+                throw new \Exception("This billing is already fully paid.");
+            }
+
+            $billingDetails = collect($request->billingDetails);
+            $totalPaymentApplied = 0;
+
+            foreach ($billingDetails as $detail) {
+                $logDetail = $billing->billingLogDetails()
+                    ->where('id', $detail['billing_log_id'])
+                    ->first();
+
+                if (!$logDetail) {
+                    throw new \Exception("Billing detail not found for ID {$detail['billing_log_id']}");
+                }
+
+                // Already fully paid? Skip
+                if ($logDetail->status === 'Paid') {
+                    continue;
+                }
+
+                $amountPaid  = $detail['amount'] ?? 0;
+                $alreadyPaid = $logDetail->amount_paid ?? 0;
+                $outstanding = $logDetail->amount - $alreadyPaid;
+                $applied     = min($amountPaid, $outstanding);
+
+                $logDetail->amount_paid = $alreadyPaid + $applied;
+
+                if ($logDetail->amount_paid >= $logDetail->amount) {
+                    $logDetail->status = 'Paid';
+                    $logDetail->amount_paid = $logDetail->amount;
+                } elseif ($logDetail->amount_paid > 0) {
+                    $logDetail->status = 'Part Paid';
+                } else {
+                    $logDetail->status = 'Pending';
+                }
+
+                $logDetail->save();
+                $totalPaymentApplied += $applied;
+            }
+
+            // --- ✅ Tax and Discount Handling ---
+            $billing->discount = $request->discount ?? $billing->discount ?? 0;
+
+            // Calculate items total
+            $itemsTotal = $billing->billingLogDetails()->sum('amount');
+
+            // Determine tax amount (Nigerian VAT 7.5%)
+            if ($request->filled('tax_amount')) {
+                // Use frontend value if provided
+                $billing->tax_amount = $request->tax_amount;
+            } else {
+                // Auto-calculate VAT if not provided and not already stored
+                if (empty($billing->tax_amount) || $billing->tax_amount == 0) {
+                    $billing->tax_amount = round($itemsTotal * 0.075, 2);
+                }
+            }
+
+            // Grand total = (items - discount) + tax
+            $billing->grand_total = max(0, ($itemsTotal - $billing->discount) + $billing->tax_amount);
+
+            // --- ✅ Payment Progression ---
+            $billing->amount_paid += $totalPaymentApplied;
+
             if ($billing->amount_paid > $billing->grand_total) {
                 $billing->amount_paid = $billing->grand_total;
             }

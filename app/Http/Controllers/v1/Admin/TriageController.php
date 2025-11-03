@@ -90,10 +90,11 @@ class TriageController extends Controller
             ]);
 
             // Create notification
-            $tenant = $currentUser->tenant;
+            //$tenant = $currentUser->tenant;
+            $tenant = \App\Models\Tenant::current();
             $notificationData = [
                 'user_id' => $currentUser->id,
-                'tenant_domain' => $tenant->domain,
+                'tenant_domain' => $tenant?->domain,
                 'title' => 'New Patient Case Assigned',
                 'message' => "Triage for the assigned patient has been successfully completed.
                             You are now expected to proceed with the next clinical step. The following information is available for your review:
@@ -153,7 +154,7 @@ class TriageController extends Controller
         }
     }
 
-    public function viewRadiologyInvestigationOrders(Request $request, $id)
+    public function viewRadiologyInvestigationOrders(Request $request, $id, $visit)
     {
         try {
 
@@ -165,13 +166,14 @@ class TriageController extends Controller
 
             $radiologyQuery = Radiology::query()
                 ->where('patient_id', $patient->id)
+                ->where('visit_id', $visit)
                 ->when($request->search_param, function ($query) use ($request) {
                     $query->where('test_name', 'LIKE', '%' . $request->search_param . '%');
                 })
                 ->when($request->test_status, function ($query) use ($request) {
-                    $query->where('test_status', $request->test_status);
+                    $query->where('status', $request->test_status);
                 })
-                ->with('visit.billingLogsForPatient')
+                ->with('visit.billingLogsForPatient', 'billingLogDetail')
                 ->orderBy('id', 'DESC');
 
             $radiologyTest = $request->paginate === "true"
@@ -185,8 +187,8 @@ class TriageController extends Controller
                     return [
                         'Scan Type'           => $item->test_name,
                         'Date'   => $item->created_at->toDateTimeString(),
-                        'Price'   => optional($billingLog)->grand_total ?? 'N/A',
-                        'Preparation Status' => $item->test_status
+                        'Price'   => $item->billingLogDetail->amount ?? 0,
+                        'Preparation Status' => $item->status
                     ];
                 });
 
@@ -212,7 +214,7 @@ class TriageController extends Controller
         }
     }
 
-    public function viewLaboratoryInvestigationOrders(Request $request, $id)
+    public function viewLaboratoryInvestigationOrders(Request $request, $id, $visit)
     {
         try {
 
@@ -224,19 +226,19 @@ class TriageController extends Controller
 
             $labTestQuery = Laboratory::query()
                 ->where('patient_id', $patient->id)
+                ->where('visit_id', $visit)
                 ->when($request->search_param, function ($query) use ($request) {
                     $query->where('test_name', 'LIKE', '%' . $request->search_param . '%')
-                        ->orWhere('lab_dept', 'LIKE', '%' . $request->search_param . '%')
-                        ->orWhere('ordered_test', 'LIKE', '%' . $request->search_param . '%')
-                        ->orWhere('others', 'LIKE', '%' . $request->search_param . '%');
+                        ->orWhere('department', 'LIKE', '%' . $request->search_param . '%')
+                        ->orWhere('specimen_type', 'LIKE', '%' . $request->search_param . '%');
                 })
                 ->when($request->payment_status, function ($query) use ($request) {
                     $query->whereRelation('billingLogs', 'payment_status', $request->payment_status);
                 })
                 ->when($request->test_status, function ($query) use ($request) {
-                    $query->where('test_status', $request->test_status);
+                    $query->where('status', $request->test_status);
                 })
-                ->with('billingLogs')
+                ->with('billingLogs', 'billingLogDetail')
                 ->orderBy('id', 'DESC');
 
             $labTest = $request->paginate === "true"
@@ -249,8 +251,8 @@ class TriageController extends Controller
                     return [
                         'Type Of Test'   => $item->test_name,
                         'Date'           => $item->created_at->toDateTimeString(),
-                        'Price'          => $item->billingLogs->grand_total ?? 0,
-                        'Test Status'    => $item->test_status,
+                        'Price'          => $item->billingLogDetail->amount ?? 0,
+                        'Test Status'    => $item->status,
                     ];
                 });
 
@@ -276,7 +278,7 @@ class TriageController extends Controller
         }
     }
 
-    public function viewPharmacyInvestigationOrders(Request $request, $id)
+    public function viewPharmacyInvestigationOrders(Request $request, $id, $visit)
     {
         try {
 
@@ -288,16 +290,17 @@ class TriageController extends Controller
 
             $pharmQuery = Treatment::query()
                 ->where('patient_id', $patient->id)
+                ->where('visit_id', $visit)
                 ->when($request->search_param, function ($query) use ($request) {
                     $query->where('drug', 'LIKE', '%' . $request->search_param . '%');
                 })
                 ->when($request->payment_status, function ($query) use ($request) {
                     $query->whereRelation('billingLogs', 'payment_status', $request->payment_status);
                 })
-                // ->when($request->test_status, function ($query) use ($request) {
-                //     $query->where('test_status', $request->test_status);
-                // })
-                ->with('visit', 'billingLogs')
+                ->when($request->status, function ($query) use ($request) {
+                    $query->where('status', $request->status);
+                })
+                ->with('visit', 'billingLogs', 'billingLogDetail')
                 ->orderBy('id', 'DESC');
 
             $pharmTest = $request->paginate === "true"
@@ -310,8 +313,8 @@ class TriageController extends Controller
                     return [
                         'Medicine Type'   => $item->drug,
                         'Date'           => $item->created_at->toDateTimeString(),
-                        'Price'          => $item->billingLogs->grand_total ?? 0,
-                        'Patient Prescription Status'    => $item->billingLogs->payment_status ?? 'N/A',
+                        'Price'          => $item->billingLogDetail->amount ?? 0,
+                        'Patient Prescription Status'    => $item->status,
                     ];
                 });
 

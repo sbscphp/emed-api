@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('new_born_details', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->unsignedBigInteger('patient_id')->nullable();
             $table->unsignedBigInteger('visit_id')->nullable();
             $table->date('birth_date')->nullable();
