@@ -123,4 +123,15 @@ class User extends Authenticatable implements JWTSubject
             ->where('tenant_id', $currentTenant?->id)
             ->first();
     }
+
+    public function tenantContext($tenantId)
+    {
+        return $this->hasOne(TenantUser::class, 'user_id')
+            ->where('tenant_id', $tenantId);
+    }
+
+    public function tenantUsers()
+    {
+        return $this->hasMany(TenantUser::class);
+    }
 }

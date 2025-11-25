@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to {{ $hospitalName }}</title>
+    <title>Added to {{ $hospitalName }}</title>
 </head>
 
 <body style="margin:0; padding:0; background-color:#f4f4f4; font-family: 'Helvetica Neue', Arial, sans-serif;">
@@ -46,13 +46,10 @@
                             style="padding: 0 40px 20px; color:#333333; font-size:15px; line-height:24px;">
                             <p>Hello {{ $name }},</p>
 
-                            <p>Your account has been successfully created on <strong>{{ $hospitalName }}</strong>.</p>
-
-                            <p>Here are your login credentials:</p>
-
-                            <p><strong>Email:</strong> {{ $email }}<br>
-                                <strong>Password:</strong> {{ $password }}
+                            <p>You have been added to <strong>{{ $hospitalName }}</strong> Hospital Management System.
                             </p>
+
+                            <p>Please use your existing email and password to login.</p>
 
                             <p style="margin-top: 25px;">Best regards,<br>
                                 <strong>{{ $hospitalName }} Team</strong>
@@ -66,8 +63,8 @@
                             style="padding: 30px 30px; font-size:12px; color:#999999; line-height:18px; border-top:1px solid #eee;">
                             This email was sent to
                             <a href="mailto:{{ $email }}"
-                                style="color:#2F4FDC; text-decoration:none;">{{ $email }}</a>.
-                            If you didn’t create this account, please ignore this email.<br><br>
+                                style="color:#2F4FDC; text-decoration:none;">{{ $email }}</a>.<br>
+                            If you were not expecting this, please ignore this email.<br><br>
                             © {{ date('Y') }} {{ $hospitalName }}, Lagos State, Nigeria.
                             <br><br>
 

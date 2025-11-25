@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1;
 
+use App\Helpers\FileUploadHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Inventory;
 use App\Models\LabService;
@@ -56,7 +57,7 @@ class GeneralController extends Controller
         try {
             $tenantId = $request->header('X-Tenant-ID');
             $record = PharmacyRequest::where('tenant_id', $tenantId)
-                ->where('pharmacy_id', $request->pharmacy_id)
+                // ->where('pharmacy_id', $request->pharmacy_id)
                 ->with('pharmacy')->orderBy('id', 'DESC')->get();
 
             return JsonResponser::send(false, 'Record found successfully', $record, 200);
@@ -123,6 +124,78 @@ class GeneralController extends Controller
             return JsonResponser::send(false, 'Record found successfully', $record, 200);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
+    public function uploadSingleFileString(Request $request)
+    {
+        try {
+            if (isset($request->file)) {
+                $file = $request->file;
+                $fileKey = 'Document';
+                $fileUrl = FileUploadHelper::singleStringFileUpload($file, $fileKey);
+            } else {
+                $fileUrl = null;
+            }
+            return JsonResponser::send(false, 'File Uploaded successfully', $fileUrl, 200);
+        } catch (\Throwable $error) {
+            logger($error);
+            return JsonResponser::send(true, $error->getMessage(), [], 500);
+        }
+    }
+
+    public function uploadSingleFileBinary(Request $request)
+    {
+        try {
+            if (isset($request->file)) {
+                $file = $request->file;
+                $fileKey = 'Document';
+                $fileUrl = FileUploadHelper::singleBinaryFileUpload($file, $fileKey);
+            } else {
+                $fileUrl = null;
+            }
+
+            return JsonResponser::send(false, 'File Uploaded successfully', $fileUrl, 200);
+        } catch (\Throwable $error) {
+            logger($error);
+            return JsonResponser::send(true, 'Internal server error!', [], 500);
+        }
+    }
+
+    public function uploadMultipleFileBinary(Request $request)
+    {
+        try {
+            if (isset($request->file)) {
+                $file = $request->file;
+                $fileKey = 'Document';
+                $fileUrl = FileUploadHelper::multipleBinaryFileUpload($file, $fileKey);
+            } else {
+                $fileUrl = null;
+            }
+
+            return JsonResponser::send(false, 'File Uploaded successfully', implode("|", $fileUrl), 200);
+        } catch (\Throwable $error) {
+            logger($error);
+            return JsonResponser::send(true, 'Internal server error!', [], 500);
+        }
+    }
+
+    public function uploadMultipleFileString(Request $request)
+    {
+        try {
+
+            if (isset($request->file)) {
+                $file = $request->file;
+                $fileKey = 'Document';
+                $fileUrl = FileUploadHelper::multipleStringFileUpload($file, $fileKey);
+            } else {
+                $fileUrl = null;
+            }
+
+            return JsonResponser::send(false, 'File Uploaded successfully', implode("|", $fileUrl), 200);
+        } catch (\Throwable $error) {
+            logger($error);
+            return JsonResponser::send(true, $error->getMessage(), [], 500);
         }
     }
 }

@@ -22,15 +22,20 @@ use App\Events\CreateUserEvent;
 use App\Helpers\ExportHelper;
 use App\Helpers\FileUploadHelper;
 use App\Http\Requests\UserUpdateRequest;
+use App\Mail\CreateUser;
+use App\Mail\ExistingUser;
+use App\Models\Permission;
 use App\Models\Registration;
 use Throwable;
 use Illuminate\Support\Facades\Artisan;
 use App\Models\Tenant;
+use App\Models\TenantUser;
 use App\Models\UserInformation;
 // use Stancl\Tenancy\Tenancy;
 use Stancl\Tenancy\Tenancy;
 
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Mail;
 
 class UserController extends Controller
 {
@@ -49,15 +54,19 @@ class UserController extends Controller
 
         try {
             $currentUser = Auth::user();
-            $user = User::where('email', $currentUser->email)->first();
+            $tenantId = $request->header('X-Tenant-ID');
+            $tenant = Tenant::where('uuid', $tenantId)->first();
+            $tenant->makeCurrent(); // Helper from tenancy to get current tenant instance
 
-            if (!$user) {
-                return JsonResponser::send(true, 'User not found.', null, 200);
+            if (!$tenant) {
+                return JsonResponser::send(true, 'No tenant context found.', null, 400);
             }
 
+            // Filters
             $filters = [
                 'status' => $request->status,
-                'role'   => $request->department,
+                'role'   => $request->role, // renamed correctly (not department)
+                'tenant_id' => $tenantId,
             ];
 
             $search   = $request->search;
@@ -67,7 +76,6 @@ class UserController extends Controller
 
             $result = $this->userService->all($filters, $search, $export, $paginate, $perPage);
 
-            // If export, return immediately (this is a file response)
             if ($result instanceof \Symfony\Component\HttpFoundation\Response) {
                 DB::connection('tenant')->commit();
                 DB::connection('landlord')->commit();
@@ -98,10 +106,11 @@ class UserController extends Controller
         }
     }
 
-    public function allRoles()
+    public function allRoles(Request $request)
     {
         try {
-            $record = Role::orderBy('id', 'DESC')->get();
+            $tenantId = $request->header('X-Tenant-ID');
+            $record = Role::where('tenant_id', $tenantId)->orderBy('id', 'DESC')->get();
 
             return JsonResponser::send(false, 'Record found successfully', $record, 200);
         } catch (\Throwable $th) {
@@ -109,102 +118,247 @@ class UserController extends Controller
         }
     }
 
+    // public function addUser(StoreUserRequest $request)
+    // {
+    //     // Start transactions on both connections
+    //     DB::connection('tenant')->beginTransaction();
+    //     DB::connection('landlord')->beginTransaction();
+
+    //     try {
+    //         $currentUser = Auth::user();
+    //         $tenantId = $request->header('X-Tenant-ID');
+    //         $tenant = Tenant::where('uuid', $tenantId)->first();
+    //         $data = $request->validated();
+
+    //         // 1. Validate role exists in tenant DB
+    //         $tenantRole = Role::on('tenant')->where('name', $data['role'])->first();
+    //         if (!$tenantRole) {
+    //             return JsonResponser::send(true, 'Invalid role provided (tenant).', [], 422);
+    //         }
+
+    //         // 2. Prevent duplicates in tenant
+    //         $tenantUserExists = User::on('tenant')
+    //             ->where('email', $data['email'])
+    //             ->orWhere('phone_number', $data['phone_number'])
+    //             ->exists();
+
+    //         if ($tenantUserExists) {
+    //             return JsonResponser::send(true, 'User email or phone number already exists.', [], 422);
+    //         }
+
+    //         // 3. Generate password & UUID
+    //         $password = $this->userService->generateSecurePassword();
+    //         $uuid = (string) Str::uuid();;
+
+    //         // 4. Prepare common data
+    //         $userData = [
+    //             'uuid'               => $uuid,
+    //             'fullname'           => $data['fullname'],
+    //             'first_name'           => $data['first_name'],
+    //             'last_name'           => $data['last_name'],
+    //             'email'              => $data['email'],
+    //             'role'               => $data['role'],
+    //             'phone_number'       => $data['phone_number'],
+    //             'date_of_birth'      => $data['date_of_birth'],
+    //             'email_verified_at'  => now(),
+    //             'can_login'          => 1,
+    //             'is_verified'        => 1,
+    //             'is_active'          => 1,
+    //             'is_change_password' => 1,
+    //             'password'           => bcrypt($password),
+    //         ];
+
+    //         // 5. Create tenant-side user
+    //         $tenantUser = User::on('tenant')->create(array_merge(
+    //             $userData,
+    //             ['tenant_id' => $currentUser->tenant_id]
+    //         ));
+    //         $tenantUser->roles()->attach($tenantRole->id);
+
+    //         // 6. Create landlord-side user
+    //         $landlordRole = Role::on('landlord')->where('name', $data['role'])->first();
+    //         if (!$landlordRole) {
+    //             DB::connection('tenant')->rollBack();
+    //             DB::connection('landlord')->rollBack();
+    //             return JsonResponser::send(true, 'Role not found in landlord DB.', [], 422);
+    //         }
+
+    //         $landlordUser = User::on('landlord')->create(array_merge(
+    //             $userData,
+    //             ['tenant_id' => $currentUser->tenant_id]
+    //         ));
+    //         $landlordUser->roles()->attach($landlordRole->id);
+
+    //         // 7. Send onboarding email
+    //         event(new CreateUserEvent($data['fullname'], $data['email'], $password));
+
+    //         // Commit transactions
+    //         DB::connection('tenant')->commit();
+    //         DB::connection('landlord')->commit();
+
+    //         return JsonResponser::send(false, 'User created successfully.', $tenantUser, 200);
+    //     } catch (\Throwable $th) {
+    //         DB::connection('tenant')->rollBack();
+    //         DB::connection('landlord')->rollBack();
+
+    //         return JsonResponser::send(true, 'Internal server error.', $th->getMessage(), 500);
+    //     }
+    // }
 
     public function addUser(StoreUserRequest $request)
     {
-        // Start transactions on both connections
-        DB::connection('tenant')->beginTransaction();
         DB::connection('landlord')->beginTransaction();
 
         try {
             $currentUser = Auth::user();
-            $data = $request->validated();
+            $tenantUuid = $request->header('X-Tenant-ID');
+            $tenant = Tenant::where('uuid', $tenantUuid)->firstOrFail();
 
-            // 1. Validate role exists in tenant DB
-            $tenantRole = Role::on('tenant')->where('name', $data['role'])->first();
+            // 1️⃣ Fetch tenant-scoped role (use numeric tenant ID!)
+            $tenantRole = Role::where('tenant_id', $tenantUuid)->find($request['role']);
             if (!$tenantRole) {
-                return JsonResponser::send(true, 'Invalid role provided (tenant).', [], 422);
+                return JsonResponser::send(true, 'Invalid role selected.', [], 422);
             }
 
-            // 2. Prevent duplicates in tenant
-            $tenantUserExists = User::on('tenant')
-                ->where('email', $data['email'])
-                ->orWhere('phone_number', $data['phone_number'])
-                ->exists();
+            // 2️⃣ Check if user exists in landlord DB
+            $user = User::on('landlord')
+                ->where('email', $request['email'])
+                ->orWhere('phone_number', $request['phone_number'])
+                ->first();
 
-            if ($tenantUserExists) {
-                return JsonResponser::send(true, 'User email or phone number already exists.', [], 422);
+            $isNewUser = false;
+
+            if (!$user) {
+                // 3️⃣ Generate secure password & UUID
+                $password = $this->userService->generateRoleBasedPassword(
+                    $tenantRole->name,
+                    $request['first_name'],
+                    $request['last_name']
+                );
+
+                $uuid = (string) Str::uuid();
+
+                // 4️⃣ Create user in landlord DB
+                $user = User::on('landlord')->create([
+                    'uuid'         => $uuid,
+                    'fullname'     => $request['fullname'],
+                    'first_name'   => $request['first_name'],
+                    'last_name'    => $request['last_name'],
+                    'email'        => $request['email'],
+                    'phone_number' => $request['phone_number'],
+                    'password'     => bcrypt($password),
+                    'can_login'    => 1,
+                    'is_verified'  => 1,
+                    'is_active'    => 1,
+                ]);
+
+                $isNewUser = true;
             }
 
-            // 3. Generate password & UUID
-            $password = $this->userService->generateSecurePassword();
-            $uuid = (string) Str::uuid();;
+            // 5️⃣ Detach any existing roles **for this tenant only**
+            $tenantRoleIds = Role::where('tenant_id', $tenantUuid)->pluck('id');
+            $user->roles()->detach($tenantRoleIds);
 
-            // 4. Prepare common data
-            $userData = [
-                'uuid'               => $uuid,
-                'fullname'           => $data['fullname'],
-                'first_name'           => $data['first_name'],
-                'last_name'           => $data['last_name'],
-                'email'              => $data['email'],
-                'role'               => $data['role'],
-                'phone_number'       => $data['phone_number'],
-                'date_of_birth'      => $data['date_of_birth'],
-                'email_verified_at'  => now(),
-                'can_login'          => 1,
-                'is_verified'        => 1,
-                'is_active'          => 1,
-                'is_change_password' => 1,
-                'password'           => bcrypt($password),
-            ];
+            // 6️⃣ Attach the tenant role
+            $user->roles()->attach($tenantRole->id);
 
-            // 5. Create tenant-side user
-            $tenantUser = User::on('tenant')->create(array_merge(
-                $userData,
-                ['tenant_id' => $currentUser->tenant_id]
-            ));
-            $tenantUser->roles()->attach($tenantRole->id);
-
-            // 6. Create landlord-side user
-            $landlordRole = Role::on('landlord')->where('name', $data['role'])->first();
-            if (!$landlordRole) {
-                DB::connection('tenant')->rollBack();
-                DB::connection('landlord')->rollBack();
-                return JsonResponser::send(true, 'Role not found in landlord DB.', [], 422);
+            // 7️⃣ Attach permissions from tenant role
+            $permissions = $tenantRole->permissions()->pluck('id')->toArray();
+            if (!empty($permissions)) {
+                $user->permissions()->syncWithoutDetaching($permissions);
             }
 
-            $landlordUser = User::on('landlord')->create(array_merge(
-                $userData,
-                ['tenant_id' => $currentUser->tenant_id]
-            ));
-            $landlordUser->roles()->attach($landlordRole->id);
+            // 8️⃣ Attach user to tenant via tenant_users table
+            $tenantUser = TenantUser::on('landlord')->updateOrCreate(
+                [
+                    'tenant_id' => $tenant->id,
+                    'user_id'   => $user->id,
+                ],
+                [
+                    'status'        => $request['status'],
+                    'date_of_birth' => $request['date_of_birth'],
+                    'is_active'     => 1,
+                ]
+            );
 
-            // 7. Send onboarding email
-            event(new CreateUserEvent($data['fullname'], $data['email'], $password));
+            // 9️⃣ Send onboarding email only if new user
+            if ($isNewUser) {
+                $maildata = [
+                    'email'         => $request['email'],
+                    'name'          => $request['fullname'],
+                    'hospital_name' => $tenant->name,
+                    'password'      => $password,
+                ];
+                Mail::to($request['email'])->send(new CreateUser($maildata));
+            } else {
+                $maildata = [
+                    'email'         => $request['email'],
+                    'name'          => $request['fullname'],
+                    'hospital_name' => $tenant->name,
+                ];
+                Mail::to($request['email'])->send(new ExistingUser($maildata));
+            }
 
-            // Commit transactions
-            DB::connection('tenant')->commit();
             DB::connection('landlord')->commit();
 
-            return JsonResponser::send(false, 'User created successfully.', $tenantUser, 200);
+            return JsonResponser::send(false, 'User added successfully to the tenant.', $user->load('roles', 'permissions'), 200);
         } catch (\Throwable $th) {
-            DB::connection('tenant')->rollBack();
             DB::connection('landlord')->rollBack();
-
             return JsonResponser::send(true, 'Internal server error.', $th->getMessage(), 500);
         }
     }
 
-
-    public function viewUser($id)
+    public function viewUser(Request $request, $id)
     {
         try {
-            $user = $this->userService->find($id);
-            $user = $user->load('roles.permissions');
-
-            if (!$user) {
-                return JsonResponser::send(true, 'User not found.', null, 200);
+            $tenantUuid = $request->header('X-Tenant-ID');
+            $tenant = Tenant::where('uuid', $tenantUuid)->first();
+            if (!$tenant) {
+                return JsonResponser::send(true, 'Invalid tenant.', null, 400);
             }
+            $tenant->makeCurrent();
+
+            // Fetch user from landlord DB
+            $user = User::on('landlord')->find($id);
+            if (!$user) {
+                return JsonResponser::send(true, 'User not found.', null, 404);
+            }
+
+            // Ensure user belongs to this tenant
+            $tenantUser = DB::connection('landlord')
+                ->table('tenant_users')
+                ->where('tenant_id', $tenant->id)
+                ->where('user_id', $user->id)
+                ->first();
+
+            if (!$tenantUser) {
+                return JsonResponser::send(true, 'This user does not belong to the selected tenant.', null, 403);
+            }
+
+            // Fetch **tenant-specific role**
+            $currentRole = Role::on('tenant')
+                ->join('role_user', 'roles.id', '=', 'role_user.role_id')
+                ->where('role_user.user_id', $user->id)
+                ->where('roles.tenant_id', $tenant->uuid)
+                ->first(['roles.id', 'roles.name', 'roles.display_name']);
+
+            $rolePermissions = [];
+            if ($currentRole) {
+                $rolePermissions = Permission::on('tenant')
+                    ->join('permission_role', 'permissions.id', '=', 'permission_role.permission_id')
+                    ->where('permission_role.role_id', $currentRole->id)
+                    ->get(['permissions.id', 'permissions.name', 'permissions.display_name']);
+            }
+
+            $user = $user->toArray();
+            $user['current_tenant_user'] = $tenantUser;
+            $user['current_role'] = $currentRole ? [
+                'id'           => $currentRole->id,
+                'name'         => $currentRole->name,
+                'display_name' => $currentRole->display_name,
+            ] : null;
+
+            $user['permissions'] = $rolePermissions;
 
             return JsonResponser::send(false, 'User retrieved successfully.', $user, 200);
         } catch (\Throwable $th) {
@@ -212,86 +366,107 @@ class UserController extends Controller
         }
     }
 
-    public function updateUser(UpdateUserRequest $request, $id)
+    public function updateUser(UpdateUserRequest $request, $userId)
     {
-        DB::connection('tenant')->beginTransaction();
+        DB::connection('landlord')->beginTransaction();
 
         try {
-            $currentUser = Auth::user();
+            $tenantUuid = $request->header('X-Tenant-ID');
+            $tenant = Tenant::where('uuid', $tenantUuid)->firstOrFail();
 
-            $user = $this->userService->find($id);
-            if (!$user) {
-                return JsonResponser::send(true, 'User not found.', null, 200);
+            // Fetch user
+            $user = User::on('landlord')->findOrFail($userId);
+
+            // Fetch tenant-scoped role (corrected!)
+            $tenantRole = Role::where('tenant_id', $tenantUuid)
+                ->find($request['role']);
+
+            if (!$tenantRole) {
+                return JsonResponser::send(true, 'Invalid role selected.', [], 422);
             }
 
-            $data = $request->validated();
+            // Update user fields
+            $user->update([
+                'first_name'   => $request['first_name'],
+                'last_name'    => $request['last_name'],
+                'phone_number' => $request['phone_number'],
+            ]);
 
-            if (isset($data['role'])) {
-                $role = Role::where('name', $data['role'])->first();
-                if (!$role) {
-                    return JsonResponser::send(true, 'Invalid role provided.', [], 422);
-                }
+            // Detach only roles related to this tenant
+            $tenantRoleIds = Role::where('tenant_id', $tenantUuid)->pluck('id');
+            $user->roles()->detach($tenantRoleIds);
 
-                $user->roles()->sync([$role->id]);
-            }
+            // Attach the new tenant role
+            $user->roles()->attach($tenantRole->id);
 
-            unset($data['role']);
+            // Sync permissions for this tenant role
+            $permissions = $tenantRole->permissions()->pluck('id')->toArray();
+            $user->permissions()->sync($permissions);
 
-            $updatedUser = $this->userService->update($data, $id);
+            // Update TenantUser row
+            TenantUser::on('landlord')->updateOrCreate(
+                [
+                    'tenant_id' => $tenant->id,
+                    'user_id'   => $user->id,
+                ],
+                [
+                    'status'        => $request['status'],
+                    'date_of_birth' => $request['date_of_birth'],
+                    'is_active'     => $request['is_active'] ?? 1,
+                ]
+            );
 
-            $dataToLog = [
-                'causer_id' => $currentUser->id,
-                'action_id' => $user->id,
-                'action' => 'Update',
-                'action_type' => "Models\User",
-                'log_name' => "User updated successfully",
-                'description' => "{$currentUser->first_name} {$currentUser->last_name} updated user: {$user->first_name} {$user->last_name}",
-                'module_accessed' => ListModuleEnums::Records
-            ];
+            DB::connection('landlord')->commit();
 
-            GeneralHelper::storeAuditLog($dataToLog);
-
-            DB::connection('tenant')->commit();
-
-            return JsonResponser::send(false, 'User updated successfully.', $updatedUser, 200);
+            return JsonResponser::send(false, 'User updated successfully.', $user->load('roles', 'permissions'), 200);
         } catch (\Throwable $th) {
-            DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
+
+            DB::connection('landlord')->rollBack();
+            return JsonResponser::send(true, 'Internal server error.', $th->getMessage(), 500);
         }
     }
 
-    public function toggleStatus($id)
+    public function toggleStatus(Request $request, $id)
     {
-        $user = User::find($id);
-        if (!$user) {
+        $tenantId = $request->header('X-Tenant-ID');
+        $tenant = Tenant::where('uuid', $tenantId)->firstOrFail();
+        $tenantUser = TenantUser::on('landlord')
+            ->where('tenant_id', $tenant->id)
+            ->where('user_id', $id)
+            ->first();
+        if (!$tenantUser) {
             return JsonResponser::send(false, 'User profile not found.');
         }
 
-        $user->status = $user->status == GeneralEnums::ACTIVE->value
+        $tenantUser->status = $tenantUser->status == GeneralEnums::ACTIVE->value
             ? GeneralEnums::INACTIVE->value
             : GeneralEnums::ACTIVE->value;
 
-        $user->save();
+        $tenantUser->save();
 
-        return JsonResponser::send(false, "Account status updated", $user, 200);
+        return JsonResponser::send(false, "Account status updated", $tenantUser, 200);
     }
 
 
-    public function deleteUser($id)
+    public function deleteUser(Request $request, $id)
     {
         try {
-            $currentUser = Auth::user();
+            $tenantId = $request->header('X-Tenant-ID');
+            $tenant = Tenant::where('uuid', $tenantId)->firstOrFail();
 
-            $user = $this->userService->find($id);
-            if (!$user) {
-                return JsonResponser::send(true, 'User not found.', null, 200);
+            $tenantUser = TenantUser::on('landlord')
+                ->where('tenant_id', $tenant->id)
+                ->where('user_id', $id)
+                ->first();
+
+            if (!$tenantUser) {
+                return JsonResponser::send(true, 'User is not assigned to this tenant.', [], 404);
             }
+            $tenantUser->delete();
 
-            $this->userService->delete($id);
-
-            return JsonResponser::send(false, 'User deleted successfully.', [], 200);
+            return JsonResponser::send(false, 'User removed from this tenant successfully.', [], 200);
         } catch (\Throwable $th) {
-            return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
+            return JsonResponser::send(true, 'Internal server error.', $th->getMessage(), 500);
         }
     }
 
@@ -412,10 +587,20 @@ class UserController extends Controller
 
     public function user_update(Request $request, $id)
     {
-
+        $tenantId = $request->header('X-Tenant-ID');
+        $tenant = Tenant::where('uuid', $tenantId)->firstOrFail();
         $user = User::find($id);
         if (!$user) {
             return JsonResponser::send(false, 'User profile not found.');
+        }
+
+        $tenantUser = TenantUser::on('landlord')
+            ->where('tenant_id', $tenant->id)
+            ->where('user_id', $id)
+            ->first();
+
+        if (!$tenantUser) {
+            return JsonResponser::send(true, 'User is not assigned to this tenant.', [], 404);
         }
 
         $updates = [
@@ -426,16 +611,20 @@ class UserController extends Controller
             "role"          => $request->role,
         ];
 
-        // Only update profile_picture if a new one is provided
-        if (!empty($request->profile_picture)) {
-            $updates['profile_picture'] = FileUploadHelper::singleStringFileUpload($request->profile_picture, 'profile');
-        }
-
         $user->update($updates);
 
-        return JsonResponser::send(false, 'User updated successfully.', $user->fresh(), 200);
-    }
+        // Only update profile_picture if a new one is provided
+        if ($request->filled('profile_picture')) {
+            $tenantUser->profile_picture = FileUploadHelper::singleStringFileUpload($request->profile_picture, 'profile');
+            $tenantUser->save();
+        }
 
+        // Attach tenantUser profile_picture to user object
+        $userWithTenantData = $user->fresh()->toArray();
+        $userWithTenantData['current_tenant_user'] = $tenantUser;
+
+        return JsonResponser::send(false, 'User updated successfully.', $userWithTenantData, 200);
+    }
 
     public function account_deactive($id)
     {
@@ -465,7 +654,8 @@ class UserController extends Controller
 
     public function hospital_information(Request $request, $id)
     {
-        $hospital = Registration::find($id);
+        $tenantId = $request->header('X-Tenant-ID');
+        $hospital = Tenant::where('uuid', $tenantId)->firstOrFail();
         if (!$hospital) {
             return JsonResponser::send(false, 'Hospital record not found.');
         }
@@ -484,7 +674,6 @@ class UserController extends Controller
 
         return JsonResponser::send(true, "Record updated successfully", $hospital->refresh(), 200);
     }
-
 
     public function user_upload_image(Request $request)
     {

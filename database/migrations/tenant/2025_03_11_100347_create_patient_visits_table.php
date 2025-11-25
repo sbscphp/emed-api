@@ -18,8 +18,15 @@ return new class extends Migration
             $table->foreignId('patient_id')->constrained('patients')->onDelete('cascade');
             $table->unsignedBigInteger('service_id')->nullable();
             $table->string('visitno')->nullable();
-            $table->string('stage')->nullable()->comment('triage', 'consultation', 'investigation', 'admitted', 'treatment', 'discharged');
-            $table->string('status')->nullable()->comment('ongoing', 'waiting', 'completed');
+            $table->string('status')->nullable()->comment('Visit Initiated', 'Ongoing', 'Completed');
+            $table->string('triage_status')->nullable()->comment('Pending', 'Completed');
+            $table->string('immunization_status')->nullable()->comment('Pending', 'Completed');
+            $table->string('counsel_status')->nullable()->comment('Pending', 'Completed');
+            $table->string('natal_status')->nullable()->comment('Pending', 'Completed');
+            $table->string('con_status')->nullable()->comment('Pending', 'Completed');
+            $table->string('pharm_status')->nullable()->comment('Pending', 'Completed');
+            $table->string('lab_status')->nullable()->comment('Pending', 'Completed');
+            $table->string('rad_status')->nullable()->comment('Pending', 'Completed');
             $table->dateTime('arrival_date')->nullable();
             $table->dateTime('departure_date')->nullable();
             $table->dateTime('visit_date')->nullable();

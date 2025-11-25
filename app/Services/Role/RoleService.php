@@ -29,9 +29,9 @@ class RoleService
      * 
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    public function all()
+    public function all($tenantId, $request)
     {
-        return $this->RoleInterface->all();
+        return $this->RoleInterface->all($tenantId, $request);
     }
 
     /**

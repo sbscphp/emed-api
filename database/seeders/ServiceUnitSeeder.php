@@ -23,13 +23,14 @@ class ServiceUnitSeeder extends Seeder
         Schema::enableForeignKeyConstraints();
 
         $now = Carbon::now();
+        $tenant = app('currentTenant');
 
         $units = [
-            ['name' => 'Registration', 'created_at' => $now, 'updated_at' => $now],
-            ['name' => 'Pharmacy', 'created_at' => $now, 'updated_at' => $now],
-            ['name' => 'Consultation', 'created_at' => $now, 'updated_at' => $now],
-            ['name' => 'Laboratory', 'created_at' => $now, 'updated_at' => $now],
-            ['name' => 'Radiology', 'created_at' => $now, 'updated_at' => $now],
+            ['tenant_id' => $tenant->uuid, 'name' => 'Registration', 'price' => 0.00, 'created_at' => $now, 'updated_at' => $now],
+            ['tenant_id' => $tenant->uuid, 'name' => 'Pharmacy', 'price' => 0.00, 'created_at' => $now, 'updated_at' => $now],
+            ['tenant_id' => $tenant->uuid, 'name' => 'Consultation', 'price' => 0.00, 'created_at' => $now, 'updated_at' => $now],
+            ['tenant_id' => $tenant->uuid, 'name' => 'Laboratory', 'price' => 0.00, 'created_at' => $now, 'updated_at' => $now],
+            ['tenant_id' => $tenant->uuid, 'name' => 'Radiology', 'price' => 0.00, 'created_at' => $now, 'updated_at' => $now],
         ];
 
         DB::table('service_units')->insert($units);

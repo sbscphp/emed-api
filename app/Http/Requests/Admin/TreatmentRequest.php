@@ -25,13 +25,13 @@ class TreatmentRequest extends FormRequest
         return [
 
             'patient_id' => 'required|exists:tenant.patients,id',
-            'pharmacy_id' => 'required',
             'visit_id' => 'required|exists:tenant.patient_visits,id',
             'consultation_id' => 'required|exists:tenant.patient_visit_consultation,id',
 
             'medications' => 'required|array|min:1',
             'medications.*.drug_id' => 'required|integer',
             'medications.*.qualifier' => 'nullable|string',
+            'medications.*.pharmacy_id' => 'nullable',
             'medications.*.dosage' => 'required|string',
             'medications.*.weight' => 'nullable|string',
             'medications.*.period' => 'required|string',
@@ -44,7 +44,6 @@ class TreatmentRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'pharmacy_id.required' => 'The pharmacy field is required.',
             'patient_id.required' => 'The patient field is required.',
             'patient_id.exists'   => 'The selected patient does not exist in the system.',
 
@@ -60,6 +59,8 @@ class TreatmentRequest extends FormRequest
 
             'medications.*.drug_id.required' => 'The drug is required for each medication.',
             'medications.*.drug_id.integer'  => 'The drug ID must be a valid integer.',
+
+            'medications.*.pharmacy_id.required'  => 'The pharmacy id is required for each medication.',
 
             'medications.*.qualifier.string' => 'The qualifier must be a string.',
 

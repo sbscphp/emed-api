@@ -38,7 +38,10 @@ class AuthenticationService
      */
     public function create($data)
     {
+        DB::connection('landlord')->beginTransaction();
+
         $tenant = null;
+        $user = null;
 
         try {
             // Create Tenant
@@ -71,12 +74,13 @@ class AuthenticationService
             ];
 
             Mail::to($user->email)->send(new TenantEmailVerification($maildata));
-
+            DB::connection('landlord')->commit();
             return [
                 'user' => $user->load('roles', 'permissions'),
                 'tenant' => $tenant
             ];
         } catch (\Throwable $e) {
+            DB::connection('landlord')->rollBack();
             if (env('APP_ENV') === 'local') {
                 if ($tenant && $tenant->database) {
                     DB::connection('mysql')->statement("DROP DATABASE IF EXISTS `{$tenant->database}`");

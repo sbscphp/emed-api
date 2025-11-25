@@ -28,6 +28,7 @@ return new class extends Migration
             $table->decimal('amount_outstanding', 12, 2)->default(0.00);
             $table->decimal('tax_amount', 10, 2)->default(0.00);
             $table->decimal('discount', 10, 2)->default(0.00);
+            $table->decimal('total_amount', 12, 2)->default(0.00);
             $table->decimal('grand_total', 12, 2)->default(0.00);
             $table->string('payment_method')->comment('Bank Transfer', 'Credit Card', 'Cash', 'Pos', 'Insurance')->nullable();
             $table->string('payment_status')->default('Pending')->comment('Paid', 'Part Paid', 'Pending');

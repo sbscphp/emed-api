@@ -20,10 +20,8 @@
                     <!-- Header -->
                     <tr>
                         <td align="center" style="background-color:#f5f3ff;">
-                            <img src="https://emed.com/images/email-header.png"
-                                 alt="EMED Team"
-                                 width="600"
-                                 style="display:block; max-width:100%; height:auto;">
+                            <img src="https://res.cloudinary.com/dlcenmo5x/image/upload/v1763377653/Document/upload_43142_1763377652/kcjk71hu1pmprnko4tls.png"
+                                alt="EMED Team" width="600" style="display:block; max-width:100%; height:auto;">
                         </td>
                     </tr>
 
@@ -44,7 +42,8 @@
 
                     <!-- Email Body -->
                     <tr>
-                        <td align="left" style="padding: 0 40px 10px; color:#333333; font-size:15px; line-height:24px;">
+                        <td align="left"
+                            style="padding: 0 40px 10px; color:#333333; font-size:15px; line-height:24px;">
                             <p>Hello {{ $name }},</p>
 
                             <p>Thank you for signing up with EMED. Your OTP verification code is:</p>
@@ -68,15 +67,23 @@
                         <td align="center"
                             style="padding: 30px 30px; font-size:12px; color:#999999; line-height:18px; border-top:1px solid #eee;">
                             This email was sent to
-                            <a href="mailto:{{ $email }}" style="color:#7F56D9; text-decoration:none;">{{ $email }}</a>.
-                            If you'd rather not receive this kind of email, you can unsubscribe or manage your email preferences.<br><br>
+                            <a href="mailto:{{ $email }}"
+                                style="color:#7F56D9; text-decoration:none;">{{ $email }}</a>.
+                            If you'd rather not receive this kind of email, you can unsubscribe or manage your email
+                            preferences.<br><br>
                             © 2024 EMED, Lagos State, Nigeria.
                             <br><br>
 
                             <!-- Social icons -->
-                            <a href="#" style="margin:0 6px;"><img src="https://cdn-icons-png.flaticon.com/512/733/733579.png" width="20" alt="Twitter"></a>
-                            <a href="#" style="margin:0 6px;"><img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" width="20" alt="Facebook"></a>
-                            <a href="#" style="margin:0 6px;"><img src="https://cdn-icons-png.flaticon.com/512/733/733558.png" width="20" alt="Instagram"></a>
+                            <a href="#" style="margin:0 6px;"><img
+                                    src="https://cdn-icons-png.flaticon.com/512/733/733579.png" width="20"
+                                    alt="Twitter"></a>
+                            <a href="#" style="margin:0 6px;"><img
+                                    src="https://cdn-icons-png.flaticon.com/512/733/733547.png" width="20"
+                                    alt="Facebook"></a>
+                            <a href="#" style="margin:0 6px;"><img
+                                    src="https://cdn-icons-png.flaticon.com/512/733/733558.png" width="20"
+                                    alt="Instagram"></a>
                         </td>
                     </tr>
 

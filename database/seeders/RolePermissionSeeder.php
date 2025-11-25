@@ -20,28 +20,51 @@ class RolePermissionSeeder extends Seeder
      */
     public function run()
     {
-        $this->truncateLaratrustTables();
+        $tenant = app('currentTenant');
+        // $this->truncateLaratrustTables();
 
         // $mapPermission = collect(config('role_permission_seeder.permissions_map'));
         // $config = config('role_permission_seeder.roles_structure');
         // $mapPermission = collect(config('role_permission_seeder.permissions_map'));
 
-        $tenant = app('currentTenant');
         $config = [
             'admin' => 'This is the administrator role. It has full access to everything including global settings. This role is not editable.',
+            'record' => 'This role can access all the record modules of the software and have all the privileges within the system.',
+            'nurse' => 'This role can access all the nurse modules of the software and have all the privileges within the system.',
+            'consultant' => 'This role can access all the consultant modules of the software and have all the privileges within the system.',
+            'pharmacy' => 'This role can access all the pharmacy modules of the software and have all the privileges within the system.',
+            'laboratory' => 'This role can access all the laboratory modules of the software and have all the privileges within the system.',
+            'radiology' => 'This role can access all the radiology modules of the software and have all the privileges within the system.',
+            'billing' => 'This role can access all the billing modules of the software and have all the privileges within the system.',
         ];
 
         foreach ($config as $key => $description) {
-
             // Create a new role
-            $role = Role::firstOrCreate([
-                'tenant_id' => $tenant->uuid,
-                'name' => ucwords(str_replace('_', ' ', $key)),
-                'display_name' => $key,
-                'description' => $description
-            ]);
+            $role = Role::where('tenant_id', $tenant->uuid)->where('name', $key)->first();
+            if (!$role) {
+                DB::connection('tenant')->table('roles')->insert([
+                    'tenant_id'    => $tenant->uuid,
+                    'name'         => $key,
+                    'display_name' => ucwords(str_replace('_', ' ', $key)),
+                    'description'  => $description,
+                    'status'       => 'Active',
+                    'created_at'   => now(),
+                    'updated_at'   => now(),
+                ]);
+                // Role::firstOrCreate(
+                //     [
+                //         'tenant_id' => $tenant->uuid,
+                //         'name'      => $key,
+                //     ],
+                //     [
+                //         'display_name' => ucwords(str_replace('_', ' ', $key)),
+                //         'description'  => $description,
+                //         'status'       => 'Active'
+                //     ]
+                // );
+            }
 
-            $this->command->info('Creating Role ' . strtoupper($key));
+            $this->command->info("Created role: {$key}");
 
             // if ($key == 'super_admin') {
             //     $description = 'Super admin has full access to everything including global settings.';

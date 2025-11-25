@@ -15,14 +15,14 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             PermissionTableSeeder::class,
-            // RolePermissionSeeder::class,
+            RolePermissionSeeder::class,
+            ServicesTableSeeder::class,
+            ServiceUnitSeeder::class,
+            StateSeeder::class,
             // UsersTableSeeder::class,
             // TenantUserSeeder::class,
-            // ServicesTableSeeder::class,
-            // StateSeeder::class,
-            // ServiceUnitSeeder::class,
         ]);
 
-        $this->call(MySqlDumpSeeder::class);
+        // $this->call(MySqlDumpSeeder::class);
     }
 }

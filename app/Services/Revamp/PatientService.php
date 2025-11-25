@@ -403,6 +403,7 @@ class PatientService
                 // 'stage' => PatientVisitStageEnums::VISIT,
                 'arrival_date' => now(),
                 'status' => PatientVisitStatusEnums::VISIT_INITIATED->value,
+                'triage_status' => GeneralEnums::PENDING->value,
             ]);
 
             $invoiceNumber = GeneralHelper::getModelUniqueOrderlyId([

@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\v1\Admin;
 
 use App\Enums\ListModuleEnums;
+use App\Helpers\ExportHelper;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreRoleRequest;
 use App\Http\Requests\Admin\UpdateRoleRequest;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\Tenant;
 use App\Responser\JsonResponser;
 use App\Services\Role\RoleService;
 use App\Services\User\UserService;
@@ -33,67 +35,118 @@ class RoleController extends Controller
      */
     public function index(Request $request)
     {
-        $query = $this->roleService->all()->orderBy('id', 'DESC');
+        $tenantUuid = $request->header('X-Tenant-ID');
+        $export = $request->export;
 
-        // Count total roles (before pagination)
-        $totalRoles = $query->count();
-
-        // Apply pagination or get all
-        if ($request->paginate) {
-            $rolesRecord = $query->paginate($request->limit ?? 10);
-        } else {
-            $rolesRecord = $query->get();
+        // Fetch tenant
+        $tenant = Tenant::where('uuid', $tenantUuid)->first();
+        if (! $tenant) {
+            return JsonResponser::send(true, 'Invalid tenant.', null, 400);
         }
 
-        // Eager load related models
+        $query = $this->roleService
+            ->all($tenantUuid, $request)
+            ->orderBy('id', 'DESC');
+
+        $totalRoles = $query->count();
+        $roles = $export
+            ? $query->get()
+            : ($request->paginate
+                ? $query->paginate($request->limit ?? 10)
+                : $query->get());
+        $processRole = function ($role) use ($tenant, $tenantUuid) {
+
+            $userIds = DB::connection('tenant')
+                ->table('role_user')
+                ->where('role_id', $role->id)
+                ->pluck('user_id')
+                ->toArray();
+
+            if (empty($userIds)) {
+                $role->correct_user_count = 0;
+                return $role;
+            }
+
+            $validUserCount = \App\Models\User::whereIn('id', $userIds)
+                ->whereHas('tenantUsers', function ($q) use ($tenant) {
+                    $q->where('tenant_id', $tenant->id)
+                        ->whereNull('deleted_at');
+                })
+                ->count();
+
+            $role->correct_user_count = $validUserCount;
+            return $role;
+        };
+
+        // If paginated
         if (
-            $rolesRecord instanceof \Illuminate\Pagination\LengthAwarePaginator ||
-            $rolesRecord instanceof \Illuminate\Pagination\Paginator
+            $roles instanceof \Illuminate\Pagination\Paginator ||
+            $roles instanceof \Illuminate\Pagination\LengthAwarePaginator
         ) {
 
-            // Load relationships
-            $rolesRecord->getCollection()->load('permissions', 'users');
+            $roles->getCollection()->transform($processRole);
+        } else {
+            // Non-paginated
+            $roles = $roles->map($processRole);
+        }
 
-            // Transform the items while keeping pagination metadata
-            $rolesRecord->setCollection(
-                $rolesRecord->getCollection()->transform(function ($role) {
+        if ($export) {
+
+            $exportData = $roles->map(function ($role) {
+                return [
+                    'Role Name'   => $role->display_name ?? $role->name,
+                    'Users Count' => $role->correct_user_count,
+                ];
+            })->toArray();
+
+            return match (strtolower($export)) {
+                'csv' => ExportHelper::streamCsv($exportData, null, 'roles.csv'),
+                'pdf' => ExportHelper::downloadPdf($exportData, 'roles.pdf'),
+                default => throw new \Exception('Invalid export format.'),
+            };
+        }
+
+        if (
+            $roles instanceof \Illuminate\Pagination\Paginator ||
+            $roles instanceof \Illuminate\Pagination\LengthAwarePaginator
+        ) {
+
+            $roles->setCollection(
+                $roles->getCollection()->map(function ($role) {
                     return [
-                        'id'           => $role->id ?? "",
-                        'name'         => $role->name ?? "",
-                        'display_name' => $role->display_name ?? "",
-                        'description'  => $role->description ?? "",
-                        'status'       => $role->status ?? "",
-                        'permissions'  => $role->permissions->pluck('name')->toArray() ?? [],
-                        'users_count'  => $role->users->count() ?? 0,
-                        'created_at'   => $role->created_at ?? "",
-                        'updated_at'   => $role->updated_at ?? "",
+                        'id'           => $role->id,
+                        'name'         => $role->name,
+                        'display_name' => $role->display_name,
+                        'description'  => $role->description,
+                        'status'       => $role->status,
+                        'permissions'  => $role->permissions->pluck('name')->toArray(),
+                        'users_count'  => $role->correct_user_count,
+                        'created_at'   => $role->created_at,
+                        'updated_at'   => $role->updated_at,
                     ];
                 })
             );
         } else {
-            // If not paginating (just getting all)
-            $rolesRecord->load('permissions', 'users');
-            $rolesRecord = $rolesRecord->map(function ($role) {
+            $roles = $roles->map(function ($role) {
                 return [
-                    'id'           => $role->id ?? "",
-                    'name'         => $role->name ?? "",
-                    'display_name' => $role->display_name ?? "",
-                    'description'  => $role->description ?? "",
-                    'status'       => $role->status ?? "",
-                    'permissions'  => $role->permissions->pluck('name')->toArray() ?? [],
-                    'users_count'  => $role->users->count() ?? 0,
-                    'created_at'   => $role->created_at ?? "",
-                    'updated_at'   => $role->updated_at ?? "",
+                    'id'           => $role->id,
+                    'name'         => $role->name,
+                    'display_name' => $role->display_name,
+                    'description'  => $role->description,
+                    'status'       => $role->status,
+                    'permissions'  => $role->permissions->pluck('name')->toArray(),
+                    'users_count'  => $role->correct_user_count,
+                    'created_at'   => $role->created_at,
+                    'updated_at'   => $role->updated_at,
                 ];
             });
         }
 
         return JsonResponser::send(false, 'Roles retrieved successfully.', [
-            'roles'       => $rolesRecord, // will include pagination data if paginated
+            'roles'       => $roles,
             'total_roles' => $totalRoles,
         ], 200);
     }
-
 
     public function permissions()
     {
@@ -125,7 +178,10 @@ class RoleController extends Controller
         $currentUser = Auth::user();
         // $user = $this->userService->find($currentUser->id);
         $user = User::on('tenant')->where('email', $currentUser['email'])->first();
-
+        $checkRole = Role::on('tenant')->where('name', $request->name)->first();
+        if ($checkRole) {
+            return JsonResponser::send(true, 'Role with the same name already exists.', null, 400);
+        }
         $validated = array_merge($request->validated(), [
             'created_by' => $currentUser->id,
         ]);
@@ -169,27 +225,84 @@ class RoleController extends Controller
         }
     }
 
-
-
-
     /**
      * Fetch a single role by ID.
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        $role = $this->roleService->find($id)->load(['permissions', 'users']);
+        $tenantUuid = $request->header('X-Tenant-ID');
 
-        if (!$role) {
+        $tenant = Tenant::where('uuid', $tenantUuid)->first();
+        if (! $tenant) {
+            return JsonResponser::send(true, 'Invalid tenant.', null, 400);
+        }
+
+        $role = \App\Models\Role::on('tenant')
+            ->where('tenant_id', $tenantUuid)
+            ->with('permissions')
+            ->find($id);
+
+        if (! $role) {
             return JsonResponser::send(true, 'Role not found.', null, 200);
         }
 
-        $usersData = $role->users->map(function ($user) {
+        $permissions = $role->permissions->map(function ($perm) {
             return [
-                'name' => $user->fullname,
-                'status' => $user->status,
-                'created_at' => $user->created_at ? $user->created_at->toDateTimeString() : null,
+                'id' => $perm->id,
+                'name' => $perm->name,
             ];
-        });
+        })->values();
+
+        $userIds = DB::connection('tenant')
+            ->table('role_user')
+            ->where('role_id', $role->id)
+            ->pluck('user_id')
+            ->toArray();
+
+        if (empty($userIds)) {
+            $roleData = [
+                'id' => $role->id,
+                'name' => $role->name,
+                'display_name' => $role->display_name,
+                'description' => $role->description,
+                'status' => $role->status,
+                'permissions' => $permissions,
+                'users' => [],
+                'user_count' => 0,
+                'created_at' => $role->created_at?->toDateTimeString(),
+                'updated_at' => $role->updated_at?->toDateTimeString(),
+            ];
+
+            return JsonResponser::send(false, 'Role retrieved successfully.', $roleData, 200);
+        }
+
+        $users = \App\Models\User::query()
+            ->whereIn('id', $userIds)
+            ->whereHas('tenantUsers', function ($q) use ($tenant) {
+                $q->where('tenant_id', $tenant->id)->whereNull('deleted_at');
+            })
+            ->with(['tenantUsers' => function ($q) use ($tenant) {
+                $q->where('tenant_id', $tenant->id)->whereNull('deleted_at');
+            }])
+            ->get();
+
+        $usersData = $users->map(function ($user) use ($role) {
+
+            $userRole = [
+                'id' => $role->id,
+                'name' => $role->name,
+                'display_name' => $role->display_name,
+            ];
+
+            return [
+                'id' => $user->id,
+                'name' => $user->fullname ?? trim($user->first_name . ' ' . $user->last_name),
+                'email' => $user->email,
+                'status' => $user->status ?? ($user->tenantUsers->first()->status ?? null),
+                'joined_at' => $user->created_at?->toDateTimeString(),
+                'userRole' => $userRole,
+            ];
+        })->values();
 
         $roleData = [
             'id' => $role->id,
@@ -197,10 +310,11 @@ class RoleController extends Controller
             'display_name' => $role->display_name,
             'description' => $role->description,
             'status' => $role->status,
-            'permissions' => $role->permissions->pluck('name')->toArray(),
+            'permissions' => $permissions,
             'users' => $usersData,
-            'created_at' =>  $role->created_at ? $role->created_at->toDateTimeString() : null,
-            'updated_at' =>   $role->created_at ? $role->updated_at->toDateTimeString() : null,
+            'user_count' => $usersData->count(),
+            'created_at' => $role->created_at?->toDateTimeString(),
+            'updated_at' => $role->updated_at?->toDateTimeString(),
         ];
 
         return JsonResponser::send(false, 'Role retrieved successfully.', $roleData, 200);
@@ -212,48 +326,45 @@ class RoleController extends Controller
      */
     public function update(UpdateRoleRequest $request, $id)
     {
-        $currentUser = Auth::user();
-        // $user = $this->userService->find($currentUser->id);
-        $user = User::on('tenant')->where('email', $currentUser['email'])->first();
-
-        $validated = array_merge($request->validated(), [
-            'updated_by' => $currentUser->id,
-        ]);
+        DB::connection('tenant')->beginTransaction();
 
         try {
-            $role = DB::connection('tenant')->transaction(function () use ($validated, $request, $id, $user) {
-                $role = $this->roleService->update($validated, $id);
+            $currentUser = Auth::user();
+            $role = Role::findOrFail($id);
+            // Update role
+            // $role->update([
+            //     'name'         => $request->name,
+            //     'display_name' => $request->display_name,
+            //     'description'  => $request->description,
+            //     'status'       => $request->status,
+            // ]);
 
-                if (!$role) {
-                    return JsonResponser::send(true, 'Role not found or update failed.', null, 200);
-                }
+            // Sync permissions if provided
+            if ($request->filled('permissions')) {
+                $role->syncPermissions($request->permissions);
+            }
 
-                if ($request->has('permissions')) {
-                    $role->syncPermissions($request->permissions);
-                }
+            // Commit tenant transaction
+            DB::connection('tenant')->commit();
 
-                $dataToLog = [
-                    'causer_id' => $user->id,
-                    'action_id' => $role->id,
-                    'action' => 'Update',
-                    'action_type' => "Models\Role",
-                    'log_name' => "Role updated successfully",
-                    'description' => "{$user->firstname} {$user->lastname} updated the role: {$role->name}",
-                    'module_accessed' => ListModuleEnums::Records
-                ];
-                GeneralHelper::storeAuditLog($dataToLog);
+            $dataToLog = [
+                'causer_id'       => $currentUser->id,
+                'action_id'       => $role->id,
+                'action'          => 'Update',
+                'action_type'     => "Models\Role",
+                'log_name'        => "Role updated successfully",
+                'description'     => "{$currentUser->first_name} {$currentUser->last_name} updated the role: {$role->name}",
+                'module_accessed' => ListModuleEnums::Records
+            ];
 
-                return $role;
-            });
-
-
+            GeneralHelper::storeAuditLog($dataToLog);
 
             return JsonResponser::send(false, 'Role updated successfully with permissions.', $role, 200);
         } catch (\Exception $e) {
-            return JsonResponser::send(true, 'Failed to update role. Please try again.', null, 500);
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, 'Failed to update role. Please try again.', $e->getMessage(), 500);
         }
     }
-
 
     /**
      * Delete a role.

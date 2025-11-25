@@ -58,6 +58,14 @@ Route::group(["prefix" => "v1"], function () {
         return "Data Cache is cleared";
     });
 
+    /** UPLOAD FILES & DOCUMENTS */
+    Route::group(['prefix' => 'upload'], function () {
+        Route::post('/single/string/file', [GeneralController::class, 'uploadSingleFileString']);
+        Route::post('/single/binary/file', [GeneralController::class, 'uploadSingleFileBinary']);
+        Route::post('/multiple/binary/file', [GeneralController::class, 'uploadMultipleFileBinary']);
+        Route::post('/multiple/string/file', [GeneralController::class, 'uploadMultipleFileString']);
+    });
+
     // Route::get('/test_all-records', [RecordManagementController::class, 'allRecords']);
 
     Route::get('/fetch_country_state_city', [UserController::class, 'fetch_country_state_city']);

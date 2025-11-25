@@ -60,13 +60,14 @@ class RecordManagementController extends Controller
         try {
             DB::connection('tenant')->beginTransaction();
             $currentUser = Auth::user();
-            $patientExists = Patient::where('firstname', $request->firstname)->where('lastname', $request->lastname)->first();
+            $tenantId = $request->header('X-Tenant-ID');
+            $patientExists = Patient::where('tenant_id', $tenantId)->where('firstname', $request->firstname)->where('lastname', $request->lastname)->first();
             if ($patientExists) {
                 return JsonResponser::send(true, 'A patient with the same firstname and lastname already exists.', null, 422);
             }
 
             //validate if Card number exists already
-            $cardNoExists = Patient::where('cardno', $request->cardno)->first();
+            $cardNoExists = Patient::where('tenant_id', $tenantId)->where('cardno', $request->cardno)->first();
             if ($cardNoExists) {
                 return JsonResponser::send(true, 'Card Number already exists.', null, 422);
             }

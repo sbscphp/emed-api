@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Enums\GeneralEnums;
 use App\Helpers\ExportHelper;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -50,6 +51,11 @@ class ImmunizationController extends Controller
                 ], // Unique key
                 $validated // Data to update/create
             );
+
+            $visit = PatientVisit::find($data['visit_id']);
+            $visit->update([
+                'immunization_status' => GeneralEnums::COMPLETED->value,
+            ]);
             return JsonResponser::send(false, ' Create successfully.', $data);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Error fetching  .', [], 500, $e);

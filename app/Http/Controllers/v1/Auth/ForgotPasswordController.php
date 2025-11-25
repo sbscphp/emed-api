@@ -49,7 +49,7 @@ class ForgotPasswordController extends Controller
                 'otp'       => $otpCode,
                 'token'     => $verification_code,
                 'created_at' => Carbon::now(),
-                'expires_at' => Carbon::now()->addMinutes(10),
+                'expires_at' => Carbon::now()->addDays(1),
             ]);
 
             $data = [

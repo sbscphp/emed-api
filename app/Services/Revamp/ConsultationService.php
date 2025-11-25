@@ -51,6 +51,7 @@ class ConsultationService
 
         $records = PatientVisit::query()
             ->where('tenant_id', $tenantId)
+            ->whereNotNull('con_status')
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->whereRelation('patient', 'cardno', 'LIKE', '%' . $request['search_param'] . '%')
@@ -94,8 +95,8 @@ class ConsultationService
         $tenantId = $request->header('X-Tenant-ID');
         $query = PatientVisit::query()->where('tenant_id', $tenantId);
 
-        $awaitingConsultation = (clone $query)->where('status', PatientVisitStatusEnums::TRIAGE->value)->count();
-        $completedConsultation = (clone $query)->where('status', PatientVisitStatusEnums::CONSULTATION->value)->count();
+        $awaitingConsultation = (clone $query)->where('con_status', GeneralEnums::PENDING->value)->count();
+        $completedConsultation = (clone $query)->where('con_status', GeneralEnums::COMPLETED->value)->count();
         $awaitingInvestigation = Laboratory::where('tenant_id', $tenantId)->where('status', GeneralEnums::NOT_READY->value)->count();
         $completedInvestigation = Laboratory::where('tenant_id', $tenantId)->where('status', GeneralEnums::READY->value)->count();
         $awaitingProcedure = Radiology::where('tenant_id', $tenantId)->where('status', GeneralEnums::NOT_READY->value)->count();
@@ -175,8 +176,12 @@ class ConsultationService
                 $request->all()
             );
 
+            // $visit->update([
+            //     'status' => PatientVisitStatusEnums::CONSULTATION->value,
+            // ]);
+
             $visit->update([
-                'status' => PatientVisitStatusEnums::CONSULTATION->value,
+                'con_status' => GeneralEnums::COMPLETED->value,
             ]);
 
             $status =    $request['admit_patient'] == 1 ? PatientVisitStatusEnums::ADMITTED->value : PatientVisitStatusEnums::NOT_ADMITTED->value;
@@ -289,8 +294,11 @@ class ConsultationService
             $fetchBilling->save();
 
             // Update visit status
+            // $visit->update([
+            //     'status' => PatientVisitStatusEnums::INVESTIGATION->value,
+            // ]);
             $visit->update([
-                'status' => PatientVisitStatusEnums::INVESTIGATION->value,
+                'lab_status' => GeneralEnums::PENDING->value,
             ]);
 
             return $labInvestigations;
@@ -395,8 +403,12 @@ class ConsultationService
             $fetchBilling->save();
 
             // Update visit status
+            // $visit->update([
+            //     'status' => PatientVisitStatusEnums::INVESTIGATION->value,
+            // ]);
+
             $visit->update([
-                'status' => PatientVisitStatusEnums::INVESTIGATION->value,
+                'rad_status' => GeneralEnums::PENDING->value,
             ]);
 
             return $labInvestigations;
@@ -478,7 +490,7 @@ class ConsultationService
 
                     $newTreatment = Treatment::create([
                         'tenant_id'        => $tenantId,
-                        'pharmacy_id'        => $request->pharmacy_id,
+                        'pharmacy_id'        => $drugItem['pharmacy_id'],
                         'visit_id'        => $visit->id,
                         'drug_id'         => $drug->id,
                         'user_id'         => $currentUser->id,
@@ -540,8 +552,12 @@ class ConsultationService
             $fetchBilling->save();
 
             // Update visit status
+            // $visit->update([
+            //     'status' => PatientVisitStatusEnums::TREATMENT->value,
+            // ]);
+
             $visit->update([
-                'status' => PatientVisitStatusEnums::TREATMENT->value,
+                'pharm_status' => GeneralEnums::PENDING->value,
             ]);
 
             return $drugTreatments;
