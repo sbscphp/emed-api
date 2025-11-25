@@ -15,6 +15,7 @@ use App\Models\AntenatalLabTest;
 use App\Models\BillingLog;
 use App\Models\Consultation;
 use App\Models\DeliveryDetail;
+use App\Models\Laboratory;
 use App\Models\NewBornDetail;
 use App\Models\Patient;
 use App\Models\PatientVisit;
@@ -54,7 +55,7 @@ class AntenatalController extends Controller
         }
     }
 
-    public function createAntenatalLabTest(ConsultationLaborartoryRequest $request)
+    public function createAntenatalLabTest(AntenatalLabTestRequest $request)
     {
 
         try {
@@ -126,7 +127,7 @@ class AntenatalController extends Controller
             $patientVisit = PatientVisit::find($id);
             $patient = Patient::with('service', 'triage', 'familyHistory', 'medicalHistory', 'socialHistory')->find($patientVisit->patient_id);
             $antenatalDetail = Antenatal::where('visit_id', $id)->with('consultedBy')->first();
-            // $antenatalLabTest = AntenatalLabTest::where('visit_id', $id)->first();
+            $antenatalLabTest = Laboratory::where('visit_id', $id)->orderBy('id', 'DESC')->get();
             $deliveryDetail = DeliveryDetail::where('visit_id',  $patientVisit->id)->first();
             $newBornDetails = NewBornDetail::where('visit_id',  $patientVisit->id)->first();
             $billingLog = BillingLog::where('visit_id',  $patientVisit->id)->first();
@@ -136,7 +137,7 @@ class AntenatalController extends Controller
                 "patient" => $patient,
                 "patientVisit" => $patientVisit,
                 "antenatalDetail" => $antenatalDetail,
-                // "antenatalLabTest" => $antenatalLabTest,
+                "antenatalLabTest" => $antenatalLabTest,
                 "deliveryDetail" => $deliveryDetail,
                 "newBornDetails" => $newBornDetails,
                 "billingLog" => $billingLog,

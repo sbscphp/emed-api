@@ -4,6 +4,7 @@ namespace App\Http\Controllers\v1\Admin\Revamp;
 
 use App\Enums\GeneralEnums;
 use App\Helpers\ExportHelper;
+use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Models\BillingLog;
 use App\Models\Consultation;
@@ -63,6 +64,12 @@ class RadiologyController extends Controller
         try {
             DB::connection('tenant');
             $tenantId = $request->header('X-Tenant-ID');
+            $customDate = [];
+            if ($request->period === 'custom date' && $request->start_date && $request->end_date) {
+                $customDate = [$request->start_date, $request->end_date];
+            }
+
+            $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
             $labTestQuery = Radiology::query()
                 ->where('tenant_id', $tenantId)
                 ->where('visit_id', $request->visit_id)
@@ -77,6 +84,12 @@ class RadiologyController extends Controller
                 })
                 ->when($request->test_status, function ($query) use ($request) {
                     $query->where('status', $request->test_status);
+                })
+                ->when($request->startDate && $request->endDate, function ($query) use ($request) {
+                    $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+                })
+                ->when($dateFilter, function ($query) use ($dateFilter) {
+                    return $query->whereBetween('created_at', $dateFilter);
                 })
                 ->with(['patient', 'visit', 'consultation:id,consulted_by', 'billingLogDetail'])
                 ->orderBy('id', 'DESC');

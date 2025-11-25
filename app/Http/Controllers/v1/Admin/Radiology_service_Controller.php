@@ -19,8 +19,8 @@ class Radiology_service_Controller extends Controller
     {
         try {
             $validated = $request->validated();
-            $serviceunit = ServiceUnit::where("name", "Radiology")->first() ?? null;
             $tenantId = $request->header('X-Tenant-ID');
+            $serviceunit = ServiceUnit::where("name", "Radiology")->where('tenant_id', $tenantId)->first() ?? null;
             $data = RadiologyService::create([
                 'tenant_id'        => $tenantId,
                 "service_unit_id" => $serviceunit->id,

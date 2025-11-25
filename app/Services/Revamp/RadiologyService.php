@@ -59,6 +59,9 @@ class RadiologyService
                         ->orWhereRelation('patient', 'cardno', 'LIKE', '%' . $request['search_param'] . '%');
                 });
             })
+            ->when(!empty($request['status']), function ($query) use ($request) {
+                $query->where('rad_status', $request['status']);
+            })
             ->when($request->startDate && $request->endDate, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
             })
@@ -84,10 +87,10 @@ class RadiologyService
         $query = PatientVisit::query()->where('tenant_id', $tenantId);
         $totalPatientsToday = (clone $query)->whereNotNull('rad_status')
             ->whereDate('created_at', now()->toDateString())->count();
-        $testResultToday = Radiology::where('tenant_id', $tenantId)->whereDate('created_at', now()->toDateString())
-            ->where('status', GeneralEnums::READY->value)->count();
-        $testResultPendingToday = Radiology::where('tenant_id', $tenantId)->whereDate('created_at', now()->toDateString())
-            ->where('status', GeneralEnums::NOT_READY->value)->count();
+        $testResultToday = (clone $query)->whereDate('created_at', now()->toDateString())
+            ->where('rad_status', GeneralEnums::COMPLETED->value)->count();
+        $testResultPendingToday = (clone $query)->whereDate('created_at', now()->toDateString())
+            ->where('rad_status', GeneralEnums::PENDING->value)->count();
 
         return [
             'totalPatientsToday' => $totalPatientsToday,
@@ -106,6 +109,7 @@ class RadiologyService
                 'Patient No'       => $visit->patient->patientno,
                 'Visit No'       => $visit->visitno,
                 'Date'      => $visit->created_at->format('Y-m-d H:i'),
+                'Status'       => $visit->rad_status,
             ];
         })->toArray();
 

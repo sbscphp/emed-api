@@ -4,6 +4,7 @@ namespace App\Http\Controllers\v1\Notification;
 
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
+use App\Models\Tenant;
 use App\Responser\JsonResponser;
 use App\Services\Notification\NotificationService;
 use Illuminate\Http\Request;
@@ -50,14 +51,16 @@ class NotificationController extends Controller
         return JsonResponser::send(false, 'Notification marked as read.', $record, 200);
     }
 
-    public function markAllAsRead()
+    public function markAllAsRead(Request $request)
     {
         $user = Auth::user();
+        $tenantId = $request->header('X-Tenant-ID');
+        $tenant = Tenant::where('uuid', $tenantId)->first();
 
         // Mark all as read
-        Notification::where('is_read', 'false')
+        Notification::where('is_read', false)
             // ->where('type', $user->role)
-            ->where('tenant_domain', $user->tenant->domain)
+            ->where('tenant_domain', $tenant->domain)
             ->update([
                 'is_read' => true,
                 'read_at' => now(),

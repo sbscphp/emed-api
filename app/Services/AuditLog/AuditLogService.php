@@ -174,7 +174,7 @@ class AuditLogService
                 'User ID'         => $log->causer->id ?? 'N/A',
                 'User Role'       => $role->display_name ?? $role->name ?? 'N/A',
                 'Timestamp'       => $log->created_at->toDateTimeString(),
-                'Action Taken'    => $log->action,
+                'Action Taken'    => $log->log_name,
                 'Module Accessed' => $log->module_accessed,
             ];
         })->toArray();

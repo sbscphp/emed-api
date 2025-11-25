@@ -18,6 +18,7 @@ return new class extends Migration
             $table->foreignId('patient_id')->constrained('patients')->onDelete('cascade');
             $table->unsignedBigInteger('visit_id')->nullable();
             $table->unsignedBigInteger('consultation_id')->nullable();
+            $table->unsignedBigInteger('consultedBy')->nullable();
             $table->unsignedBigInteger('test_id')->nullable();
             $table->string('test_name')->nullable();
             $table->string('department')->nullable();

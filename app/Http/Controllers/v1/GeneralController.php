@@ -70,7 +70,10 @@ class GeneralController extends Controller
     {
         try {
             $tenantId = $request->header('X-Tenant-ID');
-            $record = Service::where('tenant_id', $tenantId)->orderBy('id', 'ASC')->get();
+            $record = Service::where('tenant_id', $tenantId)
+                ->when(!empty($request['type']), function ($query) use ($request) {
+                    $query->where('type', $request['type']);
+                })->orderBy('id', 'ASC')->get();
 
             return JsonResponser::send(false, 'Record found successfully', $record, 200);
         } catch (\Throwable $th) {
@@ -82,8 +85,8 @@ class GeneralController extends Controller
     {
         try {
             $tenantId = $request->header('X-Tenant-ID');
-            //$record = ServiceUnit::where('tenant_id', $tenantId)->orderBy('id', 'ASC')->get();
-            $record = ServiceUnit::all();
+            $record = ServiceUnit::where('tenant_id', $tenantId)->orderBy('id', 'ASC')->get();
+            // $record = ServiceUnit::all();
 
             return JsonResponser::send(false, 'Record found successfully', $record, 200);
         } catch (\Throwable $th) {
