@@ -75,7 +75,7 @@ class NotificationService
     public function notification($notification)
     {
         $notification->update([
-            'is_read' => "true",
+            'is_read' => true,
             'read_at' => now()
         ]);
 

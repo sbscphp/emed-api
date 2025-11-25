@@ -4,6 +4,7 @@ namespace App\Http\Controllers\v1\Admin\Revamp;
 
 use App\Enums\GeneralEnums;
 use App\Helpers\ExportHelper;
+use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Models\BillingLog;
 use App\Models\Consultation;
@@ -64,6 +65,13 @@ class LabController extends Controller
             DB::connection('tenant');
             $tenantId = $request->header('X-Tenant-ID');
 
+            $customDate = [];
+            if ($request->period === 'custom date' && $request->start_date && $request->end_date) {
+                $customDate = [$request->start_date, $request->end_date];
+            }
+
+            $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+
             $labTestQuery = Laboratory::query()
                 ->with('billingLogDetail.billingLog')
                 ->where('tenant_id', $tenantId)
@@ -88,6 +96,12 @@ class LabController extends Controller
                 ->when($request->test_status, function ($query) use ($request) {
                     $query->where('status', $request->test_status);
                 })
+                ->when($request->startDate && $request->endDate, function ($query) use ($request) {
+                    $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+                })
+                ->when($dateFilter, function ($query) use ($dateFilter) {
+                    return $query->whereBetween('created_at', $dateFilter);
+                })
                 ->with(['patient', 'visit', 'consultation:id,consulted_by', 'billingLogDetail'])
                 ->orderBy('id', 'DESC');
 
@@ -97,11 +111,36 @@ class LabController extends Controller
                 : $labTestQuery->get();
 
             // Attach consulted user from landlord DB
+            // $labTest->each(function ($item) {
+            //     if ($item->consultation && $item->consultation->consulted_by) {
+            //         $consultedUser = User::on('landlord')
+            //             ->select('id', 'first_name', 'last_name', 'email')
+            //             ->find($item->consultation->consulted_by);
+
+            //         $item->consultedBy = $consultedUser;
+            //     } else {
+            //         $item->consultedBy = null;
+            //     }
+            // });
+
             $labTest->each(function ($item) {
+                $consultedById = null;
+
+                // Priority 1: consultation table doctor
                 if ($item->consultation && $item->consultation->consulted_by) {
+                    $consultedById = $item->consultation->consulted_by;
+                }
+
+                // Priority 2: fallback to consultedBy column on Laboratory table
+                if (!$consultedById && $item->consultedBy) {
+                    $consultedById = $item->consultedBy; // assuming this is a user_id
+                }
+
+                // If still null, no consulted-by user exists
+                if ($consultedById) {
                     $consultedUser = User::on('landlord')
                         ->select('id', 'first_name', 'last_name', 'email')
-                        ->find($item->consultation->consulted_by);
+                        ->find($consultedById);
 
                     $item->consultedBy = $consultedUser;
                 } else {

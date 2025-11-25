@@ -428,7 +428,7 @@ class ConsultationService
                 throw new \Exception("No treatment medications provided.");
             }
 
-            $serviceUnit = ServiceUnit::where('name', 'Pharmacy')->first();
+            $serviceUnit = ServiceUnit::where('name', 'Pharmacy')->where('tenant_id', $tenantId)->first();
             if (empty($serviceUnit)) {
                 throw new \Exception("Pharmacy service unit not found.");
             }

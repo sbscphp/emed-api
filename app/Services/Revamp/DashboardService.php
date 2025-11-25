@@ -88,16 +88,40 @@ class DashboardService
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
         $tenantId = $request->header('X-Tenant-ID');
 
-        $patientQuery = Patient::query()->where('tenant_id', $tenantId);
+        $patientQuery = Patient::query()->where('tenant_id', $tenantId)
+            ->when($request->startDate && $request->endDate, function ($query) use ($request) {
+                $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+            })
+            ->when($dateFilter, function ($query) use ($dateFilter) {
+                return $query->whereBetween('created_at', $dateFilter);
+            });
         $totalPatient = (clone $patientQuery)->count();
         $totalAdmittedPatient = (clone $patientQuery)->where('status', GeneralEnums::ADMITTED->value)->count();
 
-        $consultationQuery = Consultation::query()->where('tenant_id', $tenantId);
+        $consultationQuery = Consultation::query()->where('tenant_id', $tenantId)
+            ->when($request->startDate && $request->endDate, function ($query) use ($request) {
+                $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+            })
+            ->when($dateFilter, function ($query) use ($dateFilter) {
+                return $query->whereBetween('created_at', $dateFilter);
+            });
         $totalConsultation = (clone $consultationQuery)->count();
         $totalPendingConsultation = PatientVisit::where('status', PatientVisitStatusEnums::VISIT_INITIATED->value)
-            ->where('tenant_id', $tenantId)->count();
+            ->where('tenant_id', $tenantId)
+            ->when($request->startDate && $request->endDate, function ($query) use ($request) {
+                $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+            })
+            ->when($dateFilter, function ($query) use ($dateFilter) {
+                return $query->whereBetween('created_at', $dateFilter);
+            })->count();
 
-        $billingQuery = BillingLog::query()->where('tenant_id', $tenantId);
+        $billingQuery = BillingLog::query()->where('tenant_id', $tenantId)
+            ->when($request->startDate && $request->endDate, function ($query) use ($request) {
+                $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+            })
+            ->when($dateFilter, function ($query) use ($dateFilter) {
+                return $query->whereBetween('created_at', $dateFilter);
+            });
         $totalRevenue = (clone $billingQuery)->sum('grand_total');
         $outstandingPayment = (clone $billingQuery)->sum('amount_outstanding');
 
@@ -146,7 +170,7 @@ class DashboardService
         ];
         // End Statistics
 
-        $totalDepartmentRevenue = BillingLogDetail::whereRelation('billingLog', 'tenant_id', $tenantId)
+        $totalDepartmentRevenue = BillingLogDetail::where('tenant_id', $tenantId)
             ->when(!empty($request['department_id']), function ($query) use ($request) {
                 $query->where('service_unit_id', $request['department_id']);
             })->when($request->startDate && $request->endDate, function ($query) use ($request) {

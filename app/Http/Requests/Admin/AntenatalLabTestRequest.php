@@ -22,20 +22,17 @@ class AntenatalLabTestRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'patient_id' => 'required',
-            'visit_id' => 'required',
-            'vdrl' => 'required',
-            'hcv' => 'required',
-            'genotype' => 'required',
-            'hbsag' => 'required',
-            'hiv' => 'required',
-            'blood_group' => 'required',
-            'hbgd' => 'required',
-            'pcv' => 'required',
-            'cvs' => 'required',
-            'rs' => 'required',
-            'spleen' => 'required',
-            'liver' => 'required'
+            'patient_id' => 'required|exists:tenant.patients,id',
+            'visit_id' => 'required|exists:tenant.patient_visits,id',
+            // 'consultation_id' => 'required|exists:tenant.patient_visit_consultation,id',
+
+            // test must be an array
+            // 'test' => 'required|array|min:1',
+
+            // each test item should have an id, name and department
+            'test.*.test_id' => 'required|exists:tenant.lab_services,id',
+            'test.*.test_name' => 'required|string',
+            // 'test.*.department' => 'required|string',
         ];
     }
 }

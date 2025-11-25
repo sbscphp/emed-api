@@ -302,6 +302,9 @@ class BillingService
             SUM(CASE WHEN status = "Paid" THEN amount ELSE 0 END) as amount_paid,
             SUM(CASE WHEN status = "Pending" THEN amount ELSE 0 END) as outstanding
         ')
+            ->when(!empty($request['service_unit']), function ($query) use ($request) {
+                $query->where('service_unit_id', $request['service_unit']);
+            })
             ->when($request->start_date && $request->end_date, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
             })
@@ -628,7 +631,7 @@ class BillingService
 
             // Grand total excludes tax (only items - discount)
             $billing->grand_total = max(0, $itemsTotal - $billing->discount);
-            
+
             // --- Payment Progression ---
             $billing->amount_paid += $totalPaymentApplied;
 

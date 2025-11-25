@@ -56,6 +56,9 @@ class LaboratoryService
                         ->orWhereRelation('patient', 'cardno', 'LIKE', '%' . $request['search_param'] . '%');
                 });
             })
+            ->when(!empty($request['status']), function ($query) use ($request) {
+                $query->where('lab_status', $request['status']);
+            })
             ->when($request->startDate && $request->endDate, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
             })
@@ -82,10 +85,10 @@ class LaboratoryService
         $labQuery = Laboratory::query()->where('tenant_id', $tenantId);
         $totalPatientsToday = (clone $query)->whereNotNull('lab_status')
             ->whereDate('created_at', now()->toDateString())->count();
-        $testResultToday = (clone $labQuery)->whereDate('created_at', now()->toDateString())
-            ->where('status', GeneralEnums::READY->value)->count();
-        $testResultPendingToday = (clone $labQuery)->whereDate('created_at', now()->toDateString())
-            ->where('status', GeneralEnums::NOT_READY->value)->count();
+        $testResultToday = (clone $query)->whereDate('created_at', now()->toDateString())
+            ->where('lab_status', GeneralEnums::COMPLETED->value)->count();
+        $testResultPendingToday = (clone $query)->whereDate('created_at', now()->toDateString())
+            ->where('lab_status', GeneralEnums::PENDING->value)->count();
 
         return [
             'totalPatientsToday' => $totalPatientsToday,
@@ -104,6 +107,7 @@ class LaboratoryService
                 'Patient No'       => $visit->patient->patientno,
                 'Visit No'       => $visit->visitno,
                 'Date'      => $visit->created_at->format('Y-m-d H:i'),
+                'Status'       => $visit->lab_status,
             ];
         })->toArray();
 

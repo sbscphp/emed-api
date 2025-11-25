@@ -19,7 +19,7 @@ class Lab_Service_Controller extends Controller
         try {
             $validated = $request->validated();
             $tenantId = $request->header('X-Tenant-ID');
-            $serviceunit = ServiceUnit::where("name", "Laboratory")->first() ?? null;
+            $serviceunit = ServiceUnit::where("name", "Laboratory")->where('tenant_id', $tenantId)->first() ?? null;
             $data = LabService::create([
                 'tenant_id'        => $tenantId,
                 "service_unit_id" => $serviceunit->id,

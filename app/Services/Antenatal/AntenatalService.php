@@ -66,6 +66,7 @@ class AntenatalService
     public function createLabTest($request)
     {
         try {
+            $currentUserInstance = UserMgtHelper::userInstance();
             $tenantId = $request->header('X-Tenant-ID');
             $visit = PatientVisit::findOrFail($request->visit_id);
 
@@ -113,6 +114,7 @@ class AntenatalService
                         'test_id'         => $labService->id,
                         'patient_id'      => $request->patient_id,
                         'consultation_id' => $request->consultation_id,
+                        'consultedBy'    => $currentUserInstance->id,
                         'test_name'       => $labService->name,
                         'department'      => $labService->class,
                     ]);
@@ -159,7 +161,7 @@ class AntenatalService
 
             // Update visit status
             $visit->update([
-                'status' => PatientVisitStatusEnums::INVESTIGATION->value,
+                'lab_status' => GeneralEnums::PENDING->value,
             ]);
 
             return $labInvestigations;
