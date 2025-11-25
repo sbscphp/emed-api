@@ -4,6 +4,7 @@ namespace App\Services\Notification;
 
 use App\Helpers\GeneralHelper;
 use App\Models\Notification;
+use App\Models\Tenant;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -17,7 +18,9 @@ class NotificationService
     public function overview($request)
     {
         $currentUser = Auth::user();
-        $tenant = $currentUser->tenant;
+        $tenantId = $request->header('X-Tenant-ID');
+        $tenant = Tenant::where('uuid', $tenantId)->first();
+
         // Extract custom date range if available
         $customDate = [];
         if ($request->period === 'custom date' && $request->start_date && $request->end_date) {
@@ -26,7 +29,10 @@ class NotificationService
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
 
-        $records = Notification::query()
+        // --------------------------------------------------------------------
+        // 🔥 Base query for all filters (used for both listing & unread count)
+        // --------------------------------------------------------------------
+        $baseQuery = Notification::query()
             ->where('tenant_domain', $tenant->domain)
             ->when($request->search_param, function ($query) use ($request) {
                 $query->where('title', 'LIKE', '%' . $request->search_param . '%');
@@ -39,12 +45,31 @@ class NotificationService
             })
             ->when($dateFilter, function ($query) use ($dateFilter) {
                 return $query->where('created_at', '>=', $dateFilter);
-            })
-            ->when($request->sortBy == 'alphabetically', function ($query) {
-                $query->orderBy('title', 'ASC');
             });
 
-        return $records->paginate($request->limit);
+        // -----------------------------
+        // 🔥 Get unread notification count
+        // -----------------------------
+        $unreadCount = (clone $baseQuery)
+            ->where('is_read', false)
+            ->count();
+
+        // -----------------------------
+        // 🔥 Apply sorting for listing
+        // -----------------------------
+        $records = (clone $baseQuery)
+            ->when($request->sortBy == 'alphabetically', function ($query) {
+                $query->orderBy('title', 'ASC');
+            })
+            ->orderBy('id', 'DESC')->paginate($request->limit);
+
+        // -----------------------------
+        // 🔥 Add unread count to the response
+        // -----------------------------
+        return [
+            'unread_notification_count' => $unreadCount,
+            'data' => $records
+        ];
     }
 
     public function notification($notification)
@@ -56,5 +81,4 @@ class NotificationService
 
         return $notification->fresh();
     }
-
 }

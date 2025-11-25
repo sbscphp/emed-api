@@ -45,6 +45,7 @@ class LaboratoryService
 
         $records = PatientVisit::query()
             ->where('tenant_id', $tenantId)
+            ->whereNotNull('lab_status')
             // ->where('status', PatientVisitStatusEnums::INVESTIGATION->value)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
@@ -79,7 +80,7 @@ class LaboratoryService
         $tenantId = $request->header('X-Tenant-ID');
         $query = PatientVisit::query()->where('tenant_id', $tenantId);
         $labQuery = Laboratory::query()->where('tenant_id', $tenantId);
-        $totalPatientsToday = (clone $query)->where('status', PatientVisitStatusEnums::INVESTIGATION->value)
+        $totalPatientsToday = (clone $query)->whereNotNull('lab_status')
             ->whereDate('created_at', now()->toDateString())->count();
         $testResultToday = (clone $labQuery)->whereDate('created_at', now()->toDateString())
             ->where('status', GeneralEnums::READY->value)->count();
@@ -161,8 +162,20 @@ class LaboratoryService
             'notes'         => $data->notes,
             'user_id'    => $currentUserInstance->id,
             // 'requested_by'  => $data->requested_by,
-            // 'test_status'   => 'completed'
+            'status'   => 'Ready'
         ]);
+
+        $visit = PatientVisit::find($test->visit_id);
+        $totalLabRequests = Laboratory::where('visit_id', $visit->id)->count();
+        $completedLabRequests = LaboratoryResult::whereIn(
+            'patient_visit_lab_id',
+            Laboratory::where('visit_id', $visit->id)->pluck('id')
+        )->count();
+        if ($totalLabRequests > 0 && $totalLabRequests === $completedLabRequests) {
+            $visit->update([
+                'lab_status' => GeneralEnums::COMPLETED->value,
+            ]);
+        }
 
         return $test->refresh()->load('results');
     }

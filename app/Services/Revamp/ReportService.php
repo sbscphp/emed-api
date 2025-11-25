@@ -3,11 +3,15 @@
 namespace App\Services\Revamp;
 
 use App\Helpers\ExportHelper;
+use Illuminate\Support\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use App\Helpers\GeneralHelper;
 use App\Models\BillingLog;
 use App\Models\Service;
 use App\Repositories\Laboratory\LaboratoryInterface;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class ReportService
@@ -139,43 +143,71 @@ class ReportService
 
     public function fetchAllReportOverview($request)
     {
-        $customDate = [];
+        $tenantId = $request->header('X-Tenant-ID');
 
+        // Handle date range: either custom OR system dateFilter, not both
         if ($request->period === 'custom date' && $request->start_date && $request->end_date) {
-            $customDate = [$request->start_date, $request->end_date];
+            $dateRange = [$request->start_date, $request->end_date];
+        } else {
+            $dateRange = GeneralHelper::dateFilter($request->period);
         }
 
-        $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
-
+        // Base query
         $records = Service::query()
-            ->when($request->start_date && $request->end_date, function ($q) use ($request) {
-                $q->whereBetween('created_at', [$request->start_date, $request->end_date]);
-            })
-            ->when($dateFilter, function ($q) use ($dateFilter) {
-                $q->whereBetween('created_at', $dateFilter);
+            ->where('tenant_id', $tenantId)
+            ->when($dateRange, function ($q) use ($dateRange) {
+                $q->whereBetween('created_at', $dateRange);
             });
 
+        // === PATIENT REPORT ===
         if ($request->type === 'Patient') {
             $records->withCount(['visits as total_patient_attended']);
-        } elseif ($request->type === 'Financial') {
-            $records->withSum('billing', 'grand_total')
-                ->withSum('billing', 'amount_outstanding');
         }
 
-        // Apply pagination or fetch all
-        $results = !empty($request->paginate) && empty($request->export)
+        // === FINANCIAL REPORT ===
+        if ($request->type === 'Financial') {
+            $records
+                ->withSum('billing', 'amount_paid')
+                ->withSum([
+                    'billing as billing_sum_amount_pending' => function ($q) {}
+                ], DB::raw('grand_total - amount_paid'));
+        }
+
+        // Fetch paginated or all results
+        $results = (!empty($request->paginate) && empty($request->export))
             ? $records->orderBy('id', 'DESC')->paginate($request->limit ?? 15)
             : $records->orderBy('id', 'DESC')->get();
 
+        // Post-process for financial
+        if ($request->type === 'Patient') {
+            $totalPatient = $results->sum('total_patient_attended');
+            $total_amount_pending = $results->sum('pending_payment');
+            return [
+                'total_patient' => $totalPatient,
+                'services' => $results, // The paginated Service records
+            ];
+        }
         if ($request->type === 'Financial') {
             $results->transform(function ($record) {
-                $record->total_revenue = $record->billing_sum_grand_total ?? 0;
-                $record->pending_payment = $record->billing_sum_amount_outstanding ?? 0;
+                $record->total_revenue = $record->billing_sum_amount_paid ?? 0;
+                $record->pending_payment = $record->billing_sum_amount_pending ?? 0;
 
-                unset($record->billing_sum_grand_total, $record->billing_sum_amount_outstanding);
+                unset(
+                    $record->billing_sum_amount_paid,
+                    $record->billing_sum_amount_pending,
+                    $record->billing_sum_grand_total
+                );
 
                 return $record;
             });
+
+            $total_amount_paid = $results->sum('total_revenue');
+            $total_amount_pending = $results->sum('pending_payment');
+            return [
+                'total_amount_paid' => $total_amount_paid,
+                'total_amount_pending' => $total_amount_pending,
+                'services' => $results, // The paginated Service records
+            ];
         }
 
         return $results;
@@ -183,23 +215,51 @@ class ReportService
 
     public function fetchAllReportExport($records, $format, $type = null)
     {
-        if ($records->isEmpty()) {
+        // Normalize input: accept either
+        if (is_array($records) && isset($records['services'])) {
+            $recordsCollection = $records['services'];
+        } else {
+            $recordsCollection = is_array($records) ? collect($records) : $records;
+        }
+
+        // If it's a paginator instance, extract the underlying collection
+        if ($recordsCollection instanceof LengthAwarePaginator || $recordsCollection instanceof Paginator) {
+            $recordsCollection = $recordsCollection->getCollection();
+        }
+
+        // Ensure we have a Collection
+        if (!($recordsCollection instanceof Collection)) {
+            $recordsCollection = collect($recordsCollection);
+        }
+
+        if ($recordsCollection->isEmpty()) {
             throw new \Exception("No records found for export.");
         }
 
+        $exportData = [];
+        $headers = [];
+
         if ($type == 'Patient') {
-            $exportData = $records->map(function ($record) {
+            $headers = ['Department', 'Total Patient Attended'];
+            $exportData = $recordsCollection->map(function ($record) {
                 return [
                     'Department'              => $record->name,
                     'Total Patient Attended'  => $record->total_patient_attended ?? 0,
                 ];
+                return [
+                    'Department'      => data_get($record, 'name', ''),
+                    'Total Patient Attended'   => data_get($record, 'total_patient_attended', 0) ?? 0,
+                ];
             })->toArray();
         } elseif ($type == 'Financial') {
-            $exportData = $records->map(function ($record) {
+            $headers = ['Department', 'Total Revenue', 'Pending Payment'];
+
+            // 1. Map the Service records first
+            $exportData = $recordsCollection->map(function ($record) {
                 return [
-                    'Department'       => $record->name,
-                    'Total Revenue'    => $record->total_revenue ?? 0,
-                    'Pending Payment'  => $record->pending_payment ?? 0,
+                    'Department'      => data_get($record, 'name', ''),
+                    'Total Revenue'   => data_get($record, 'total_revenue', 0) ?? 0,
+                    'Pending Payment' => data_get($record, 'pending_payment', 0) ?? 0,
                 ];
             })->toArray();
         } else {
@@ -208,13 +268,16 @@ class ReportService
 
         if (strtolower($format) == 'csv') {
             $fileName = strtolower($type) . '_report.csv';
-            return ExportHelper::streamCsv($exportData, null, $fileName);
+            return ExportHelper::streamCsv($exportData, $headers, $fileName);
         }
 
         if (strtolower($format) == 'pdf') {
             $fileName = strtolower($type) . '_report.pdf';
-            $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData])
-                ->setPaper('A1', 'landscape');
+            $pdf = Pdf::loadView('exports.patients', [
+                'patients' => $exportData,
+                'headers' => $headers,
+                'type' => $type
+            ])->setPaper('A1', 'landscape');
 
             return $pdf->download($fileName);
         }

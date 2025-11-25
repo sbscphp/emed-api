@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\v1\Admin\Revamp;
 
+use App\Enums\GeneralEnums;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Mail\TenantEmailVerification;
 use App\Models\Tenant;
+use App\Models\TenantUser;
 use App\Models\User;
 use App\Responser\JsonResponser;
 use App\Services\Revamp\AuthenticationService;
@@ -211,8 +213,8 @@ class AuthenticationController extends Controller
             ]);
 
             $credentials = $request->only(['email', 'password']);
-
             $tenant = null;
+
             if ($request->filled('tenant_uuid')) {
                 $tenant = Tenant::where('uuid', $request->tenant_uuid)->first();
 
@@ -220,9 +222,9 @@ class AuthenticationController extends Controller
                     return JsonResponser::send(true, 'Invalid hospital selected.', [], 400);
                 }
 
-                // Switch to tenant DB
                 $tenant->makeCurrent();
-            } else {
+            }
+            else {
                 DB::purge('tenant');
                 DB::setDefaultConnection('landlord');
             }
@@ -241,55 +243,61 @@ class AuthenticationController extends Controller
                 return JsonResponser::send(true, 'Your account has been deactivated. Please contact the administrator.', [], 403);
             }
 
-            if ($tenant && !$currentUser->tenants->contains($tenant->id)) {
-                return JsonResponser::send(true, 'You are not registered with this hospital.', [], 403);
-            }
-
-            $user = $currentUser->toArray();
-
             if ($tenant) {
-                $roles = $currentUser->roles()
-                    ->where('roles.tenant_id', $tenant->uuid)
-                    // ->with('permissions')
-                    ->get(['id', 'name', 'display_name']);
 
-                $currentRole = $roles->first();
-
-                // Tenant user pivot from landlord DB
-                $tenantUser = DB::connection('landlord')->table('tenant_users')
+                $tenantUser = TenantUser::on('landlord')
                     ->where('tenant_id', $tenant->id)
                     ->where('user_id', $currentUser->id)
                     ->first();
 
+                if (!$tenantUser) {
+                    return JsonResponser::send(true, 'You are not registered with this hospital.', [], 403);
+                }
+
+                if ($tenantUser->status != GeneralEnums::ACTIVE->value) {
+                    return JsonResponser::send(true, 'Your account for this hospital is inactive.', [], 403);
+                }
+
+                $roles = $currentUser->roles()
+                    ->where('roles.tenant_id', $tenant->uuid)
+                    ->get(['id', 'name', 'display_name']);
+
+                $currentRole = $roles->first();
+
+                $user = $currentUser->toArray();
                 $user['current_tenant'] = [
                     'id'   => $tenant->id,
                     'uuid' => $tenant->uuid,
                     'name' => $tenant->name,
                 ];
-                $user['current_tenant_user']  = $tenantUser;
+                $user['current_tenant_user'] = $tenantUser;
                 $user['roles'] = $roles;
                 $user['current_role'] = $currentRole ? [
                     'id'           => $currentRole->id,
                     'name'         => $currentRole->name,
                     'display_name' => $currentRole->display_name,
                 ] : null;
-            } else {
-                // SUPER ADMIN LOGIN (landlord only)
+            }
+
+            // --- SUPER ADMIN (LANDLORD) ---
+            else {
                 $roles = DB::connection('landlord')->table('roles')
                     ->join('role_user', 'roles.id', '=', 'role_user.role_id')
                     ->where('role_user.user_id', $currentUser->id)
                     ->get(['roles.id', 'roles.name', 'roles.display_name']);
 
-                $user['current_tenant']       = null;
-                $user['current_tenant_user']  = null;
+                $user = $currentUser->toArray();
+                $user['current_tenant'] = null;
+                $user['current_tenant_user'] = null;
                 $user['roles'] = $roles;
             }
 
             // --- Inject Permissions ---
             $permissionService = app(PermissionAccessService::class);
-            $permissions = $permissionService->allPermissions();
-
-            $user['permissions'] = $permissions;
+            $user['permissions'] = $permissionService->allPermissions($tenant);
+            // $permissionService = app(PermissionAccessService::class);
+            // $permissions = $permissionService->allPermissions();
+            // $user['permissions'] = $permissions;
 
             return JsonResponser::send(false, 'Login successful.', [
                 'user'        => $user,

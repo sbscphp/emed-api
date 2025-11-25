@@ -69,9 +69,7 @@ class RadiologyController extends Controller
                 ->when($request->search_param, function ($query) use ($request) {
                     $query->where(function ($subQuery) use ($request) {
                         $subQuery->where('test_name', 'LIKE', '%' . $request->search_param . '%')
-                            ->orWhere('lab_dept', 'LIKE', '%' . $request->search_param . '%')
-                            ->orWhere('ordered_test', 'LIKE', '%' . $request->search_param . '%')
-                            ->orWhere('others', 'LIKE', '%' . $request->search_param . '%');
+                            ->orWhere('department', 'LIKE', '%' . $request->search_param . '%');
                     });
                 })
                 ->when($request->payment_status, function ($query) use ($request) {
@@ -92,7 +90,7 @@ class RadiologyController extends Controller
             $labTest->each(function ($item) {
                 if ($item->consultation && $item->consultation->consulted_by) {
                     $consultedUser = User::on('landlord')
-                        ->select('id', 'fullname', 'email')
+                        ->select('id', 'first_name', 'last_name', 'email')
                         ->find($item->consultation->consulted_by);
 
                     $item->consultedBy = $consultedUser;
@@ -106,9 +104,9 @@ class RadiologyController extends Controller
                 // Use the already hydrated collection with consultedBy info
                 $exportData = $labTest->map(function ($item) {
                     return [
-                        'Date'           => $item->created_at->toDateTimeString(),
-                        'Consulted By'   => $item->consultedBy->fullname ?? 'N/A',
                         'Type Of Test'   => $item->test_name,
+                        'Date'           => $item->created_at->toDateTimeString(),
+                        'Consulted By'   => $item->consultedBy->first_name . ' ' . $item->consultedBy->first_name  ?? 'N/A',
                         'Price'          => $item->billingLogDetail->amount ?? 0,
                         'Payment Status' => $item->billingLogDetail->status ?? 'N/A',
                         'Test Status'    => $item->status,

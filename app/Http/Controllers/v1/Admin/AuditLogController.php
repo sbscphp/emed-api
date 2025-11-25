@@ -38,14 +38,14 @@ class AuditLogController extends Controller
                 'data' => $overview
             ];
 
-            if ($request['export'] === 'csv') {
-                return $this->auditLogService->activityExport($overview);
+            if ($request['export']) {
+                return $this->auditLogService->activityExport($overview, $request['export']);
             }
 
-            if ($request['export'] === 'pdf') {
-                $pdf = Pdf::loadView('exports.audit_logs', ['logs' => $overview]);
-                return $pdf->download('audit_logs.pdf');
-            }
+            // if ($request['export'] === 'pdf') {
+            //     $pdf = Pdf::loadView('exports.audit_logs', ['logs' => $overview]);
+            //     return $pdf->download('audit_logs.pdf');
+            // }
 
             if (!$request['paginate']) {
                 $records = $overview;
@@ -237,44 +237,33 @@ class AuditLogController extends Controller
 
     public function data_changes(Request $request)
     {
-
         try {
             DB::connection('tenant')->beginTransaction();
-            $validated = $request->validate([
-                "search" => "nullable|string",
-                "start_date" => "nullable|date",
-                "end_date" => "nullable|date",
-                "activity_type" => "nullable|string",
-                'export' => 'nullable|string',
-                'paginate' => 'nullable|in:1,0',
-                'module_accessed' => "nullable|string",
-                'action' => "nullable|string",
-            ]);
 
-            $logs = $this->auditLogService->data_changes($validated);
-            if (!empty($validated['export'])) {
-                $query = AuditLog::whereIn('module_accessed', ['Billing', 'Records', 'Pharmacy'])->with(['audit_log_transactions', 'causer']);
-                $logs = $query->get();
-                $export = $validated['export'];
+            $logs = $this->auditLogService->data_changes($request);
 
+            // Handle export
+            if (!empty($request['export'])) {
                 $exportData = $logs->map(function ($log) {
                     return [
-                        'User ID' => $log->causer->id ?? 'N/A',
-                        'Module' => $log->log_name,
-                        'Timestamp' => $log->created_at->toDateTimeString(),
-                        'Reason for update' => $log->description
+                        'User ID'           => $log->causer->id ?? 'N/A',
+                        'User Name'         => $log->causer->fullname ?? ($log->causer->first_name . ' ' . $log->causer->last_name ?? 'N/A'),
+                        'Module'            => $log->log_name,
+                        'Timestamp'         => $log->created_at?->toDateTimeString() ?? 'N/A',
+                        'Reason for Update' => $log->description,
                     ];
-                });
+                })->toArray();
 
-                if ($export === 'csv') {
-                    return ExportHelper::streamCsv($exportData->toArray(), null, 'audit-logs.csv');
+                if (strtolower($request['export']) === 'csv') {
+                    return ExportHelper::streamCsv($exportData, null, 'audit-logs.csv');
                 }
 
-                if ($export === 'pdf') {
-                    return ExportHelper::downloadPdf($exportData->toArray(), 'audit-logs.pdf');
+                if (strtolower($request['export']) === 'pdf') {
+                    return ExportHelper::downloadPdf($exportData, 'audit-logs.pdf');
                 }
             }
 
+            DB::connection('tenant')->commit();
 
             return JsonResponser::send(false, 'Record(s) found successfully.', $logs);
         } catch (\Throwable $th) {

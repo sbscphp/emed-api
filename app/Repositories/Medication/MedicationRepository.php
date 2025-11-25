@@ -80,7 +80,7 @@ class MedicationRepository implements MedicationRepositoryInterface
 
         // ✅ Handle export
         if (!empty($request['export'])) {
-            $medications = $query->get();
+            $medications = $query->orderBy('id', 'DESC')->get();
 
             $exportData = $medications->map(function ($med) {
                 return [

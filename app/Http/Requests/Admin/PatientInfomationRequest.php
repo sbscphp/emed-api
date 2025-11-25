@@ -32,20 +32,7 @@ class PatientInfomationRequest extends FormRequest
             'age' => 'required|integer',
             'gender' => 'required|string',
             'marital_status' => 'required|string',
-            'email' => [
-                'required',
-                'email',
-                'max:255',
-                function ($attribute, $value, $fail) {
-                    $exists = DB::table('patients')
-                        ->where('email', $value)
-                        ->exists();
-
-                    if ($exists) {
-                        $fail('This email already exists.');
-                    }
-                },
-            ],
+            'email' => ['required', 'email', 'max:255'],
             'homeaddress' => 'required|string',
             'occupation' => 'required|string',
             'bloodgroup' => 'required|string',

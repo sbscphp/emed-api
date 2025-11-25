@@ -71,6 +71,24 @@ class UserService
         return str_shuffle($password);
     }
 
+    public function generateRoleBasedPassword(string $roleName, string $firstName, string $lastName): string
+    {
+        // Get initials from first and last name
+        $initials = strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1));
+
+        // Define some symbols
+        $symbols = ['@', '#', '!', '$', '&'];
+
+        // Pick random symbol and number
+        $symbol = $symbols[array_rand($symbols)];
+        $number = rand(10, 999);
+
+        // Clean and capitalize role name (remove spaces like "Lab Technician" → "LabTechnician")
+        $roleSegment = ucfirst(str_replace(' ', '', $roleName));
+
+        // Build final password
+        return "{$symbol}{$roleSegment}{$initials}{$number}";
+    }
 
     /**
      * Update an existing user with the provided data.

@@ -10,7 +10,9 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\SystemReportExport;
 use App\Helpers\ExportHelper;
+use App\Models\Tenant;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class UserRepository
@@ -26,57 +28,112 @@ class UserRepository implements UserRepositoryInterface
      */
     public function all($filters = [], $search = null, $export = null, $paginate = true, $perPage = 20)
     {
-        $query = User::query();
+        $tenantUuid = $filters['tenant_id'] ?? null;
+        $tenant = Tenant::where('uuid', $tenantUuid)->first();
 
+        if (!$tenant) {
+            throw new \Exception('Invalid tenant.');
+        }
+
+        // Switch DB to tenant context
+        $tenant->makeCurrent();
+        $tenantId = $tenant->id;
+
+        // Base query
+        $query = User::query()
+            ->select('users.*', 'tenant_users.status as tenant_status')
+            ->join('tenant_users', 'tenant_users.user_id', '=', 'users.id')
+            ->where('tenant_users.tenant_id', $tenantId)
+            ->whereNull('tenant_users.deleted_at')
+            ->with(['tenantUsers' => function ($q) use ($tenantId) {
+                $q->where('tenant_id', $tenantId)->whereNull('deleted_at');
+            }]);
+
+        // Search filter
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
-                $q->where('fullname', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('phone_number', 'like', "%{$search}%");
+                $terms = explode(' ', $search);
+                foreach ($terms as $term) {
+                    $q->where(function ($q2) use ($term) {
+                        $q2->where('first_name', 'like', "%{$term}%")
+                            ->orWhere('last_name', 'like', "%{$term}%")
+                            ->orWhere('fullname', 'like', "%{$term}%")
+                            ->orWhere('email', 'like', "%{$term}%")
+                            ->orWhere('phone_number', 'like', "%{$term}%");
+                    });
+                }
             });
         }
 
-        if (!empty($filters['role'])) {
-            $query->where('role', $filters['role']);
-        }
+        // Status filter
         if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+            $query->where('tenant_users.status', $filters['status']);
         }
 
-        // Handle export (full dataset, no pagination)
-        if ($export) {
-            $users = $query->get();
+        // Role filter (manual)
+        if (!empty($filters['role'])) {
+            $roleId = $filters['role'];
+            $tenantDb = DB::connection('tenant')->getDatabaseName();
 
-            $exportData = $users->map(function ($user) {
+            $query->whereExists(function ($sub) use ($tenantDb, $tenant, $roleId) {
+                $sub->select(DB::raw(1))
+                    ->from("$tenantDb.role_user")
+                    ->join("$tenantDb.roles", "roles.id", "=", "role_user.role_id")
+                    ->whereRaw("role_user.user_id = users.id")
+                    ->where("roles.tenant_id", $tenant->uuid)
+                    ->where("role_user.role_id", $roleId);
+            });
+        }
+
+        if (!empty($export)) {
+            $users = $query->orderBy('users.id', 'DESC')->get();
+
+            $exportData = $users->map(function ($user) use ($tenant) {
+
+                // fetch tenant-specific role for export
+                $role = $user->roles()
+                    ->where('roles.tenant_id', $tenant->uuid)
+                    ->first(['roles.name', 'roles.display_name']);
+
                 return [
-                    'ID'            => $user->id,
-                    'Fullname'      => $user->fullname,
-                    'Email'         => $user->email,
-                    'Date_of_birth' => $user->date_of_birth,
-                    'PhoneNumber'   => $user->phone_number,
-                    'Role'          => $user->role,
-                    'Status'        => $user->status,
-                    'Created At'    => $user->created_at,
+                    'Full Name'    => $user->fullname ?? ($user->first_name . ' ' . $user->last_name),
+                    'Role'         => $role->display_name ?? $role->name ?? 'N/A',
+                    'Email'        => $user->email,
+                    'Status'       => ucfirst($user->tenant_status ?? 'Inactive'),
                 ];
             })->toArray();
 
-            if (strtolower($export) === 'csv') {
-                return ExportHelper::streamCsv($exportData, null, 'users.csv'); // Response
-            }
-            if (strtolower($export) === 'pdf') {
-                return ExportHelper::downloadPdf($exportData, 'users.pdf'); // Response
-            }
-
-            throw new \Exception('Invalid export format.');
+            return match (strtolower($export)) {
+                'csv' => ExportHelper::streamCsv($exportData, null, 'users.csv'),
+                'pdf' => ExportHelper::downloadPdf($exportData, 'users.pdf'),
+                default => throw new \Exception('Invalid export format.'),
+            };
         }
 
-        // Return paginator or full collection
-        return $paginate
-            ? $query->orderBy('id', 'DESC')->paginate($perPage) // LengthAwarePaginator
-            : $query->orderBy('id', 'DESC')->get();             // Collection
+        // Fetch results
+        $result = $paginate
+            ? $query->orderBy('users.id', 'DESC')->paginate($perPage)
+            : $query->orderBy('users.id', 'DESC')->get();
+
+        // Attach tenant-specific `userRole` exactly like login does
+        $result->getCollection()->transform(function ($user) use ($tenant) {
+
+            // Fetch the user role for this tenant
+            $userRole = $user->roles()
+                ->where('roles.tenant_id', $tenant->uuid)
+                ->first(['roles.id', 'roles.name', 'roles.display_name']);
+
+            // Attach only userRole
+            $user->userRole = $userRole;
+
+            // Remove roles array completely
+            unset($user->roles);
+
+            return $user;
+        });
+
+        return $result;
     }
-
-
 
     /**
      * Create a new user in the database.

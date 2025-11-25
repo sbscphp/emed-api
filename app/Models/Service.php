@@ -12,7 +12,7 @@ class Service extends Model
 
     public function visits()
     {
-        return $this->hasMany(PatientVisit::class, 'service_id');
+        return $this->hasMany(PatientVisit::class, 'service_id', 'id');
     }
 
     public function billing()

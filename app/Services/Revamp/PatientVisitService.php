@@ -15,6 +15,7 @@ use App\Models\DeliveryDetail;
 use App\Models\DosageAdministration;
 use App\Models\Immunization;
 use App\Models\Patient;
+use App\Models\Service;
 use App\Models\Surgery;
 use App\Models\Triage;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -99,8 +100,8 @@ class PatientVisitService
         $tenantId = $request->header('X-Tenant-ID');
         $query = PatientVisit::query()->where('tenant_id', $tenantId)->where('service_id', $request->service_id);
 
-        $awaitingTriage = (clone $query)->where('status', PatientVisitStatusEnums::VISIT_INITIATED->value)->count();
-        $awaitingConsultation = (clone $query)->where('status', PatientVisitStatusEnums::TRIAGE->value)->count();
+        $awaitingTriage = (clone $query)->where('triage_status', GeneralEnums::PENDING->value)->count();
+        $awaitingConsultation = (clone $query)->where('con_status', GeneralEnums::PENDING->value)->count();
         // $admitted = Consultation::where('admit_patient', 1)->whereDate('created_at', now()->toDateString())->count();
         $admitted = Patient::where('status', PatientVisitStatusEnums::ADMITTED->value)->whereDate('created_at', now()->toDateString())->count();
         $discharged = (clone $query)->where('status', PatientVisitStatusEnums::DISCHARGED->value)->count();
@@ -108,11 +109,11 @@ class PatientVisitService
         $completedSugery = Surgery::where('tenant_id', $tenantId)->where('status', GeneralEnums::COMPLETED)->count();
         $cancelledSugery = Surgery::where('tenant_id', $tenantId)->where('status', GeneralEnums::CANCELLED)->count();
 
-        $triagePatient = (clone $query)->where('status', PatientVisitStatusEnums::TRIAGE->value)->count();
+        $triagePatient = (clone $query)->where('triage_status', GeneralEnums::COMPLETED->value)->count();
         $totalImmunization = Immunization::where('tenant_id', $tenantId)->count();
         $vaccineAdministered = DosageAdministration::where('tenant_id', $tenantId)->count();
 
-        $awaitingCounselling = (clone $query)->where('status', PatientVisitStatusEnums::TRIAGE->value)->count();
+        $awaitingCounselling = (clone $query)->where('counsel_status', GeneralEnums::PENDING->value)->count();
         $totalCounselled = CounsellingDetail::where('tenant_id', $tenantId)->count();
 
         $totalDeliveries = DeliveryDetail::where('tenant_id', $tenantId)->count();
@@ -213,8 +214,16 @@ class PatientVisitService
                 'idLength' => 6,
             ]);
 
+            // check if patient is an hiv patient
+            $patientService = Service::find($visit->service_id);
+
             $visit->update([
-                'status' => PatientVisitStatusEnums::TRIAGE->value,
+                'status' => PatientVisitStatusEnums::ONGOING->value,
+                'triage_status' => GeneralEnums::COMPLETED->value,
+                'con_status' => GeneralEnums::PENDING->value,
+                'immunization_status' => $patientService->name == 'IMMUNIZATION' ? GeneralEnums::PENDING->value : NULL,
+                'counsel_status' => $patientService->name == 'HIV/AIDS' ? GeneralEnums::PENDING->value : NULL,
+                'natal_status' => $patientService->name == 'ANTENATAL' ? GeneralEnums::PENDING->value : NULL,
             ]);
 
             // update patient registaration staus
@@ -248,7 +257,7 @@ class PatientVisitService
                 });
             })
             ->when(!empty($request['patient_status']), function ($query) use ($request) {
-                $query->whereRelation('visit', 'status', $request['patient_status']);
+                $query->whereRelation('visit', 'triage_status', $request['patient_status']);
             })
             ->when(!empty($request['payment_status']), function ($query) use ($request) {
                 $query->whereRelation('visit.patientBilling', 'payment_status', $request['payment_status']);
@@ -287,7 +296,7 @@ class PatientVisitService
 
         $totalPatients = Patient::where('tenant_id', $tenantId)->count();
         $pendingPatients = PatientVisit::where('tenant_id', $tenantId)
-            ->where('status', PatientVisitStatusEnums::VISIT_INITIATED->value)->count();
+            ->where('triage_status', GeneralEnums::PENDING->value)->count();
         $totalOrders = (clone $query)->count();
         $patientLog = (clone $query)->count();
 

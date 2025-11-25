@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -21,13 +22,15 @@ class ServicesTableSeeder extends Seeder
         DB::statement('ALTER TABLE services AUTO_INCREMENT = 1');
 
         Schema::enableForeignKeyConstraints();
+        $tenant = app('currentTenant');
+        $now = Carbon::now();
 
         $services = [
-            ['name' => 'GOPD'],
-            ['name' => 'SOPD'],
-            ['name' => 'IMMUNIZATION'],
-            ['name' => 'HIV/AIDS'],
-            ['name' => 'ANTENATAL'],
+            ['tenant_id' => $tenant->uuid, 'name' => 'GOPD', 'price' => 0.00, 'created_at' => $now, 'updated_at' => $now],
+            ['tenant_id' => $tenant->uuid, 'name' => 'SOPD', 'price' => 0.00, 'created_at' => $now, 'updated_at' => $now],
+            ['tenant_id' => $tenant->uuid, 'name' => 'IMMUNIZATION', 'price' => 0.00, 'created_at' => $now, 'updated_at' => $now],
+            ['tenant_id' => $tenant->uuid, 'name' => 'HIV/AIDS', 'price' => 0.00, 'created_at' => $now, 'updated_at' => $now],
+            ['tenant_id' => $tenant->uuid, 'name' => 'ANTENATAL', 'price' => 0.00, 'created_at' => $now, 'updated_at' => $now],
         ];
 
         DB::table('services')->insert($services);

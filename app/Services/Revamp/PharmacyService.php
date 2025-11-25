@@ -53,6 +53,7 @@ class PharmacyService
 
         $records = PatientVisit::query()
             ->where('tenant_id', $tenantId)
+            ->whereNotNull('pharm_status')
             // ->where('status', PatientVisitStatusEnums::TREATMENT->value)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
@@ -63,7 +64,7 @@ class PharmacyService
                 });
             })
             ->when(!empty($request['patient_status']), function ($query) use ($request) {
-                $query->where('status', $request['patient_status']);
+                $query->where('pharm_status', $request['patient_status']);
             })
             ->when($request->startDate && $request->endDate, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
@@ -87,13 +88,16 @@ class PharmacyService
     public function stats($request)
     {
         $tenantId = $request->header('X-Tenant-ID');
+        $totalMedications = Medication::where('tenant_id', $tenantId)->count();
         $totalMedicationInStock = Medication::where('tenant_id', $tenantId)->count();
         $availableMedication = Medication::where('tenant_id', $tenantId)->where('medicine_status', GeneralEnums::AVAILABLE->value)->count();
-        $fulfilledPrescriptions = Treatment::where('tenant_id', $tenantId)->where('status', GeneralEnums::FULLFILLED->value)->count();
-        $totalSupply = PharmacySupply::where('tenant_id', $tenantId)->count();
+        $fulfilledPrescriptions = Treatment::where('tenant_id', $tenantId)->where('status', GeneralEnums::FULLFILLED->value)
+            ->whereDate('created_at', now()->toDateString())->count();
+        $totalSupply = PharmacyRequest::where('tenant_id', $tenantId)->whereNotNull('supplied_date')->count();
         $totalRequest = PharmacyRequest::where('tenant_id', $tenantId)->count();
         $totalPharmacy = Pharmacy::where('tenant_id', $tenantId)->count();
         return [
+            'totalMedications' => $totalMedications,
             'totalMedicationInStock' => $totalMedicationInStock,
             'availableMedication' => $availableMedication,
             'fulfilledPrescriptions' => $fulfilledPrescriptions,
@@ -205,7 +209,7 @@ class PharmacyService
             return [
                 'Drug Name'      => $treatment->pharmacyRequest->product ?? 'N/A',
                 'Consulted By'      => $treatment->consultedBy->first_name . ' ' . $treatment->consultedBy->last_name ?? 'N/A',
-                'Price'        => $treatment->billing_log_detail->amount ?? 'N/A',
+                'Price'        => $treatment->billingLogDetail->amount ?? 'N/A',
                 'Date'     => Carbon::parse($treatment->created_at) ?? 'N/A',
                 'Payment Status'     => $treatment->billingLogDetail->status ?? 'N/A',
                 'Test Status'   => $treatment->status ?? 'N/A',
@@ -254,8 +258,19 @@ class PharmacyService
             if ($qtyAvailable <= 0) {
                 $drug->stock_level = GeneralEnums::OUT_OF_STOCK->value;
             }
-
             $drug->save();
+
+            $visit = PatientVisit::find($treatment->visit_id);
+            $totalTreatments = Treatment::where('visit_id', $visit->id)->count();
+            $fulfilledTreatments = Treatment::where('visit_id', $visit->id)
+                ->where('status', GeneralEnums::FULLFILLED->value)
+                ->count();
+            if ($totalTreatments > 0 && $totalTreatments === $fulfilledTreatments) {
+                $visit->update([
+                    'pharm_status' => GeneralEnums::COMPLETED->value,
+                ]);
+            }
+
             return $treatment->refresh();
         } catch (\Throwable $th) {
             throw $th;
@@ -325,10 +340,10 @@ class PharmacyService
             return [
                 'Pharmacy Name'      => $pharmacy->name ?? 'N/A',
                 'Pharmacy ID'        => $pharmacy->pharmacy_id ?? 'N/A',
-                'Location'        => $pharmacy->state->state_name ?? 'N/A',
+                'Location'        => $pharmacy->address, //$pharmacy->state->state_name ?? 'N/A',
                 'Contact'     => $pharmacy->phone_number ?? 'N/A',
                 'License Number'   => $pharmacy->license_number ?? 'N/A',
-                'Operating Hours' => $pharmacy->opening_time ?? 'N/A',
+                'Operating Hours' => $pharmacy->opening_time . '-' . $pharmacy->closing_time ?? 'N/A',
                 'Status' => $pharmacy->active == 1 ? 'Active' : 'Inactive' ?? 'N/A',
             ];
         })->toArray();

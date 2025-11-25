@@ -2,8 +2,10 @@
 
 namespace App\Services\HivAids;
 
+use App\Enums\GeneralEnums;
 use App\Models\CounsellingDetail;
 use App\Models\ObservationRecommendation;
+use App\Models\PatientVisit;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -27,6 +29,11 @@ class HivAidsService
             ], // Unique key
             $validated // Data to update/create
         );
+
+        $visit = PatientVisit::find($data['visit_id']);
+        $visit->update([
+            'counsel_status' => GeneralEnums::COMPLETED->value,
+        ]);
 
         return $data;
     }

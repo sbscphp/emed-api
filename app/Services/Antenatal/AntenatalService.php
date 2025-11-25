@@ -2,6 +2,7 @@
 
 namespace App\Services\Antenatal;
 
+use App\Enums\GeneralEnums;
 use App\Enums\ListModuleEnums;
 use App\Enums\PatientVisitStatusEnums;
 use App\Helpers\GeneralHelper;
@@ -41,6 +42,11 @@ class AntenatalService
             ],
             $data
         );
+
+        $visit = PatientVisit::find($data['visit_id']);
+        $visit->update([
+            'natal_status' => GeneralEnums::COMPLETED->value,
+        ]);
 
         $dataToLog = [
             'causer_id'       => $userId,
@@ -198,7 +204,7 @@ class AntenatalService
         $tenantId = $request->header('X-Tenant-ID');
         $data = $request->validated();
 
-        $newBornDetail = DeliveryDetail::updateOrCreate(
+        $newBornDetail = NewBornDetail::updateOrCreate(
             [
                 'visit_id' => $data['visit_id'],
                 'tenant_id' => $tenantId,

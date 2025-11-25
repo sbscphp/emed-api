@@ -424,7 +424,7 @@ class BillingLogService
         
         $data = [
             ["name" => "registration", "total" => Service::where('tenant_id', $tenantId)->count()],
-            ["name" => "pharmacy", "total" => PharmacyService::where('tenant_id', $tenantId)->count()],
+            ["name" => "pharmacy", "total" => Medication::where('tenant_id', $tenantId)->count()],
             ["name" => "laboratory", "total" => LabService::where('tenant_id', $tenantId)->count()],
             ["name" => "Radiology", "total" => RadiologyService::where('tenant_id', $tenantId)->count()],
             ["name" => "Consultation", "total" => Service::where('tenant_id', $tenantId)->count()]
@@ -460,7 +460,7 @@ class BillingLogService
             });
         });
 
-        return $med->paginate(10);
+        return $med->orderBy('id', 'DESC')->paginate(10);
     }
 
     public function regstration_billingmgt($validated)
