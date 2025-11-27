@@ -72,7 +72,7 @@
                             <br><br>
 
                             <!-- Social icons -->
-                            <a href="#" style="margin:0 6px;"><img
+                            {{-- <a href="#" style="margin:0 6px;"><img
                                     src="https://cdn-icons-png.flaticon.com/512/733/733579.png" width="20"
                                     alt="Twitter"></a>
                             <a href="#" style="margin:0 6px;"><img
@@ -80,7 +80,7 @@
                                     alt="Facebook"></a>
                             <a href="#" style="margin:0 6px;"><img
                                     src="https://cdn-icons-png.flaticon.com/512/733/733558.png" width="20"
-                                    alt="Instagram"></a>
+                                    alt="Instagram"></a> --}}
                         </td>
                     </tr>
 

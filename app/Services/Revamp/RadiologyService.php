@@ -59,8 +59,14 @@ class RadiologyService
                         ->orWhereRelation('patient', 'cardno', 'LIKE', '%' . $request['search_param'] . '%');
                 });
             })
+            ->when(!empty($request['rad_status']), function ($query) use ($request) {
+                $query->where('rad_status', $request['rad_status']);
+            })
+            ->when(!empty($request['patient_status']), function ($query) use ($request) {
+                $query->whereRelation('patient', 'status', $request['patient_status']);
+            })
             ->when(!empty($request['status']), function ($query) use ($request) {
-                $query->where('rad_status', $request['status']);
+                $query->where('status', $request['status']);
             })
             ->when($request->startDate && $request->endDate, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);

@@ -193,6 +193,7 @@ Route::group(["prefix" => "v1"], function () {
                 Route::group(['prefix' => 'consultation',  'middleware' => 'role.consultant'], function () {
                     Route::get('/', [RevampConsultationController::class, 'index']);
                     Route::post('/patient/create', [RevampConsultationController::class, 'createConsultation']);
+                    Route::put('/patient/update/{id}', [RevampConsultationController::class, 'updatePatientConsultation']);
                     Route::post('/patient/lab/test', [RevampConsultationController::class, 'createLabTest']);
                     Route::post('/patient/radiology/test', [RevampConsultationController::class, 'createRadiologyTest']);
                     Route::post('/patient/treatment', [RevampConsultationController::class, 'createTreatment']);

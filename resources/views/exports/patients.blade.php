@@ -68,6 +68,15 @@
                         </tr>
                     @endforeach
                 </tbody>
+                @if (!empty($footerTotals))
+                    <tfoot>
+                        <tr>
+                            @foreach ($footerTotals as $value)
+                                <th style="padding: 8px; background: #f3f3f3;">{{ $value }}</th>
+                            @endforeach
+                        </tr>
+                    </tfoot>
+                @endif
             </table>
         @else
             <p>No records to display.</p>

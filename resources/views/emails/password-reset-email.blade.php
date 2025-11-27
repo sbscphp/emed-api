@@ -99,7 +99,7 @@
                                     Nigeria.</p>
 
                                 <!-- social icons (optional) -->
-                                <p style="margin:6px 0 0;">
+                                {{-- <p style="margin:6px 0 0;">
                                     <a href="#" style="display:inline-block; margin:0 6px;"><img
                                             src="{{ asset('assets/img/twitter.png') }}" width="20" alt="Twitter"
                                             style="display:block;border:0;"></a>
@@ -109,7 +109,7 @@
                                     <a href="#" style="display:inline-block; margin:0 6px;"><img
                                             src="{{ asset('assets/img/instagram.png') }}" width="20" alt="Instagram"
                                             style="display:block;border:0;"></a>
-                                </p>
+                                </p> --}}
                             </div>
                         </td>
                     </tr>

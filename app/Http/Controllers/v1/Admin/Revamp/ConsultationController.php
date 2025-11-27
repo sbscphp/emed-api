@@ -4,6 +4,7 @@ namespace App\Http\Controllers\v1\Admin\Revamp;
 
 use App\Enums\GeneralEnums;
 use App\Enums\ListModuleEnums;
+use App\Enums\PatientVisitStatusEnums;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ConsultationRequest;
@@ -110,6 +111,31 @@ class ConsultationController extends Controller
 
             DB::connection('tenant')->commit();
             return JsonResponser::send(false, 'Consultation recorded successfully', $consultation, 201);
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+        }
+    }
+
+    public function updatePatientConsultation($id)
+    {
+
+        try {
+            DB::connection('tenant')->beginTransaction();
+
+            $patient = Patient::find($id);
+            if (!$patient) {
+                return JsonResponser::send(true, 'Record not found.', null, 200);
+            }
+
+            $status = PatientVisitStatusEnums::DISCHARGED->value;
+            // update patient registaration staus
+            $patient->update([
+                'status' => $status,
+            ]);
+
+            DB::connection('tenant')->commit();
+            return JsonResponser::send(false, 'Consultation ended successfully', $patient, 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Internal server error', [], 500, $th);

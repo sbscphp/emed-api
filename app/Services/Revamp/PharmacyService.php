@@ -63,8 +63,14 @@ class PharmacyService
                         ->orWhereRelation('patient', 'lastname', 'LIKE', '%' . $request['search_param'] . '%');
                 });
             })
+            ->when(!empty($request['pharm_status']), function ($query) use ($request) {
+                $query->where('pharm_status', $request['pharm_status']);
+            })
             ->when(!empty($request['patient_status']), function ($query) use ($request) {
-                $query->where('pharm_status', $request['patient_status']);
+                $query->whereRelation('patient', 'status', $request['patient_status']);
+            })
+            ->when(!empty($request['status']), function ($query) use ($request) {
+                $query->where('status', $request['status']);
             })
             ->when($request->startDate && $request->endDate, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);

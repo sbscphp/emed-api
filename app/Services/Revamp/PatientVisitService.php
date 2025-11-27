@@ -65,6 +65,15 @@ class PatientVisitService
             ->when(!empty($request['patient_status']), function ($query) use ($request) {
                 $query->where('status', $request['patient_status']);
             })
+            ->when(!empty($request['immunization_status']), function ($query) use ($request) {
+                $query->where('immunization_status', $request['immunization_status']);
+            })
+            ->when(!empty($request['counsel_status']), function ($query) use ($request) {
+                $query->where('counsel_status', $request['counsel_status']);
+            })
+            ->when(!empty($request['natal_status']), function ($query) use ($request) {
+                $query->where('natal_status', $request['natal_status']);
+            })
             ->when(!empty($request['payment_status']), function ($query) use ($request) {
                 $query->whereRelation('patientBilling', 'payment_status', $request['payment_status']);
             })
@@ -106,8 +115,7 @@ class PatientVisitService
         $admitted = Patient::where('status', PatientVisitStatusEnums::ADMITTED->value)->whereDate('created_at', now()->toDateString())->count();
         $discharged = (clone $query)->where('status', PatientVisitStatusEnums::DISCHARGED->value)->count();
 
-        $completedSugery = Surgery::where('tenant_id', $tenantId)->where('status', GeneralEnums::COMPLETED)->count();
-        $cancelledSugery = Surgery::where('tenant_id', $tenantId)->where('status', GeneralEnums::CANCELLED)->count();
+        $totalSugery = Surgery::where('tenant_id', $tenantId)->count();
 
         $triagePatient = (clone $query)->where('triage_status', GeneralEnums::COMPLETED->value)->count();
         $totalImmunization = Immunization::where('tenant_id', $tenantId)->count();
@@ -127,8 +135,7 @@ class PatientVisitService
             'admitted' => $admitted,
             'discharged' => $discharged,
 
-            'completedSugery' => $completedSugery,
-            'cancelledSugery' => $cancelledSugery,
+            'totalSugery' => $totalSugery,
 
             'triagePatient' => $triagePatient,
             'totalImmunization' => $totalImmunization,
@@ -221,9 +228,9 @@ class PatientVisitService
                 'status' => PatientVisitStatusEnums::ONGOING->value,
                 'triage_status' => GeneralEnums::COMPLETED->value,
                 'con_status' => GeneralEnums::PENDING->value,
-                'immunization_status' => $patientService->name == 'IMMUNIZATION' ? GeneralEnums::PENDING->value : NULL,
-                'counsel_status' => $patientService->name == 'HIV/AIDS' ? GeneralEnums::PENDING->value : NULL,
-                'natal_status' => $patientService->name == 'ANTENATAL' ? GeneralEnums::PENDING->value : NULL,
+                // 'immunization_status' => $patientService->name == 'IMMUNIZATION' ? GeneralEnums::PENDING->value : NULL,
+                // 'counsel_status' => $patientService->name == 'HIV/AIDS' ? GeneralEnums::PENDING->value : NULL,
+                // 'natal_status' => $patientService->name == 'ANTENATAL' ? GeneralEnums::PENDING->value : NULL,
             ]);
 
             // update patient registaration staus
@@ -258,6 +265,9 @@ class PatientVisitService
             })
             ->when(!empty($request['patient_status']), function ($query) use ($request) {
                 $query->whereRelation('visit', 'triage_status', $request['patient_status']);
+            })
+            ->when(!empty($request['triage_status']), function ($query) use ($request) {
+                $query->whereRelation('visit', 'triage_status', $request['triage_status']);
             })
             ->when(!empty($request['payment_status']), function ($query) use ($request) {
                 $query->whereRelation('visit.patientBilling', 'payment_status', $request['payment_status']);
