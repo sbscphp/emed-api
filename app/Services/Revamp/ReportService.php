@@ -215,7 +215,7 @@ class ReportService
 
     public function fetchAllReportExport($records, $format, $type = null)
     {
-        // Normalize input: accept either
+        // Normalize input
         if (is_array($records) && isset($records['services'])) {
             $recordsCollection = $records['services'];
         } else {
@@ -232,51 +232,83 @@ class ReportService
             $recordsCollection = collect($recordsCollection);
         }
 
-        if ($recordsCollection->isEmpty()) {
-            throw new \Exception("No records found for export.");
-        }
-
         $exportData = [];
         $headers = [];
+        $footerTotals = [];
 
+        /* ----------------------------------------------------------------------
+       PATIENT REPORT
+    ---------------------------------------------------------------------- */
         if ($type == 'Patient') {
             $headers = ['Department', 'Total Patient Attended'];
+
+            // Department rows
             $exportData = $recordsCollection->map(function ($record) {
                 return [
-                    'Department'              => $record->name,
-                    'Total Patient Attended'  => $record->total_patient_attended ?? 0,
-                ];
-                return [
-                    'Department'      => data_get($record, 'name', ''),
-                    'Total Patient Attended'   => data_get($record, 'total_patient_attended', 0) ?? 0,
+                    'Department'             => data_get($record, 'name', ''),
+                    'Total Patient Attended' => data_get($record, 'total_patient_attended', 0),
                 ];
             })->toArray();
-        } elseif ($type == 'Financial') {
+
+            // Footer totals (NOT part of exportData)
+            $footerTotals = [
+                'Department'             => 'TOTAL',
+                'Total Patient Attended' => $recordsCollection->sum('total_patient_attended'),
+            ];
+        }
+        /* ----------------------------------------------------------------------
+       FINANCIAL REPORT
+    ---------------------------------------------------------------------- */ elseif ($type == 'Financial') {
             $headers = ['Department', 'Total Revenue', 'Pending Payment'];
 
-            // 1. Map the Service records first
+            // Department rows
             $exportData = $recordsCollection->map(function ($record) {
                 return [
                     'Department'      => data_get($record, 'name', ''),
-                    'Total Revenue'   => data_get($record, 'total_revenue', 0) ?? 0,
-                    'Pending Payment' => data_get($record, 'pending_payment', 0) ?? 0,
+                    'Total Revenue'   => data_get($record, 'total_revenue', 0),
+                    'Pending Payment' => data_get($record, 'pending_payment', 0),
                 ];
             })->toArray();
+
+            // Summary footer (NOT part of exportData)
+            $footerTotals = [
+                'Department'      => 'TOTAL',
+                'Total Revenue'   => $recordsCollection->sum('total_revenue'),
+                'Pending Payment' => $recordsCollection->sum('pending_payment'),
+            ];
         } else {
             throw new \Exception("Invalid report type.");
         }
 
+        // If after mapping there are no rows to export, throw
+        if (empty($exportData)) {
+            throw new \Exception("No records found for export.");
+        }
+
+        /* ----------------------------------------------------------------------
+       EXPORT FORMATS
+    ---------------------------------------------------------------------- */
+
+        // CSV Export
         if (strtolower($format) == 'csv') {
             $fileName = strtolower($type) . '_report.csv';
+
+            // Add footer to CSV manually at end
+            $exportData[] = $footerTotals;
+
             return ExportHelper::streamCsv($exportData, $headers, $fileName);
         }
 
+        // PDF Export
         if (strtolower($format) == 'pdf') {
             $fileName = strtolower($type) . '_report.pdf';
+
+            // Pass as 'patients' so your existing blade works unchanged
             $pdf = Pdf::loadView('exports.patients', [
-                'patients' => $exportData,
-                'headers' => $headers,
-                'type' => $type
+                'patients'     => $exportData,
+                'headers'      => $headers,
+                'type'         => $type,
+                'footerTotals' => $footerTotals,
             ])->setPaper('A1', 'landscape');
 
             return $pdf->download($fileName);

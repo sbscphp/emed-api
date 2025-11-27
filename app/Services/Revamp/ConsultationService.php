@@ -63,6 +63,12 @@ class ConsultationService
             ->when(!empty($request['patient_status']), function ($query) use ($request) {
                 $query->whereRelation('patient', 'status', $request['patient_status']);
             })
+            ->when(!empty($request['status']), function ($query) use ($request) {
+                $query->where('status', $request['status']);
+            })
+            ->when(!empty($request['con_status']), function ($query) use ($request) {
+                $query->where('con_status', $request['con_status']);
+            })
             ->when(!empty($request['service']), function ($query) use ($request) {
                 $query->where('service_id', $request['service']);
             })
@@ -101,8 +107,7 @@ class ConsultationService
         $completedInvestigation = Laboratory::where('tenant_id', $tenantId)->where('status', GeneralEnums::READY->value)->count();
         $awaitingProcedure = Radiology::where('tenant_id', $tenantId)->where('status', GeneralEnums::NOT_READY->value)->count();
         $completedProcedure = Radiology::where('tenant_id', $tenantId)->where('status', GeneralEnums::READY->value)->count();
-        $pendingSurgeries = Surgery::where('tenant_id', $tenantId)->where('status', GeneralEnums::PENDING->value)->count();
-        $completedSurgeries = Surgery::where('tenant_id', $tenantId)->where('status', GeneralEnums::COMPLETED->value)->count();
+        $totalSugery = Surgery::where('tenant_id', $tenantId)->count();
 
         return [
             'awaitingConsultation' => $awaitingConsultation,
@@ -111,8 +116,7 @@ class ConsultationService
             'completedInvestigation' => $completedInvestigation,
             'awaitingProcedure' => $awaitingProcedure,
             'completedProcedure' => $completedProcedure,
-            'pendingSurgeries' => $pendingSurgeries,
-            'completedSurgeries' => $completedSurgeries,
+            'pendingSurgeries' => $totalSugery,
         ];
     }
 

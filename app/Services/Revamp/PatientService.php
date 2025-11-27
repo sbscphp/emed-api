@@ -404,6 +404,10 @@ class PatientService
                 'arrival_date' => now(),
                 'status' => PatientVisitStatusEnums::VISIT_INITIATED->value,
                 'triage_status' => GeneralEnums::PENDING->value,
+                'immunization_status' => $service->name == 'IMMUNIZATION' ? GeneralEnums::PENDING->value : NULL,
+                'counsel_status' => $service->name == 'HIV/AIDS' ? GeneralEnums::PENDING->value : NULL,
+                'natal_status' => $service->name == 'ANTENATAL' ? GeneralEnums::PENDING->value : NULL,
+                
             ]);
 
             $invoiceNumber = GeneralHelper::getModelUniqueOrderlyId([
