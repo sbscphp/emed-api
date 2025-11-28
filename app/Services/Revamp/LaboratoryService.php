@@ -113,7 +113,8 @@ class LaboratoryService
                 'Patient No'       => $visit->patient->patientno,
                 'Visit No'       => $visit->visitno,
                 'Date'      => $visit->created_at->format('Y-m-d H:i'),
-                'Status'       => $visit->lab_status,
+                'Visit Status'       => $visit->status,
+                'Lab Status'       => $visit->lab_status,
             ];
         })->toArray();
 

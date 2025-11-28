@@ -37,9 +37,9 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
         return MedicationInventory::create($data);
     }
 
-    public function getAllWithFilters(array $filters = [], ?string $export = null)
+    public function getAllWithFilters(array $filters = [], ?string $export = null, $tenantId = null)
     {
-        $query = MedicationInventory::with(['medication', 'pharmacy', 'vendor'])
+        $query = MedicationInventory::where('tenant_id', $tenantId)->with(['medication', 'pharmacy', 'vendor'])
             ->orderBy('created_at', 'desc');
 
         if (!empty($filters['shipment_status'])) {
