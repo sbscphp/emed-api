@@ -87,8 +87,9 @@ class MedicationInventoryController extends Controller
         try {
             $filters = $request->only(['shipment_status', 'search', 'from', 'to', 'brand_name', 'medicine_name', 'generic_name', 'medicine_type', 'vendor_name']);
             $export = $request->input('export');
+            $tenantId = $request->header('X-Tenant-ID');
 
-            $data = $this->inventoryService->all($filters, $export);
+            $data = $this->inventoryService->all($filters, $export, $tenantId);
 
             if ($data instanceof \Symfony\Component\HttpFoundation\Response) {
                 return $data;

@@ -102,6 +102,8 @@ class PharmacyService
         $totalSupply = PharmacyRequest::where('tenant_id', $tenantId)->whereNotNull('supplied_date')->count();
         $totalRequest = PharmacyRequest::where('tenant_id', $tenantId)->count();
         $totalPharmacy = Pharmacy::where('tenant_id', $tenantId)->count();
+        $treatmentCompleted = PatientVisit::where('tenant_id', $tenantId)->where('pharm_status', GeneralEnums::COMPLETED->value)->count();
+        $treatmentPending = PatientVisit::where('tenant_id', $tenantId)->where('pharm_status', GeneralEnums::PENDING->value)->count();
         return [
             'totalMedications' => $totalMedications,
             'totalMedicationInStock' => $totalMedicationInStock,
@@ -109,7 +111,9 @@ class PharmacyService
             'fulfilledPrescriptions' => $fulfilledPrescriptions,
             'totalSupply' => $totalSupply,
             'totalRequest' => $totalRequest,
-            'totalPharmacy' => $totalPharmacy
+            'totalPharmacy' => $totalPharmacy,
+            'treatmentCompleted' => $treatmentCompleted,
+            'treatmentPending' => $treatmentPending,
         ];
     }
 
@@ -123,6 +127,8 @@ class PharmacyService
                 'Patient Type'        => $visit->patient->reg_status ?? 'N/A',
                 'Patient No'     => $visit->patient->patientno ?? 'N/A',
                 'Visit Number'     => $visit->visitno ?? 'N/A',
+                'Visit Status'     => $visit->status ?? 'N/A',
+                'Treatment Status'     => $visit->pharm_status ?? 'N/A',
                 // 'Arrival Date'   => $visit->arrival_date ?? 'N/A',
                 // 'Patient Status' => $visit->status ?? 'N/A',
             ];

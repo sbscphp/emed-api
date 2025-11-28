@@ -106,10 +106,10 @@ class InventoryService
             'expired_medicine' => Inventory::where('tenant_id', $tenantId)
                 ->whereDate('expiry_date', '<=', now())
                 ->count(),
-            'pending_restock_requests' => Inventory::where('tenant_id', $tenantId)->where(function ($query) {
-                $query->whereColumn('quantity', '<', 'reorder_level')
-                    ->orWhereDate('expiry_date', '<', now());
-            })->count(),
+            // 'pending_restock_requests' => Inventory::where('tenant_id', $tenantId)->where(function ($query) {
+            //     $query->whereColumn('quantity', '<', 'reorder_level')
+            //         ->orWhereDate('expiry_date', '<', now());
+            // })->count(),
         ];
     }
 }

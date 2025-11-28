@@ -254,7 +254,7 @@ class PatientVisitService
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
         $tenantId = $request->header('X-Tenant-ID');
 
-        $records = Triage::query()->where('tenant_id', $tenantId)
+        $records = PatientVisit::query()->where('tenant_id', $tenantId)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->whereRelation('patient', 'cardno', 'LIKE', '%' . $request['search_param'] . '%')
@@ -264,16 +264,19 @@ class PatientVisitService
                 });
             })
             ->when(!empty($request['patient_status']), function ($query) use ($request) {
-                $query->whereRelation('visit', 'triage_status', $request['patient_status']);
+                $query->whereRelation('patient', 'status', $request['patient_status']);
+            })
+            ->when(!empty($request['status']), function ($query) use ($request) {
+                $query->where('status', $request['status']);
             })
             ->when(!empty($request['triage_status']), function ($query) use ($request) {
-                $query->whereRelation('visit', 'triage_status', $request['triage_status']);
+                $query->where('triage_status', $request['triage_status']);
             })
             ->when(!empty($request['payment_status']), function ($query) use ($request) {
-                $query->whereRelation('visit.patientBilling', 'payment_status', $request['payment_status']);
+                $query->whereRelation('patientBilling', 'payment_status', $request['payment_status']);
             })
             ->when(!empty($request['payment_method']), function ($query) use ($request) {
-                $query->whereRelation('visit.patientBilling', 'payment_method', $request['payment_method']);
+                $query->whereRelation('patientBilling', 'payment_method', $request['payment_method']);
             })
             ->when($request->startDate && $request->endDate, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
@@ -285,7 +288,7 @@ class PatientVisitService
             })->when(($request['sort_by'] ?? null) === 'date_descending', function ($query) {
                 $query->orderBy('created_at', 'DESC');
             })
-            ->with('patient', 'visit.billingLogsForPatient');
+            ->with('patient', 'triage', 'billingLogsForPatient');
 
         if (!empty($request['paginate']) && empty($request['export'])) {
             return $records->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
@@ -302,12 +305,11 @@ class PatientVisitService
         }
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
         $tenantId = $request->header('X-Tenant-ID');
-        $query = Triage::query()->where('tenant_id', $tenantId);
+        $query = PatientVisit::query()->where('tenant_id', $tenantId);
 
-        $totalPatients = Patient::where('tenant_id', $tenantId)->count();
-        $pendingPatients = PatientVisit::where('tenant_id', $tenantId)
-            ->where('triage_status', GeneralEnums::PENDING->value)->count();
-        $totalOrders = (clone $query)->count();
+        $totalPatients = (clone $query)->count();
+        $pendingPatients = (clone $query)->where('triage_status', GeneralEnums::PENDING->value)->count();
+        $totalOrders = (clone $query)->where('triage_status', GeneralEnums::COMPLETED->value)->count();
         $patientLog = (clone $query)->count();
 
         return [
@@ -320,15 +322,17 @@ class PatientVisitService
 
     public function investigationOrdersExport($records, $format)
     {
-        $exportData = $records->map(function ($triage) {
+        $exportData = $records->map(function ($visit) {
             return [
-                'Patient Name'     => $triage->patient->firstname . ' ' . $triage->patient->lastname,
-                'Card No'          => $triage->patient->cardno,
-                'Patient No'       => $triage->patient->patientno,
-                'Time Of Arrival'  => $triage->visit->arrival_date ?? 'N/A',
-                'Acuity'           => $triage->severity,
-                'Payment Status'   => $triage->visit->patientBilling->payment_method ?? 'N/A',
-                'Patient Status'   => $triage->visit->status ?? 'N/A'
+                'Patient Name'     => $visit->patient->firstname . ' ' . $visit->patient->lastname,
+                'Card No'          => $visit->patient->cardno,
+                'Patient No'       => $visit->patient->patientno,
+                'Time Of Arrival'  => $visit->arrival_date ?? 'N/A',
+                'Time Of Departure'  => $visit->departure_date ?? 'N/A',
+                'Acuity'           => $visit->triage->severity ?? 'N/A',
+                'Triage Status'   => $visit->status ?? 'N/A',
+                'Payment Status'   => $visit->billingLogsForPatient->payment_status ?? 'N/A',
+                'Visit Status'   => $visit->triage_status ?? 'N/A',
             ];
         })->toArray();
 

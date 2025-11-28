@@ -102,6 +102,16 @@ class BillingService
             })
             ->with('billingLogDetails');
 
+        $logQuery = BillingLogDetail::query()
+            ->where('tenant_id', $tenantId)
+            ->when($request->start_date && $request->end_date, function ($query) use ($request) {
+                $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+            })
+            ->when($dateFilter, function ($query) use ($dateFilter) {
+                return $query->whereBetween('created_at', $dateFilter);
+            })
+            ->with('billingLog');
+
         // Service units
         $units = [
             'Registrations' => 'Registration',
@@ -114,7 +124,11 @@ class BillingService
         $stats = [];
 
         foreach ($units as $key => $unitName) {
-            $unit = ServiceUnit::where('name', $unitName)->first();
+
+            $unit = ServiceUnit::where('name', $unitName)
+                ->where('tenant_id', $tenantId)
+                ->first();
+
             if (!$unit) {
                 $stats[$key] = [
                     'total_amount' => 0,
@@ -123,18 +137,33 @@ class BillingService
                 continue;
             }
 
-            $unitQuery = (clone $query)->where('service_unit_id', $unit->id);
+            // Clone base query and filter by unit
+            $unitQuery = (clone $logQuery)->where('service_unit_id', $unit->id);
+
+            // Sum amount
+            $totalAmount = $unitQuery->sum('amount_paid');
+
+            // Get all matching records
+            $unitLogs = $unitQuery->get();
+
+            // Count unique patients through the billingLog relationship
+            $patientCount = $unitLogs
+                ->pluck('billingLog')       // get related models
+                ->filter()                  // remove null relations
+                ->pluck('patient_id')       // extract patient IDs
+                ->unique()                  // unique patients
+                ->count();
 
             $stats[$key] = [
-                'total_amount' => $unitQuery->sum('grand_total'),
-                'patients'     => $unitQuery->distinct('patient_id')->count('patient_id'),
+                'total_amount' => $totalAmount,
+                'patients'     => $patientCount,
             ];
         }
 
         // Totals
-        $stats['TotalRevenue']     = $query->sum('grand_total');
-        $stats['PendingPayment']   = (clone $query)->where('payment_status', GeneralEnums::PENDING->value)->sum('grand_total');
-        $stats['CompletedPayment'] = (clone $query)->where('payment_status', GeneralEnums::PAID->value)->sum('grand_total');
+        $stats['TotalRevenue']     = $logQuery->sum('amount');
+        $stats['PendingPayment']   = (clone $logQuery)->where('status', GeneralEnums::PENDING->value)->sum('amount');
+        $stats['CompletedPayment'] = (clone $logQuery)->where('status', GeneralEnums::PAID->value)->sum('amount_paid');
 
         // ===== Billing Trends (Monthly Revenue) =====
         $year = $request->year ?? now()->year;

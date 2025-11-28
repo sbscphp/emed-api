@@ -105,8 +105,15 @@ class DashboardService
             ->when($dateFilter, function ($query) use ($dateFilter) {
                 return $query->whereBetween('created_at', $dateFilter);
             });
-        $totalConsultation = (clone $consultationQuery)->count();
-        $totalPendingConsultation = PatientVisit::where('status', PatientVisitStatusEnums::VISIT_INITIATED->value)
+        $totalConsultation = PatientVisit::whereNotNull('con_status')
+            ->where('tenant_id', $tenantId)
+            ->when($request->startDate && $request->endDate, function ($query) use ($request) {
+                $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+            })
+            ->when($dateFilter, function ($query) use ($dateFilter) {
+                return $query->whereBetween('created_at', $dateFilter);
+            })->count();
+        $totalPendingConsultation = PatientVisit::where('con_status', GeneralEnums::PENDING->value)
             ->where('tenant_id', $tenantId)
             ->when($request->startDate && $request->endDate, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
