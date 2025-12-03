@@ -94,7 +94,11 @@ class PharmacyRequestController extends Controller
             return JsonResponser::send(true, 'Drug not found.', [], 422);
         }
 
-        if ($drug->inventory->expiry_date && Carbon::parse($drug->inventory->expiry_date)->isPast()) {
+        if (!$drug->inventory) {
+            return JsonResponser::send(true, 'Inventory record not found for this drug.', [], 422);
+        }
+
+        if (!empty($drug->inventory->expiry_date) && Carbon::parse($drug->inventory->expiry_date)->isPast()) {
             return JsonResponser::send(true, 'Drug expired', [], 422);
         }
 

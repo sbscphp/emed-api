@@ -427,12 +427,34 @@ class BillingService
 
         // Attach consulted user from landlord DB
         $records->each(function ($item) {
+
+            $consultedById = null;
+
+            // ---------------------------
+            // Priority 1: Consultation table doctor
+            // ---------------------------
             $consultation = optional(optional($item->billingLog)->visits)->consultation;
 
             if ($consultation && $consultation->consulted_by) {
-                $item->consultedBy = User::on('landlord')
+                $consultedById = $consultation->consulted_by;
+            }
+
+            // ---------------------------
+            // Priority 2: Fallback → labInvestigation consultedBy
+            // ---------------------------
+            if (!$consultedById && isset($item->labInvestigation) && $item->labInvestigation->consultedBy) {
+                $consultedById = $item->labInvestigation->consultedBy; // assumes user_id stored here
+            }
+
+            // ---------------------------
+            // Load User from Landlord DB
+            // ---------------------------
+            if ($consultedById) {
+                $consultedUser = User::on('landlord')
                     ->select('id', 'first_name', 'last_name', 'email')
-                    ->find($consultation->consulted_by);
+                    ->find($consultedById);
+
+                $item->consultedBy = $consultedUser;
             } else {
                 $item->consultedBy = null;
             }
@@ -461,7 +483,7 @@ class BillingService
             })
             ->with('billingLog');
 
-        $numberOfPatient = (clone $query)->with('billingLog:id,patient_id')->get()->pluck('billingLog.patient_id')->unique()->count();
+        $numberOfPatient = (clone $query)->with('billingLog:id,patient_id')->get()->pluck('billingLog.patient_id')->count();
         $totalRevenue = (clone $query)->sum('amount');
 
         return [

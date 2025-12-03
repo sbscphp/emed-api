@@ -55,14 +55,14 @@ class AuditLogService
 
         $records = AuditLog::query()
             ->whereIn('module_accessed', ['Billing', 'Records', 'Pharmacy'])
-            ->when(!empty($request->search), function ($query) use ($request) {
+            ->when(!empty($request->search_param), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
-                    $q->where('action', 'LIKE', '%' . $request->search . '%')
-                        ->orWhere('log_name', 'LIKE', '%' . $request->search . '%')
-                        ->orWhere('module_accessed', 'LIKE', '%' . $request->search . '%')
+                    $q->where('action', 'LIKE', '%' . $request->search_param . '%')
+                        ->orWhere('log_name', 'LIKE', '%' . $request->search_param . '%')
+                        ->orWhere('module_accessed', 'LIKE', '%' . $request->search_param . '%')
                         ->orWhereHas('causer', function ($q2) use ($request) {
-                            $q2->where('fullname', 'LIKE', '%' . $request->search . '%')
-                                ->orWhere('id', intval($request->search));
+                            $q2->where('fullname', 'LIKE', '%' . $request->search_param . '%')
+                                ->orWhere('id', intval($request->search_param));
                         });
                 });
             })
