@@ -52,20 +52,18 @@ class MedicationInventoryRepository implements MedicationInventoryRepositoryInte
                 $q->where('batch_no', 'like', "%{$search}%")
                     ->orWhere('shipment_status', 'like', "%{$search}%")
                     ->orWhere('brand_name', 'like', "%{$search}%")
-                    ->orWhereHas('pharmacy', function ($pharmacyQuery) use ($search) {
-                        $pharmacyQuery->where('name', 'like', "%{$search}%");
-                    })
-                    ->orWhereHas('medication', function ($medicationQuery) use ($search) {
-                        $medicationQuery->where('medicine_name', 'like', "%{$search}%")
-                            ->orWhere('generic_name', 'like', "%{$search}%")
-                            ->orWhere('brand_name', 'like', "%{$search}%")
-                            ->orWhere('medicine_type', 'like', "%{$search}%");
-                    })
+                    ->orWhere('shipment_no', 'like', "%{$search}%")
+                    // ->orWhereHas('pharmacy', function ($pharmacyQuery) use ($search) {
+                    //     $pharmacyQuery->where('name', 'like', "%{$search}%");
+                    // })
+                    // ->orWhereHas('medication', function ($medicationQuery) use ($search) {
+                    //     $medicationQuery->where('medicine_name', 'like', "%{$search}%")
+                    //         ->orWhere('generic_name', 'like', "%{$search}%")
+                    //         ->orWhere('brand_name', 'like', "%{$search}%")
+                    //         ->orWhere('medicine_type', 'like', "%{$search}%");
+                    // })
                     ->orWhereHas('vendor', function ($qu2) use ($search) {
-                        $qu2->where('vendor_name', 'like', "%{$search}%")
-                            ->orWhere('contact_person', 'like', "%{$search}%")
-                            ->orWhere('phone_number', 'like', "%{$search}%")
-                            ->orWhere('status', 'like', "%{$search}%");
+                        $qu2->where('vendor_name', 'like', "%{$search}%");
                     });
             });
         }

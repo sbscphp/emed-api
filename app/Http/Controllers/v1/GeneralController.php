@@ -57,8 +57,9 @@ class GeneralController extends Controller
         try {
             $tenantId = $request->header('X-Tenant-ID');
             $record = PharmacyRequest::where('tenant_id', $tenantId)
+                ->whereRelation('inventory', 'expiry_date', '>=', now())
                 // ->where('pharmacy_id', $request->pharmacy_id)
-                ->with('pharmacy')->orderBy('id', 'DESC')->get();
+                ->with('inventory', 'pharmacy')->orderBy('id', 'DESC')->get();
 
             return JsonResponser::send(false, 'Record found successfully', $record, 200);
         } catch (\Throwable $th) {
