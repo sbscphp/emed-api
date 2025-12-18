@@ -101,9 +101,9 @@ class PatientService
         $patientLog = (clone $query)->count();
         $admitted = (clone $query)->where('status', GeneralEnums::ADMITTED->value)->count();
         $patientVisitToday = PatientVisit::where('tenant_id', $tenantId)->whereDate('created_at', now()->toDateString())->count();
-        $consultantFollowUpPatient = Consultation::where('schedule_a_follow_up', 1)->count();
-        $hivFollowUpPatient = CounsellingDetail::where('schedule_a_follow_up', 1)->count();
-        $immunizationFollowUpPatient = Immunization::where('schedule_a_follow_up', 1)->count();
+        $consultantFollowUpPatient = Consultation::where('tenant_id', $tenantId)->where('schedule_a_follow_up', 1)->count();
+        $hivFollowUpPatient = CounsellingDetail::where('tenant_id', $tenantId)->where('schedule_a_follow_up', 1)->count();
+        $immunizationFollowUpPatient = Immunization::where('tenant_id', $tenantId)->where('schedule_a_follow_up', 1)->count();
         $followUpPatient = $consultantFollowUpPatient + $hivFollowUpPatient + $immunizationFollowUpPatient;
 
         return [
