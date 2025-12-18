@@ -140,7 +140,7 @@ Route::group(["prefix" => "v1"], function () {
                 });
 
                 //Record routes
-                Route::group(['prefix' => 'record',  'middleware' => 'role.record'], function () {
+                Route::group(['prefix' => 'record'], function () {
                     Route::group(['prefix' => 'patient'], function () {
                         Route::get('/', [RecordManagementController::class, 'index']);
                         Route::post('/create', [RecordManagementController::class, 'store']);
@@ -157,7 +157,7 @@ Route::group(["prefix" => "v1"], function () {
                 });
 
                 // Nurse services routes
-                Route::group(['prefix' => 'services', 'middleware' => 'role.nurse'], function () {
+                Route::group(['prefix' => 'services'], function () {
                     Route::get('/', [TriageController::class, 'index']);
                     Route::post('/triage/initiate', [TriageController::class, 'store']);
                     Route::get('/show/{id}', [TriageController::class, 'show']);
@@ -190,7 +190,7 @@ Route::group(["prefix" => "v1"], function () {
                 });
 
                 //Consultant routes
-                Route::group(['prefix' => 'consultation',  'middleware' => 'role.consultant'], function () {
+                Route::group(['prefix' => 'consultation'], function () {
                     Route::get('/', [RevampConsultationController::class, 'index']);
                     Route::post('/patient/create', [RevampConsultationController::class, 'createConsultation']);
                     Route::put('/patient/update/{id}', [RevampConsultationController::class, 'updatePatientConsultation']);
@@ -203,7 +203,7 @@ Route::group(["prefix" => "v1"], function () {
                 });
 
                 // Old Consultant routes
-                Route::group(['prefix' => 'consultant',  'middleware' => 'role.consultant'], function () {
+                Route::group(['prefix' => 'consultant'], function () {
                     Route::get("/consultaton_stats", [ConsultationController::class, "consultaton_stats"]);
                     Route::post('/patients', [ConsultationController::class, 'patientsForConsultation']);
                     Route::get('/patient/{visitNo}', [ConsultationController::class, 'show']);
@@ -220,7 +220,7 @@ Route::group(["prefix" => "v1"], function () {
                 });
 
                 // Pharmacy routes
-                Route::group(['prefix' => 'pharmacy', 'middleware' => 'role.pharmacy'], function () {
+                Route::group(['prefix' => 'pharmacy'], function () {
                     Route::get('/patient/logs', [RevampPharmacyController::class, 'index']);
                     Route::get('/patient/treatments', [RevampPharmacyController::class, 'patientTreatments']);
                     Route::get('/patient/treatment/view/{id}', [RevampPharmacyController::class, 'viewPatientTreatment']);
@@ -267,7 +267,7 @@ Route::group(["prefix" => "v1"], function () {
                 //     Route::get('users/pharmacists', [UserController::class, 'getPharmacists']);
                 // });
 
-                Route::group(['prefix' => 'medicine', 'middleware' => 'role.pharmacy'], function () {
+                Route::group(['prefix' => 'medicine'], function () {
                     Route::post('/create', [MedicationController::class, 'store']);
                     Route::get('/lists', [MedicationController::class, 'index']);
                     Route::get('/list/{id}', [MedicationController::class, 'show']);
@@ -286,7 +286,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/fetch_medical_log', [AuditLogController::class, 'fetch_medical_log']);
                 });
 
-                Route::group(['prefix' => 'medicine-inventory', 'middleware' => 'role.pharmacy'], function () {
+                Route::group(['prefix' => 'medicine-inventory'], function () {
                     Route::post('/lists', [MedicationInventoryController::class, 'index']);
                     Route::get('/{id}', [MedicationInventoryController::class, 'show']);
                     Route::post('/', [MedicationInventoryController::class, 'store']);
@@ -295,7 +295,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/dashboard/stats', [MedicationInventoryController::class, 'shipmentStat']);
                 });
 
-                Route::group(['prefix' => 'inventory', 'middleware' => 'role.pharmacy'], function () {
+                Route::group(['prefix' => 'inventory'], function () {
                     Route::get('/lists', [InventoryController::class, 'index']);
                     Route::get('/{id}', [InventoryController::class, 'show']);
                     Route::post('/', [InventoryController::class, 'store']);
@@ -305,7 +305,7 @@ Route::group(["prefix" => "v1"], function () {
                 });
 
 
-                Route::group(['prefix' => 'vendor', 'middleware' => 'role.pharmacy'], function () {
+                Route::group(['prefix' => 'vendor'], function () {
                     Route::get('/fetch/all', [VendorController::class, 'all']);
                     Route::get('/lists', [VendorController::class, 'index']);
                     Route::get('/{id}', [VendorController::class, 'show']);
@@ -317,7 +317,7 @@ Route::group(["prefix" => "v1"], function () {
                 });
 
                 // Billing routes
-                Route::group(['prefix' => 'billing', 'middleware' => 'role.billing'], function () {
+                Route::group(['prefix' => 'billing'], function () {
                     Route::get('/', [RevampBillingController::class, 'index']);
                     Route::get('/view/{id}', [RevampBillingController::class, 'viewBilling']);
                     Route::post('/make/payment', [RevampBillingController::class, 'makePayment']);
@@ -356,13 +356,13 @@ Route::group(["prefix" => "v1"], function () {
                 // });
 
                 // Report routes
-                Route::group(['prefix' => 'reports', 'middleware' => 'admin.superadmin'], function () {
+                Route::group(['prefix' => 'reports'], function () {
                     Route::get('/', [RevampReportController::class, 'index']);
                     Route::get('/all', [RevampReportController::class, 'fetchAllReports']);
                 });
 
                 //  Old Report Routes
-                Route::group(['prefix' => 'report', 'middleware' => 'admin.superadmin'], function () {
+                Route::group(['prefix' => 'report'], function () {
                     Route::get('/dashboard/stats', [ReportController::class, 'getReportStatistics']);
                     Route::post('/', [ReportController::class, 'index']);
                     // patient
@@ -405,14 +405,14 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/patient/{id}', [RevampRadiologyController::class, 'patientDetails']);
                 });
 
-                Route::group(['prefix' => 'auditLog', 'middleware' => 'admin.superadmin'], function () {
+                Route::group(['prefix' => 'auditLog'], function () {
                     Route::post('/logs', [AuditLogController::class, 'userActivity']);
                     Route::get('/user/activity', [AuditLogController::class, 'userActivityRecords']);
                     Route::get('data_changes', [AuditLogController::class, 'data_changes']);
                     Route::get('/logs-download', [AuditLogController::class, 'downloadAuditLog']);
                 });
 
-                Route::group(['prefix' => 'role', 'middleware' => 'admin.superadmin'], function () {
+                Route::group(['prefix' => 'role'], function () {
                     Route::get('/all', [RoleController::class, 'index']);
                     Route::get('/permissions', [RoleController::class, 'permissions']);
                     Route::post('/create', [RoleController::class, 'store']);
@@ -421,7 +421,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::delete('/delete/{id}', [RoleController::class, 'destroy']);
                 });
 
-                Route::group(['prefix' => 'users', 'middleware' => 'admin.superadmin'], function () {
+                Route::group(['prefix' => 'users'], function () {
                     Route::get('/all', [UserController::class, 'allUsers']);
                     Route::get('/roles', [UserController::class, 'allRoles']);
                     Route::post('/create', [UserController::class, 'addUser']);
