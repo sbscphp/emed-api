@@ -34,13 +34,9 @@ class AuthenticationController extends Controller
     public function register(RegisterRequest $request)
     {
         try {
-            DB::beginTransaction();
             $record = $this->authenticationService->create($request->all());
-
-            DB::commit();
             return JsonResponser::send(false, 'Registration successful, please check your mail to verify your email.', $record, 200);
         } catch (\Throwable $th) {
-            DB::rollBack();
             return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
         }
     }
@@ -223,8 +219,7 @@ class AuthenticationController extends Controller
                 }
 
                 $tenant->makeCurrent();
-            }
-            else {
+            } else {
                 DB::purge('tenant');
                 DB::setDefaultConnection('landlord');
             }

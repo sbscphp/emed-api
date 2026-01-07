@@ -38,33 +38,38 @@ class AuthenticationService
      */
     public function create($data)
     {
-        DB::connection('landlord')->beginTransaction();
-
         $tenant = null;
         $user = null;
 
         try {
-            // Create Tenant
+            // Create Tenant on landlord DB
             $tenant = $this->createTenant($data);
             $tenant->makeCurrent(); // Switch DB to tenant
 
-            // Create User (Hospital Admin)
+            // Create User (Hospital Admin) - operations on tenant DB
             $user = $this->createUser($tenant, $data);
 
             $otp = random_int(100000, 999999);
             $expiresAt = Carbon::now()->addMinutes(30);
 
-            // Store token in landlord DB
-            DB::connection('landlord')->table('password_reset_tokens')->updateOrInsert(
-                ['email' => $user->email],
-                [
-                    'user_id' => $user->id,
-                    'email' => $user->email,
-                    'otp' => $otp,
-                    'created_at' => now(),
-                    'expires_at' => $expiresAt
-                ]
-            );
+            // Store token in landlord DB with separate transaction
+            DB::connection('landlord')->beginTransaction();
+            try {
+                DB::connection('landlord')->table('password_reset_tokens')->updateOrInsert(
+                    ['email' => $user->email],
+                    [
+                        'user_id' => $user->id,
+                        'email' => $user->email,
+                        'otp' => $otp,
+                        'created_at' => now(),
+                        'expires_at' => $expiresAt
+                    ]
+                );
+                DB::connection('landlord')->commit();
+            } catch (\Throwable $e) {
+                DB::connection('landlord')->rollBack();
+                throw $e;
+            }
 
             // Prepare password setup mail
             $maildata = [
@@ -74,13 +79,18 @@ class AuthenticationService
             ];
 
             Mail::to($user->email)->send(new TenantEmailVerification($maildata));
-            DB::connection('landlord')->commit();
+
+            // Load tenant-scoped relations while tenant DB is still selected
+            $userWithRelations = $user->load('roles', 'permissions');
+
+            // Forget tenant connection after eager-loading tenant data
+            $tenant->forget();
+
             return [
-                'user' => $user->load('roles', 'permissions'),
+                'user' => $userWithRelations,
                 'tenant' => $tenant
             ];
         } catch (\Throwable $e) {
-            DB::connection('landlord')->rollBack();
             if (env('APP_ENV') === 'local') {
                 if ($tenant && $tenant->database) {
                     DB::connection('mysql')->statement("DROP DATABASE IF EXISTS `{$tenant->database}`");
