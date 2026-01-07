@@ -91,7 +91,8 @@ class AuthenticationService
                 'tenant' => $tenant
             ];
         } catch (\Throwable $e) {
-            if (env('APP_ENV') === 'local') {
+            // if (env('APP_ENV') === 'local') {
+            if (in_array(env('APP_ENV'), ['production', 'local'])) {
                 if ($tenant && $tenant->database) {
                     DB::connection('mysql')->statement("DROP DATABASE IF EXISTS `{$tenant->database}`");
                 }
@@ -144,7 +145,8 @@ class AuthenticationService
         $tenant = Tenant::create($tenantData);
 
         // Create tenant DB in local/dev
-        if (env('APP_ENV') === 'local') {
+        // if (env('APP_ENV') === 'local') {
+        if (in_array(env('APP_ENV'), ['production', 'local'])) {
             DB::statement("CREATE DATABASE IF NOT EXISTS {$tenant->database}");
             $tenant->makeCurrent();
 
