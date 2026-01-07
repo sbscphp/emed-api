@@ -146,30 +146,46 @@ class ReportService
         $tenantId = $request->header('X-Tenant-ID');
 
         // Handle date range: either custom OR system dateFilter, not both
+        $customDate = [];
         if ($request->period === 'custom date' && $request->start_date && $request->end_date) {
-            $dateRange = [$request->start_date, $request->end_date];
-        } else {
-            $dateRange = GeneralHelper::dateFilter($request->period);
+            $customDate = [$request->start_date, $request->end_date];
         }
+
+        $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
 
         // Base query
         $records = Service::query()
-            ->where('tenant_id', $tenantId)
-            ->when($dateRange, function ($q) use ($dateRange) {
-                $q->whereBetween('created_at', $dateRange);
-            });
+            ->where('tenant_id', $tenantId);
 
         // === PATIENT REPORT ===
         if ($request->type === 'Patient') {
-            $records->withCount(['visits as total_patient_attended']);
+
+            $records->withCount([
+                'visits as total_patient_attended' => function ($q) use ($dateFilter) {
+                    if ($dateFilter) {
+                        $q->whereBetween('created_at', $dateFilter);
+                    }
+                }
+            ]);
         }
 
         // === FINANCIAL REPORT ===
         if ($request->type === 'Financial') {
+
             $records
-                ->withSum('billing', 'amount_paid')
                 ->withSum([
-                    'billing as billing_sum_amount_pending' => function ($q) {}
+                    'billing as billing_sum_amount_paid' => function ($q) use ($dateFilter) {
+                        if ($dateFilter) {
+                            $q->whereBetween('created_at', $dateFilter);
+                        }
+                    }
+                ], 'amount_paid')
+                ->withSum([
+                    'billing as billing_sum_amount_pending' => function ($q) use ($dateFilter) {
+                        if ($dateFilter) {
+                            $q->whereBetween('created_at', $dateFilter);
+                        }
+                    }
                 ], DB::raw('grand_total - amount_paid'));
         }
 

@@ -257,6 +257,7 @@ class PharmacyService
             $treatment->update([
                 'dispensed_by' => $currentUser->id,
                 'dispensing_date' => $data['dispensing_date'],
+                'dispensed_date' => now(),
                 'quantity_dispensed' => $data['quantity_dispensed'],
                 'batch_number' => $data['batch_number'],
                 'expiry_date' => $data['expiry_date'],
