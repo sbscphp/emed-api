@@ -144,26 +144,21 @@ class AuthenticationService
         // Save tenant
         $tenant = Tenant::create($tenantData);
 
-        // Create tenant DB in local/dev
-        // if (env('APP_ENV') === 'local') {
-        if (in_array(env('APP_ENV'), ['production', 'local'])) {
-            DB::statement("CREATE DATABASE IF NOT EXISTS {$tenant->database}");
-            $tenant->makeCurrent();
+        // Create tenant DB and run migrations (all environments)
+        DB::statement("CREATE DATABASE IF NOT EXISTS {$tenant->database}");
+        $tenant->makeCurrent();
 
-            Artisan::call('migrate', [
-                '--database' => 'tenant',
-                '--path' => 'database/migrations/tenant',
-                '--force' => true
-            ]);
+        Artisan::call('migrate', [
+            '--database' => 'tenant',
+            '--path' => 'database/migrations/tenant',
+            '--force' => true
+        ]);
 
-            Artisan::call('db:seed', [
-                '--database' => 'tenant',
-                '--class' => 'DatabaseSeeder',
-                '--force' => true,
-            ]);
-
-            $tenant->forget();
-        }
+        Artisan::call('db:seed', [
+            '--database' => 'tenant',
+            '--class' => 'DatabaseSeeder',
+            '--force' => true,
+        ]);
 
         return $tenant;
     }
