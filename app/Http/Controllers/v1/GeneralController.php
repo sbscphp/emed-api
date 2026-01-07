@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1;
 
+use App\Helpers\ExportHelper;
 use App\Helpers\FileUploadHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Inventory;
@@ -17,11 +18,35 @@ use App\Responser\JsonResponser;
 
 class GeneralController extends Controller
 {
+    // public function allLabTest(Request $request)
+    // {
+    //     try {
+    //         $tenantId = $request->header('X-Tenant-ID');
+    //         $record = LabService::where('tenant_id', $tenantId)
+    //             ->when(!empty($request['search_param']), function ($query) use ($request) {
+    //                 $query->where(function ($q) use ($request) {
+    //                     $q->orWhere('name', 'LIKE', '%' . $request['search_param'] . '%')
+    //                         ->orWhere('class', 'LIKE', '%' . $request['search_param'] . '%')
+    //                         ->orWhere('price', 'LIKE', '%' . $request['search_param'] . '%')
+    //                         ->orWhere('type', 'LIKE', '%' . $request['search_param'] . '%');
+    //                 });
+    //             })
+    //             ->when(!empty($request->type), function ($query) use ($request) {
+    //                 $query->where('type', $request->type);
+    //             })->orderBy('id', 'DESC')->get();
+
+    //         return JsonResponser::send(false, 'Record found successfully', $record, 200);
+    //     } catch (\Throwable $th) {
+    //         return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+    //     }
+    // }
+
     public function allLabTest(Request $request)
     {
         try {
+
             $tenantId = $request->header('X-Tenant-ID');
-            $record = LabService::where('tenant_id', $tenantId)
+            $query = LabService::where('tenant_id', $tenantId)
                 ->when(!empty($request['search_param']), function ($query) use ($request) {
                     $query->where(function ($q) use ($request) {
                         $q->orWhere('name', 'LIKE', '%' . $request['search_param'] . '%')
@@ -32,11 +57,34 @@ class GeneralController extends Controller
                 })
                 ->when(!empty($request->type), function ($query) use ($request) {
                     $query->where('type', $request->type);
-                })->orderBy('id', 'DESC')->get();
+                })->orderBy('id', 'DESC');
 
-            return JsonResponser::send(false, 'Record found successfully', $record, 200);
+            if (!empty($request['export'])) {
+                $records = $query->get();
+
+                $exportData = $records->map(function ($lab) {
+                    return [
+                        'Name'   => $lab->name ?? 'N/A',
+                        'Class'       => $lab->class ?? 'N/A',
+                        'Type'        => $lab->type ?? 'N/A',
+                        'Price'       => $lab->price ?? 'N/A'
+                    ];
+                })->toArray();
+
+                if ($request['export'] === 'csv') {
+                    return ExportHelper::streamCsv($exportData, null, 'lab-tests.csv');
+                }
+
+                if ($request['export'] === 'pdf') {
+                    return ExportHelper::downloadPdf($exportData, 'lab-tests.pdf');
+                }
+            }
+            
+            $records = $query->paginate(10);
+
+            return JsonResponser::send(false, 'Record found successfully', $records, 200);
         } catch (\Throwable $th) {
-            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+            return JsonResponser::send(true, $th->getMessage(), [], 500);
         }
     }
 

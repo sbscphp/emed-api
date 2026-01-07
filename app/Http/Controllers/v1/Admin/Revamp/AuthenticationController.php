@@ -269,6 +269,7 @@ class AuthenticationController extends Controller
                     'id'   => $tenant->id,
                     'uuid' => $tenant->uuid,
                     'name' => $tenant->name,
+                    'logo' => $tenant->logo,
                 ];
                 $user['current_tenant_user'] = $tenantUser;
                 $user['roles'] = $roles;

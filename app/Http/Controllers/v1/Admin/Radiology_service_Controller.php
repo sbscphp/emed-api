@@ -10,6 +10,7 @@ use App\Models\RadiologyService;
 use Illuminate\Http\Request;
 use App\Models\ServiceUnit;
 use App\Responser\JsonResponser;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class Radiology_service_Controller extends Controller
 {
@@ -58,21 +59,10 @@ class Radiology_service_Controller extends Controller
                 "export" => "nullable|string|in:pdf,csv"
             ]);
 
-            if (!empty($validated['export'])) {
-                $exportData = RadiologyService::all()->toArray();
-
-                if ($validated['export'] === 'csv') {
-                    return ExportHelper::streamCsv($exportData, null, 'service.csv');
-                }
-
-                if ($validated['export'] === 'pdf') {
-                    return ExportHelper::downloadPdf($exportData, 'service.pdf');
-                }
-            }
-
             $tenantId = $request->header('X-Tenant-ID');
 
-            $services = RadiologyService::where('tenant_id', $tenantId)
+            // Base query
+            $query = RadiologyService::where('tenant_id', $tenantId)
                 ->when(!empty($validated['search']), function ($query) use ($validated) {
                     $search = $validated['search'];
 
@@ -80,10 +70,54 @@ class Radiology_service_Controller extends Controller
                         $q->where('name', 'LIKE', "%{$search}%")
                             ->orWhere('price', 'LIKE', "%{$search}%");
                     });
-                })->paginate(10);
-            return JsonResponser::send(false, 'featch successfully.', $services);
+                });
+
+            // EXPORT
+            if (!empty($validated['export'])) {
+                $records = $query->orderBy('id', 'DESC')->get();
+                return $this->exportRadiologyServices($records, $validated['export']);
+            }
+
+            // NORMAL PAGINATED RESPONSE
+            $services = $query->orderBy('id', 'DESC')->paginate(10);
+
+            return JsonResponser::send(false, 'Fetched successfully.', $services);
         } catch (\Throwable $th) {
-            return JsonResponser::send(true, 'Error  .', [], 500, $th);
+            return JsonResponser::send(true, 'Error.', [], 500, $th);
         }
+    }
+
+    public function exportRadiologyServices($records, $format)
+    {
+        $exportData = $records->map(function ($service) {
+            return [
+                'Service Name'   => $service->name,
+                'Price'          => number_format($service->price, 2),
+                // 'Category'       => $service->category ?? 'N/A',
+                // 'Status'         => $service->status ?? 'Active',
+                // 'Created Date'   => optional($service->created_at)->format('Y-m-d H:i'),
+            ];
+        })->toArray();
+
+        if (empty($exportData)) {
+            throw new \Exception("No records found for export.");
+        }
+
+        // CSV Export
+        if (strtolower($format) === 'csv') {
+            return ExportHelper::streamCsv($exportData, null, 'radiology_services.csv');
+        }
+
+        // PDF Export
+        if (strtolower($format) === 'pdf') {
+            $pdf = Pdf::loadView(
+                'exports.patients',
+                ['patients' => $exportData]
+            )->setPaper('A4', 'landscape');
+
+            return $pdf->download('radiology_services.pdf');
+        }
+
+        throw new \Exception("Invalid export format.");
     }
 }

@@ -62,13 +62,31 @@ class Consultation_Service_Bill extends Controller
     {
         try {
             $validated = $request->validate([
-                "search" => "nullable|string",
-                "export" => "nullable|string|in:pdf,csv"
+                'search' => 'nullable|string',
+                'export' => 'nullable|string|in:pdf,csv'
             ]);
 
-            if (!empty($validated['export'])) {
-                $exportData = Service::all()->toArray();
+            $tenantId = $request->header('X-Tenant-ID');
 
+            $query = Service::where('tenant_id', $tenantId)
+                ->when(!empty($validated['search']), function ($q) use ($validated) {
+                    $search = $validated['search'];
+                    $q->where(function ($sub) use ($search) {
+                        $sub->where('name', 'LIKE', "%{$search}%")
+                            ->orWhere('price', 'LIKE', "%{$search}%");
+                    });
+                });
+
+            if (!empty($validated['export'])) {
+                $records = $query->get();
+
+                $exportData = $records->map(function ($service) {
+
+                    return [
+                        'Service Unit'     => $service->name ?? 'N/A',
+                        'Price'  => $service->price ?? 'N/A'
+                    ];
+                })->toArray();
                 if ($validated['export'] === 'csv') {
                     return ExportHelper::streamCsv($exportData, null, 'service.csv');
                 }
@@ -77,20 +95,11 @@ class Consultation_Service_Bill extends Controller
                     return ExportHelper::downloadPdf($exportData, 'service.pdf');
                 }
             }
-            $tenantId = $request->header('X-Tenant-ID');
+            $services = $query->paginate(10);
 
-            $services = Service::where('tenant_id', $tenantId)
-                ->when(!empty($validated['search']), function ($query) use ($validated) {
-                    $search = $validated['search'];
-
-                    $query->where(function ($q) use ($search) {
-                        $q->where('name', 'LIKE', "%{$search}%")
-                            ->orWhere('price', 'LIKE', "%{$search}%");
-                    });
-                })->paginate(10);
-            return JsonResponser::send(false, 'featch successfully.', $services);
+            return JsonResponser::send(false, 'Fetched successfully.', $services);
         } catch (\Throwable $th) {
-            return JsonResponser::send(true, 'Error  .', [], 500, $th);
+            return JsonResponser::send(true, 'Error.', [], 500, $th);
         }
     }
 

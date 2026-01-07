@@ -130,7 +130,7 @@ class DashboardService
                 return $query->whereBetween('created_at', $dateFilter);
             });
         $totalRevenue = (clone $billingQuery)->sum('grand_total');
-        $outstandingPayment = (clone $billingQuery)->sum('amount_outstanding');
+        $outstandingPayment = BillingLogDetail::where('tenant_id', $tenantId)->where('status', GeneralEnums::PENDING->value)->sum('amount');
 
         $totalReferrals = (clone $patientQuery)->whereNotNull('referral')->count();
         $totalReferralsToday = (clone $patientQuery)->whereNotNull('referral')->whereDate('created_at', Carbon::today())->count();
