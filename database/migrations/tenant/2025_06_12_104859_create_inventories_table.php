@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('medication_id')->nullable();
             $table->unsignedBigInteger('medicine_type_id')->nullable();
+            $table->string('tenant_id')->nullable();
             $table->string('batch_no')->nullable();
             $table->string('item_name')->nullable();
             $table->integer('quantity')->default(0);
