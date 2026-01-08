@@ -26,7 +26,7 @@ class PermissionTableSeeder extends Seeder
                         Permission::updateOrCreate(
                             ['name' => $name],
                             [
-                                'module'       => $moduleName,
+                                'module'       => $appName,
                                 'sub_module'   => null,
                                 'display_name' => ucfirst($action) . " " . $appName,
                                 'description'  => "Allows user to {$action} in {$appName} {$moduleName}",
