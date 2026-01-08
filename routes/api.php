@@ -340,7 +340,7 @@ Route::group(["prefix" => "v1"], function () {
                 // Old Billing routes
                 // Route::group(['prefix' => 'billing', 'middleware' => 'role.billing'], function () {
                 //     Route::post('/lists', [BillingController::class, 'index']);
-                    // Route::post('/', [BillingController::class, 'store']);
+                // Route::post('/', [BillingController::class, 'store']);
 
                 //     // save_as_daft
                 //     Route::post('/save_as_daft', [BillingController::class, 'save_as_daft']);

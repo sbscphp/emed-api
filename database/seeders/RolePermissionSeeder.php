@@ -40,29 +40,36 @@ class RolePermissionSeeder extends Seeder
 
         foreach ($config as $key => $description) {
             // Create a new role
-            $role = Role::where('tenant_id', $tenant->uuid)->where('name', $key)->first();
-            if (!$role) {
-                DB::connection('tenant')->table('roles')->insert([
-                    'tenant_id'    => $tenant->uuid,
-                    'name'         => $key,
+            $role = Role::firstOrCreate(
+                [
+                    'tenant_id' => $tenant->uuid,
+                    'name'      => $key,
+                ],
+                [
                     'display_name' => ucwords(str_replace('_', ' ', $key)),
                     'description'  => $description,
-                    'status'       => 'Active',
-                    'created_at'   => now(),
-                    'updated_at'   => now(),
-                ]);
-                // Role::firstOrCreate(
-                //     [
-                //         'tenant_id' => $tenant->uuid,
-                //         'name'      => $key,
-                //     ],
-                //     [
-                //         'display_name' => ucwords(str_replace('_', ' ', $key)),
-                //         'description'  => $description,
-                //         'status'       => 'Active'
-                //     ]
-                // );
-            }
+                    'status'       => 'Active'
+                ]
+            );
+
+            $permissions = Permission::where('module', $key)->get();
+            $role->givePermissions($permissions->pluck('id')->toArray());
+            
+            // $role = Role::where('tenant_id', $tenant->uuid)->where('name', $key)->first();
+            // if (!$role) {
+            //     $role = DB::connection('tenant')->table('roles')->insert([
+            //         'tenant_id'    => $tenant->uuid,
+            //         'name'         => $key,
+            //         'display_name' => ucwords(str_replace('_', ' ', $key)),
+            //         'description'  => $description,
+            //         'status'       => 'Active',
+            //         'created_at'   => now(),
+            //         'updated_at'   => now(),
+            //     ]);
+            // }
+
+            // $permissions = Permission::where('module', $key)->get();
+            // $role->givePermissions($permissions->pluck('id')->toArray());
 
             $this->command->info("Created role: {$key}");
 
