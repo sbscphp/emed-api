@@ -8,6 +8,7 @@ return [
         'http://localhost:5174',
         'https://emed-application.vercel.app',
         'http://127.0.0.1:5500',
+        'https://emed.quick-retail.com',
     ],
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],
