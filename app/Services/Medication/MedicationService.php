@@ -60,7 +60,7 @@ class MedicationService
         return [
             'total_medications' => Medication::where('tenant_id', $tenantId)->count(),
             // 'total_supply_today' => PharmacyRequest::where('tenant_id', $tenantId)->whereDate('supplied_date', now())->whereNotNull('supplied_date')->count(),
-            'total_supply_today' => Treatment::where('tenant_id', $tenantId)->whereDate('dispensed_date', now())->whereNotNull('dispensed_date')->count(),
+            'total_supply_today' => Treatment::where('tenant_id', $tenantId)->whereDate('dispensing_date', now())->whereNotNull('dispensing_date')->count(),
             // 'near_expiry_medications' => MedicationInventory::where('tenant_id', $tenantId)->whereBetween('expiry_date', [now(), now()->addDays(30)])
             //     ->distinct('medication_id')
             //     ->count('medication_id'),
