@@ -79,8 +79,12 @@ class GeneralController extends Controller
                     return ExportHelper::downloadPdf($exportData, 'lab-tests.pdf');
                 }
             }
-            
-            $records = $query->paginate(10);
+
+            if (!empty($request['paginate'])) {
+                $records = $query->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
+            }
+
+            $records = $query->orderBy('id', 'DESC')->get();
 
             return JsonResponser::send(false, 'Record found successfully', $records, 200);
         } catch (\Throwable $th) {
