@@ -9,6 +9,7 @@ return [
         'https://emed-application.vercel.app',
         'http://127.0.0.1:5500',
         'https://emed.quick-retail.com',
+        'https://api.emeddiaries.com',
     ],
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],
