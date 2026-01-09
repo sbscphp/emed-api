@@ -470,21 +470,48 @@ class UserController extends Controller
         }
     }
 
-    public function getPharmacists()
+    public function getPharmacists(Request $request)
     {
         try {
-            $pharmacists = User::whereHas('roles', fn($q) => $q->where('name', 'pharmacy'))
-                ->get()
-                ->map(function ($user) {
-                    return [
-                        'id' => $user->id,
-                        'name' => "{$user->fullname}",
-                        'email' => $user->email,
-                    ];
-                });
+            $tenantUuid = $request->header('X-Tenant-ID');
+            $tenant = Tenant::where('uuid', $tenantUuid)->firstOrFail();
+            $tenant->makeCurrent();
+            $tenantId = $tenant->id;
+            $tenantDb = DB::connection('tenant')->getDatabaseName();
+
+            $pharmacists = User::query()
+                ->select('users.*')
+                ->join('tenant_users', 'tenant_users.user_id', '=', 'users.id')
+                ->where('tenant_users.tenant_id', $tenantId)
+                ->whereNull('tenant_users.deleted_at')
+                ->with(['tenantUsers' => function ($q) use ($tenantId) {
+                    $q->where('tenant_id', $tenantId)->whereNull('deleted_at');
+                }])
+                ->whereExists(function ($sub) use ($tenantDb, $tenant) {
+                    $sub->select(DB::raw(1))
+                        ->from("{$tenantDb}.role_user")
+                        ->join("{$tenantDb}.roles", "roles.id", "=", "role_user.role_id")
+                        ->whereRaw("role_user.user_id = users.id")
+                        ->where("roles.tenant_id", $tenant->uuid)
+                        ->where("roles.name", 'pharmacy');
+                })
+                ->orderByDesc('users.id')
+                ->get();
+
+            $pharmacists = $pharmacists->transform(function ($user) use ($tenant) {
+                $userRole = $user->roles()
+                    ->where('roles.tenant_id', $tenant->uuid)
+                    ->where('roles.name', 'pharmacy')
+                    ->first(['roles.id', 'roles.name', 'roles.display_name']);
+
+                $user->userRole = $userRole;
+                unset($user->roles);
+
+                return $user;
+            });
 
             return JsonResponser::send(false, 'Pharmacists fetched successfully.', $pharmacists);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return JsonResponser::send(true, 'Failed to fetch pharmacists.', [], 500, $e);
         }
     }
