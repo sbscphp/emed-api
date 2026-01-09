@@ -652,7 +652,7 @@ class UserController extends Controller
         return JsonResponser::send(true, "User deleted successfully found", null, 200);
     }
 
-    public function hospital_information(Request $request, $id)
+    public function hospital_information(Request $request)
     {
         $tenantId = $request->header('X-Tenant-ID');
         $hospital = Tenant::where('uuid', $tenantId)->firstOrFail();
