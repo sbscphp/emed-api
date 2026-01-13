@@ -154,7 +154,7 @@ class RadiologyController extends Controller
             }
 
             // Manually fetch dispensed user from landlord DB
-            if ($record->consultation->consulted_by) {
+            if ($record->consultation && $record->consultation->consulted_by) {
                 $consultedUser = User::on('landlord')
                     ->select('id', 'fullname', 'email')
                     ->find($record->consultation->consulted_by);
@@ -169,9 +169,9 @@ class RadiologyController extends Controller
                     ->select('id', 'fullname', 'email')
                     ->find($record->user_id);
 
-                $record->setAttribute('attendedBy', $labUsers);
+                $record->setAttribute('consultedBy', $labUsers);
             } else {
-                $record->setAttribute('attendedBy', null);
+                $record->setAttribute('consultedBy', null);
             }
 
             return JsonResponser::send(false, 'Record(s) found successfully.', $record, 200);

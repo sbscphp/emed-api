@@ -16,6 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id')->nullable();
             $table->unsignedBigInteger('patient_id')->nullable();
             $table->unsignedBigInteger('visit_id')->nullable();
+            $table->string('tenant_id')->nullable();
             $table->date('birth_date')->nullable();
             $table->time('birth_time')->nullable();
             $table->string('sex')->nullable();
