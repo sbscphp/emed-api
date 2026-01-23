@@ -531,6 +531,7 @@ class ConsultationService
 
                     $price = $drug->inventory->medication?->selling_price ?? 0;
 
+                    $totalPrice += $price * ($drugItem['quantity'] ?? 1);
                     // create fresh billing detail
                     $billingDetail = BillingLogDetail::create([
                         'tenant_id'        => $tenantId,
@@ -540,10 +541,9 @@ class ConsultationService
                         'item_name'       => $drugItem['drug'] ?? $drug->product,
                         'quantity'        => $drugItem['quantity'] ?? 1,
                         // 'amount'          => $drug->inventory->medication ? $drug->inventory->medication->selling_price : 0,
-                        'amount'          => $price,
+                        'amount'          => $totalPrice //$price,
                     ]);
 
-                    $totalPrice += $price * ($drugItem['quantity'] ?? 1);
                     // $totalPrice += $drug->inventory->medication->selling_price * ($drugItem['quantity'] ?? 1);
                 }
             }
