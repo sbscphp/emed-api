@@ -205,7 +205,7 @@ class DashboardService
             $quantity = $treatmentQuery->sum('quantity');
 
             $topDrugs[] = [
-                'name' => $medication->medicine_name,
+                'name' => $medication->generic_name,
                 'totalQuantity' => $quantity
             ];
         }

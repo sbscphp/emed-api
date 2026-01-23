@@ -32,7 +32,8 @@ class TreatmentRequest extends FormRequest
             'medications.*.drug_id' => 'required|integer',
             'medications.*.qualifier' => 'nullable|string',
             'medications.*.pharmacy_id' => 'nullable',
-            'medications.*.dosage' => 'required|string',
+            // 'medications.*.dosage' => 'required|string',
+            'medications.*.quantity' => 'required|integer',
             'medications.*.weight' => 'nullable|string',
             'medications.*.period' => 'required|string',
             'medications.*.duration' => 'required|string',
@@ -64,8 +65,11 @@ class TreatmentRequest extends FormRequest
 
             'medications.*.qualifier.string' => 'The qualifier must be a string.',
 
-            'medications.*.dosage.required' => 'The dosage is required for each medication.',
-            'medications.*.dosage.string'   => 'The dosage must be a valid string.',
+            // 'medications.*.dosage.required' => 'The dosage is required for each medication.',
+            // 'medications.*.dosage.string'   => 'The dosage must be a valid string.',
+
+            'medications.*.quantity.required' => 'The quantity is required for each medication.',
+            'medications.*.quantity.integer'   => 'The quantity must be a valid integer.',
 
             'medications.*.weight.string' => 'The weight must be a valid string.',
 
