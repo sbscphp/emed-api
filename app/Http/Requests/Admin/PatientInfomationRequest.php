@@ -35,9 +35,9 @@ class PatientInfomationRequest extends FormRequest
             'email' => ['required', 'email', 'max:255'],
             'homeaddress' => 'required|string',
             'occupation' => 'required|string',
-            'bloodgroup' => 'required|string',
-            'cardno' => 'nullable|unique:patients,cardno',
-            'genotype' => 'required|string',
+            // 'bloodgroup' => 'required|string',
+            // 'cardno' => 'nullable|unique:patients,cardno',
+            // 'genotype' => 'required|string',
             // 'referral' => 'required|string',
 
             // 'nokfirstname' => 'required|string',
@@ -94,13 +94,13 @@ class PatientInfomationRequest extends FormRequest
             'occupation.required' => 'The occupation is required.',
             'occupation.string' => 'The occupation must be a valid string.',
 
-            'bloodgroup.required' => 'The blood group is required.',
-            'bloodgroup.string' => 'The blood group must be a valid string.',
+            // 'bloodgroup.required' => 'The blood group is required.',
+            // 'bloodgroup.string' => 'The blood group must be a valid string.',
 
-            'cardno.unique' => 'This card number already exists.',
+            // 'cardno.unique' => 'This card number already exists.',
 
-            'genotype.required' => 'The genotype is required.',
-            'genotype.string' => 'The genotype must be a valid string.',
+            // 'genotype.required' => 'The genotype is required.',
+            // 'genotype.string' => 'The genotype must be a valid string.',
 
             // 'referral.required' => 'The referral is required.',
             // 'referral.string' => 'The referral must be a valid string.',
