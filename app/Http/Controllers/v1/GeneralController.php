@@ -81,7 +81,7 @@ class GeneralController extends Controller
             }
 
             if (!empty($request['paginate'])) {
-                $records = $query->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
+                return $records = $query->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
             }
 
             $records = $query->orderBy('id', 'DESC')->get();
