@@ -263,6 +263,7 @@ class PatientService
                 'marital_status' => $request->marital_status,
                 'tribe' => $request->tribe,
                 'homeaddress' => $request->homeaddress,
+                'cardno' => $request->cardno,
                 'occupation' => $request->occupation,
                 'stateoforigin' => $request->stateoforigin,
                 'lga' => $request->lga,
