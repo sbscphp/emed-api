@@ -81,7 +81,8 @@ class GeneralController extends Controller
             }
 
             if (!empty($request['paginate'])) {
-                return $records = $query->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
+                $records = $query->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
+                return JsonResponser::send(false, 'Record found successfully', $records, 200);
             }
 
             $records = $query->orderBy('id', 'DESC')->get();
