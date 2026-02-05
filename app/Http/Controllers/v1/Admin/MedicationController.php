@@ -10,6 +10,7 @@ use App\Http\Requests\Admin\MedicationCsvUploadRequest;
 use App\Http\Requests\Admin\MedicationRequest;
 use App\Http\Requests\MedicationUpdateRequest;
 use App\Models\Medicine_Log;
+use App\Models\Tenant;
 use App\Responser\JsonResponser;
 use App\Services\Medication\MedicationService;
 use App\Services\User\UserService;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Azeemade\BulkUpload\Services\BulkUploadService;
 
 class MedicationController extends Controller
 {
@@ -244,6 +246,33 @@ class MedicationController extends Controller
             return JsonResponser::send(false, 'Medicine dashboard stats fetched successfully', $stats);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Failed to fetch medicine dashboard stats', [], 500, $e);
+        }
+    }
+
+    public function bulkUpload(Request $request, BulkUploadService $service)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,xlsx',
+        ]);
+
+        $currentUser = Auth::user();
+        $tenantId = $request->header('X-Tenant-ID');
+
+        $metadata = [
+            'created_by' => $currentUser->id,
+            'tenant_id' => $tenantId,
+            'source' => 'api',
+        ];
+        // $tenant = Tenant::where('uuid', $tenantId)->first();
+        // $tenant->forget();
+        DB::connection('landlord')->beginTransaction();
+        try {
+            $batch = $service->handle('medication', $request->file('file'), $metadata);
+            DB::connection('landlord')->commit();
+            return JsonResponser::send(false, 'Bulk upload started successfully', $batch, 202);
+        } catch (\Exception $e) {
+            DB::connection('landlord')->rollback();
+            return JsonResponser::send(true, 'Bulk upload failed', [], 500, $e);
         }
     }
 }
