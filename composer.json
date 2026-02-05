@@ -10,6 +10,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "azeemade/bulk-upload": "^1.0",
         "barryvdh/laravel-dompdf": "^3.1",
         "cloudinary-labs/cloudinary-laravel": "^2.2",
         "hidehalo/nanoid-php": "^2.0",

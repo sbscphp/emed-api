@@ -26,6 +26,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\v1\Admin\MainDashBoardStatsController;
 // use App\Http\Controllers\v1\Admin\ArtisanController;
 use App\Http\Controllers\v1\Admin\ArtisanController;
+use App\Http\Controllers\v1\Admin\BulkUploadController;
 use App\Http\Controllers\v1\Notification\NotificationController;
 use App\Http\Controllers\v1\Admin\Consultation_Service_Bill;
 use App\Http\Controllers\v1\Admin\HivAidsController;
@@ -275,6 +276,12 @@ Route::group(["prefix" => "v1"], function () {
                     Route::delete('/delete/{id}', [MedicationController::class, 'destroy']);
                     Route::patch('/{id}/toggle-status', [MedicationController::class, 'changeStatus']);
                     Route::post('/upload-csv', [MedicationController::class, 'uploadCsv']);
+                    Route::post('/bulk-upload', [MedicationController::class, 'bulkUpload']);
+                    // Generic Bulk Upload Endpoints
+                    Route::get('/bulk-upload/template', [BulkUploadController::class, 'template']);
+                    Route::get('/bulk-upload/{batch_id}', [BulkUploadController::class, 'show']);
+                    Route::get('/bulk-upload/{batch_id}/errors', [BulkUploadController::class, 'errors'])->name('bulk-upload.errors');
+                    
                     Route::get('/stats', [MedicationController::class, 'medicineDashboardStats']);
                     Route::get('/vendors', [MedicationController::class, 'listVendors']);
 
