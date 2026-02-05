@@ -42,7 +42,7 @@ return [
     | Email address to send completion notifications to.
     |
     */
-    'notify_email' => 'testresd@yopmail.com',
+    'notify_email' => '',
 
     /*
     |--------------------------------------------------------------------------
