@@ -11,7 +11,7 @@ return [
     | upload will be processed synchronously.
     |
     */
-    'queue_threshold' => 6,
+    'queue_threshold' => 50,
 
     /*
     |--------------------------------------------------------------------------
