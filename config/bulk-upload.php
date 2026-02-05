@@ -11,7 +11,7 @@ return [
     | upload will be processed synchronously.
     |
     */
-    'queue_threshold' => 6,
+    'queue_threshold' => 50,
 
     /*
     |--------------------------------------------------------------------------
@@ -42,7 +42,7 @@ return [
     | Email address to send completion notifications to.
     |
     */
-    'notify_email' => 'testresd@yopmail.com',
+    'notify_email' => '',
 
     /*
     |--------------------------------------------------------------------------
