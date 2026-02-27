@@ -67,9 +67,14 @@ class RecordManagementController extends Controller
             }
 
             //validate if Card number exists already
-            $cardNoExists = Patient::where('tenant_id', $tenantId)->where('cardno', $request->cardno)->first();
-            if ($cardNoExists) {
-                return JsonResponser::send(true, 'Card Number already exists.', null, 422);
+            if (!empty($request->cardno)) {
+                $cardNoExists = Patient::where('tenant_id', $tenantId)
+                    ->where('cardno', $request->cardno)
+                    ->first();
+
+                if ($cardNoExists) {
+                    return JsonResponser::send(true, 'Card Number already exists.', null, 422);
+                }
             }
 
             $patient = $this->patientService->create($request);
