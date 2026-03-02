@@ -17,6 +17,7 @@ use App\Models\Patient;
 use App\Models\PatientVisit;
 use App\Models\User;
 use App\Services\Revamp\PatientService;
+use Azeemade\BulkUpload\Services\BulkUploadService;
 
 class RecordManagementController extends Controller
 {
@@ -283,6 +284,32 @@ class RecordManagementController extends Controller
             return JsonResponser::send(false, 'Record retrieved successfully.', $patientVisit, 200);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'An error occurred.', 'Internal server error', 500, $th);
+        }
+    }
+
+    public function bulkUpload(Request $request, BulkUploadService $service)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,txt,xlsx,xls',
+        ]);
+
+        $currentUser = Auth::user();
+        $tenantId    = $request->header('X-Tenant-ID');
+
+        $metadata = [
+            'created_by' => $currentUser->id,
+            'tenant_id'  => $tenantId,
+            'source'     => 'api',
+        ];
+
+        DB::connection('landlord')->beginTransaction();
+        try {
+            $batch = $service->handle('patient', $request->file('file'), $metadata);
+            DB::connection('landlord')->commit();
+            return JsonResponser::send(false, 'Bulk upload started successfully', $batch, 202);
+        } catch (\Exception $e) {
+            DB::connection('landlord')->rollback();
+            return JsonResponser::send(true, 'Bulk upload failed', [], 500, $e);
         }
     }
 

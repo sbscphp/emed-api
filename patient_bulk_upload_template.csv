@@ -1,0 +1,2 @@
+firstname,lastname,dob,phoneno,age,gender,marital_status,email,lga,stateoforigin,homeaddress,occupation,religion,tribe,bloodgroup,cardno,genotype,referral,nok_firstname,nok_lastname,nok_gender,nok_phoneno,nok_stateoforigin,nok_lga,nok_homeaddress,nok_relationship
+John,Doe,1990-05-15,08012345678,34,Male,Single,john.doe@example.com,Ikeja,Lagos,"12 Sample Street, Lagos",Engineer,Christianity,Yoruba,O+,,AA,,Jane,Doe,Female,08098765432,Lagos,Surulere,"12 Sample Street, Lagos",Spouse
