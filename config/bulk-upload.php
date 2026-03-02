@@ -89,5 +89,8 @@ return [
     | e.g. 'user' => \App\Models\User::class
     |
     */
-    'model_map' => ['medication' => \App\Models\Medication::class],
+    'model_map' => [
+        'medication' => \App\Models\Medication::class,
+        'patient'    => \App\Models\Patient::class,
+    ],
 ];

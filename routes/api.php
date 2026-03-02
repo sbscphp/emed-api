@@ -146,8 +146,14 @@ Route::group(["prefix" => "v1"], function () {
                         Route::get('/', [RecordManagementController::class, 'index']);
                         Route::post('/create', [RecordManagementController::class, 'store']);
                         Route::put('/update/{id}', [RecordManagementController::class, 'update']);
-                        Route::get('/{id}', [RecordManagementController::class, 'show']);
                         Route::delete('/delete{id}', [RecordManagementController::class, 'delete']);
+                        // Bulk Upload (must be declared before the /{id} wildcard)
+                        Route::post('/bulk-upload', [RecordManagementController::class, 'bulkUpload']);
+                        Route::get('/bulk-upload/template', [BulkUploadController::class, 'template']);
+                        Route::get('/bulk-upload/{batch_id}/errors', [BulkUploadController::class, 'errors'])->name('patient-bulk-upload.errors');
+                        Route::get('/bulk-upload/{batch_id}', [BulkUploadController::class, 'show']);
+                        // Wildcard — must stay last to avoid swallowing the above routes
+                        Route::get('/{id}', [RecordManagementController::class, 'show']);
                     });
 
                     Route::group(['prefix' => 'visit'], function () {
