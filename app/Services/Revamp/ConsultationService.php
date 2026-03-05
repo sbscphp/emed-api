@@ -5,6 +5,7 @@ namespace App\Services\Revamp;
 use App\Enums\GeneralEnums;
 use App\Enums\PatientVisitStatusEnums;
 use App\Helpers\ExportHelper;
+use App\Helpers\FileUploadHelper;
 use App\Helpers\GeneralHelper;
 use App\Models\BillingLog;
 use App\Models\BillingLogDetail;
@@ -171,6 +172,16 @@ class ConsultationService
             $patient = Patient::find($request->patient_id);
             $request['consulted_by'] = $currentUser->id;
             $tenantId = $request->header('X-Tenant-ID');
+
+            // handle uploaded documents if provided
+            $documentFiles = [];
+            if (isset($request['documents']) && $request['documents']) {
+                foreach ($request['documents'] as $key => $document) {
+                    $documentFiles[$key] = FileUploadHelper::singleStringFileUpload($document, 'documents');
+                }
+            }
+            $request['documents'] = !empty($documentFiles) ? json_encode($documentFiles) : null;
+
             // Initiate Patient Consultation
             $consultation = Consultation::updateOrCreate(
                 [

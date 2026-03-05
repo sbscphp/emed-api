@@ -86,6 +86,8 @@ class BillingController extends Controller
                 return JsonResponser::send(true, 'Record not found.', null, 200);
             }
 
+            $vatPercentage = env('VAT_PERCENTAGE', 0);
+            $billingInvoice->vat_amount = $vatPercentage;
             DB::connection('tenant')->commit();
             return JsonResponser::send(false, 'Record found successfully', $billingInvoice, 201);
         } catch (\Throwable $th) {
