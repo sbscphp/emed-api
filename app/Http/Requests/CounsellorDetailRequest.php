@@ -25,7 +25,7 @@ class CounsellorDetailRequest extends FormRequest
             "patient_id" => "required|exists:tenant.patients,id",
             "visit_id" => "required",
             'patient_name' => 'nullable|string',
-            'patient_card_no' => 'required',
+            // 'patient_card_no' => 'required',
             'date' => "nullable|date",
             'time' => 'nullable|string',
             'counsellor_name' => 'nullable|string',
