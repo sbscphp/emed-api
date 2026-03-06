@@ -188,6 +188,14 @@ class PatientService
                 'cardno' => $request->cardno,
                 'genotype' => $request->genotype,
                 'referral' => $request->referral,
+                'payer_type' => $request->payer_type,
+                'nhis_number' => $request->nhis_number,
+                'nhis_scheme' => $request->nhis_scheme,
+                'hmo_name' => $request->hmo_name,
+                'hmo_number' => $request->hmo_number,
+                'principal_name' => $request->principal_name,
+                'employee_id' => $request->employee_id,
+                'company_name' => $request->company_name,
             ]);
 
             // create next of kin
@@ -268,6 +276,14 @@ class PatientService
                 'stateoforigin' => $request->stateoforigin,
                 'lga' => $request->lga,
                 'referral' => $request->referral,
+                'payer_type' => $request->payer_type,
+                'nhis_number' => $request->nhis_number,
+                'nhis_scheme' => $request->nhis_scheme,
+                'hmo_name' => $request->hmo_name,
+                'hmo_number' => $request->hmo_number,
+                'principal_name' => $request->principal_name,
+                'employee_id' => $request->employee_id,
+                'company_name' => $request->company_name,
             ]);
 
             // Update next of kin
