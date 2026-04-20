@@ -82,6 +82,40 @@ class GeneralHelper
         }
     }
 
+    public static function storeLandlordAuditLog($dataToLog, $guard = 'api')
+    {
+        if (!is_null($dataToLog)) {
+            DB::connection('landlord')->beginTransaction();
+
+            try {
+                $auditLog = \App\Models\LandlordAuditLog::create([
+                    'uuid' => Str::uuid(),
+                    'causer_id' => $dataToLog['causer_id'] ?? Auth::guard($guard)->id(),
+                    'action_type' => $dataToLog['action_type'],
+                    'action_module' => $dataToLog['action_module'] ?? ModuleEnums::GUEST->value,
+                    'action_id' => $dataToLog['action_id'],
+                    'action' => $dataToLog['action'] ?? 'Update',
+                    'log_name' => $dataToLog['log_name'],
+                    'description' => $dataToLog['description'],
+                    'module_accessed' => $dataToLog['module_accessed'] ?? null,
+                ]);
+
+                if ($auditLog) {
+                    AuditLogTransaction::on('landlord')->create([
+                        'uuid' => Str::uuid(),
+                        'audit_log_id' => $auditLog->id,
+                        'old_data' => isset($dataToLog['old_data']) ? json_encode($dataToLog['old_data']) : json_encode([]),
+                        'new_data' => isset($dataToLog['new_data']) ? json_encode($dataToLog['new_data']) : json_encode([]),
+                    ]);
+                }
+
+                DB::connection('landlord')->commit();
+            } catch (\Exception $e) {
+                DB::connection('landlord')->rollBack();
+                throw $e;
+            }
+        }
+    }
 
     public static function getModelUniqueOrderlyId($data)
     {

@@ -188,7 +188,9 @@ class AuthenticationController extends Controller
                 return JsonResponser::send(true, 'No user found with this email.', [], 400);
             }
 
-            $hospitals = $user->tenants()->select('name', 'uuid')->get();
+            $hospitals = $user->tenants()
+                ->where('tenants.status', 'Active')
+                ->get(['tenants.name', 'tenants.uuid']);
             if ($hospitals->isEmpty()) {
                 return JsonResponser::send(true, 'No hospital associated with this email.', [], 400);
             }
@@ -205,7 +207,7 @@ class AuthenticationController extends Controller
             $request->validate([
                 'email'       => 'required|email',
                 'password'    => 'required',
-                'tenant_uuid' => 'nullable|exists:tenants,uuid',
+                'tenant_uuid' => 'nullable',
             ]);
 
             $credentials = $request->only(['email', 'password']);
@@ -229,6 +231,22 @@ class AuthenticationController extends Controller
             }
 
             $currentUser = auth()->user();
+            // Super admin users have no tenant — early-return with JWT token
+            $isSuperAdmin = $currentUser->superAdminRoles()->exists();
+            
+            if ($isSuperAdmin) {
+                \Spatie\Multitenancy\Models\Tenant::forgetCurrent();
+                $user = User::find($currentUser->id);
+                $user->update(["last_login" => now()]);
+                $user->load('superAdminRoles');
+
+                return JsonResponser::send(false, 'You are logged in successfully', [
+                    'user' => $user,
+                    'role_type' => 'SuperAdmin',
+                    'accessToken' => $token,
+                    'tokenType' => 'Bearer',
+                ]);
+            }
 
             if (!$currentUser->is_verified) {
                 return JsonResponser::send(true, 'Account not verified. Kindly verify your email.', [], 403);
@@ -298,6 +316,7 @@ class AuthenticationController extends Controller
 
             return JsonResponser::send(false, 'Login successful.', [
                 'user'        => $user,
+                'role_type'   => $currentRole?->display_name,
                 'accessToken' => $token,
                 'tokenType'   => 'Bearer',
             ], 200);
