@@ -134,4 +134,9 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->hasMany(TenantUser::class);
     }
+
+    public function superAdminRoles()
+    {
+        return $this->belongsToMany(SuperAdminRole::class, 'super_admin_role_user', 'user_id', 'super_admin_role_id');
+    }
 }

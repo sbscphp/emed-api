@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
-use Spatie\Multitenancy\Models\Tenant as BaseTenant;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+use Spatie\Multitenancy\Models\Tenant as BaseTenant;
 
 class Tenant extends BaseTenant
 {
+    use SoftDeletes;
+
     protected $guarded = ['id'];
 
     // public static function booted()
@@ -41,6 +44,16 @@ class Tenant extends BaseTenant
 
     public function users()
     {
-        return $this->belongsToMany(User::class, 'tenant_user');
+        return $this->belongsToMany(User::class, 'tenant_users');
+    }
+
+    public function subscription()
+    {
+        return $this->hasOne(Subscription::class, 'tenant_id');
+    }
+
+    public function usageCharges()
+    {
+        return $this->hasMany(ClientUsageCharge::class, 'tenant_id');
     }
 }
