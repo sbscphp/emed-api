@@ -79,6 +79,7 @@ class MedicationController extends Controller
             $validated = array_merge($request->validated(), [
                 'created_by' => $currentUser->id,
                 'tenant_id'        => $tenantId,
+                'reg_no' => $request->reg_no ?? 'REG-' . strtoupper(uniqid()),
             ]);
 
             $med = $this->medicationService->create($validated);
