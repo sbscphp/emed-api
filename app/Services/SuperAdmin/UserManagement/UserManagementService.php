@@ -212,9 +212,6 @@ class UserManagementService
             throw new \Exception('User not found.');
         }
 
-        // Detach from all super admin roles
-        $user->superAdminRoles()->detach();
-
         GeneralHelper::storeLandlordAuditLog([
             'action_type' => 'Models\\User',
             'action_module' => 'Super Admin Users',
@@ -224,6 +221,10 @@ class UserManagementService
             'description' => sprintf('Removed super admin user %s (%s).', $user->fullname, $user->email),
             'module_accessed' => 'Super Admin User Management',
         ]);
+
+        // Detach from all super admin roles
+        $user->superAdminRoles()->detach();
+        $user->delete();
 
         return $user;
     }
