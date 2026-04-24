@@ -30,7 +30,7 @@ class StoreInventoryRequest extends FormRequest
             'quantity' => 'required|integer|min:0',
             'reorder_level' => 'required|integer|min:0',
             'supplier' => 'nullable|string',
-            'expiry_date' => 'required|date',
+            'expiry_date' => 'nullable|date',
             'note' => 'nullable|string',
         ];
     }

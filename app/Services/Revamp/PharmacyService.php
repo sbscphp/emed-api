@@ -259,8 +259,8 @@ class PharmacyService
                 'dispensing_date' => $data['dispensing_date'],
                 'dispensed_date' => now(),
                 'quantity_dispensed' => $data['quantity_dispensed'],
-                'batch_number' => $data['batch_number'],
-                'expiry_date' => $data['expiry_date'],
+                'batch_number' => $data['batch_number'] ?? null,
+                'expiry_date' => $data['expiry_date'] ?? null,
                 'status' => GeneralEnums::FULLFILLED->value
             ]);
             // Update drug stock

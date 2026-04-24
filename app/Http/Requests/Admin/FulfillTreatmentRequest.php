@@ -25,8 +25,8 @@ class FulfillTreatmentRequest extends FormRequest
             'treatment_id'         => 'required|exists:tenant.patient_visit_treatment,id',
             'dispensing_date'      => 'required|date',
             'quantity_dispensed'   => 'required|integer|min:1',
-            'batch_number'         => 'required|string|max:255',
-            'expiry_date'          => 'required|date|after_or_equal:dispensing_date',
+            // 'batch_number'         => 'required|string|max:255',
+            // 'expiry_date'          => 'required|date|after_or_equal:dispensing_date',
         ];
     }
 }

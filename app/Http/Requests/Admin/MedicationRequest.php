@@ -23,11 +23,11 @@ class MedicationRequest extends FormRequest
             // 'cost_price' => 'required|numeric|min:0',
             'selling_price' => 'required|numeric|min:0',
             'reg_no' => [
-                'required',
+                'nullable',
                 'string',
                 Rule::unique('tenant.medications', 'reg_no'),
             ],
-            'manufacturer' => 'required|string|max:255',
+            'manufacturer' => 'nullable|string|max:255',
             'medicine_status'  => 'nullable|in:available,about to expire,out of stock,expired',
             'pharmacy_id' => 'nullable|exists:tenant.pharmacies,id',
             'active_ingredient' => "nullable|string",
