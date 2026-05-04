@@ -11,4 +11,9 @@ class LaboratoryResult extends Model
     protected $connection = 'tenant';
     protected $guarded = ["id"];
     protected $table = 'lab_test_results';
+
+    public function parameter()
+    {
+        return $this->belongsTo(LabParameter::class, 'lab_parameter_id');
+    }
 }

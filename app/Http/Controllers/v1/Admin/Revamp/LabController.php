@@ -184,7 +184,19 @@ class LabController extends Controller
         try {
             DB::connection('tenant');
 
-            $record = Laboratory::with(['results', 'patient', 'visit', 'consultation:id,consulted_by', 'billingLogDetail'])->find($id);
+            $record = Laboratory::with([
+                'results.parameter',
+                'patient',
+                'visit',
+                'consultation:id,consulted_by',
+                'billingLogDetail',
+                'testService.serviceCategory',
+                'testService.serviceCategory.labParameters' => function ($query) {
+                    $query->where('status', true)
+                        ->orderBy('display_order')
+                        ->orderBy('id');
+                }
+            ])->find($id);
             if (!$record) {
                 return JsonResponser::send(true, 'Lab test not found.', [], 404);
             }
@@ -205,14 +217,52 @@ class LabController extends Controller
                     ->select('id', 'first_name', 'last_name', 'email')
                     ->find($record->user_id);
 
-                $record->setAttribute('consultedBy', $labUsers);
+                $record->setAttribute('labTechnician', $labUsers);
             } else {
-                $record->setAttribute('consultedBy', null);
+                $record->setAttribute('labTechnician', null);
             }
+
+            $record->setAttribute('result_template', $this->laboratoryService->resultForm($id)['result_template']);
 
             return JsonResponser::send(false, 'Record(s) found successfully.', $record, 200);
         } catch (Throwable $th) {
             return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
+        }
+    }
+
+    public function resultForm($id)
+    {
+        try {
+            DB::connection('tenant');
+
+            $data = $this->laboratoryService->resultForm($id);
+            $record = $data['lab_request'];
+
+            if ($record->consultation && $record->consultation->consulted_by) {
+                $consultedUser = User::on('landlord')
+                    ->select('id', 'first_name', 'last_name', 'email')
+                    ->find($record->consultation->consulted_by);
+
+                $record->setAttribute('consultedBy', $consultedUser);
+            } else {
+                $record->setAttribute('consultedBy', null);
+            }
+
+            if ($record->user_id) {
+                $labUsers = User::on('landlord')
+                    ->select('id', 'first_name', 'last_name', 'email')
+                    ->find($record->user_id);
+
+                $record->setAttribute('labTechnician', $labUsers);
+            } else {
+                $record->setAttribute('labTechnician', null);
+            }
+
+            $data['lab_request'] = $record;
+
+            return JsonResponser::send(false, 'Record(s) found successfully.', $data, 200);
+        } catch (Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), [], 500, $th);
         }
     }
 

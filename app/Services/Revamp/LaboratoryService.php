@@ -139,30 +139,71 @@ class LaboratoryService
 
     public function updateResult($data, $test)
     {
-
         $currentUserInstance = UserMgtHelper::userInstance();
         $tenantId = $data->header('X-Tenant-ID');
+        $service = $test->testService()->with(['serviceCategory.labParameters' => function ($query) {
+            $query->where('status', true)
+                ->orderBy('display_order')
+                ->orderBy('id');
+        }])->first();
+        $categoryParameters = $service?->serviceCategory?->labParameters ?? collect();
 
-        // Collect test names sent from frontend
-        $incomingTests = collect($data->results)->pluck('test')->toArray();
+        $results = collect($data->results ?? []);
+        $parameterIds = $results->pluck('lab_parameter_id')->filter()->values()->all();
+        $incomingTests = $results->pluck('test')->filter()->values()->all();
 
-        // Delete results that are no longer present in the request
-        LaboratoryResult::where('patient_visit_lab_id', $test->id)
-            ->whereNotIn('test', $incomingTests)
-            ->delete();
+        if ($service && !empty($parameterIds)) {
+            $allowedParameterIds = $categoryParameters->pluck('id')->all();
+            $invalidParameterIds = array_diff($parameterIds, $allowedParameterIds);
 
-        // Create or update results for the current set
-        foreach ($data->results as $item) {
+            if (!empty($invalidParameterIds)) {
+                throw new \InvalidArgumentException('One or more submitted parameters do not belong to the selected service category.');
+            }
+        }
+
+        if (!empty($parameterIds)) {
+            LaboratoryResult::where('patient_visit_lab_id', $test->id)
+                ->whereNotIn('lab_parameter_id', $parameterIds)
+                ->delete();
+        } elseif (!empty($incomingTests)) {
+            LaboratoryResult::where('patient_visit_lab_id', $test->id)
+                ->whereNotIn('test', $incomingTests)
+                ->delete();
+        } else {
+            LaboratoryResult::where('patient_visit_lab_id', $test->id)->delete();
+        }
+
+        foreach ($results as $index => $item) {
+            $parameter = null;
+            if (!empty($item['lab_parameter_id'])) {
+                $parameter = $categoryParameters
+                    ->firstWhere('id', (int) $item['lab_parameter_id']);
+            }
+
+            $parameterName = $item['test'] ?? $parameter?->name;
+            if (empty($parameterName)) {
+                throw new \InvalidArgumentException('Each lab result row must include a parameter name or parameter id.');
+            }
+
+            $lookup = [
+                'patient_visit_lab_id' => $test->id,
+                'test' => $parameterName,
+            ];
+
+            if ($parameter?->id) {
+                $lookup['lab_parameter_id'] = $parameter->id;
+            }
+
             LaboratoryResult::updateOrCreate(
-                [
-                    'patient_visit_lab_id' => $test->id,
-                    'test' => $item['test'],
-                ],
+                $lookup,
                 [
                     'tenant_id'        => $tenantId,
                     'visit_id'         => $test->visit_id,
-                    'result'           => $item['result'],
-                    'reference_range'  => $item['reference_range'],
+                    'result'           => $item['result'] ?? null,
+                    'unit'             => $item['unit'] ?? $parameter?->unit,
+                    'reference_range'  => $item['reference_range'] ?? $parameter?->reference_range,
+                    'flag'             => $item['flag'] ?? null,
+                    'display_order'    => $item['display_order'] ?? $parameter?->display_order ?? $index,
                     'status'           => 'Ready',
                 ]
             );
@@ -178,17 +219,16 @@ class LaboratoryService
 
         $visit = PatientVisit::find($test->visit_id);
         $totalLabRequests = Laboratory::where('visit_id', $visit->id)->count();
-        $completedLabRequests = LaboratoryResult::whereIn(
-            'patient_visit_lab_id',
-            Laboratory::where('visit_id', $visit->id)->pluck('id')
-        )->count();
+        $completedLabRequests = Laboratory::where('visit_id', $visit->id)
+            ->where('status', GeneralEnums::READY->value)
+            ->count();
         if ($totalLabRequests > 0 && $totalLabRequests === $completedLabRequests) {
             $visit->update([
                 'lab_status' => GeneralEnums::COMPLETED->value,
             ]);
         }
 
-        return $test->refresh()->load('results');
+        return $test->refresh()->load(['results.parameter', 'testService.serviceCategory.labParameters']);
     }
 
     public function updateTest($data, $test)
@@ -199,5 +239,86 @@ class LaboratoryService
         ]);
 
         return $test->refresh();
+    }
+
+    public function resultForm($id)
+    {
+        $record = Laboratory::with([
+            'patient',
+            'visit',
+            'consultation:id,consulted_by',
+            'billingLogDetail',
+            'results' => function ($query) {
+                $query->orderBy('display_order')->orderBy('id');
+            },
+            'results.parameter',
+            'testService.serviceCategory',
+            'testService.serviceCategory.labParameters' => function ($query) {
+                $query->where('status', true)
+                    ->orderBy('display_order')
+                    ->orderBy('id');
+            }
+        ])->find($id);
+
+        if (!$record) {
+            throw new \InvalidArgumentException('Lab test not found.');
+        }
+
+        $resultMap = $record->results->keyBy(function ($result) {
+            return $result->lab_parameter_id ?: $result->test;
+        });
+
+        $categoryParameters = $record->testService?->serviceCategory?->labParameters ?? collect();
+
+        $parameterRows = $categoryParameters->map(function ($parameter) use ($resultMap) {
+            $savedResult = $resultMap->get($parameter->id) ?? $resultMap->get($parameter->name);
+
+            return [
+                'lab_parameter_id' => $parameter->id,
+                'name' => $parameter->name,
+                'code' => $parameter->code,
+                'result' => $savedResult->result ?? null,
+                'unit' => $savedResult->unit ?? $parameter->unit,
+                'reference_range' => $savedResult->reference_range ?? $parameter->reference_range,
+                'flag' => $savedResult->flag ?? null,
+                'input_type' => $parameter->input_type,
+                'display_order' => $parameter->display_order,
+                'is_required' => (bool) $parameter->is_required,
+            ];
+        })->values() ?? collect();
+
+        if ($parameterRows->isEmpty()) {
+            $parameterRows = $record->results->map(function ($result, $index) {
+                return [
+                    'lab_parameter_id' => $result->lab_parameter_id,
+                    'name' => $result->test,
+                    'code' => null,
+                    'result' => $result->result,
+                    'unit' => $result->unit,
+                    'reference_range' => $result->reference_range,
+                    'flag' => $result->flag,
+                    'input_type' => 'text',
+                    'display_order' => $result->display_order ?? $index,
+                    'is_required' => false,
+                ];
+            })->values();
+        }
+
+        $selectedTests = Laboratory::where('visit_id', $record->visit_id)
+            ->orderBy('id')
+            ->get(['id', 'test_id', 'test_name', 'department', 'status']);
+
+        return [
+            'lab_request' => $record,
+            'selected_tests' => $selectedTests,
+            'result_template' => [
+                'lab_service_id' => $record->testService?->id,
+                'lab_service_name' => $record->testService?->name ?? $record->test_name,
+                'service_category' => $record->testService?->serviceCategory?->name ?? $record->department,
+                'selected_specimen_type' => $record->specimen_type,
+                'notes' => $record->notes,
+                'parameters' => $parameterRows,
+            ],
+        ];
     }
 }

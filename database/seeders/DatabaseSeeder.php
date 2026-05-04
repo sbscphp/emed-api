@@ -19,6 +19,8 @@ class DatabaseSeeder extends Seeder
             ServicesTableSeeder::class,
             ServiceUnitSeeder::class,
             StateSeeder::class,
+            ServiceCategorySeeder::class,
+            LabParameterSeeder::class,
             // UsersTableSeeder::class,
             // TenantUserSeeder::class,
         ]);

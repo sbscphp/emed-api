@@ -39,9 +39,11 @@ use App\Http\Controllers\v1\Admin\Revamp\BillingController as RevampBillingContr
 use App\Http\Controllers\v1\Admin\Revamp\ConsultationController as RevampConsultationController;
 use App\Http\Controllers\v1\Admin\Revamp\DashboardController;
 use App\Http\Controllers\v1\Admin\Revamp\LabController as RevampLabController;
+use App\Http\Controllers\v1\Admin\Revamp\LabParameterController;
 use App\Http\Controllers\v1\Admin\Revamp\PharmacyController as RevampPharmacyController;
 use App\Http\Controllers\v1\Admin\Revamp\RadiologyController as RevampRadiologyController;
 use App\Http\Controllers\v1\Admin\Revamp\ReportController as RevampReportController;
+use App\Http\Controllers\v1\Admin\Revamp\ServiceCategoryController;
 use App\Http\Controllers\v1\GeneralController;
 use App\Services\HivAids\HivAidsService;
 // use App\Models\Immunization;
@@ -287,7 +289,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/bulk-upload/template', [BulkUploadController::class, 'template']);
                     Route::get('/bulk-upload/{batch_id}', [BulkUploadController::class, 'show']);
                     Route::get('/bulk-upload/{batch_id}/errors', [BulkUploadController::class, 'errors'])->name('bulk-upload.errors');
-                    
+
                     Route::get('/stats', [MedicationController::class, 'medicineDashboardStats']);
                     Route::get('/vendors', [MedicationController::class, 'listVendors']);
 
@@ -389,6 +391,7 @@ Route::group(["prefix" => "v1"], function () {
                 Route::prefix('laboratory')->group(function () {
                     Route::get('/', [RevampLabController::class, 'index']);
                     Route::get('/all', [RevampLabController::class, 'allTests']);
+                    Route::get('/result-form/{id}', [RevampLabController::class, 'resultForm']);
                     Route::get('/{id}', [RevampLabController::class, 'show']);
                     Route::put('/update/result/{id}', [RevampLabController::class, 'updateResult']);
                     Route::put('/update/test/status/{id}', [RevampLabController::class, 'updateTestStatus']);
@@ -517,6 +520,21 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/create_radiology_service', [Radiology_service_Controller::class, "create_radiology_service"]);
                     Route::put('/edit_radiology_service', [Radiology_service_Controller::class, "edit_radiology_service"]);
                     Route::get('/all_radiology_service', [Radiology_service_Controller::class, "all_radiology_service"]);
+                });
+
+                Route::group(['prefix' => 'service_categories'], function () {
+                    Route::get('/', [ServiceCategoryController::class, "index"]);
+                    Route::post('/create', [ServiceCategoryController::class, "store"]);
+                    Route::put('/update/{id}', [ServiceCategoryController::class, "update"]);
+                    Route::delete('/delete/{id}', [ServiceCategoryController::class, "destroy"]);
+                });
+
+                Route::group(['prefix' => 'lab_parameters'], function () {
+                    Route::get('/', [LabParameterController::class, 'index']);
+                    Route::post('/create', [LabParameterController::class, 'store']);
+                    Route::get('/{id}', [LabParameterController::class, 'show']);
+                    Route::put('/update/{id}', [LabParameterController::class, 'update']);
+                    Route::delete('/delete/{id}', [LabParameterController::class, 'destroy']);
                 });
 
                 Route::group(['prefix' => 'notifications'], function () {
