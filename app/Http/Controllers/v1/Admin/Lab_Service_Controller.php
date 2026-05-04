@@ -27,7 +27,9 @@ class Lab_Service_Controller extends Controller
                 "price" => $validated['price'],
                 "class" => $validated['class'],
                 "type" => $validated['type'],
+                "service_category_id" => $validated['service_category_id'],
             ]);
+            $data->load('serviceCategory');
             return JsonResponser::send(false, ' created successfully.', $data);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'Error  .', [], 500, $th);
@@ -42,7 +44,14 @@ class Lab_Service_Controller extends Controller
             $validated = $request->validated();
             $service = LabService::find($validated['id']);
             if ($service) {
-                $service->update($validated);
+                $service->update([
+                    'name' => $validated['name'],
+                    'price' => $validated['price'],
+                    'class' => $validated['class'],
+                    'type' => $validated['type'],
+                    'service_category_id' => $validated['service_category_id'],
+                ]);
+                $service->load('serviceCategory');
                 return JsonResponser::send(false, 'edit successfully.', $service);
             }
         } catch (\Throwable $th) {
@@ -74,6 +83,7 @@ class Lab_Service_Controller extends Controller
             $tenantId = $request->header('X-Tenant-ID');
 
             $services = LabService::where('tenant_id', $tenantId)
+                ->with('serviceCategory')
                 ->when(!empty($validated['search']), function ($query) use ($validated) {
                     $search = $validated['search'];
 

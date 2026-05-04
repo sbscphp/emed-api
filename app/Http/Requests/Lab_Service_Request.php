@@ -26,6 +26,7 @@ class Lab_Service_Request extends FormRequest
             "price" => "required|integer",
             "class" => "required|string",
             "type" => "required|string",
+            "service_category_id" => "required|exists:tenant.service_categories,id",
         ];
     }
 }

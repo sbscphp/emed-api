@@ -38,6 +38,11 @@ class Laboratory extends Model
         return $this->hasMany(LaboratoryResult::class, 'patient_visit_lab_id');
     }
 
+    public function testService()
+    {
+        return $this->belongsTo(LabService::class, 'test_id');
+    }
+
     public function billingLogs()
     {
         return $this->hasOneThrough(

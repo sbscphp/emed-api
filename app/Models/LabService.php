@@ -6,7 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class LabService extends Model
 {
-
     protected $guarded = ['id'];
     protected $connection = 'tenant';
+
+    public function serviceCategory()
+    {
+        return $this->belongsTo(ServiceCategory::class);
+    }
 }
