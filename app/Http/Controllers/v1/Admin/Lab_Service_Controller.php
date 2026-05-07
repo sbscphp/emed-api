@@ -25,7 +25,7 @@ class Lab_Service_Controller extends Controller
                 "service_unit_id" => $serviceunit->id,
                 "name" => $validated['name'],
                 "price" => $validated['price'],
-                "class" => $validated['class'],
+                "class" => $validated['class'] ?? null,
                 "type" => $validated['type'],
                 "service_category_id" => $validated['service_category_id'],
             ]);
@@ -47,7 +47,7 @@ class Lab_Service_Controller extends Controller
                 $service->update([
                     'name' => $validated['name'],
                     'price' => $validated['price'],
-                    'class' => $validated['class'],
+                    'class' => $validated['class'] ?? null,
                     'type' => $validated['type'],
                     'service_category_id' => $validated['service_category_id'],
                 ]);
@@ -59,7 +59,19 @@ class Lab_Service_Controller extends Controller
         }
     }
 
-
+    public function delete_lab_service($id)
+    {
+        try {
+            $service = LabService::find($id);
+            if ($service) {
+                $service->delete();
+                return JsonResponser::send(false, 'delete successfully.', []);
+            }
+            return JsonResponser::send(true, 'Service not found.', [], 404);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'Error  .', [], 500, $th);
+        }
+    }
 
     public function labService_all(Request $request)
     {
