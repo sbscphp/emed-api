@@ -12,6 +12,7 @@ use App\Models\Pharmacy;
 use App\Models\PharmacyRequest;
 use App\Models\RadiologyService;
 use App\Models\Service;
+use App\Models\ServiceCategory;
 use App\Models\ServiceUnit;
 use Illuminate\Http\Request;
 use App\Responser\JsonResponser;
@@ -178,6 +179,20 @@ class GeneralController extends Controller
         try {
             $tenantId = $request->header('X-Tenant-ID');
             $record = Pharmacy::where('tenant_id', $tenantId)->orderBy('id', 'ASC')->get();
+
+            return JsonResponser::send(false, 'Record found successfully', $record, 200);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
+    public function allLabCategory(Request $request)
+    {
+        try {
+
+            $record = ServiceCategory::when(!empty($request->search_param), function ($query) use ($request) {
+                $query->where('name', 'LIKE', '%' . $request->search_param . '%');
+            })->orderBy('id', 'ASC')->limit($request->limit ?? 10)->get();
 
             return JsonResponser::send(false, 'Record found successfully', $record, 200);
         } catch (\Throwable $th) {
