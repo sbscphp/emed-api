@@ -47,6 +47,7 @@ class GeneralController extends Controller
 
             $tenantId = $request->header('X-Tenant-ID');
             $query = LabService::where('tenant_id', $tenantId)
+            ->with('serviceCategory')
                 ->when(!empty($request['search_param']), function ($query) use ($request) {
                     $query->where(function ($q) use ($request) {
                         $q->orWhere('name', 'LIKE', '%' . $request['search_param'] . '%')
@@ -177,6 +178,32 @@ class GeneralController extends Controller
         try {
             $tenantId = $request->header('X-Tenant-ID');
             $record = Pharmacy::where('tenant_id', $tenantId)->orderBy('id', 'ASC')->get();
+
+            return JsonResponser::send(false, 'Record found successfully', $record, 200);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
+    public function labTestByCategory(Request $request, $id)
+    {
+        try {
+            $tenantId = $request->header('X-Tenant-ID');
+            $query = LabService::where('tenant_id', $tenantId)
+                ->where('service_category_id', $id)
+                ->when(!empty($request['search_param']), function ($query) use ($request) {
+                    $query->where(function ($q) use ($request) {
+                        $q->orWhere('name', 'LIKE', '%' . $request['search_param'] . '%')
+                            ->orWhere('class', 'LIKE', '%' . $request['search_param'] . '%')
+                            ->orWhere('price', 'LIKE', '%' . $request['search_param'] . '%')
+                            ->orWhere('type', 'LIKE', '%' . $request['search_param'] . '%');
+                    });
+                })
+                ->when(!empty($request->type), function ($query) use ($request) {
+                    $query->where('type', $request->type);
+                })->with('serviceCategory');
+
+            $record = $query->orderBy('id', 'ASC')->get();
 
             return JsonResponser::send(false, 'Record found successfully', $record, 200);
         } catch (\Throwable $th) {

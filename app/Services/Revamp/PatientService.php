@@ -9,6 +9,7 @@ use App\Enums\PatientVisitStatusEnums;
 use App\Models\Patient;
 use App\Repositories\Patient\PatientInterface;
 use App\Helpers\ExportHelper;
+use App\Helpers\FileUploadHelper;
 use App\Helpers\GeneralHelper;
 use App\Models\BillingLog;
 use App\Models\BillingLogDetail;
@@ -16,12 +17,16 @@ use App\Models\Consultation;
 use App\Models\CounsellingDetail;
 use App\Models\EmergencyContact;
 use App\Models\Immunization;
+use App\Models\PatientDocument;
 use App\Models\NextOfKin;
 use App\Models\PatientVisit;
 use App\Models\Service;
 use App\Models\ServiceUnit;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Spatie\Multitenancy\Models\Tenant;
 
 /**
@@ -318,6 +323,106 @@ class PatientService
         }
     }
 
+    public function fetchDocuments($patientExists, $request)
+    {
+        $patient = $patientExists instanceof Patient ? $patientExists : Patient::find($patientExists->id);
+        if (!$patient) {
+            return [];
+        }
+
+        $request = $request ?? request();
+
+        $query = PatientDocument::where('patient_id', $patient->id)
+            ->when($request->filled('search_param'), function ($query) use ($request) {
+                $search = '%' . $request->search_param . '%';
+                $query->where(function ($q) use ($search) {
+                    $q->where('document_title', 'LIKE', $search)
+                        ->orWhere('document_type', 'LIKE', $search)
+                        ->orWhere('uploaded_by_name', 'LIKE', $search);
+                });
+            })
+            ->when($request->start_date && $request->end_date, function ($query) use ($request) {
+                $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+            })
+            ->when($request->filled('period'), function ($query) use ($request) {
+                $customDate = [];
+                if ($request->period === 'custom date' && $request->start_date && $request->end_date) {
+                    $customDate = [$request->start_date, $request->end_date];
+                }
+                $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+                if ($dateFilter) {
+                    $query->whereBetween('created_at', $dateFilter);
+                }
+            })
+            ->orderBy('created_at', 'DESC');
+
+        $mapDocument = function ($document) {
+            return [
+                'id' => $document->id,
+                'document_type' => $document->document_type,
+                'document_title' => $document->document_title,
+                'document_date' => optional($document->document_date)->toDateString(),
+                'uploaded_by_id' => $document->uploaded_by,
+                'uploaded_by' => $document->uploaded_by_name,
+                'file_url' => $document->file_url,
+                'file_name' => $document->file_name,
+                'created_at' => $document->created_at->toDateTimeString(),
+                'updated_at' => $document->updated_at->toDateTimeString(),
+            ];
+        };
+
+        if ($request->boolean('paginate', false)) {
+            $documents = $query->paginate($request->limit ?? 15);
+            $documents->getCollection()->transform($mapDocument);
+            return $documents;
+        }
+
+        return $query->get()->map($mapDocument)->all();
+    }
+
+    public function uploadDocuments($request, $patient)
+    {
+        $currentUser = Auth::user();
+        $tenantId = $request->header('X-Tenant-ID');
+
+        $fileUrl = null;
+        if ($request->hasFile('file')) {
+            $fileUrl = FileUploadHelper::singleBinaryFileUpload($request->file('file'), 'patient_documents');
+        } elseif ($request->filled('document')) {
+            $fileUrl = FileUploadHelper::singleStringFileUpload($request->document, 'patient_documents');
+        } elseif ($request->filled('file_url')) {
+            $fileUrl = $request->file_url;
+        }
+
+        if (!$fileUrl) {
+            throw new \Exception('No document file was provided.');
+        }
+
+        $uploadedDocument = PatientDocument::create([
+            'tenant_id' => $tenantId,
+            'patient_id' => $patient->id,
+            'uploaded_by' => $currentUser->id,
+            'uploaded_by_name' => $currentUser->fullname ?? $currentUser->name ?? $currentUser->email ?? 'Unknown',
+            'document_type' => $request->document_type,
+            'document_title' => $request->document_title,
+            'document_date' => $request->document_date ? Carbon::parse($request->document_date)->format('Y-m-d') : null,
+            'file_url' => $fileUrl,
+            'file_name' => $request->file('file') ? $request->file('file')->getClientOriginalName() : null,
+        ]);
+
+        return [
+            'id' => $uploadedDocument->id,
+            'document_type' => $uploadedDocument->document_type,
+            'document_title' => $uploadedDocument->document_title,
+            'document_date' => optional($uploadedDocument->document_date)->toDateString(),
+            'uploaded_by_id' => $uploadedDocument->uploaded_by,
+            'uploaded_by' => $uploadedDocument->uploaded_by_name,
+            'file_url' => $uploadedDocument->file_url,
+            'created_at' => $uploadedDocument->created_at->toDateTimeString(),
+            'updated_at' => $uploadedDocument->updated_at->toDateTimeString(),
+        ];
+    }
+
     public function patientVisitOverview($request)
     {
         $customDate = [];
@@ -424,7 +529,7 @@ class PatientService
                 'immunization_status' => $service->name == 'IMMUNIZATION' ? GeneralEnums::PENDING->value : NULL,
                 'counsel_status' => $service->name == 'HIV/AIDS' ? GeneralEnums::PENDING->value : NULL,
                 'natal_status' => $service->name == 'ANTENATAL' ? GeneralEnums::PENDING->value : NULL,
-                
+
             ]);
 
             $invoiceNumber = GeneralHelper::getModelUniqueOrderlyId([

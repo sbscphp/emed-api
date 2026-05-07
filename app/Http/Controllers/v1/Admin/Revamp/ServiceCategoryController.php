@@ -61,6 +61,17 @@ class ServiceCategoryController extends Controller
         }
     }
 
+    public function show($id)
+    {
+        try {
+            $category = $this->serviceCategoryService->findById($id);
+
+            return JsonResponser::send(false, 'Record found successfully', $category);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
     public function update(Request $request, $id)
     {
         try {

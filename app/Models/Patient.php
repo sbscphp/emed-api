@@ -8,6 +8,7 @@ use App\Helpers\GeneralHelper;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\PatientDocument;
 use Spatie\Multitenancy\Models\Tenant;
 
 class Patient extends Model implements BulkUploadable
@@ -53,7 +54,7 @@ class Patient extends Model implements BulkUploadable
             'nok_lastname'     => 'nullable|string|max:255',
             'nok_gender'       => 'nullable|string|in:Male,Female,Other',
             'nok_phoneno'      => 'nullable|string|max:30',
-            'nok_stateoforigin'=> 'nullable|string|max:100',
+            'nok_stateoforigin' => 'nullable|string|max:100',
             'nok_lga'          => 'nullable|string|max:100',
             'nok_homeaddress'  => 'nullable|string|max:500',
             'nok_relationship' => 'nullable|string|max:100',
@@ -67,12 +68,33 @@ class Patient extends Model implements BulkUploadable
     {
         return [
             // Patient fields
-            'firstname', 'lastname', 'dob', 'phoneno', 'age', 'gender',
-            'marital_status', 'email', 'lga', 'stateoforigin', 'homeaddress',
-            'occupation', 'religion', 'tribe', 'bloodgroup', 'cardno', 'genotype', 'referral',
+            'firstname',
+            'lastname',
+            'dob',
+            'phoneno',
+            'age',
+            'gender',
+            'marital_status',
+            'email',
+            'lga',
+            'stateoforigin',
+            'homeaddress',
+            'occupation',
+            'religion',
+            'tribe',
+            'bloodgroup',
+            'cardno',
+            'genotype',
+            'referral',
             // Next of Kin (optional)
-            'nok_firstname', 'nok_lastname', 'nok_gender', 'nok_phoneno',
-            'nok_stateoforigin', 'nok_lga', 'nok_homeaddress', 'nok_relationship',
+            'nok_firstname',
+            'nok_lastname',
+            'nok_gender',
+            'nok_phoneno',
+            'nok_stateoforigin',
+            'nok_lga',
+            'nok_homeaddress',
+            'nok_relationship',
         ];
     }
 
@@ -166,8 +188,16 @@ class Patient extends Model implements BulkUploadable
         ]);
 
         // Create Next of Kin + Emergency Contact if any NOK field was supplied
-        $nokFields = ['nok_firstname', 'nok_lastname', 'nok_gender', 'nok_phoneno',
-                      'nok_stateoforigin', 'nok_lga', 'nok_homeaddress', 'nok_relationship'];
+        $nokFields = [
+            'nok_firstname',
+            'nok_lastname',
+            'nok_gender',
+            'nok_phoneno',
+            'nok_stateoforigin',
+            'nok_lga',
+            'nok_homeaddress',
+            'nok_relationship'
+        ];
 
         $hasNok = collect($nokFields)->contains(fn($f) => !empty($row[$f]));
 
@@ -230,6 +260,11 @@ class Patient extends Model implements BulkUploadable
     public function consultations()
     {
         return $this->hasMany(Consultation::class);
+    }
+
+    public function patientDocuments()
+    {
+        return $this->hasMany(PatientDocument::class);
     }
 
     public function triage()

@@ -160,6 +160,46 @@ class RecordManagementController extends Controller
         }
     }
 
+    public function fetchPatientDocuments(Request $request)
+    {
+        try {
+            $patientExists = Patient::find($request->id);
+            if (!$patientExists) {
+                return JsonResponser::send(true, 'Patient Record not found.', null, 422);
+            }
+
+            $documents = $this->patientService->fetchDocuments($patientExists, $request);
+
+            return JsonResponser::send(false, 'Documents retrieved successfully.', ['documents' => $documents], 200);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'An error occurred.', 'Internal server error', 500, $th);
+        }
+    }
+
+    public function uploadPatientDocuments(Request $request, $id)
+    {
+        $request->validate([
+            'document_type' => 'required|string|max:255',
+            'document_title' => 'required|string|max:255',
+            'document_date' => 'nullable|date',
+            'file' => 'required_without:document|file|max:10240',
+            'document' => 'required_without:file|string',
+        ]);
+
+        try {
+            $patientExists = Patient::find($id);
+            if (!$patientExists) {
+                return JsonResponser::send(true, 'Patient Record not found.', null, 422);
+            }
+
+            $uploadedFiles = $this->patientService->uploadDocuments($request, $patientExists);
+
+            return JsonResponser::send(false, 'Documents uploaded successfully.', $uploadedFiles, 200);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'An error occurred.', 'Internal server error', 500, $th);
+        }
+    }
+
     public function delete($id)
     {
         try {

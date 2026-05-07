@@ -24,7 +24,7 @@ class Lab_Service_Request extends FormRequest
         return [
             "name" => "required|string",
             "price" => "required|integer",
-            "class" => "required|string",
+            "class" => "nullable|string",
             "type" => "required|string",
             "service_category_id" => "required|exists:tenant.service_categories,id",
         ];
