@@ -125,7 +125,7 @@ class AuthenticationService
         $tenantData = [
             'uuid' => (string) Str::uuid(),
             'name' => $data['hospital_name'],
-            'country' => $data['country'],
+            'country' => $data['country'] ?? null,
             'domain' => "{$slug}.emed.com",
             'database' => "tenant_{$sanitizedSlug}",
             'state_city' => $data['state_city'],
