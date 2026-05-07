@@ -29,7 +29,7 @@ class ServiceCategoryService
             return $query->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
         }
 
-        return $query->orderBy('id', 'DESC')->get();
+        return $query->orderBy('id', 'DESC')->limit($request['limit'] ?? 15)->get();
     }
 
     public function stats($request)
@@ -48,6 +48,11 @@ class ServiceCategoryService
     public function create($data)
     {
         return ServiceCategory::create($data);
+    }
+
+    public function findById($id)
+    {
+        return ServiceCategory::findOrFail($id);
     }
 
     public function update($id, $data)

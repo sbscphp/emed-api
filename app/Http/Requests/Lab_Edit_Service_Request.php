@@ -25,7 +25,7 @@ class Lab_Edit_Service_Request extends FormRequest
             "id" => "required|exists:tenant.lab_services,id",
             "name" => "required|string",
             "price" => "required|integer",
-            "class" => "required|string",
+            "class" => "nullable|string",
             "type" => "required|string",
             "service_category_id" => "required|exists:tenant.service_categories,id",
         ];

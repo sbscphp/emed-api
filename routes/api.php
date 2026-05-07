@@ -44,6 +44,7 @@ use App\Http\Controllers\v1\Admin\Revamp\PharmacyController as RevampPharmacyCon
 use App\Http\Controllers\v1\Admin\Revamp\RadiologyController as RevampRadiologyController;
 use App\Http\Controllers\v1\Admin\Revamp\ReportController as RevampReportController;
 use App\Http\Controllers\v1\Admin\Revamp\ServiceCategoryController;
+use App\Http\Controllers\v1\Admin\Revamp\WardBedController;
 use App\Http\Controllers\v1\GeneralController;
 use App\Services\HivAids\HivAidsService;
 // use App\Models\Immunization;
@@ -110,6 +111,7 @@ Route::group(["prefix" => "v1"], function () {
                 Route::get('/all/inventory/drug', [GeneralController::class, 'allInventoryDrugs']);
                 Route::get('/all/medication', [GeneralController::class, 'allMedication']);
                 Route::get('/all/pharmacy', [GeneralController::class, 'allPharmacy']);
+                Route::get('/lab_test/by_category/{id}', [GeneralController::class, 'labTestByCategory']);
             });
             // Route::get('/test_all-records', [RecordManagementController::class, 'allRecords']);
 
@@ -148,7 +150,9 @@ Route::group(["prefix" => "v1"], function () {
                         Route::get('/', [RecordManagementController::class, 'index']);
                         Route::post('/create', [RecordManagementController::class, 'store']);
                         Route::put('/update/{id}', [RecordManagementController::class, 'update']);
-                        Route::delete('/delete{id}', [RecordManagementController::class, 'delete']);
+                        Route::get('/fetch/patient-documents', [RecordManagementController::class, 'fetchPatientDocuments']);
+                        Route::put('/upload/patient-documents/{id}', [RecordManagementController::class, 'uploadPatientDocuments']);
+                        Route::delete('/delete/{id}', [RecordManagementController::class, 'delete']);
                         // Bulk Upload (must be declared before the /{id} wildcard)
                         Route::post('/bulk-upload', [RecordManagementController::class, 'bulkUpload']);
                         Route::get('/bulk-upload/template', [BulkUploadController::class, 'template']);
@@ -525,6 +529,7 @@ Route::group(["prefix" => "v1"], function () {
                 Route::group(['prefix' => 'service_categories'], function () {
                     Route::get('/', [ServiceCategoryController::class, "index"]);
                     Route::post('/create', [ServiceCategoryController::class, "store"]);
+                    Route::get('/{id}', [ServiceCategoryController::class, "show"]);
                     Route::put('/update/{id}', [ServiceCategoryController::class, "update"]);
                     Route::delete('/delete/{id}', [ServiceCategoryController::class, "destroy"]);
                 });
@@ -535,6 +540,14 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/{id}', [LabParameterController::class, 'show']);
                     Route::put('/update/{id}', [LabParameterController::class, 'update']);
                     Route::delete('/delete/{id}', [LabParameterController::class, 'destroy']);
+                });
+
+                Route::group(['prefix' => 'ward_beds'], function () {
+                    Route::get('/', [WardBedController::class, 'index']);
+                    Route::post('/create', [WardBedController::class, 'store']);
+                    Route::get('/{id}', [WardBedController::class, 'show']);
+                    Route::put('/update/{id}', [WardBedController::class, 'update']);
+                    Route::delete('/delete/{id}', [WardBedController::class, 'destroy']);
                 });
 
                 Route::group(['prefix' => 'notifications'], function () {
