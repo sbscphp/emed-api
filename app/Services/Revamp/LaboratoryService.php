@@ -5,6 +5,7 @@ namespace App\Services\Revamp;
 use App\Enums\GeneralEnums;
 use App\Enums\PatientVisitStatusEnums;
 use App\Helpers\ExportHelper;
+use App\Helpers\FileUploadHelper;
 use App\Helpers\GeneralHelper;
 use App\Helpers\UserMgtHelper;
 use App\Models\Laboratory;
@@ -209,7 +210,19 @@ class LaboratoryService
             );
         }
 
+        if($data->signature) {
+            $fileUrl = null;
+            if ($data->filled('signature')) {
+                $fileUrl = FileUploadHelper::singleStringFileUpload($data->signature, 'signature');
+            }
+
+            if (!$fileUrl) {
+                throw new \Exception('No signature file was provided.');
+            }
+        }
+
         $test->update([
+            'signature' => $fileUrl,
             'specimen_type' => $data->specimen_type,
             'notes'         => $data->notes,
             'user_id'    => $currentUserInstance->id,
