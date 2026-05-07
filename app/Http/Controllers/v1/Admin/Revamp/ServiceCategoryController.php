@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\v1\Admin\Revamp;
 
 use App\Http\Controllers\Controller;
+use App\Models\ServiceCategory;
 use App\Responser\JsonResponser;
 use App\Services\Revamp\ServiceCategoryService;
 use Illuminate\Http\Request;
@@ -49,9 +50,15 @@ class ServiceCategoryController extends Controller
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|string|unique:tenant.service_categories,name',
+                'name' => 'required|string',
                 'status' => 'boolean'
             ]);
+
+            $checkCategory = ServiceCategory::where('name', $validated['name'])->where('deleted_at', null)->first();
+
+            if ($checkCategory) {
+                return JsonResponser::send(true, 'Service category with this name already exists', 'Bad Request', 400);
+            }
 
             $category = $this->serviceCategoryService->create($validated);
 
@@ -76,7 +83,7 @@ class ServiceCategoryController extends Controller
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|string|unique:tenant.service_categories,name,' . $id,
+                'name' => 'required|string' . $id,
                 'status' => 'boolean'
             ]);
 
