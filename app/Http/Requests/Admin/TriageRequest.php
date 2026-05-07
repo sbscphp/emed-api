@@ -16,14 +16,16 @@ class TriageRequest extends FormRequest
         return [
             'visit_id' => 'required',
             'patient_id' => 'required',
-            'blood_pressure' => ['required', 'array', 'min:1'],
-            'blood_pressure.*.systolic' => ['required', 'integer', 'min:1'],
-            'blood_pressure.*.diastolic' => ['required', 'integer', 'min:1'],
-            'pulse_bpm' => 'required|integer',
-            'sugar_level' => 'required|numeric',
-            'weight_kg' => 'required|numeric',
-            'temperature' => 'required|numeric',
-            'severity' => 'required|integer|min:1|max:5',
+            'blood_pressure' => ['nullable', 'array', 'min:1'],
+            'blood_pressure.*.systolic' => ['nullable', 'integer', 'min:1'],
+            'blood_pressure.*.diastolic' => ['nullable', 'integer', 'min:1'],
+            'pulse_bpm' => 'nullable|integer',
+            'sugar_level' => 'nullable|numeric',
+            'weight_kg' => 'nullable|numeric',
+            'temperature' => 'nullable|numeric',
+            'severity' => 'nullable|integer|min:1|max:5',
+            'sp02' => 'nullable',
+            'height' => 'nullable',
         ];
     }
 }

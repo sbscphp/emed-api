@@ -24,7 +24,7 @@ class StoreInventoryRequest extends FormRequest
         return [
             'medication_id' => 'required_without:item_name',
             'item_name'     => 'required_without:medication_id',
-            'batch_no' => 'required|string',
+            'batch_no' => 'nullable|string',
             // 'medicine_type' => 'required|string',
             'medicine_type_id' => 'required|exists:tenant.medicine_types,id',
             'quantity' => 'required|integer|min:0',

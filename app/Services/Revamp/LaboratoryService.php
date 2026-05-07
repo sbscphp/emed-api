@@ -215,10 +215,6 @@ class LaboratoryService
             if ($data->filled('signature')) {
                 $fileUrl = FileUploadHelper::singleStringFileUpload($data->signature, 'signature');
             }
-
-            if (!$fileUrl) {
-                throw new \Exception('No signature file was provided.');
-            }
         }
 
         $test->update([

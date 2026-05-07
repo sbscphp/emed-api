@@ -200,6 +200,7 @@ class PatientVisitService
             $patient = Patient::find($request->patient_id);
             $visit = PatientVisit::find($request->visit_id);
             $tenantId = $request->header('X-Tenant-ID');
+            $bmi = ($request->height && $request->weight_kg) ? round($request->weight_kg / pow(($request->height / 100), 2), 2) : null;
             // Initiate Patient Triage
             $triage = Triage::create([
                 'tenant_id' => $tenantId,
@@ -209,9 +210,12 @@ class PatientVisitService
                 'blood_pressure' => $request->blood_pressure,
                 'pulse_bpm' => $request->pulse_bpm,
                 'sugar_level' => $request->sugar_level,
-                'weight_kg' => $request->weight_kg,
                 'temperature' => $request->temperature,
                 'severity' => $request->severity,
+                'weight_kg' => $request->weight_kg,
+                'sp02' => $request->sp02,
+                'height' => $request->height,
+                'bmi' => $bmi
             ]);
 
             $invoiceNumber = GeneralHelper::getModelUniqueOrderlyId([
