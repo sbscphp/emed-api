@@ -210,8 +210,8 @@ class LaboratoryService
             );
         }
 
+        $fileUrl = null;
         if($data->signature) {
-            $fileUrl = null;
             if ($data->filled('signature')) {
                 $fileUrl = FileUploadHelper::singleStringFileUpload($data->signature, 'signature');
             }
