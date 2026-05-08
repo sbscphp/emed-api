@@ -7,6 +7,7 @@ use App\Models\ServiceCategory;
 use App\Responser\JsonResponser;
 use App\Services\Revamp\ServiceCategoryService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Throwable;
 
 class ServiceCategoryController extends Controller
@@ -83,7 +84,11 @@ class ServiceCategoryController extends Controller
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|string' . $id,
+                'name' => [
+                    'required',
+                    'string',
+                    Rule::unique('service_categories', 'name')->ignore($id),
+                ],
                 'status' => 'boolean'
             ]);
 
