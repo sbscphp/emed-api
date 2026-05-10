@@ -112,6 +112,13 @@ class LabParameterSeeder extends Seeder
                 ['name' => 'Antibody Screen', 'code' => 'ABSC', 'unit' => null, 'reference_range' => 'Negative'],
                 ['name' => 'TORCH Panel', 'code' => 'TORCH', 'unit' => null, 'reference_range' => null, 'input_type' => 'textarea'],
             ],
+            'TUMOR MARKERS' => [
+                ['name' => 'AFP', 'code' => 'AFP', 'unit' => 'ng/mL', 'reference_range' => '< 10'],
+                ['name' => 'CEA', 'code' => 'CEA', 'unit' => 'ng/mL', 'reference_range' => '< 5'],
+                ['name' => 'CA 125', 'code' => 'CA125', 'unit' => 'U/mL', 'reference_range' => '< 35'],
+                ['name' => 'CA 19-9', 'code' => 'CA199', 'unit' => 'U/mL', 'reference_range' => '< 37'],
+                ['name' => 'PSA', 'code' => 'PSA', 'unit' => 'ng/mL', 'reference_range' => '< 4'],
+            ]
         ];
 
         foreach ($parameterMap as $categoryName => $parameters) {

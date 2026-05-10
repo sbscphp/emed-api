@@ -23,7 +23,8 @@ class ServiceCategorySeeder extends Seeder
             'LIPID PROFILE',
             'IMMUNOLOGY',
             'ENDOCRINOLOGY',
-            'PRENATAL SCREENING'
+            'PRENATAL SCREENING',
+            'TUMOR MARKERS'
         ];
 
         foreach ($categories as $category) {

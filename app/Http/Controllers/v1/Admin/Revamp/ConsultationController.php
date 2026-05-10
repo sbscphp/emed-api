@@ -113,7 +113,7 @@ class ConsultationController extends Controller
             return JsonResponser::send(false, 'Consultation recorded successfully', $consultation, 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500, $th);
         }
     }
 
@@ -138,7 +138,7 @@ class ConsultationController extends Controller
             return JsonResponser::send(false, 'Consultation ended successfully', $patient, 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500, $th);
         }
     }
 
@@ -168,7 +168,7 @@ class ConsultationController extends Controller
             return JsonResponser::send(false, 'Record found successfully', $consultation, 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500, $th);
         }
     }
 
@@ -219,7 +219,7 @@ class ConsultationController extends Controller
 
             return JsonResponser::send(false, 'Record found successfully', $data, 200);
         } catch (\Throwable $th) {
-            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500, $th);
         }
     }
 
@@ -257,7 +257,7 @@ class ConsultationController extends Controller
             return JsonResponser::send(false, 'Laboratory test recorded successfully', $labTest, 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500, $th);
         }
     }
 
@@ -295,7 +295,7 @@ class ConsultationController extends Controller
             return JsonResponser::send(false, 'Radiology test recorded successfully', $radiologyTest, 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500, $th);
         }
     }
 
@@ -333,7 +333,7 @@ class ConsultationController extends Controller
             return JsonResponser::send(false, 'Treatment recorded successfully', $drugPrescribed, 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500, $th);
         }
     }
 
@@ -371,7 +371,7 @@ class ConsultationController extends Controller
             return JsonResponser::send(false, 'Patient surgery recorded successfully', $surgery, 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500, $th);
         }
     }
 }

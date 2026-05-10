@@ -92,7 +92,7 @@ class BillingController extends Controller
             return JsonResponser::send(false, 'Record found successfully', $billingInvoice, 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500, $th);
         }
     }
 
@@ -167,7 +167,7 @@ class BillingController extends Controller
             return JsonResponser::send(false, 'Record found successfully', $billing, 201);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500, $th);
         }
     }
 
@@ -196,7 +196,7 @@ class BillingController extends Controller
             return JsonResponser::send(false, 'Payment made successfully', $record, 200);
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500, $th);
         }
     }
 

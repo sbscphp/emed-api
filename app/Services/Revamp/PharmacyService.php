@@ -190,7 +190,7 @@ class PharmacyService
             ->when(($request['sort_by'] ?? null) === 'date_descending', function ($query) {
                 $query->orderBy('created_at', 'DESC');
             })
-            ->with(['pharmacyRequest.pharmacy', 'billingLogDetail']);
+            ->with(['pharmacy', 'billingLogDetail']);
 
         // Handle pagination vs export
         if (!empty($request['paginate']) && empty($request['export'])) {

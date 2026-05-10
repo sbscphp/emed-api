@@ -20,7 +20,7 @@ class InventoryRepository implements InventoryInterface
 
     public function getAllWithFilters(array $filters = [], ?string $export = null, $from, $to, $tenantId)
     {
-        $query = Inventory::where('tenant_id', $tenantId)->with('medicineType');
+        $query = Inventory::with('medicineType');
         if (!empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {

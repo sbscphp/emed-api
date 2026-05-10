@@ -175,7 +175,7 @@ class LabController extends Controller
 
             return JsonResponser::send(false, 'Record(s) found successfully.', $labTest, 200);
         } catch (Throwable $th) {
-            return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500, $th);
         }
     }
 
@@ -187,7 +187,7 @@ class LabController extends Controller
             $record = Laboratory::with([
                 'results.parameter',
                 'patient',
-                'visit',
+                'visit.service',
                 'consultation:id,consulted_by',
                 'billingLogDetail',
                 'testService.serviceCategory',
@@ -226,7 +226,7 @@ class LabController extends Controller
 
             return JsonResponser::send(false, 'Record(s) found successfully.', $record, 200);
         } catch (Throwable $th) {
-            return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500, $th);
         }
     }
 
