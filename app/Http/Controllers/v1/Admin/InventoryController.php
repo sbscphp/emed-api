@@ -48,7 +48,7 @@ class InventoryController extends Controller
         } catch (\InvalidArgumentException $e) {
             return JsonResponser::send(true, $e->getMessage(), null, 400);
         } catch (\Exception $e) {
-            return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+            return JsonResponser::send(true, $e->getMessage(), 'Internal Server Error', 500, $e);
         }
     }
 
@@ -68,7 +68,7 @@ class InventoryController extends Controller
             $currentUser = Auth::user();
             $tenantId = $request->header('X-Tenant-ID');
             if ($request->filled('item_name')) {
-                $checkInventoryItemName = Inventory::where('item_name', $request->item_name)->where('tenant_id', $tenantId)->first();
+                $checkInventoryItemName = Inventory::where('item_name', $request->item_name)->first();
                 if ($checkInventoryItemName) {
                     return JsonResponser::send(true, 'Item name already exist.', [], 422);
                 }
@@ -90,7 +90,7 @@ class InventoryController extends Controller
             $tenantId = $request->header('X-Tenant-ID');
             $validated = array_merge($request->validated(), [
                 'created_by' => $currentUser->id,
-                'tenant_id' => $tenantId,
+                // 'tenant_id' => $tenantId,
             ]);
 
             $inventory = $this->service->create($validated);
@@ -109,7 +109,7 @@ class InventoryController extends Controller
             return JsonResponser::send(false, 'Inventory created successfully', $inventory, 201);
         } catch (\Exception $e) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+            return JsonResponser::send(true, $e->getMessage(), 'Internal Server Error', 500, $e);
         }
     }
 
@@ -147,7 +147,7 @@ class InventoryController extends Controller
             return JsonResponser::send(false, 'Inventory updated successfully', $inventory);
         } catch (\Exception $e) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+            return JsonResponser::send(true, $e->getMessage(), 'Internal Server Error', 500, $e);
         }
     }
 

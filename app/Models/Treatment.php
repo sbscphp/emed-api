@@ -28,6 +28,11 @@ class Treatment extends Model
         return $this->belongsTo(PharmacyRequest::class, 'drug_id', 'id');
     }
 
+    public function medication()
+    {
+        return $this->belongsTo(Medication::class, 'drug_id', 'id');
+    }
+
     public function consultation()
     {
         return $this->belongsTo(Consultation::class);

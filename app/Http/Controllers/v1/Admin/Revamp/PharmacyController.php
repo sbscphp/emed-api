@@ -90,7 +90,7 @@ class PharmacyController extends Controller
         try {
             DB::connection('tenant')->beginTransaction();
 
-            $treatment = Treatment::with('pharmacyRequest.pharmacy', 'billingLogDetail')->find($id);
+            $treatment = Treatment::with('pharmacy', 'billingLogDetail')->find($id);
             if (!$treatment) {
                 return JsonResponser::send(true, 'Record not found.', null, 200);
             }
@@ -120,7 +120,7 @@ class PharmacyController extends Controller
             return JsonResponser::send(false, 'Record found successfully', $treatment, 201);
         } catch (\Exception $e) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+            return JsonResponser::send(true, $e->getMessage(), 'Internal Server Error', 500, $e);
         }
     }
 
@@ -183,7 +183,7 @@ class PharmacyController extends Controller
             return JsonResponser::send(false, 'Treatment fulfilled successfully', $record, 201);
         } catch (\Exception $e) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+            return JsonResponser::send(true, $e->getMessage(), 'Internal Server Error', 500, $e);
         }
     }
 
@@ -234,7 +234,7 @@ class PharmacyController extends Controller
             return JsonResponser::send(false, 'Pharmacy created successfully', $pharmacy, 201);
         } catch (\Exception $e) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+            return JsonResponser::send(true, $e->getMessage(), 'Internal Server Error', 500, $e);
         }
     }
 
@@ -253,7 +253,7 @@ class PharmacyController extends Controller
             return JsonResponser::send(false, 'Record found successfully', $pharmacy, 201);
         } catch (\Exception $e) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+            return JsonResponser::send(true, $e->getMessage(), 'Internal Server Error', 500, $e);
         }
     }
 
@@ -271,7 +271,7 @@ class PharmacyController extends Controller
 
             return JsonResponser::send(false, 'Pharmacy updated successfully', $updatedPharmacy, 200);
         } catch (\Exception $e) {
-            return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+            return JsonResponser::send(true, $e->getMessage(), 'Internal Server Error', 500, $e);
         }
     }
 
@@ -289,7 +289,7 @@ class PharmacyController extends Controller
 
             return JsonResponser::send(false, 'Pharmacy status updated successfully', $pharmacy, 200);
         } catch (\Exception $e) {
-            return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+            return JsonResponser::send(true, $e->getMessage(), 'Internal Server Error', 500, $e);
         }
     }
 

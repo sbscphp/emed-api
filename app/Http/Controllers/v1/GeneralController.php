@@ -122,6 +122,18 @@ class GeneralController extends Controller
         }
     }
 
+    public function medications(Request $request)
+    {
+        try {
+            $tenantId = $request->header('X-Tenant-ID');
+            $record = Medication::where('tenant_id', $tenantId)->orderBy('id', 'DESC')->limit($request->limit ?? 10)->get();
+
+            return JsonResponser::send(false, 'Record found successfully', $record, 200);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
     public function allService(Request $request)
     {
         try {
@@ -166,7 +178,7 @@ class GeneralController extends Controller
     {
         try {
             $tenantId = $request->header('X-Tenant-ID');
-            $record = Medication::where('tenant_id', $tenantId)->orderBy('id', 'ASC')->get();
+            $record = Medication::where('tenant_id', $tenantId)->orderBy('id', 'ASC')->limit($request->limit ?? 10)->get();
 
             return JsonResponser::send(false, 'Record found successfully', $record, 200);
         } catch (\Throwable $th) {

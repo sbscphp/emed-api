@@ -464,31 +464,31 @@ class ConsultationService
             $totalPrice = 0;
 
             foreach ($request->medications as $drugItem) {
-                $drug = PharmacyRequest::with('inventory')->find($drugItem['drug_id']);
+                // $drug = PharmacyRequest::with('inventory')->find($drugItem['drug_id']);
+                // if (!$drug) {
+                //     throw new \Exception("Drug with name {$drugItem['drug']} not found.");
+                // }
+
+                // if (!$drug->inventory) {
+                //     throw new \Exception("No inventory record found for {$drugItem['drug']}.");
+                // }
+
+                // if ($drug->inventory->expiry_date && Carbon::parse($drug->inventory->expiry_date)->isPast()) {
+                //     throw new \Exception("Drug expired.");
+                // }
+
+                // if ($drug->stock_level == GeneralEnums::OUT_OF_STOCK->value) {
+                //     throw new \Exception("Drug is not available in stock.");
+                // }
+
+                // if ($request->quantity > $drug->quantity_available) {
+                //     throw new \Exception("Drug prescribed quantity is greater than quantity available");
+                // }
+
+                $drug = Medication::find($drugItem['drug_id']);
+
                 if (!$drug) {
-                    throw new \Exception("Drug with name {$drugItem['drug']} not found.");
-                }
-
-                if (!$drug->inventory) {
-                    throw new \Exception("No inventory record found for {$drugItem['drug']}.");
-                }
-
-                if ($drug->inventory->expiry_date && Carbon::parse($drug->inventory->expiry_date)->isPast()) {
-                    throw new \Exception("Drug expired.");
-                }
-
-                if ($drug->stock_level == GeneralEnums::OUT_OF_STOCK->value) {
-                    throw new \Exception("Drug is not available in stock.");
-                }
-
-                if ($request->quantity > $drug->quantity_available) {
-                    throw new \Exception("Drug prescribed quantity is greater than quantity available");
-                }
-
-                $medication = $drug->inventory->medication;
-
-                if (!$medication) {
-                    throw new \Exception("Medication record not found for drug {$drugItem['drug']}.");
+                    throw new \Exception("Drug record not found for drug {$drugItem['drug']}.");
                 }
 
                 // Skip deleting/recreating if already Fullfilled
@@ -505,7 +505,7 @@ class ConsultationService
 
                     $newTreatment = Treatment::create([
                         'tenant_id'        => $tenantId,
-                        'pharmacy_id'        => $drugItem['pharmacy_id'],
+                        'pharmacy_id'        => $drugItem['pharmacy_id'] ?? $drug->pharmacy_id,
                         'visit_id'        => $visit->id,
                         'drug_id'         => $drug->id,
                         'user_id'         => $currentUser->id,
@@ -540,7 +540,7 @@ class ConsultationService
                         $existingBillingDetail->delete();
                     }
 
-                    $price = $drug->inventory->medication?->selling_price ?? 0;
+                    $price = $drug->selling_price ?? 0;
 
                     $totalPrice += $price * ($drugItem['quantity'] ?? 1);
                     // create fresh billing detail
