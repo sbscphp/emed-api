@@ -153,7 +153,9 @@ Route::group(["prefix" => "v1"], function () {
                         Route::post('/create', [RecordManagementController::class, 'store']);
                         Route::put('/update/{id}', [RecordManagementController::class, 'update']);
                         Route::get('/fetch/patient-documents', [RecordManagementController::class, 'fetchPatientDocuments']);
+                        Route::get('/show/patient-document/{id}', [RecordManagementController::class, 'showPatientDocument']);
                         Route::put('/upload/patient-documents/{id}', [RecordManagementController::class, 'uploadPatientDocuments']);
+                        Route::delete('/delete/patient-document/{id}', [RecordManagementController::class, 'deletePatientDocument']);
                         Route::delete('/delete/{id}', [RecordManagementController::class, 'delete']);
                         // Bulk Upload (must be declared before the /{id} wildcard)
                         Route::post('/bulk-upload', [RecordManagementController::class, 'bulkUpload']);
