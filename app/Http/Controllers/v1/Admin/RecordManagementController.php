@@ -176,6 +176,17 @@ class RecordManagementController extends Controller
         }
     }
 
+    public function showPatientDocument($id) {
+        try {
+
+            $documents = $this->patientService->showPatientDocument($id);
+
+            return JsonResponser::send(false, 'Documents retrieved successfully.', ['documents' => $documents], 200);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'An error occurred.', 'Internal server error', 500, $th);
+        }
+    }
+
     public function uploadPatientDocuments(Request $request, $id)
     {
         $request->validate([
@@ -195,6 +206,21 @@ class RecordManagementController extends Controller
             $uploadedFiles = $this->patientService->uploadDocuments($request, $patientExists);
 
             return JsonResponser::send(false, 'Documents uploaded successfully.', $uploadedFiles, 200);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'An error occurred.', 'Internal server error', 500, $th);
+        }
+    }
+
+    public function deletePatientDocument($id)
+    {
+        try {
+            $documentDeleted = $this->patientService->deletePatientDocument($id);
+
+            if (!$documentDeleted) {
+                return JsonResponser::send(true, 'Document not found.', null, 422);
+            }
+
+            return JsonResponser::send(false, 'Document deleted successfully.', null, 200);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'An error occurred.', 'Internal server error', 500, $th);
         }

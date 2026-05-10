@@ -380,6 +380,27 @@ class PatientService
         return $query->get()->map($mapDocument)->all();
     }
 
+    public function showPatientDocument($id)
+    {
+        $document = PatientDocument::find($id);
+        if (!$document) {
+            throw new \Exception('Document not found.');
+        }
+
+        return [
+            'id' => $document->id,
+            'document_type' => $document->document_type,
+            'document_title' => $document->document_title,
+            'document_date' => optional($document->document_date)->toDateString(),
+            'uploaded_by_id' => $document->uploaded_by,
+            'uploaded_by' => $document->uploaded_by_name,
+            'file_url' => $document->file_url,
+            'file_name' => $document->file_name,
+            'created_at' => $document->created_at->toDateTimeString(),
+            'updated_at' => $document->updated_at->toDateTimeString(),
+        ];
+    }
+
     public function uploadDocuments($request, $patient)
     {
         $currentUser = Auth::user();
@@ -402,7 +423,7 @@ class PatientService
             'tenant_id' => $tenantId,
             'patient_id' => $patient->id,
             'uploaded_by' => $currentUser->id,
-            'uploaded_by_name' => $currentUser->fullname ?? $currentUser->name ?? $currentUser->email ?? 'Unknown',
+            'uploaded_by_name' => $currentUser->first_name ?? $currentUser->last_name ?? $currentUser->email ?? 'Unknown',
             'document_type' => $request->document_type,
             'document_title' => $request->document_title,
             'document_date' => $request->document_date ? Carbon::parse($request->document_date)->format('Y-m-d') : null,
@@ -422,7 +443,14 @@ class PatientService
             'updated_at' => $uploadedDocument->updated_at->toDateTimeString(),
         ];
     }
-
+    public function deletePatientDocument($id) {
+        $document = PatientDocument::find($id);
+        if (!$document) {
+            throw new \Exception('Document not found.');
+        }
+        $document->delete();
+        return true;
+    }
     public function patientVisitOverview($request)
     {
         $customDate = [];
