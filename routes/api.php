@@ -114,6 +114,8 @@ Route::group(["prefix" => "v1"], function () {
                 Route::get('/all/pharmacy', [GeneralController::class, 'allPharmacy']);
                 Route::get('/all/lab_category', [GeneralController::class, 'allLabCategory']);
                 Route::get('/lab_test/by_category/{id}', [GeneralController::class, 'labTestByCategory']);
+                Route::get('/view/consultation/{id}', [GeneralController::class, 'viewConsultation']);
+                Route::get('/show/service/{id}', [TriageController::class, 'showService']);
             });
             // Route::get('/test_all-records', [RecordManagementController::class, 'allRecords']);
 
@@ -177,7 +179,7 @@ Route::group(["prefix" => "v1"], function () {
                 Route::group(['prefix' => 'services'], function () {
                     Route::get('/', [TriageController::class, 'index']);
                     Route::post('/triage/initiate', [TriageController::class, 'store']);
-                    Route::get('/show/{id}', [TriageController::class, 'show']);
+                    Route::get('/show/{id}', [TriageController::class, 'showService']);
                     Route::get('/investigation/order', [TriageController::class, 'investigationOrders']);
                     Route::post('/export/{format}', [TriageController::class, 'exportTriagePatients']);
                     Route::get('/view/radiology/investigation/order/{id}/{visit}', [TriageController::class, "viewRadiologyInvestigationOrders"]);

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\v1;
 use App\Helpers\ExportHelper;
 use App\Helpers\FileUploadHelper;
 use App\Http\Controllers\Controller;
+use App\Models\Consultation;
 use App\Models\Inventory;
 use App\Models\LabService;
 use App\Models\Medication;
@@ -14,8 +15,10 @@ use App\Models\RadiologyService;
 use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Models\ServiceUnit;
+use App\Models\User;
 use Illuminate\Http\Request;
 use App\Responser\JsonResponser;
+use Illuminate\Support\Facades\DB;
 
 class GeneralController extends Controller
 {
@@ -307,6 +310,36 @@ class GeneralController extends Controller
         } catch (\Throwable $error) {
             logger($error);
             return JsonResponser::send(true, $error->getMessage(), [], 500);
+        }
+    }
+
+    public function viewConsultation($id)
+    {
+
+        try {
+            DB::connection('tenant')->beginTransaction();
+
+            $consultation = Consultation::where('visit_id', $id)->with(['patient', 'patientVisit', 'labTest', 'radiologyTest', 'treatment', 'surgery', 'consultedDoctor'])->first();
+            if (!$consultation) {
+                return JsonResponser::send(true, 'Record not found.', null, 200);
+            }
+
+            // Manually fetch dispensed user from landlord DB
+            if ($consultation->consulted_by) {
+                $consultedUser = User::on('landlord')
+                    ->select('id', 'first_name', 'last_name', 'email')
+                    ->find($consultation->consulted_by);
+
+                $consultation->setAttribute('consultedBy', $consultedUser);
+            } else {
+                $consultation->setAttribute('consultedBy', null);
+            }
+
+            DB::connection('tenant')->commit();
+            return JsonResponser::send(false, 'Record found successfully', $consultation, 201);
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500, $th);
         }
     }
 }
