@@ -114,7 +114,7 @@ class TriageController extends Controller
         }
     }
 
-    public function show($id)
+    public function showService($id)
     {
         try {
             $triage = Triage::where('visit_id', $id)->with('patient.nextOfKin', 'patient.emergencyContact')->first();
