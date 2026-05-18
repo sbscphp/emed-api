@@ -11,16 +11,10 @@ class Bed extends Model
 
     protected $connection = 'tenant';
 
-    protected $fillable = [
-        'ward_id',
-        'bed_number',
-        'number_of_available',
-        'occupied',
-        'status',
-    ];
+    protected $guarded = ['id'];
 
     protected $casts = [
-        'number_of_available' => 'integer',
+        'available_bed_number' => 'integer',
         'occupied' => 'boolean',
         'status' => 'boolean',
     ];

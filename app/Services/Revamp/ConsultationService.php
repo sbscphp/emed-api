@@ -7,6 +7,7 @@ use App\Enums\PatientVisitStatusEnums;
 use App\Helpers\ExportHelper;
 use App\Helpers\FileUploadHelper;
 use App\Helpers\GeneralHelper;
+use App\Models\AdmittedPatient;
 use App\Models\BillingLog;
 use App\Models\BillingLogDetail;
 use App\Models\Consultation;
@@ -199,8 +200,15 @@ class ConsultationService
                 'con_status' => GeneralEnums::COMPLETED->value,
             ]);
 
-            $status =    $request['admit_patient'] == 1 ? PatientVisitStatusEnums::ADMITTED->value : PatientVisitStatusEnums::NOT_ADMITTED->value;
-            $req_status =    $request['schedule_a_follow_up'] == true ? GeneralEnums::FOLLOWUPPATIENT->value : $patient->req_status;
+            if ($request['admit_patient'] === 1) {
+                AdmittedPatient::create([
+                    'tenant_id' => $tenantId,
+                    'patient_id' => $request['patient_id'],
+                    'visit_id' => $request['visit_id']
+                ]);
+            }
+            $status =    $request['admit_patient'] === 1 ? PatientVisitStatusEnums::ADMITTED->value : PatientVisitStatusEnums::NOT_ADMITTED->value;
+            $req_status =    $request['schedule_a_follow_up'] === true ? GeneralEnums::FOLLOWUPPATIENT->value : $patient->req_status;
             // update patient registaration staus
             $patient->update([
                 'status' => $status,
@@ -511,7 +519,7 @@ class ConsultationService
                         'user_id'         => $currentUser->id,
                         'patient_id'      => $request->patient_id,
                         'consultation_id' => $request->consultation_id,
-                        'drug'            => $drugItem['drug'] ?? $drug->product,
+                        'drug'            => $drugItem['drug'] ?? $drug->generic_name,
                         'qualifier'       => $drugItem['qualifier'] ?? null,
                         'quantity'        => $drugItem['quantity'] ?? 1,
                         'dosage'          => $drugItem['dosage'] ?? null,
