@@ -6,6 +6,7 @@ use App\Helpers\ExportHelper;
 use App\Helpers\FileUploadHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Consultation;
+use App\Models\Contact;
 use App\Models\Inventory;
 use App\Models\LabService;
 use App\Models\Medication;
@@ -51,7 +52,7 @@ class GeneralController extends Controller
 
             $tenantId = $request->header('X-Tenant-ID');
             $query = LabService::where('tenant_id', $tenantId)
-            ->with('serviceCategory')
+                ->with('serviceCategory')
                 ->when(!empty($request['search_param']), function ($query) use ($request) {
                     $query->where(function ($q) use ($request) {
                         $q->orWhere('name', 'LIKE', '%' . $request['search_param'] . '%')
@@ -340,6 +341,25 @@ class GeneralController extends Controller
         } catch (\Throwable $th) {
             DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500, $th);
+        }
+    }
+
+    public function contact(Request $request)
+    {
+        try {
+            $contactData = [
+                'full_name' => $request->full_name,
+                'hospital_name' => $request->hospital_name,
+                'position' => $request->position,
+                'email' => $request->email,
+                'phone_number' => $request->phone_number,
+                'patient_volume' => $request->patient_volume,
+                'message' => $request->message,
+            ];
+            Contact::create($contactData);
+            return JsonResponser::send(false, 'Contact information submitted successfully.', null, 201);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'An error occurred.', 'Internal server error', 500, $th);
         }
     }
 }

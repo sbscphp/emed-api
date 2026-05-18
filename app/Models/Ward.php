@@ -11,22 +11,15 @@ class Ward extends Model
 
     protected $connection = 'tenant';
 
-    protected $fillable = [
-        'tenant_id',
-        'name',
-        'type',
-        'gender',
-        'status',
-        'bed_cost',
-    ];
+    protected $guarded = ['id'];
 
     protected $casts = [
         'status' => 'boolean',
-        'bed_cost' => 'decimal:2',
+        'cost' => 'decimal:2',
     ];
 
-    public function beds()
+    public function bed()
     {
-        return $this->hasMany(Bed::class)->orderBy('id');
+        return $this->hasOne(Bed::class);
     }
 }

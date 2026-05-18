@@ -34,4 +34,5 @@ enum GeneralEnums: string
     case OUT_OF_STOCK = "Out Of Stock";
     case LOW_STOCK = "Low Stock";
     case CANCELLED = "Cancelled";
+    case ADMINISTERED = "Administered";
 }

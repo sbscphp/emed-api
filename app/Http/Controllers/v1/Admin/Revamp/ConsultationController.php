@@ -223,6 +223,33 @@ class ConsultationController extends Controller
         }
     }
 
+    public function endConsultation ($id) {
+        try {
+            DB::connection('tenant')->beginTransaction();
+
+            $consultation = Consultation::with('patientVisit')->find($id);
+            if (!$consultation) {
+                return JsonResponser::send(true, 'Record not found.', null, 200);
+            }
+
+            $consultation->update([
+                'status' => GeneralEnums::COMPLETED->value
+            ]);
+
+            if($consultation->patientVisit) {
+                $consultation->patientVisit->update([
+                    'status' => PatientVisitStatusEnums::COMPLETED->value
+                ]);
+            }
+
+            DB::connection('tenant')->commit();
+            return JsonResponser::send(false, 'Consultation ended successfully', $consultation, 201);
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500, $th);
+        }
+    }
+
     public function createLabTest(ConsultationLaborartoryRequest $request)
     {
 
