@@ -266,6 +266,9 @@ class PatientService
             // Update Patient
             $patient->update([
                 'updated_by' => $currentUser->id,
+                'firstname' => $request->firstname,
+                'lastname' => $request->lastname,
+                'middlename' => $request->middlename,
                 'phoneno' => $request->phoneno,
                 'email' => $request->email,
                 'dob' => $request->dob,
@@ -443,7 +446,8 @@ class PatientService
             'updated_at' => $uploadedDocument->updated_at->toDateTimeString(),
         ];
     }
-    public function deletePatientDocument($id) {
+    public function deletePatientDocument($id)
+    {
         $document = PatientDocument::find($id);
         if (!$document) {
             throw new \Exception('Document not found.');
