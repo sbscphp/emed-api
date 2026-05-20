@@ -98,6 +98,7 @@ Route::group(["prefix" => "v1"], function () {
         Route::get('/verify/email/{toke}/{email}', [AuthenticationController::class, 'verifyEmail']);
         Route::post('/find/hospitals', [AuthenticationController::class, 'findHospitals']);
         Route::post('/login', [AuthenticationController::class, 'login']);
+        Route::post('/contact', [GeneralController::class, 'contact']);
         // Route::post('/register', [RegistrationController::class, 'onboardTenant']);
     });
 
@@ -117,7 +118,6 @@ Route::group(["prefix" => "v1"], function () {
                 Route::get('/lab_test/by_category/{id}', [GeneralController::class, 'labTestByCategory']);
                 Route::get('/view/consultation/{id}', [GeneralController::class, 'viewConsultation']);
                 Route::get('/show/service/{id}', [TriageController::class, 'showService']);
-                Route::post('/contact', [GeneralController::class, 'contact']);
             });
             // Route::get('/test_all-records', [RecordManagementController::class, 'allRecords']);
 
