@@ -148,7 +148,7 @@ class ConsultationController extends Controller
         try {
             DB::connection('tenant')->beginTransaction();
 
-            $consultation = Consultation::where('visit_id', $id)->with(['patient', 'patientVisit', 'labTest', 'radiologyTest', 'treatment', 'surgery', 'consultedDoctor'])->first();
+            $consultation = Consultation::where('visit_id', $id)->with(['patient', 'patientVisit', 'labTest.testService.serviceCategory:id,name', 'radiologyTest', 'treatment', 'surgery', 'consultedDoctor'])->first();
             if (!$consultation) {
                 return JsonResponser::send(true, 'Record not found.', null, 200);
             }
@@ -223,7 +223,8 @@ class ConsultationController extends Controller
         }
     }
 
-    public function endConsultation ($id) {
+    public function endConsultation($id)
+    {
         try {
             DB::connection('tenant')->beginTransaction();
 
@@ -236,7 +237,7 @@ class ConsultationController extends Controller
                 'status' => GeneralEnums::COMPLETED->value
             ]);
 
-            if($consultation->patientVisit) {
+            if ($consultation->patientVisit) {
                 $consultation->patientVisit->update([
                     'status' => PatientVisitStatusEnums::COMPLETED->value
                 ]);
