@@ -232,17 +232,25 @@ class ConsultationService
                 throw new \Exception("No lab tests provided.");
             }
 
+            $invoiceNumber = GeneralHelper::getModelUniqueOrderlyId([
+                'modelNamespace' => BillingLog::class,
+                'modelField' => 'invoice_number',
+                'prefix' => 'INV-',
+                'idLength' => 6,
+            ]);
+
             // Fetch or create billing log
-            $fetchBilling = BillingLog::firstOrCreate(
-                [
-                    'visit_id' => $visit->id,
-                    'tenant_id' => $tenantId
-                ],
-                [
-                    'grand_total' => 0,
-                    'patient_id'  => $request->patient_id,
-                ]
-            );
+            $fetchBilling = BillingLog::Create([
+                'invoice_number' => $invoiceNumber,
+                'visit_id' => $visit->id,
+                'tenant_id' => $tenantId,
+                'grand_total' => 0,
+                'patient_id'  => $request->patient_id,
+                'patient_name' => $visit->patient->firstname . ' ' . $visit->patient->lastname,
+                'billing_date' => now(),
+                'created_by' => $currentUser->id,
+                'updated_by' => $currentUser->id,
+            ]);
 
             $labInvestigations = [];
             $totalPrice = 0;
@@ -341,17 +349,25 @@ class ConsultationService
                 throw new \Exception("No lab tests provided.");
             }
 
+            $invoiceNumber = GeneralHelper::getModelUniqueOrderlyId([
+                'modelNamespace' => BillingLog::class,
+                'modelField' => 'invoice_number',
+                'prefix' => 'INV-',
+                'idLength' => 6,
+            ]);
+
             // Fetch or create billing log
-            $fetchBilling = BillingLog::firstOrCreate(
-                [
-                    'visit_id' => $visit->id,
-                    'tenant_id' => $tenantId
-                ],
-                [
-                    'grand_total' => 0,
-                    'patient_id'  => $request->patient_id,
-                ]
-            );
+            $fetchBilling = BillingLog::Create([
+                'invoice_number' => $invoiceNumber,
+                'visit_id' => $visit->id,
+                'tenant_id' => $tenantId,
+                'grand_total' => 0,
+                'patient_id'  => $request->patient_id,
+                'patient_name' => $visit->patient->firstname . ' ' . $visit->patient->lastname,
+                'billing_date' => now(),
+                'created_by' => $currentUser->id,
+                'updated_by' => $currentUser->id,
+            ]);
 
             $labInvestigations = [];
             $totalPrice = 0;
@@ -456,17 +472,25 @@ class ConsultationService
                 throw new \Exception("Pharmacy service unit not found.");
             }
 
+            $invoiceNumber = GeneralHelper::getModelUniqueOrderlyId([
+                'modelNamespace' => BillingLog::class,
+                'modelField' => 'invoice_number',
+                'prefix' => 'INV-',
+                'idLength' => 6,
+            ]);
+
             // Fetch or create billing log
-            $fetchBilling = BillingLog::firstOrCreate(
-                [
-                    'visit_id' => $visit->id,
-                    'tenant_id' => $tenantId
-                ],
-                [
-                    'grand_total' => 0,
-                    'patient_id'  => $request->patient_id,
-                ]
-            );
+            $fetchBilling = BillingLog::Create([
+                'invoice_number' => $invoiceNumber,
+                'visit_id' => $visit->id,
+                'tenant_id' => $tenantId,
+                'grand_total' => 0,
+                'patient_id'  => $request->patient_id,
+                'patient_name' => $visit->patient->firstname . ' ' . $visit->patient->lastname,
+                'billing_date' => now(),
+                'created_by' => $currentUser->id,
+                'updated_by' => $currentUser->id,
+            ]);
 
             $drugTreatments = [];
             $totalPrice = 0;
