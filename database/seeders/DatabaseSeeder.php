@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             ServiceCategorySeeder::class,
             LabParameterSeeder::class,
             LabTestSeeder::class,
+            RadiologyTestSeeder::class,
             // UsersTableSeeder::class,
             // TenantUserSeeder::class,
         ]);
