@@ -486,6 +486,7 @@ class ConsultationService
                 'tenant_id' => $tenantId,
                 'grand_total' => 0,
                 'patient_id'  => $request->patient_id,
+                'service_type_id'  => $visit->service_id,
                 'patient_name' => $visit->patient->firstname . ' ' . $visit->patient->lastname,
                 'billing_date' => now(),
                 'created_by' => $currentUser->id,
