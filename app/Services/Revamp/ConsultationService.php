@@ -581,7 +581,7 @@ class ConsultationService
                         'billing_id'      => $fetchBilling->id,
                         'treatment_id'  => $newTreatment->id,
                         'service_unit_id' => $serviceUnit->id,
-                        'item_name'       => $drugItem['drug'] ?? $drug->product,
+                        'item_name'       => $drugItem['drug'] ?? $drug->generic_name,
                         'quantity'        => $drugItem['quantity'] ?? 1,
                         // 'amount'          => $drug->inventory->medication ? $drug->inventory->medication->selling_price : 0,
                         'amount'          => $totalPrice //$price,
