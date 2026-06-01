@@ -140,17 +140,16 @@ class BillingController extends Controller
         }
     }
 
-    public function viewBilling($visitNo)
+    public function viewBilling($invoiceNumber)
     {
         try {
             DB::connection('tenant')->beginTransaction();
 
-            $billing = BillingLog::whereHas('visits', function ($q) use ($visitNo) {
-                $q->where('visitno', $visitNo);
-            })
+            $billing = BillingLog::where('invoice_number', $invoiceNumber)
                 ->with([
                     'patient',
                     'service',
+                    'visits',
                     'billingLogDetails.treatment',
                     'billingLogDetails.labInvestigation',
                     'billingLogDetails.radiologyInvestigation',
