@@ -14,14 +14,14 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            PermissionTableSeeder::class,
-            RolePermissionSeeder::class,
-            ServicesTableSeeder::class,
-            ServiceUnitSeeder::class,
-            StateSeeder::class,
-            ServiceCategorySeeder::class,
-            LabParameterSeeder::class,
-            LabTestSeeder::class,
+            // PermissionTableSeeder::class,
+            // RolePermissionSeeder::class,
+            // ServicesTableSeeder::class,
+            // ServiceUnitSeeder::class,
+            // StateSeeder::class,
+            // ServiceCategorySeeder::class,
+            // LabParameterSeeder::class,
+            // LabTestSeeder::class,
             RadiologyTestSeeder::class,
             // UsersTableSeeder::class,
             // TenantUserSeeder::class,
