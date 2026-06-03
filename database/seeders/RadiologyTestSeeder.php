@@ -17,7 +17,10 @@ class RadiologyTestSeeder extends Seeder
         $now = Carbon::now();
         $tenant = app('currentTenant');
 
-        $serviceUnit = ServiceUnit::where('name', 'Radiology')->first();
+        $serviceUnit = ServiceUnit::firstOrCreate(
+            ['name' => 'Radiology'],
+            ['tenant_id' => $tenant?->uuid, 'price' => 0.00]
+        );
 
         $radiologyTest = [
             'X-RAY IMAGING' => [
