@@ -365,7 +365,25 @@ class AdmissionService
         if (empty($careNote)) {
             throw new \Exception("Care note not found.");
         }
-        return $careNote->load(['patient', 'visit', 'writer']);
+        return $careNote->load(['patient', 'visit', 'writer', 'updated_by']);
+    }
+
+    public function updatePatientCareNotes($request, $id)
+    {
+        $tenantId = $request->header('X-Tenant-ID');
+        $currentUser = Auth::user();
+        $careNote = CareNote::find($id);
+        if (empty($careNote)) {
+            throw new \Exception("Care note not found.");
+        }
+
+        $careNote->update([
+            'updated_by' => $currentUser ? $currentUser->id : $careNote->written_by,
+            'notes' => $request->notes,
+            'type' => $request->type,
+        ]);
+
+        return $careNote;
     }
 
     public function viewPatientVisitDrugs($id)

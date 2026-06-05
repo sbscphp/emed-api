@@ -12,6 +12,11 @@ class LaboratoryResult extends Model
     protected $guarded = ["id"];
     protected $table = 'lab_test_results';
 
+    public function patientVisitLab()
+    {
+        return $this->belongsTo(Laboratory::class, 'patient_visit_lab_id');
+    }
+
     public function parameter()
     {
         return $this->belongsTo(LabParameter::class, 'lab_parameter_id');

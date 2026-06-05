@@ -52,9 +52,11 @@ class RolePermissionSeeder extends Seeder
                 ]
             );
 
-            $permissions = Permission::where('module', $key)->get();
-            $role->givePermissions($permissions->pluck('id')->toArray());
-            
+            $permissionIds = Permission::where('module', $key)->pluck('id')->all();
+            if (!empty($permissionIds)) {
+                $role->permissions()->syncWithoutDetaching($permissionIds);
+            }
+
             // $role = Role::where('tenant_id', $tenant->uuid)->where('name', $key)->first();
             // if (!$role) {
             //     $role = DB::connection('tenant')->table('roles')->insert([

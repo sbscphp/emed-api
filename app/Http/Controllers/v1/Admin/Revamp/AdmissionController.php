@@ -191,6 +191,15 @@ class AdmissionController extends Controller
             return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
         }
     }
+    public function updatePatientCareNotes(Request $request, $id)
+    {
+        try {
+            $records = $this->admissionService->updatePatientCareNotes($request, $id);
+            return JsonResponser::send(false, 'Record(s) found successfully', $records);
+        } catch (Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
 
     public function viewPatientVisitDrugs($id)
     {

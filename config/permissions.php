@@ -16,6 +16,9 @@ return [
         'nurse' => [
             'management' => ['create', 'view', 'modify'],
         ],
+        'admission' => [
+            'management' => ['create', 'view', 'modify'],
+        ],
         'consultant' => [
             'management' => ['create', 'view', 'modify'],
         ],
