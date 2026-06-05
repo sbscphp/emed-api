@@ -17,14 +17,18 @@ use App\Models\Consultation;
 use App\Models\CounsellingDetail;
 use App\Models\EmergencyContact;
 use App\Models\Immunization;
+use App\Models\Laboratory;
+use App\Models\LaboratoryResult;
 use App\Models\PatientDocument;
+use App\Models\RadiologyResult;
 use App\Models\NextOfKin;
+use App\Models\Radiology;
 use App\Models\PatientVisit;
 use App\Models\Service;
 use App\Models\ServiceUnit;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Spatie\Multitenancy\Models\Tenant;
@@ -201,6 +205,7 @@ class PatientService
                 'principal_name' => $request->principal_name,
                 'employee_id' => $request->employee_id,
                 'company_name' => $request->company_name,
+                'allergies' => $request->allergies,
             ]);
 
             // create next of kin
@@ -383,6 +388,151 @@ class PatientService
         return $query->get()->map($mapDocument)->all();
     }
 
+    public function fetchPatientDocumentsBundle($patientExists, $request): array
+    {
+        $patient = $patientExists instanceof Patient ? $patientExists : Patient::find($patientExists->id);
+        if (!$patient) {
+            return [
+                'documents' => [],
+                'lab_tests' => [],
+                'radiology_tests' => [],
+                'records' => [],
+            ];
+        }
+
+        $request = $request ?? request();
+
+        $documentsRequest = $request->duplicate();
+        $documentsRequest->merge(['paginate' => false]);
+        $documents = $this->fetchDocuments($patient, $documentsRequest);
+
+        $customDate = [];
+        if ($request->filled('period') && $request->period === 'custom date' && $request->start_date && $request->end_date) {
+            $customDate = [$request->start_date, $request->end_date];
+        }
+        $dateFilter = $request->filled('period') ? GeneralHelper::dateFilter($request->period, $customDate) : null;
+
+        $labTestsQuery = Laboratory::query()
+            ->with(['results'])
+            ->where('patient_id', $patient->id)
+            ->when($request->filled('search_param'), function ($query) use ($request) {
+                $search = '%' . $request->search_param . '%';
+                $query->where(function ($q) use ($search) {
+                    $q->where('test_name', 'LIKE', $search)
+                        ->orWhere('specimen_type', 'LIKE', $search)
+                        ->orWhere('notes', 'LIKE', $search)
+                        ->orWhereHas('results', function ($r) use ($search) {
+                            $r->where('test', 'LIKE', $search)
+                                ->orWhere('result', 'LIKE', $search);
+                        });
+                });
+            })
+            ->when($request->start_date && $request->end_date, function ($query) use ($request) {
+                $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+            })
+            ->when($dateFilter, function ($query) use ($dateFilter) {
+                $query->whereBetween('created_at', $dateFilter);
+            })
+            ->orderBy('created_at', 'DESC');
+
+        $labTests = $labTestsQuery->get()->map(function ($test) {
+            return [
+                'record_type' => 'lab_test',
+                'id' => $test->id,
+                'visit_id' => $test->visit_id,
+                'consultation_id' => $test->consultation_id,
+                'test_id' => $test->test_id,
+                'test_name' => $test->test_name,
+                'department' => $test->department,
+                'specimen_type' => $test->specimen_type,
+                'notes' => $test->notes,
+                'status' => $test->status,
+                'results_count' => $test->results?->count() ?? 0,
+                'created_at' => optional($test->created_at)->toDateTimeString(),
+                'updated_at' => optional($test->updated_at)->toDateTimeString(),
+            ];
+        })->all();
+
+        $radiologyTestsQuery = Radiology::query()
+            ->with(['results'])
+            ->where('patient_id', $patient->id)
+            ->when($request->filled('search_param'), function ($query) use ($request) {
+                $search = '%' . $request->search_param . '%';
+                $query->where(function ($q) use ($search) {
+                    $q->where('test_name', 'LIKE', $search)
+                        ->orWhere('department', 'LIKE', $search)
+                        ->orWhereHas('results', function ($r) use ($search) {
+                            $r->where('examination_type', 'LIKE', $search)
+                                ->orWhere('findings', 'LIKE', $search);
+                        });
+                });
+            })
+            ->when($request->start_date && $request->end_date, function ($query) use ($request) {
+                $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+            })
+            ->when($dateFilter, function ($query) use ($dateFilter) {
+                $query->whereBetween('created_at', $dateFilter);
+            })
+            ->orderBy('created_at', 'DESC');
+
+        $radiologyTests = $radiologyTestsQuery->get()->map(function ($test) {
+            return [
+                'record_type' => 'radiology_test',
+                'id' => $test->id,
+                'visit_id' => $test->visit_id,
+                'consultation_id' => $test->consultation_id,
+                'test_id' => $test->test_id,
+                'test_name' => $test->test_name,
+                'department' => $test->department,
+                'status' => $test->status,
+                'results_count' => $test->results?->count() ?? 0,
+                'created_at' => optional($test->created_at)->toDateTimeString(),
+                'updated_at' => optional($test->updated_at)->toDateTimeString(),
+            ];
+        })->all();
+
+        $documentRecords = collect($documents)->map(function ($document) {
+            return array_merge(
+                [
+                    'record_type' => 'patient_document',
+                ],
+                is_array($document) ? $document : (array) $document
+            );
+        })->all();
+
+        $records = array_merge($documentRecords, $labTests, $radiologyTests);
+        usort($records, function ($a, $b) {
+            return strtotime($b['created_at'] ?? '1970-01-01 00:00:00') <=> strtotime($a['created_at'] ?? '1970-01-01 00:00:00');
+        });
+
+        if ($request->boolean('paginate', false)) {
+            $page = (int) ($request->query('page', 1));
+            $perPage = (int) ($request->limit ?? $request->per_page ?? 15);
+            $perPage = $perPage > 0 ? $perPage : 15;
+
+            $total = count($records);
+            $items = array_slice($records, max(0, ($page - 1) * $perPage), $perPage);
+
+            $records = new LengthAwarePaginator(
+                $items,
+                $total,
+                $perPage,
+                $page,
+                [
+                    'path' => $request->url(),
+                    'query' => $request->query(),
+                ]
+            );
+        }
+
+        return [
+            'documents' => $documents,
+            'lab_tests' => $labTests,
+            'radiology_tests' => $radiologyTests,
+            'records' => $records,
+        ];
+    }
+
     public function showPatientDocument($id)
     {
         $document = PatientDocument::find($id);
@@ -402,6 +552,103 @@ class PatientService
             'created_at' => $document->created_at->toDateTimeString(),
             'updated_at' => $document->updated_at->toDateTimeString(),
         ];
+    }
+
+    public function showPatientRecord($id, string $recordType): array
+    {
+        $recordType = strtolower(trim($recordType));
+
+        if (in_array($recordType, ['patient_document', 'document', 'patient-doc'], true)) {
+            return array_merge(
+                ['record_type' => 'patient_document'],
+                $this->showPatientDocument($id)
+            );
+        }
+
+        if (in_array($recordType, ['lab_test', 'lab', 'laboratory', 'lab_result', 'laboratory_result'], true)) {
+            $test = Laboratory::with(['results.parameter'])->find($id);
+            if (!$test) {
+                throw new \Exception('Lab test not found.');
+            }
+
+            $results = $test->results
+                ->sortBy([['display_order', 'asc'], ['id', 'asc']])
+                ->values()
+                ->map(function ($result) {
+                    return [
+                        'id' => $result->id,
+                        'lab_parameter_id' => $result->lab_parameter_id ?? null,
+                        'test' => $result->test,
+                        'result' => $result->result,
+                        'unit' => $result->unit ?? null,
+                        'reference_range' => $result->reference_range,
+                        'flag' => $result->flag ?? null,
+                        'display_order' => $result->display_order ?? 0,
+                        'status' => $result->status,
+                        'created_at' => optional($result->created_at)->toDateTimeString(),
+                        'updated_at' => optional($result->updated_at)->toDateTimeString(),
+                    ];
+                })->all();
+
+            return [
+                'record_type' => 'lab_test',
+                'id' => $test->id,
+                'patient_id' => $test->patient_id,
+                'visit_id' => $test->visit_id,
+                'consultation_id' => $test->consultation_id,
+                'test_id' => $test->test_id,
+                'test_name' => $test->test_name,
+                'department' => $test->department,
+                'specimen_type' => $test->specimen_type,
+                'notes' => $test->notes,
+                'status' => $test->status,
+                'results' => $results,
+                'created_at' => optional($test->created_at)->toDateTimeString(),
+                'updated_at' => optional($test->updated_at)->toDateTimeString(),
+            ];
+        }
+
+        if (in_array($recordType, ['radiology_test', 'radiology', 'radiology_result', 'radio_result'], true)) {
+            $test = Radiology::with(['results'])->find($id);
+            if (!$test) {
+                throw new \Exception('Radiology test not found.');
+            }
+
+            $results = $test->results
+                ->values()
+                ->map(function ($result) {
+                    return [
+                        'id' => $result->id,
+                        'radiology_id' => $result->radiology_id,
+                        'patient_id' => $result->patient_id,
+                        'examination_type' => $result->examination_type,
+                        'clinical_indication' => $result->clinical_indication,
+                        'technique' => $result->technique,
+                        'findings' => $result->findings,
+                        'result_img' => $result->result_img,
+                        'status' => $result->status,
+                        'created_at' => optional($result->created_at)->toDateTimeString(),
+                        'updated_at' => optional($result->updated_at)->toDateTimeString(),
+                    ];
+                })->all();
+
+            return [
+                'record_type' => 'radiology_test',
+                'id' => $test->id,
+                'patient_id' => $test->patient_id,
+                'visit_id' => $test->visit_id,
+                'consultation_id' => $test->consultation_id,
+                'test_id' => $test->test_id,
+                'test_name' => $test->test_name,
+                'department' => $test->department,
+                'status' => $test->status,
+                'results' => $results,
+                'created_at' => optional($test->created_at)->toDateTimeString(),
+                'updated_at' => optional($test->updated_at)->toDateTimeString(),
+            ];
+        }
+
+        throw new \Exception('Unsupported record type.');
     }
 
     public function uploadDocuments($request, $patient)

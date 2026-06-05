@@ -221,6 +221,9 @@ class Patient extends Model implements BulkUploadable
 
     protected $guarded = ['id'];
     protected $connection = 'tenant';
+    protected $casts = [
+        'allergies' => 'array',
+    ];
 
     public function service()
     {

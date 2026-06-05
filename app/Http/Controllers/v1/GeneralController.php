@@ -103,7 +103,7 @@ class GeneralController extends Controller
     {
         try {
             $tenantId = $request->header('X-Tenant-ID');
-            $record = RadiologyService::where('tenant_id', $tenantId)->orderBy('id', 'DESC')->get();
+            $record = RadiologyService::where('tenant_id', $tenantId)->where('price', '>', 0)->orderBy('id', 'DESC')->get();
 
             return JsonResponser::send(false, 'Record found successfully', $record, 200);
         } catch (\Throwable $th) {
@@ -222,6 +222,7 @@ class GeneralController extends Controller
             $tenantId = $request->header('X-Tenant-ID');
             $query = LabService::where('tenant_id', $tenantId)
                 ->where('service_category_id', $id)
+                ->where('price', '>', 0)
                 ->when(!empty($request['search_param']), function ($query) use ($request) {
                     $query->where(function ($q) use ($request) {
                         $q->orWhere('name', 'LIKE', '%' . $request['search_param'] . '%')

@@ -167,23 +167,27 @@ class RecordManagementController extends Controller
             if (!$patientExists) {
                 return JsonResponser::send(true, 'Patient Record not found.', null, 422);
             }
-
-            $documents = $this->patientService->fetchDocuments($patientExists, $request);
-
-            return JsonResponser::send(false, 'Documents retrieved successfully.', ['documents' => $documents], 200);
+            $bundle = $this->patientService->fetchPatientDocumentsBundle($patientExists, $request);
+            return JsonResponser::send(false, 'Documents retrieved successfully.', $bundle, 200);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'An error occurred.', 'Internal server error', 500, $th);
         }
     }
 
-    public function showPatientDocument($id) {
+    public function showPatientDocument(Request $request, $id)
+    {
         try {
+            $recordType = $request->query('record_type', $request->query('type', 'patient_document'));
 
-            $documents = $this->patientService->showPatientDocument($id);
+            if (in_array(strtolower((string) $recordType), ['patient_document', 'document', 'patient-doc'], true)) {
+                $document = $this->patientService->showPatientDocument($id);
+                return JsonResponser::send(false, 'Documents retrieved successfully.', ['documents' => $document], 200);
+            }
 
-            return JsonResponser::send(false, 'Documents retrieved successfully.', ['documents' => $documents], 200);
+            $record = $this->patientService->showPatientRecord($id, (string) $recordType);
+            return JsonResponser::send(false, 'Documents retrieved successfully.', ['record' => $record], 200);
         } catch (\Throwable $th) {
-            return JsonResponser::send(true, 'An error occurred.', 'Internal server error', 500, $th);
+            return JsonResponser::send(true, $th->getMessage(), 'Internal server error', 500, $th);
         }
     }
 

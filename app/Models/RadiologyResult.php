@@ -11,4 +11,9 @@ class RadiologyResult extends Model
     use HasFactory, SoftDeletes;
     protected $connection = 'tenant';
     protected $guarded = ["id"];
+
+    public function radiology()
+    {
+        return $this->belongsTo(Radiology::class, 'radiology_id');
+    }
 }

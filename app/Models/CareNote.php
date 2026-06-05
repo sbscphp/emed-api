@@ -26,4 +26,8 @@ class CareNote extends Model
     {
         return $this->belongsTo(User::class, 'written_by');
     }
+
+    public function updated_by () {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
 }

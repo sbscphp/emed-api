@@ -200,12 +200,12 @@ class ConsultationService
                 'con_status' => GeneralEnums::COMPLETED->value,
             ]);
 
-            if ($request['admit_patient'] === 1) {
-                AdmittedPatient::create([
+            if ($request['admit_patient'] === 1 || $request['admit_patient'] === true) {
+                AdmittedPatient::updateOrCreate([
                     'tenant_id' => $tenantId,
                     'patient_id' => $request['patient_id'],
                     'visit_id' => $request['visit_id']
-                ]);
+                    ]);
             }
             $status =    $request['admit_patient'] === 1 ? PatientVisitStatusEnums::ADMITTED->value : PatientVisitStatusEnums::NOT_ADMITTED->value;
             $req_status =    $request['schedule_a_follow_up'] === true ? GeneralEnums::FOLLOWUPPATIENT->value : $patient->req_status;
@@ -243,6 +243,7 @@ class ConsultationService
             $fetchBilling = BillingLog::Create([
                 'invoice_number' => $invoiceNumber,
                 'visit_id' => $visit->id,
+                'service_type_id'  => $visit->service_id,
                 'tenant_id' => $tenantId,
                 'grand_total' => 0,
                 'patient_id'  => $request->patient_id,
@@ -361,6 +362,7 @@ class ConsultationService
                 'invoice_number' => $invoiceNumber,
                 'visit_id' => $visit->id,
                 'tenant_id' => $tenantId,
+                'service_type_id'  => $visit->service_id,
                 'grand_total' => 0,
                 'patient_id'  => $request->patient_id,
                 'patient_name' => $visit->patient->firstname . ' ' . $visit->patient->lastname,

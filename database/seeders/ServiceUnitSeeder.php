@@ -3,9 +3,8 @@
 namespace Database\Seeders;
 
 use Carbon\Carbon;
+use App\Models\ServiceUnit;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 class ServiceUnitSeeder extends Seeder
 {
@@ -14,14 +13,6 @@ class ServiceUnitSeeder extends Seeder
      */
     public function run(): void
     {
-
-        Schema::disableForeignKeyConstraints();
-
-        DB::table('service_units')->delete();
-        DB::statement('ALTER TABLE service_units AUTO_INCREMENT = 1');
-
-        Schema::enableForeignKeyConstraints();
-
         $now = Carbon::now();
         $tenant = app('currentTenant');
 
@@ -33,6 +24,16 @@ class ServiceUnitSeeder extends Seeder
             ['tenant_id' => $tenant->uuid, 'name' => 'Radiology', 'price' => 0.00, 'created_at' => $now, 'updated_at' => $now],
         ];
 
-        DB::table('service_units')->insert($units);
+        foreach ($units as $unit) {
+            $serviceUnit = ServiceUnit::firstOrCreate(
+                ['name' => $unit['name']],
+                ['tenant_id' => $unit['tenant_id'], 'price' => $unit['price']]
+            );
+
+            if (!$serviceUnit->tenant_id) {
+                $serviceUnit->tenant_id = $unit['tenant_id'];
+                $serviceUnit->save();
+            }
+        }
     }
 }

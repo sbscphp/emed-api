@@ -563,16 +563,17 @@ Route::group(["prefix" => "v1"], function () {
                 Route::group(['prefix' => 'admissions'], function () {
                     Route::get('/', [AdmissionController::class, 'index']);
                     Route::get('/{id}', [AdmissionController::class, 'show']);
-                    Route::get('/wards', [AdmissionController::class, 'wards']);
+                    Route::get('/fetch/wards', [AdmissionController::class, 'wards']);
                     Route::post('/admit/patient', [AdmissionController::class, 'admitPatient']);
                     Route::post('/discharge/patient', [AdmissionController::class, 'dischargePatient']);
                     Route::get('/patients/{id}', [AdmissionController::class, 'viewPatient']);
-                    Route::get('/patients/visits', [AdmissionController::class, 'viewPatientVisit']);
-                    Route::get('/patients/care-notes', [AdmissionController::class, 'patientCareNotes']);
+                    Route::get('/all/patients/visits', [AdmissionController::class, 'viewPatientVisit']);
+                    Route::get('/all/patients/care-notes', [AdmissionController::class, 'patientCareNotes']);
                     Route::post('/add/patients/care-notes', [AdmissionController::class, 'addPatientCareNotes']);
                     Route::get('/view/patients/care-notes/{id}', [AdmissionController::class, 'viewPatientCareNotes']);
-                    Route::get('/patients/visit/drugs/{id}', [AdmissionController::class, 'viewPatientVisitDrugs']);
-                    Route::get('/patients/drug-charts', [AdmissionController::class, 'patientDrugCharts']);
+                    Route::put('/update/patients/care-notes/{id}', [AdmissionController::class, 'updatePatientCareNotes']);
+                    Route::get('/all/patients/visit/drugs/{id}', [AdmissionController::class, 'viewPatientVisitDrugs']);
+                    Route::get('/all/patients/drug-charts', [AdmissionController::class, 'patientDrugCharts']);
                     Route::post('/add/patients/drug-charts', [AdmissionController::class, 'addPatientDrugCharts']);
                     Route::get('/view/patients/drug-charts/{id}', [AdmissionController::class, 'viewPatientDrugCharts']);
                 });
