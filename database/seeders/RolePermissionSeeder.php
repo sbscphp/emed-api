@@ -5,11 +5,10 @@ namespace Database\Seeders;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class RolePermissionSeeder extends Seeder
 {
@@ -52,7 +51,9 @@ class RolePermissionSeeder extends Seeder
                 ]
             );
 
-            $permissionIds = Permission::where('module', $key)->pluck('id')->all();
+            $permissionIds = $key === 'admin'
+                ? Permission::pluck('id')->all()
+                : Permission::where('module', $key)->pluck('id')->all();
             if (!empty($permissionIds)) {
                 $role->permissions()->syncWithoutDetaching($permissionIds);
             }
@@ -176,17 +177,21 @@ class RolePermissionSeeder extends Seeder
     public function truncateLaratrustTables()
     {
         $this->command->info('Truncating User, Role and Permission tables');
+
         Schema::disableForeignKeyConstraints();
         DB::table('permission_role')->truncate();
         DB::table('permission_user')->truncate();
         DB::table('role_user')->truncate();
+
         if (Config::get('role_permission_seeder.truncate_tables')) {
             Role::truncate();
             Permission::truncate();
         }
+
         if (Config::get('role_permission_seeder.truncate_tables') && Config::get('role_permission_seeder.create_users')) {
             User::truncate();
         }
+
         Schema::enableForeignKeyConstraints();
     }
 }
