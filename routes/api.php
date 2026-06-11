@@ -168,6 +168,12 @@ Route::group(["prefix" => "v1"], function () {
                         Route::get('/bulk-upload/{batch_id}', [BulkUploadController::class, 'show']);
                         // Wildcard — must stay last to avoid swallowing the above routes
                         Route::get('/{id}', [RecordManagementController::class, 'show']);
+
+                        Route::get('/all/patients/care-notes', [RecordManagementController::class, 'patientCareNotes']);
+                        Route::post('/add/patients/care-notes', [RecordManagementController::class, 'addPatientCareNotes']);
+                        Route::get('/view/patients/care-notes/{id}', [RecordManagementController::class, 'viewPatientCareNotes']);
+                        Route::put('/update/patients/care-notes/{id}', [RecordManagementController::class, 'updatePatientCareNotes']);
+
                     });
 
                     Route::group(['prefix' => 'visit'], function () {

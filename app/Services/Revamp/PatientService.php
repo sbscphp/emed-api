@@ -13,6 +13,7 @@ use App\Helpers\FileUploadHelper;
 use App\Helpers\GeneralHelper;
 use App\Models\BillingLog;
 use App\Models\BillingLogDetail;
+use App\Models\CareNote;
 use App\Models\Consultation;
 use App\Models\CounsellingDetail;
 use App\Models\EmergencyContact;
@@ -883,5 +884,124 @@ class PatientService
         $acronym = strtoupper($firstTwoLetters) . 'H';
 
         return $acronym;
+    }
+
+    public function getPatientCareNotes($request)
+    {
+        $tenantId = $request->header('X-Tenant-ID');
+        $patientId = $request->patient_id;
+        $customDate = [];
+        if ($request->period === 'custom date' && $request->start_date && $request->end_date) {
+            $customDate = [$request->start_date, $request->end_date];
+        }
+
+        $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
+        $query = CareNote::query()->where('tenant_id', $tenantId)
+            ->where('patient_id', $patientId)
+            ->where('visit_id', $request->visit_id)
+            ->when(!empty($request['search_param']), function ($query) use ($request) {
+                $query->where(function ($q) use ($request) {
+                    $q->whereRelation('patient', 'cardno', 'LIKE', '%' . $request['search_param'] . '%')
+                        ->orWhereRelation('patient', 'patientno', 'LIKE', '%' . $request['search_param'] . '%')
+                        ->orWhereRelation('patient', 'firstname', 'LIKE', '%' . $request['search_param'] . '%')
+                        ->orWhereRelation('patient', 'lastname', 'LIKE', '%' . $request['search_param'] . '%');
+                });
+            })->when(isset($request['type']), function ($query) use ($request) {
+                $query->where('type', filter_var($request['type']));
+            })
+            ->when($request->startDate && $request->endDate, function ($query) use ($request) {
+                $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+            })
+            ->when($dateFilter, function ($query) use ($dateFilter) {
+                return $query->whereBetween('created_at', $dateFilter);
+            })->when(($request['sort_by'] ?? null) === 'date_ascending', function ($query) {
+                $query->orderBy('created_at', 'ASC');
+            })->when(($request['sort_by'] ?? null) === 'date_descending', function ($query) {
+                $query->orderBy('created_at', 'DESC');
+            });
+
+        if (!empty($request['paginate'])) {
+            return $query->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
+        }
+
+        return $query->orderBy('id', 'DESC')->get();
+    }
+
+    public function exportPatientCareNotes($request)
+    {
+        $exportData = $request->map(function ($note) {
+            return [
+                'Firstname'      => $note->patient->firstname ?? 'N/A',
+                'Lastname'       => $note->patient->lastname ?? 'N/A',
+                'Card No'        => $note->patient->cardno ?? 'N/A',
+                'Patient No'     => $note->patient->patientno ?? 'N/A',
+                'Note Type'      => $note->type ?? 'N/A',
+                // 'Notes'          => $note->notes ?? 'N/A',
+                'Written By'     => $note->writer ? $note->writer->firstname . ' ' . $note->writer->lastname : 'N/A',
+                'Date Written'   => $note->created_at ? Carbon::parse($note->created_at)->format('Y-m-d H:i:s') : 'N/A',
+            ];
+        })->toArray();
+
+        if (empty($exportData)) {
+            throw new \Exception("No records found for export.");
+        }
+
+        // Choose export format
+        if (strtolower($request['format']) === 'csv') {
+            return ExportHelper::streamCsv($exportData, null, 'patient_care_notes.csv');
+        }
+
+        if (strtolower($request['format']) === 'pdf') {
+            $pdf = Pdf::loadView('exports.care_notes', ['careNotes' => $exportData])
+                ->setPaper('A1', 'landscape');
+
+            return $pdf->download('patient_care_notes.pdf');
+        }
+
+        throw new \Exception("Invalid export format.");
+    }
+
+    public function addPatientCareNote($request)
+    {
+        $tenantId = $request->header('X-Tenant-ID');
+        $currentUser = Auth::user();
+
+        $careNote = CareNote::create([
+            'tenant_id' => $tenantId,
+            'patient_id' => $request->patient_id,
+            'visit_id' => $request->visit_id,
+            'written_by' => $currentUser ? $currentUser->id : null,
+            'notes' => $request->notes,
+            'type' => $request->type,
+        ]);
+
+        return $careNote;
+    }
+
+    public function viewPatientCareNotes($id)
+    {
+        $careNote = CareNote::find($id);
+        if (empty($careNote)) {
+            throw new \Exception("Care note not found.");
+        }
+        return $careNote->load(['patient', 'visit', 'writer', 'updated_by']);
+    }
+
+    public function updatePatientCareNotes($request, $id)
+    {
+        $tenantId = $request->header('X-Tenant-ID');
+        $currentUser = Auth::user();
+        $careNote = CareNote::find($id);
+        if (empty($careNote)) {
+            throw new \Exception("Care note not found.");
+        }
+
+        $careNote->update([
+            'updated_by' => $currentUser ? $currentUser->id : $careNote->written_by,
+            'notes' => $request->notes,
+            'type' => $request->type,
+        ]);
+
+        return $careNote;
     }
 }
