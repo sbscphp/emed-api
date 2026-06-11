@@ -18,6 +18,7 @@ use App\Models\PatientVisit;
 use App\Models\User;
 use App\Services\Revamp\PatientService;
 use Azeemade\BulkUpload\Services\BulkUploadService;
+use Throwable;
 
 class RecordManagementController extends Controller
 {
@@ -395,5 +396,59 @@ class RecordManagementController extends Controller
         $acronym = strtoupper($firstTwoLetters) . 'H';
 
         return $acronym;
+    }
+
+    public function patientCareNotes(Request $request)
+    {
+        try {
+            $careNotes = $this->patientService->getPatientCareNotes($request);
+
+            $records = [
+                'data' => $careNotes
+            ];
+
+            if ($request->export) {
+                $format = $request->export;
+                return $this->patientService->exportPatientCareNotes($careNotes, $format);
+            }
+
+            if (!$request->paginate) {
+                $records = $careNotes;
+            }
+
+            return JsonResponser::send(false, 'Record(s) found successfully', $records);
+        } catch (Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
+    public function addPatientCareNotes(Request $request)
+    {
+        try {
+            $careNote = $this->patientService->addPatientCareNote($request);
+
+            return JsonResponser::send(false, 'Care note added successfully', $careNote);
+        } catch (Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
+    public function viewPatientCareNotes($id)
+    {
+        try {
+            $records = $this->patientService->viewPatientCareNotes($id);
+            return JsonResponser::send(false, 'Record(s) found successfully', $records);
+        } catch (Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+    public function updatePatientCareNotes(Request $request, $id)
+    {
+        try {
+            $records = $this->patientService->updatePatientCareNotes($request, $id);
+            return JsonResponser::send(false, 'Record(s) found successfully', $records);
+        } catch (Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
     }
 }
