@@ -285,7 +285,12 @@ class AdmissionService
                     $q->whereRelation('patient', 'cardno', 'LIKE', '%' . $request['search_param'] . '%')
                         ->orWhereRelation('patient', 'patientno', 'LIKE', '%' . $request['search_param'] . '%')
                         ->orWhereRelation('patient', 'firstname', 'LIKE', '%' . $request['search_param'] . '%')
-                        ->orWhereRelation('patient', 'lastname', 'LIKE', '%' . $request['search_param'] . '%');
+                        ->orWhereRelation('patient', 'lastname', 'LIKE', '%' . $request['search_param'] . '%')
+                        ->orWhereRelation('visit', 'visitno', 'LIKE', '%' . $request['search_param'] . '%')
+                        ->orWhereRelation('writer', 'first_name', 'LIKE', '%' . $request['search_param'] . '%')
+                        ->orWhereRelation('writer', 'last_name', 'LIKE', '%' . $request['search_param'] . '%')
+                        ->orWhereRelation('updated_by', 'first_name', 'LIKE', '%' . $request['search_param'] . '%')
+                        ->orWhereRelation('updated_by', 'last_name', 'LIKE', '%' . $request['search_param'] . '%');
                 });
             })->when(isset($request['type']), function ($query) use ($request) {
                 $query->where('type', filter_var($request['type']));
@@ -299,7 +304,7 @@ class AdmissionService
                 $query->orderBy('created_at', 'ASC');
             })->when(($request['sort_by'] ?? null) === 'date_descending', function ($query) {
                 $query->orderBy('created_at', 'DESC');
-            });
+            })->with('patient', 'visit', 'writer:id,first_name,last_name,email', 'updated_by:id,first_name,last_name,email');
 
         if (!empty($request['paginate'])) {
             return $query->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
@@ -308,9 +313,9 @@ class AdmissionService
         return $query->orderBy('id', 'DESC')->get();
     }
 
-    public function exportPatientCareNotes($request)
+    public function exportPatientCareNotes($careNotes, $format = null)
     {
-        $exportData = $request->map(function ($note) {
+        $exportData = $careNotes->map(function ($note) {
             return [
                 'Firstname'      => $note->patient->firstname ?? 'N/A',
                 'Lastname'       => $note->patient->lastname ?? 'N/A',
@@ -328,12 +333,12 @@ class AdmissionService
         }
 
         // Choose export format
-        if (strtolower($request['format']) === 'csv') {
+        if (strtolower($format) === 'csv') {
             return ExportHelper::streamCsv($exportData, null, 'patient_care_notes.csv');
         }
 
-        if (strtolower($request['format']) === 'pdf') {
-            $pdf = Pdf::loadView('exports.care_notes', ['careNotes' => $exportData])
+        if (strtolower($format) === 'pdf') {
+            $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData])
                 ->setPaper('A1', 'landscape');
 
             return $pdf->download('patient_care_notes.pdf');
@@ -356,7 +361,7 @@ class AdmissionService
             'type' => $request->type,
         ]);
 
-        return $careNote;
+        return $careNote->load('patient', 'visit', 'writer:id,first_name,last_name,email');
     }
 
     public function viewPatientCareNotes($id)
@@ -365,7 +370,7 @@ class AdmissionService
         if (empty($careNote)) {
             throw new \Exception("Care note not found.");
         }
-        return $careNote->load(['patient', 'visit', 'writer', 'updated_by']);
+        return $careNote->load('patient', 'visit', 'writer:id,first_name,last_name,email', 'updated_by:id,first_name,last_name,email');
     }
 
     public function updatePatientCareNotes($request, $id)
@@ -383,7 +388,7 @@ class AdmissionService
             'type' => $request->type,
         ]);
 
-        return $careNote;
+        return $careNote->load('patient', 'visit', 'writer:id,first_name,last_name,email', 'updated_by:id,first_name,last_name,email');
     }
 
     public function viewPatientVisitDrugs($id)
