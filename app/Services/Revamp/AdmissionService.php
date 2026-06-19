@@ -463,7 +463,7 @@ class AdmissionService
                 $query->orderBy('created_at', 'ASC');
             })->when(($request['sort_by'] ?? null) === 'date_descending', function ($query) {
                 $query->orderBy('created_at', 'DESC');
-            })->with('patient', 'visit', 'drug', 'administeredBy:id,first_name,last_name,email');
+            })->with('patient', 'visit', 'drug', 'writer:id,first_name,last_name,email');
 
         if (!empty($request['paginate'])) {
             return $query->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
@@ -542,6 +542,6 @@ class AdmissionService
         if (empty($drugChart)) {
             throw new \Exception("Drug chart record not found.");
         }
-        return $drugChart->load(['patient', 'visit', 'drug', 'administeredBy']);
+        return $drugChart->load(['patient', 'visit', 'drug', 'writer']);
     }
 }
