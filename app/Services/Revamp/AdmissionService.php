@@ -18,6 +18,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AdmissionService
 {
@@ -277,34 +278,64 @@ class AdmissionService
         }
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
-        $query = CareNote::query()->where('tenant_id', $tenantId)
+        $query = CareNote::query()
+            ->where('tenant_id', $tenantId)
             ->where('patient_id', $patientId)
             ->where('visit_id', $request->visit_id)
             ->when(!empty($request['search_param']), function ($query) use ($request) {
-                $query->where(function ($q) use ($request) {
-                    $q->whereRelation('patient', 'cardno', 'LIKE', '%' . $request['search_param'] . '%')
-                        ->orWhereRelation('patient', 'patientno', 'LIKE', '%' . $request['search_param'] . '%')
-                        ->orWhereRelation('patient', 'firstname', 'LIKE', '%' . $request['search_param'] . '%')
-                        ->orWhereRelation('patient', 'lastname', 'LIKE', '%' . $request['search_param'] . '%')
-                        ->orWhereRelation('visit', 'visitno', 'LIKE', '%' . $request['search_param'] . '%')
-                        ->orWhereRelation('writer', 'first_name', 'LIKE', '%' . $request['search_param'] . '%')
-                        ->orWhereRelation('writer', 'last_name', 'LIKE', '%' . $request['search_param'] . '%')
-                        ->orWhereRelation('updated_by', 'first_name', 'LIKE', '%' . $request['search_param'] . '%')
-                        ->orWhereRelation('updated_by', 'last_name', 'LIKE', '%' . $request['search_param'] . '%');
+                $search = '%' . trim($request['search_param']) . '%';
+                $searchRaw = trim($request['search_param']);
+
+                $query->where(function ($q) use ($search, $searchRaw) {
+                    $q->orWhereHas('patient', function ($q) use ($search) {
+                        $q->where('cardno', 'LIKE', $search)
+                            ->orWhere('patientno', 'LIKE', $search)
+                            ->orWhere('firstname', 'LIKE', $search)
+                            ->orWhere('lastname', 'LIKE', $search);
+                    })
+                        ->orWhereHas('visit', function ($q) use ($search) {
+                            $q->where('visitno', 'LIKE', $search);
+                        })
+                        ->orWhereHas('writer', function ($q) use ($search, $searchRaw) {
+                            $q->where('first_name', 'LIKE', $search)
+                                ->orWhere('last_name', 'LIKE', $search)
+                                ->orWhereRaw(
+                                    "CONCAT(COALESCE(first_name,''), ' ', COALESCE(last_name,'')) LIKE ?",
+                                    ["%{$searchRaw}%"]
+                                );
+                        })
+                        ->orWhereHas('updatedBy', function ($q) use ($search, $searchRaw) {  // ← renamed
+                            $q->where('first_name', 'LIKE', $search)
+                                ->orWhere('last_name', 'LIKE', $search)
+                                ->orWhereRaw(
+                                    "CONCAT(COALESCE(first_name,''), ' ', COALESCE(last_name,'')) LIKE ?",
+                                    ["%{$searchRaw}%"]
+                                );
+                        });
                 });
-            })->when(isset($request['type']), function ($query) use ($request) {
-                $query->where('type', filter_var($request['type']));
+            })
+            ->when(isset($request['type']), function ($query) use ($request) {
+                $query->where('type', $request['type']);
             })
             ->when($request->startDate && $request->endDate, function ($query) use ($request) {
-                $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+                // Fix: use consistent casing — camelCase on both sides
+                $query->whereBetween('created_at', [$request->startDate, $request->endDate]);
             })
             ->when($dateFilter, function ($query) use ($dateFilter) {
-                return $query->whereBetween('created_at', $dateFilter);
-            })->when(($request['sort_by'] ?? null) === 'date_ascending', function ($query) {
+                $query->whereBetween('created_at', $dateFilter);
+            })
+            ->when(($request['sort_by'] ?? null) === 'date_ascending', function ($query) {
                 $query->orderBy('created_at', 'ASC');
-            })->when(($request['sort_by'] ?? null) === 'date_descending', function ($query) {
+            })
+            ->when(($request['sort_by'] ?? null) === 'date_descending', function ($query) {
                 $query->orderBy('created_at', 'DESC');
-            })->with('patient', 'visit', 'writer:id,first_name,last_name,email', 'updated_by:id,first_name,last_name,email');
+            })
+            ->with([
+                'patient',
+                'visit',
+                'writer:id,first_name,last_name,email',
+                'updatedBy:id,first_name,last_name,email',  // ← renamed
+            ]);
 
         if (!empty($request['paginate'])) {
             return $query->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
@@ -432,7 +463,7 @@ class AdmissionService
                 $query->orderBy('created_at', 'ASC');
             })->when(($request['sort_by'] ?? null) === 'date_descending', function ($query) {
                 $query->orderBy('created_at', 'DESC');
-            });
+            })->with('patient', 'visit', 'drug', 'writer:id,first_name,last_name,email');
 
         if (!empty($request['paginate'])) {
             return $query->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
@@ -489,7 +520,7 @@ class AdmissionService
             'tenant_id' => $tenantId,
             'patient_id' => $request->patient_id,
             'visit_id' => $request->visit_id,
-            'drug_id' => $request->drug_id,
+            'drug_id' => $request->drug_id ?? null,
             'administered_by' => $currentUser ? $currentUser->id : null,
             'drug_name' => $request->drug_name,
             'dosage' => $request->dosage,
@@ -511,6 +542,6 @@ class AdmissionService
         if (empty($drugChart)) {
             throw new \Exception("Drug chart record not found.");
         }
-        return $drugChart->load(['patient', 'visit', 'drug', 'administeredBy']);
+        return $drugChart->load(['patient', 'visit', 'drug', 'writer']);
     }
 }

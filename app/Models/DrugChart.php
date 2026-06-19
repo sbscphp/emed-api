@@ -27,7 +27,7 @@ class DrugChart extends Model
         return $this->belongsTo(Medication::class, 'drug_id');
     }
 
-    public function administeredBy()
+    public function writer()
     {
         return $this->belongsTo(User::class, 'administered_by');
     }
