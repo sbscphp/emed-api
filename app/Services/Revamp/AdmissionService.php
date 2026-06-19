@@ -52,7 +52,7 @@ class AdmissionService
                 $query->orderBy('date_admitted', 'ASC');
             })->when(($request['sort_by'] ?? null) === 'date_descending', function ($query) {
                 $query->orderBy('date_admitted', 'DESC');
-            });
+            })->with('patient', 'visit', 'ward');
 
         if (!empty($request['paginate'])) {
             return $query->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
