@@ -559,7 +559,7 @@ Route::group(["prefix" => "v1"], function () {
                 });
 
                 Route::group(['prefix' => 'ward_beds'], function () {
-                    Route::get('/', [WardBedController::class, 'index']);
+                    Route::get('/fetch/all', [WardBedController::class, 'index']);
                     Route::post('/create', [WardBedController::class, 'store']);
                     Route::get('/{id}', [WardBedController::class, 'show']);
                     Route::put('/update/{id}', [WardBedController::class, 'update']);

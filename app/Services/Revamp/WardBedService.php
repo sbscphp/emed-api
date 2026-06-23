@@ -72,6 +72,27 @@ class WardBedService
                 'cost' => $data['cost'] ?? 0,
             ]);
 
+            if (isset($data['bed_number'])) {
+                $bed = Bed::where('ward_id', $ward->id)->first();
+                if (!$bed) {
+                    Bed::create([
+                        'ward_id' => $ward->id,
+                        'bed_number' => $data['bed_number'] ?? '1',
+                        'available_bed_number' => $data['bed_number'] ?? 1,
+                    ]);
+                } else {
+                    $oldBedNumber = (int) $bed->bed_number;
+                    $newBedNumber = isset($data['bed_number']) ? (int) $data['bed_number'] : $oldBedNumber;
+                    $difference = $newBedNumber - $oldBedNumber;
+                    $newAvailableBedNumber = max(0, $bed->available_bed_number + $difference);
+
+                    $bed->update([
+                        'bed_number' => $newBedNumber,
+                        'available_bed_number' => $newAvailableBedNumber,
+                    ]);
+                }
+            }
+
             return $ward->fresh();
         });
     }
