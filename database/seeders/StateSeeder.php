@@ -61,6 +61,6 @@ class StateSeeder extends Seeder
             ['id' => 37, 'state_name' => 'Zamfara State'],
         ];
 
-        DB::table('states')->insert($states);
+        DB::table('states')->firstOrCreate($states);
     }
 }
