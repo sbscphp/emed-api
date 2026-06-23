@@ -21,7 +21,7 @@ class WardBedRequest extends FormRequest
             'type' => 'required|string|in:' . implode(',', self::WARD_TYPES),
             'gender' => 'required|string|in:' . implode(',', self::WARD_GENDERS),
             'cost' => 'nullable|numeric|min:0',
-            'bed_number' => 'nullable|integer|min:1',
+            'bed_number' => 'required|integer|min:1',
         ];
     }
 
@@ -36,6 +36,8 @@ class WardBedRequest extends FormRequest
             'cost.min' => 'Ward cost must be a positive number.',
             'cost.numeric' => 'Ward cost must be a valid number.',
             'bed_number.min' => 'Bed number must be a positive integer.',
+            'bed_number.required' => 'Bed number is required.',
+            'bed_number.integer' => 'Bed number must be an integer.',
         ];
     }
 }
