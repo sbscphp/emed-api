@@ -908,8 +908,8 @@ class PatientService
                         ->orWhereRelation('visit', 'visitno', 'LIKE', '%' . $request['search_param'] . '%')
                         ->orWhereRelation('writer', 'first_name', 'LIKE', '%' . $request['search_param'] . '%')
                         ->orWhereRelation('writer', 'last_name', 'LIKE', '%' . $request['search_param'] . '%')
-                        ->orWhereRelation('updated_by', 'first_name', 'LIKE', '%' . $request['search_param'] . '%')
-                        ->orWhereRelation('updated_by', 'last_name', 'LIKE', '%' . $request['search_param'] . '%');
+                        ->orWhereRelation('updatedBy', 'first_name', 'LIKE', '%' . $request['search_param'] . '%')
+                        ->orWhereRelation('updatedBy', 'last_name', 'LIKE', '%' . $request['search_param'] . '%');
                 });
             })->when(isset($request['type']), function ($query) use ($request) {
                 $query->where('type', filter_var($request['type']));
@@ -923,7 +923,7 @@ class PatientService
                 $query->orderBy('created_at', 'ASC');
             })->when(($request['sort_by'] ?? null) === 'date_descending', function ($query) {
                 $query->orderBy('created_at', 'DESC');
-            })->with('patient', 'visit', 'writer:id,first_name,last_name,email', 'updated_by:id,first_name,last_name,email');
+            })->with('patient', 'visit', 'writer:id,first_name,last_name,email', 'updatedBy:id,first_name,last_name,email');
 
         if (!empty($request['paginate'])) {
             return $query->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
@@ -989,7 +989,7 @@ class PatientService
         if (empty($careNote)) {
             throw new \Exception("Care note not found.");
         }
-        return $careNote->load('patient', 'visit', 'writer:id,first_name,last_name,email', 'updated_by:id,first_name,last_name,email');
+        return $careNote->load('patient', 'visit', 'writer:id,first_name,last_name,email', 'updatedBy:id,first_name,last_name,email');
     }
 
     public function updatePatientCareNotes($request, $id)
@@ -1007,6 +1007,6 @@ class PatientService
             'type' => $request->type,
         ]);
 
-        return $careNote->load('patient', 'visit', 'writer:id,first_name,last_name,email', 'updated_by:id,first_name,last_name,email');
+        return $careNote->load('patient', 'visit', 'writer:id,first_name,last_name,email', 'updatedBy:id,first_name,last_name,email');
     }
 }
