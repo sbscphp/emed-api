@@ -401,7 +401,7 @@ class AdmissionService
         if (empty($careNote)) {
             throw new \Exception("Care note not found.");
         }
-        return $careNote->load('patient', 'visit', 'writer:id,first_name,last_name,email', 'updated_by:id,first_name,last_name,email');
+        return $careNote->load('patient', 'visit', 'writer:id,first_name,last_name,email', 'updatedBy:id,first_name,last_name,email');
     }
 
     public function updatePatientCareNotes($request, $id)
@@ -414,12 +414,12 @@ class AdmissionService
         }
 
         $careNote->update([
-            'updated_by' => $currentUser ? $currentUser->id : $careNote->written_by,
+            'updatedBy' => $currentUser ? $currentUser->id : $careNote->written_by,
             'notes' => $request->notes,
             'type' => $request->type,
         ]);
 
-        return $careNote->load('patient', 'visit', 'writer:id,first_name,last_name,email', 'updated_by:id,first_name,last_name,email');
+        return $careNote->load('patient', 'visit', 'writer:id,first_name,last_name,email', 'updatedBy:id,first_name,last_name,email');
     }
 
     public function viewPatientVisitDrugs($id)
