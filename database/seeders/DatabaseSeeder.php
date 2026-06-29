@@ -13,18 +13,29 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $currentTenant = app()->bound('currentTenant') ? app('currentTenant') : null;
+
+        if ($currentTenant) {
+            $this->call([
+                PermissionTableSeeder::class,
+                RolePermissionSeeder::class,
+                ServicesTableSeeder::class,
+                ServiceUnitSeeder::class,
+                ServiceCategorySeeder::class,
+                LabParameterSeeder::class,
+                LabTestSeeder::class,
+                RadiologyTestSeeder::class,
+                StateSeeder::class,
+                // UsersTableSeeder::class,
+                // TenantUserSeeder::class,
+            ]);
+
+            return;
+        }
+
         $this->call([
-            PermissionTableSeeder::class,
-            RolePermissionSeeder::class,
-            ServicesTableSeeder::class,
-            ServiceUnitSeeder::class,
-            StateSeeder::class,
-            ServiceCategorySeeder::class,
-            LabParameterSeeder::class,
-            LabTestSeeder::class,
-            RadiologyTestSeeder::class,
-            // UsersTableSeeder::class,
-            // TenantUserSeeder::class,
+            SuperAdminPermissionSeeder::class,
+            SuperAdminSeeder::class,
         ]);
 
         // $this->call(MySqlDumpSeeder::class);

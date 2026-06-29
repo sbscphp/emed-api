@@ -23,15 +23,15 @@ class PermissionTableSeeder extends Seeder
                     foreach ($actions as $action) {
                         $name = "{$appName}.{$moduleName}.{$action}";
 
-                        Permission::updateOrCreate(
+                        $record = Permission::updateOrCreate(
                             ['name' => $name],
                             [
                                 'module'       => $appName,
                                 'sub_module'   => null,
                                 'display_name' => ucfirst($action) . " " . $appName,
                                 'description'  => "Allows user to {$action} in {$appName} {$moduleName}",
-                            ]
-                        );
+                                ]
+                            );
                     }
                 }
             }

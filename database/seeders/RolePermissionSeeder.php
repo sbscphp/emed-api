@@ -19,8 +19,14 @@ class RolePermissionSeeder extends Seeder
      */
     public function run()
     {
-        $tenant = app('currentTenant');
-        // $this->truncateLaratrustTables();
+        $tenant = app()->bound('currentTenant') ? app('currentTenant') : null;
+
+        if (!$tenant) {
+            $this->command?->warn('Skipping RolePermissionSeeder: no tenant context found.');
+            return;
+        }
+
+        $this->truncateLaratrustTables();
 
         // $mapPermission = collect(config('role_permission_seeder.permissions_map'));
         // $config = config('role_permission_seeder.roles_structure');
