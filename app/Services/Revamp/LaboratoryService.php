@@ -8,6 +8,7 @@ use App\Helpers\ExportHelper;
 use App\Helpers\FileUploadHelper;
 use App\Helpers\GeneralHelper;
 use App\Helpers\UserMgtHelper;
+use App\Models\LabService;
 use App\Models\Laboratory;
 use App\Models\LaboratoryResult;
 use App\Models\PatientVisit;
@@ -23,11 +24,16 @@ use Carbon\Carbon;
  */
 class LaboratoryService
 {
+    protected LabParameterService $labParameterService;
+
     /**
      * Laboratory constructor.
      *
      */
-    public function __construct(LaboratoryInterface $LaboratoryInterface) {}
+    public function __construct(LaboratoryInterface $LaboratoryInterface, LabParameterService $labParameterService)
+    {
+        $this->labParameterService = $labParameterService;
+    }
 
     /**
      * Retrieve all Laboratory.
@@ -142,23 +148,29 @@ class LaboratoryService
     {
         $currentUserInstance = UserMgtHelper::userInstance();
         $tenantId = $data->header('X-Tenant-ID');
-        $service = $test->testService()->with(['serviceCategory.labParameters' => function ($query) {
+        $service = $test->testService()->with([
+            'labParameters' => function ($query) {
+                $query->where('status', true)
+                    ->orderBy('display_order')
+                    ->orderBy('id');
+            },
+            'serviceCategory.labParameters' => function ($query) {
             $query->where('status', true)
                 ->orderBy('display_order')
                 ->orderBy('id');
         }])->first();
-        $categoryParameters = $service?->serviceCategory?->labParameters ?? collect();
+        $effectiveParameters = $this->labParameterService->getEffectiveParametersForLabTest($service);
 
         $results = collect($data->results ?? []);
         $parameterIds = $results->pluck('lab_parameter_id')->filter()->values()->all();
         $incomingTests = $results->pluck('test')->filter()->values()->all();
 
         if ($service && !empty($parameterIds)) {
-            $allowedParameterIds = $categoryParameters->pluck('id')->all();
+            $allowedParameterIds = $effectiveParameters->pluck('id')->all();
             $invalidParameterIds = array_diff($parameterIds, $allowedParameterIds);
 
             if (!empty($invalidParameterIds)) {
-                throw new \InvalidArgumentException('One or more submitted parameters do not belong to the selected service category.');
+                throw new \InvalidArgumentException('One or more submitted parameters do not belong to the selected lab test.');
             }
         }
 
@@ -177,7 +189,7 @@ class LaboratoryService
         foreach ($results as $index => $item) {
             $parameter = null;
             if (!empty($item['lab_parameter_id'])) {
-                $parameter = $categoryParameters
+                $parameter = $effectiveParameters
                     ->firstWhere('id', (int) $item['lab_parameter_id']);
             }
 
@@ -237,7 +249,11 @@ class LaboratoryService
             ]);
         }
 
-        return $test->refresh()->load(['results.parameter', 'testService.serviceCategory.labParameters']);
+        return $test->refresh()->load([
+            'results.parameter',
+            'testService.labParameters',
+            'testService.serviceCategory.labParameters'
+        ]);
     }
 
     public function updateTest($data, $test)
@@ -262,6 +278,11 @@ class LaboratoryService
             },
             'results.parameter',
             'testService.serviceCategory',
+            'testService.labParameters' => function ($query) {
+                $query->where('status', true)
+                    ->orderBy('display_order')
+                    ->orderBy('id');
+            },
             'testService.serviceCategory.labParameters' => function ($query) {
                 $query->where('status', true)
                     ->orderBy('display_order')
@@ -277,9 +298,9 @@ class LaboratoryService
             return $result->lab_parameter_id ?: $result->test;
         });
 
-        $categoryParameters = $record->testService?->serviceCategory?->labParameters ?? collect();
+        $effectiveParameters = $this->labParameterService->getEffectiveParametersForLabTest($record->testService);
 
-        $parameterRows = $categoryParameters->map(function ($parameter) use ($resultMap) {
+        $parameterRows = $effectiveParameters->map(function ($parameter) use ($resultMap) {
             $savedResult = $resultMap->get($parameter->id) ?? $resultMap->get($parameter->name);
 
             return [
@@ -324,6 +345,7 @@ class LaboratoryService
                 'lab_service_id' => $record->testService?->id,
                 'lab_service_name' => $record->testService?->name ?? $record->test_name,
                 'service_category' => $record->testService?->serviceCategory?->name ?? $record->department,
+                'uses_test_specific_parameters' => $record->testService?->labParameters?->where('status', true)->isNotEmpty() ?? false,
                 'selected_specimen_type' => $record->specimen_type,
                 'notes' => $record->notes,
                 'parameters' => $parameterRows,
