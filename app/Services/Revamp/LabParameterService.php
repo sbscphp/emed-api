@@ -108,6 +108,30 @@ class LabParameterService
             ->get();
     }
 
+    public function updateLabTestParameter(LabService $labTest, int $parameterId, array $data, string $tenantId): LabParameter
+    {
+        $parameter = LabParameter::where('tenant_id', $tenantId)
+            ->where('lab_test_id', $labTest->id)
+            ->findOrFail($parameterId);
+
+        $parameter->update([
+            ...$data,
+            'service_category_id' => $labTest->service_category_id,
+            'lab_test_id' => $labTest->id,
+        ]);
+
+        return $parameter->load(['serviceCategory', 'labTest']);
+    }
+
+    public function deleteLabTestParameter(LabService $labTest, int $parameterId, string $tenantId): void
+    {
+        $parameter = LabParameter::where('tenant_id', $tenantId)
+            ->where('lab_test_id', $labTest->id)
+            ->findOrFail($parameterId);
+
+        $parameter->delete();
+    }
+
     public function getEffectiveParametersForLabTest(?LabService $labTest): Collection
     {
         if (!$labTest) {

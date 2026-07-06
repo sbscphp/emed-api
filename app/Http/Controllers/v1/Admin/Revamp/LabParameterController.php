@@ -5,6 +5,7 @@ namespace App\Http\Controllers\v1\Admin\Revamp;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AssignLabTestParametersRequest;
 use App\Http\Requests\LabParameterRequest;
+use App\Http\Requests\UpdateLabTestParameterRequest;
 use App\Models\LabService;
 use App\Responser\JsonResponser;
 use App\Services\Revamp\LabParameterService;
@@ -115,6 +116,50 @@ class LabParameterController extends Controller
                 'lab_test' => $labTest->load(['serviceCategory']),
                 'parameters' => $parameters,
             ]);
+        } catch (Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
+    public function updateLabTestParameter(UpdateLabTestParameterRequest $request, $labTestId, $parameterId)
+    {
+        try {
+            $tenantId = $request->header('X-Tenant-ID');
+            $labTest = LabService::where('tenant_id', $tenantId)->find($labTestId);
+
+            if (!$labTest) {
+                return JsonResponser::send(true, 'Lab test not found.', [], 404);
+            }
+
+            $parameter = $this->labParameterService->updateLabTestParameter(
+                $labTest,
+                (int) $parameterId,
+                $request->validated(),
+                $tenantId
+            );
+
+            return JsonResponser::send(false, 'Lab test parameter updated successfully', [
+                'lab_test' => $labTest->load(['serviceCategory']),
+                'parameter' => $parameter,
+            ]);
+        } catch (Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
+    public function destroyLabTestParameter(Request $request, $labTestId, $parameterId)
+    {
+        try {
+            $tenantId = $request->header('X-Tenant-ID');
+            $labTest = LabService::where('tenant_id', $tenantId)->find($labTestId);
+
+            if (!$labTest) {
+                return JsonResponser::send(true, 'Lab test not found.', [], 404);
+            }
+
+            $this->labParameterService->deleteLabTestParameter($labTest, (int) $parameterId, $tenantId);
+
+            return JsonResponser::send(false, 'Lab test parameter deleted successfully');
         } catch (Throwable $th) {
             return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
         }
