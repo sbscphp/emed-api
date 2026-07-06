@@ -101,6 +101,7 @@ Route::group(["prefix" => "v1"], function () {
         Route::post('/contact', [GeneralController::class, 'contact']);
         // Route::post('/register', [RegistrationController::class, 'onboardTenant']);
     });
+    Route::post('/logout', [RegistrationController::class, 'logout']);
 
     Route::group(["middleware" => ["auth:api"]], function () {
         Route::group(['middleware' => ["tenant"]], function () {
@@ -127,7 +128,6 @@ Route::group(["prefix" => "v1"], function () {
             Route::get('/user_information', [RegistrationController::class, 'user_information']);
             Route::put('/change_password', [RegistrationController::class, 'change_password']);
             Route::get('/refreshToken', [RegistrationController::class, 'refreshToken']);
-            Route::post('/logout', [RegistrationController::class, 'logout']);
 
             Route::group(['prefix' => 'admin', "namespace" => "v1\Admin"], function () {
                 // Dashboard stats
