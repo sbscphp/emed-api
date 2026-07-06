@@ -173,7 +173,6 @@ Route::group(["prefix" => "v1"], function () {
                         Route::post('/add/patients/care-notes', [RecordManagementController::class, 'addPatientCareNotes']);
                         Route::get('/view/patients/care-notes/{id}', [RecordManagementController::class, 'viewPatientCareNotes']);
                         Route::put('/update/patients/care-notes/{id}', [RecordManagementController::class, 'updatePatientCareNotes']);
-
                     });
 
                     Route::group(['prefix' => 'visit'], function () {
@@ -532,8 +531,10 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/all_consultation_service', [Consultation_Service_Bill::class, "all_consultation_service"]);
 
                     Route::post('/create_lab_service', [Lab_Service_Controller::class, "create_lab_service"]);
-                    Route::post('/lab_services/{labTestId}/parameters', [LabParameterController::class, 'assignToLabTest']);
                     Route::put('/edit_lab_service', [Lab_Service_Controller::class, "edit_lab_service"]);
+                    Route::post('/lab_services/{labTestId}/parameters', [LabParameterController::class, 'assignToLabTest']);
+                    Route::put('/lab_services/{labTestId}/parameters/{parameterId}', [LabParameterController::class, 'updateLabTestParameter']);
+                    Route::delete('/lab_services/{labTestId}/parameters/{parameterId}', [LabParameterController::class, 'destroyLabTestParameter']);
                     Route::delete('/delete_lab_service/{id}', [Lab_Service_Controller::class, "delete_lab_service"]);
                     Route::get('/lab_Service_all', [Lab_Service_Controller::class, "labService_all"]);
 
