@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\v1\Admin\Revamp;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AssignLabTestParametersRequest;
 use App\Http\Requests\LabParameterRequest;
+use App\Models\LabService;
 use App\Responser\JsonResponser;
 use App\Services\Revamp\LabParameterService;
 use Illuminate\Http\Request;
@@ -56,7 +58,7 @@ class LabParameterController extends Controller
         try {
             $tenantId = $request->header('X-Tenant-ID');
             $parameter = \App\Models\LabParameter::where('tenant_id', $tenantId)
-                ->with('serviceCategory')
+                ->with(['serviceCategory', 'labTest'])
                 ->find($id);
 
             if (!$parameter) {
@@ -88,6 +90,31 @@ class LabParameterController extends Controller
             $this->labParameterService->delete((int) $id, $tenantId);
 
             return JsonResponser::send(false, 'Lab parameter deleted successfully');
+        } catch (Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
+    public function assignToLabTest(AssignLabTestParametersRequest $request, $labTestId)
+    {
+        try {
+            $tenantId = $request->header('X-Tenant-ID');
+            $labTest = LabService::where('tenant_id', $tenantId)->find($labTestId);
+
+            if (!$labTest) {
+                return JsonResponser::send(true, 'Lab test not found.', [], 404);
+            }
+
+            $parameters = $this->labParameterService->assignToLabTest(
+                $labTest,
+                $request->validated()['parameters'],
+                $tenantId
+            );
+
+            return JsonResponser::send(false, 'Lab parameters assigned successfully', [
+                'lab_test' => $labTest->load(['serviceCategory']),
+                'parameters' => $parameters,
+            ]);
         } catch (Throwable $th) {
             return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
         }

@@ -22,4 +22,9 @@ class LabParameter extends Model
     {
         return $this->belongsTo(ServiceCategory::class);
     }
+
+    public function labTest()
+    {
+        return $this->belongsTo(LabService::class, 'lab_test_id');
+    }
 }

@@ -191,6 +191,11 @@ class LabController extends Controller
                 'consultation:id,consulted_by',
                 'billingLogDetail',
                 'testService.serviceCategory',
+                'testService.labParameters' => function ($query) {
+                    $query->where('status', true)
+                        ->orderBy('display_order')
+                        ->orderBy('id');
+                },
                 'testService.serviceCategory.labParameters' => function ($query) {
                     $query->where('status', true)
                         ->orderBy('display_order')
