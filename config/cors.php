@@ -11,6 +11,7 @@ return [
         'https://emed.quick-retail.com',
         'https://api.emeddiaries.com',
         'https://emeddiaries.com',
+        'https://emed-superadmin.vercel.app',
     ],
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],
