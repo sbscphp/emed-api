@@ -533,6 +533,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::post('/create_lab_service', [Lab_Service_Controller::class, "create_lab_service"]);
                     Route::put('/edit_lab_service', [Lab_Service_Controller::class, "edit_lab_service"]);
                     Route::post('/lab_services/{labTestId}/parameters', [LabParameterController::class, 'assignToLabTest']);
+                    Route::get('/lab_services/{labTestId}/parameters/show', [LabParameterController::class, 'showLabTestParameters']);
                     Route::put('/lab_services/{labTestId}/parameters/{parameterId}', [LabParameterController::class, 'updateLabTestParameter']);
                     Route::delete('/lab_services/{labTestId}/parameters/{parameterId}', [LabParameterController::class, 'destroyLabTestParameter']);
                     Route::delete('/delete_lab_service/{id}', [Lab_Service_Controller::class, "delete_lab_service"]);

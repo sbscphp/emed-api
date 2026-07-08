@@ -108,6 +108,15 @@ class LabParameterService
             ->get();
     }
 
+    public function showLabTestParameters (LabService $labTest, string $tenantId): Collection
+    {
+        return $labTest->labParameters()
+            ->where('tenant_id', $tenantId)
+            ->orderBy('display_order')
+            ->orderBy('id')
+            ->get();
+    }
+
     public function updateLabTestParameter(LabService $labTest, int $parameterId, array $data, string $tenantId): LabParameter
     {
         $parameter = LabParameter::where('tenant_id', $tenantId)
