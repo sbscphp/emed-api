@@ -131,7 +131,7 @@ class LabParameterController extends Controller
                 return JsonResponser::send(true, 'Lab test not found.', [], 404);
             }
 
-            $parameters = $this->labParameterService->showLabTestParameters($labTest, $tenantId);
+            $parameters = $this->labParameterService->showLabTestParameters($labTest, $request, $tenantId);
 
             return JsonResponser::send(false, 'Lab test parameters found successfully', [
                 'lab_test' => $labTest->load(['serviceCategory']),
