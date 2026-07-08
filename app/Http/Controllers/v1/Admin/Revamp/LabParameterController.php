@@ -121,6 +121,24 @@ class LabParameterController extends Controller
         }
     }
 
+    public function showLabTestParameters(Request $request, $labTestId)
+    {
+        try {
+            $tenantId = $request->header('X-Tenant-ID');
+            $labTest = LabService::where('tenant_id', $tenantId)->find($labTestId);
+
+            if (!$labTest) {
+                return JsonResponser::send(true, 'Lab test not found.', [], 404);
+            }
+
+            $parameters = $this->labParameterService->showLabTestParameters($labTest, $tenantId);
+
+            return JsonResponser::send(false, 'Lab test parameters found successfully', $parameters);
+        } catch (Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
     public function updateLabTestParameter(UpdateLabTestParameterRequest $request, $labTestId, $parameterId)
     {
         try {
