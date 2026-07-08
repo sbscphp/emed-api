@@ -108,9 +108,15 @@ class LabParameterService
             ->get();
     }
 
-    public function showLabTestParameters (LabService $labTest, string $tenantId): Collection
+    public function showLabTestParameters(LabService $labTest, $request, string $tenantId): Collection
     {
-        return $labTest->labParameters()
+        return $labTest->labParameters()->when(!empty($request['search_param']), function ($query) use ($request) {
+            $query->where(function ($subQuery) use ($request) {
+                $subQuery->where('name', 'LIKE', '%' . $request['search_param'] . '%')
+                    ->orWhere('code', 'LIKE', '%' . $request['search_param'] . '%')
+                    ->orWhere('unit', 'LIKE', '%' . $request['search_param'] . '%');
+            });
+        })
             ->where('tenant_id', $tenantId)
             ->orderBy('display_order')
             ->orderBy('id')
