@@ -133,7 +133,10 @@ class LabParameterController extends Controller
 
             $parameters = $this->labParameterService->showLabTestParameters($labTest, $tenantId);
 
-            return JsonResponser::send(false, 'Lab test parameters found successfully', $parameters);
+            return JsonResponser::send(false, 'Lab test parameters found successfully', [
+                'lab_test' => $labTest->load(['serviceCategory']),
+                'parameters' => $parameters,
+            ]);
         } catch (Throwable $th) {
             return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
         }
