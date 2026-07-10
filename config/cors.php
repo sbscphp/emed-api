@@ -12,6 +12,7 @@ return [
         'https://api.emeddiaries.com',
         'https://emeddiaries.com',
         'https://emed-superadmin.vercel.app',
+        'https://admin.emeddiaries.com',
     ],
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],
