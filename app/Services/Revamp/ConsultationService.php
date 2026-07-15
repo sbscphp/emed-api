@@ -205,7 +205,7 @@ class ConsultationService
                     'tenant_id' => $tenantId,
                     'patient_id' => $request['patient_id'],
                     'visit_id' => $request['visit_id']
-                    ]);
+                ]);
             }
             $status =    $request['admit_patient'] === 1 ? PatientVisitStatusEnums::ADMITTED->value : PatientVisitStatusEnums::NOT_ADMITTED->value;
             $req_status =    $request['schedule_a_follow_up'] === true ? GeneralEnums::FOLLOWUPPATIENT->value : $patient->req_status;
@@ -289,7 +289,11 @@ class ConsultationService
                 }
 
                 // Do not touch already Paid items
-                $labId = $existingLab?->id ?? $labInvestigation->id;
+                $labRecord = $existingLab && $existingLab->status === 'Ready'
+                    ? $existingLab
+                    : $labInvestigation;
+
+                $labId = $labRecord?->id;
 
                 // Do not touch already Paid items
                 $existingBillingDetail = BillingLogDetail::where('billing_id', $fetchBilling->id)
@@ -307,7 +311,7 @@ class ConsultationService
                     $billingDetail = BillingLogDetail::create([
                         'tenant_id'        => $tenantId,
                         'billing_id'      => $fetchBilling->id,
-                        'lab_test_id'  => $labInvestigation->id,
+                        'lab_test_id'  => $labId,
                         'service_unit_id' => $labService->service_unit_id,
                         'item_name'       => $labService->name,
                         'quantity'        => 1,
