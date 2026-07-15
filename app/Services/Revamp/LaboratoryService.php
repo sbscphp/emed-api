@@ -216,6 +216,8 @@ class LaboratoryService
                     'unit'             => $item['unit'] ?? $parameter?->unit,
                     'reference_range'  => $item['reference_range'] ?? $parameter?->reference_range,
                     'flag'             => $item['flag'] ?? null,
+                    'sensitivity_s'    => $item['sensitivity_s'] ?? false,
+                    'sensitivity_r'    => $item['sensitivity_r'] ?? false,
                     'display_order'    => $item['display_order'] ?? $parameter?->display_order ?? $index,
                     'status'           => 'Ready',
                 ]
