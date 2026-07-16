@@ -38,6 +38,16 @@ class ConfigurationService
         ];
     }
 
+    public function stats ($request)
+    {
+        $query = UsageFee::query();
+        return [
+            'total_usage_fees' => (clone $query)->count(),
+            'active_usage_fees' => (clone $query)->where('status', GeneralEnums::ACTIVE->value)->count(),
+            'inactive_usage_fees' => (clone $query)->where('status', GeneralEnums::INACTIVE->value)->count(),
+        ];
+    }
+
     public function createUsageFee($request)
     {
         $usageFee = UsageFee::create([

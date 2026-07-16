@@ -21,7 +21,12 @@ class ConfigurationController extends Controller
     public function usageFees(Request $request)
     {
         try {
-            $records = $this->configurationService->usageFees($request);
+            $overview = $this->configurationService->usageFees($request);
+            $stats = $this->configurationService->stats($request);
+            $records = [
+                ...$stats,
+                'data' => $overview,
+            ];
 
             return JsonResponser::send(false, 'Record(s) found successfully', $records);
         } catch (\Throwable $th) {
