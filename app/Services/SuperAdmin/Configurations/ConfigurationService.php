@@ -28,8 +28,7 @@ class ConfigurationService
             });
 
         $paginate = $request->paginate ?? true;
-
-        if ($paginate) {
+        if ($paginate != "false") {
             return $query->orderBy('id', 'DESC')->paginate($request->limit ?? 15);
         }
 
@@ -38,7 +37,7 @@ class ConfigurationService
         ];
     }
 
-    public function stats ($request)
+    public function stats($request)
     {
         $query = UsageFee::query();
         return [
