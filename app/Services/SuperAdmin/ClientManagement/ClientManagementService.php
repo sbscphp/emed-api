@@ -76,6 +76,7 @@ class ClientManagementService
             'admin_email' => $request->input('admin_email'),
             'admin_phoneno' => $request->input('admin_phoneno'),
             'admin_password' => $request->input('admin_password'),
+            'skip_email_verification' => true,
         ];
 
         $result = $this->authenticationService->create($data);

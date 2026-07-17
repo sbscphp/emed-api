@@ -40,6 +40,7 @@ class AuthenticationService
     {
         $tenant = null;
         $user = null;
+        $skipEmailVerification = (bool) ($data['skip_email_verification'] ?? false);
 
         try {
             // Create Tenant on landlord DB
@@ -49,36 +50,50 @@ class AuthenticationService
             // Create User (Hospital Admin) - operations on tenant DB
             $user = $this->createUser($tenant, $data);
 
-            $otp = random_int(100000, 999999);
-            $expiresAt = Carbon::now()->addMinutes(30);
+            if ($skipEmailVerification) {
+                $user->update([
+                    'email_verified_at' => now(),
+                    'is_verified' => 1,
+                    'can_login' => 1,
+                    'otp' => null,
+                ]);
 
-            // Store token in landlord DB with separate transaction
-            DB::connection('landlord')->beginTransaction();
-            try {
-                DB::connection('landlord')->table('password_reset_tokens')->updateOrInsert(
-                    ['email' => $user->email],
-                    [
-                        'user_id' => $user->id,
-                        'email' => $user->email,
-                        'otp' => $otp,
-                        'created_at' => now(),
-                        'expires_at' => $expiresAt
-                    ]
-                );
-                DB::connection('landlord')->commit();
-            } catch (\Throwable $e) {
-                DB::connection('landlord')->rollBack();
-                throw $e;
+                DB::connection('landlord')
+                    ->table('password_reset_tokens')
+                    ->where('email', $user->email)
+                    ->delete();
+            } else {
+                $otp = random_int(100000, 999999);
+                $expiresAt = Carbon::now()->addMinutes(30);
+
+                // Store token in landlord DB with separate transaction
+                DB::connection('landlord')->beginTransaction();
+                try {
+                    DB::connection('landlord')->table('password_reset_tokens')->updateOrInsert(
+                        ['email' => $user->email],
+                        [
+                            'user_id' => $user->id,
+                            'email' => $user->email,
+                            'otp' => $otp,
+                            'created_at' => now(),
+                            'expires_at' => $expiresAt
+                        ]
+                    );
+                    DB::connection('landlord')->commit();
+                } catch (\Throwable $e) {
+                    DB::connection('landlord')->rollBack();
+                    throw $e;
+                }
+
+                // Prepare password setup mail
+                $maildata = [
+                    'email' => $user->email,
+                    'name' => $user->first_name . ' ' . $user->last_name,
+                    'token' => $otp,
+                ];
+
+                Mail::to($user->email)->send(new TenantEmailVerification($maildata));
             }
-
-            // Prepare password setup mail
-            $maildata = [
-                'email' => $user->email,
-                'name' => $user->first_name . ' ' . $user->last_name,
-                'token' => $otp,
-            ];
-
-            Mail::to($user->email)->send(new TenantEmailVerification($maildata));
 
             // Load tenant-scoped relations while tenant DB is still selected
             $userWithRelations = $user->load('roles', 'permissions');
@@ -179,6 +194,8 @@ class AuthenticationService
                 'password' => bcrypt($data['admin_password']),
                 'remember_token' => Str::random(60),
                 'can_login' => 1,
+                'is_verified' => $data['skip_email_verification'] ?? false,
+                'email_verified_at' => ($data['skip_email_verification'] ?? false) ? now() : null,
                 'is_completed' => 1
             ]
         );
