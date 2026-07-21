@@ -23,8 +23,8 @@ class UserManagementService
             ->with('superAdminRoles:id,name,display_name')
             ->when($request->search_param, function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
-                    $q->where('firstname', 'LIKE', '%' . $request->search_param . '%')
-                        ->orWhere('lastname', 'LIKE', '%' . $request->search_param . '%')
+                    $q->where('first_name', 'LIKE', '%' . $request->search_param . '%')
+                        ->orWhere('last_name', 'LIKE', '%' . $request->search_param . '%')
                         ->orWhere('email', 'LIKE', '%' . $request->search_param . '%');
                 });
             })
