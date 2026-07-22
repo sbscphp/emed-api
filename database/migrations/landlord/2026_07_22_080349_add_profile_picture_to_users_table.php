@@ -13,7 +13,7 @@ return new class extends Migration
     {
         if (!Schema::hasColumn('users', 'profile_picture')) {
             Schema::table('users', function (Blueprint $table) {
-                $table->string('profile_picture')->default('')->comment('Pending, Active, Inactive')->after('email');
+                $table->string('profile_picture')->nullable()->after('remember_token');
             });
         }
     }
