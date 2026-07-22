@@ -35,6 +35,11 @@ class LaboratoryService
         $this->labParameterService = $labParameterService;
     }
 
+    public function supportsLabTestParameters(): bool
+    {
+        return $this->labParameterService->supportsLabTestParameters();
+    }
+
     /**
      * Retrieve all Laboratory.
      *
@@ -148,17 +153,23 @@ class LaboratoryService
     {
         $currentUserInstance = UserMgtHelper::userInstance();
         $tenantId = $data->header('X-Tenant-ID');
-        $service = $test->testService()->with([
-            'labParameters' => function ($query) {
+        $relations = [
+            'serviceCategory.labParameters' => function ($query) {
                 $query->where('status', true)
                     ->orderBy('display_order')
                     ->orderBy('id');
-            },
-            'serviceCategory.labParameters' => function ($query) {
-            $query->where('status', true)
-                ->orderBy('display_order')
-                ->orderBy('id');
-        }])->first();
+            }
+        ];
+
+        if ($this->labParameterService->supportsLabTestParameters()) {
+            $relations['labParameters'] = function ($query) {
+                $query->where('status', true)
+                    ->orderBy('display_order')
+                    ->orderBy('id');
+            };
+        }
+
+        $service = $test->testService()->with($relations)->first();
         $effectiveParameters = $this->labParameterService->getEffectiveParametersForLabTest($service);
 
         $results = collect($data->results ?? []);
@@ -225,7 +236,7 @@ class LaboratoryService
         }
 
         $fileUrl = null;
-        if($data->signature) {
+        if ($data->signature) {
             if ($data->filled('signature')) {
                 $fileUrl = FileUploadHelper::singleStringFileUpload($data->signature, 'signature');
             }
@@ -251,11 +262,16 @@ class LaboratoryService
             ]);
         }
 
-        return $test->refresh()->load([
+        $loadRelations = [
             'results.parameter',
-            'testService.labParameters',
             'testService.serviceCategory.labParameters'
-        ]);
+        ];
+
+        if ($this->labParameterService->supportsLabTestParameters()) {
+            $loadRelations[] = 'testService.labParameters';
+        }
+
+        return $test->refresh()->load($loadRelations);
     }
 
     public function updateTest($data, $test)
@@ -280,17 +296,22 @@ class LaboratoryService
             },
             'results.parameter',
             'testService.serviceCategory',
-            'testService.labParameters' => function ($query) {
-                $query->where('status', true)
-                    ->orderBy('display_order')
-                    ->orderBy('id');
-            },
             'testService.serviceCategory.labParameters' => function ($query) {
                 $query->where('status', true)
                     ->orderBy('display_order')
                     ->orderBy('id');
             }
         ])->find($id);
+
+        if ($record && $this->labParameterService->supportsLabTestParameters()) {
+            $record->load([
+                'testService.labParameters' => function ($query) {
+                    $query->where('status', true)
+                        ->orderBy('display_order')
+                        ->orderBy('id');
+                }
+            ]);
+        }
 
         if (!$record) {
             throw new \InvalidArgumentException('Lab test not found.');

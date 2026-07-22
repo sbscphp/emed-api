@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateLabTestParameterRequest;
 use App\Models\LabService;
 use App\Responser\JsonResponser;
 use App\Services\Revamp\LabParameterService;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Throwable;
 
@@ -19,6 +20,17 @@ class LabParameterController extends Controller
     public function __construct(LabParameterService $labParameterService)
     {
         $this->labParameterService = $labParameterService;
+    }
+
+    protected function renderException(Throwable $th)
+    {
+        report($th);
+
+        if ($th instanceof QueryException && str_contains($th->getMessage(), 'lab_parameters.lab_test_id')) {
+            return JsonResponser::send(true, 'This feature is not available for this hospital right now.', 'Internal Server Error', 500);
+        }
+
+        return JsonResponser::send(true, 'Something went wrong while processing your request.', 'Internal Server Error', 500);
     }
 
     public function index(Request $request)
@@ -38,7 +50,7 @@ class LabParameterController extends Controller
 
             return JsonResponser::send(false, 'Record(s) found successfully', $records);
         } catch (Throwable $th) {
-            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+            return $this->renderException($th);
         }
     }
 
@@ -50,7 +62,7 @@ class LabParameterController extends Controller
 
             return JsonResponser::send(false, 'Lab parameter created successfully', $parameter);
         } catch (Throwable $th) {
-            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+            return $this->renderException($th);
         }
     }
 
@@ -68,7 +80,7 @@ class LabParameterController extends Controller
 
             return JsonResponser::send(false, 'Record found successfully', $parameter);
         } catch (Throwable $th) {
-            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+            return $this->renderException($th);
         }
     }
 
@@ -80,7 +92,7 @@ class LabParameterController extends Controller
 
             return JsonResponser::send(false, 'Lab parameter updated successfully', $parameter);
         } catch (Throwable $th) {
-            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+            return $this->renderException($th);
         }
     }
 
@@ -92,7 +104,7 @@ class LabParameterController extends Controller
 
             return JsonResponser::send(false, 'Lab parameter deleted successfully');
         } catch (Throwable $th) {
-            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+            return $this->renderException($th);
         }
     }
 
@@ -117,7 +129,7 @@ class LabParameterController extends Controller
                 'parameters' => $parameters,
             ]);
         } catch (Throwable $th) {
-            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+            return $this->renderException($th);
         }
     }
 
@@ -138,7 +150,7 @@ class LabParameterController extends Controller
                 'parameters' => $parameters,
             ]);
         } catch (Throwable $th) {
-            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+            return $this->renderException($th);
         }
     }
 
@@ -164,7 +176,7 @@ class LabParameterController extends Controller
                 'parameter' => $parameter,
             ]);
         } catch (Throwable $th) {
-            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+            return $this->renderException($th);
         }
     }
 
