@@ -14,6 +14,7 @@ use App\Models\PatientVisit;
 use App\Models\Radiology;
 use App\Models\Treatment;
 use App\Responser\JsonResponser;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +31,17 @@ class LabController extends Controller
         LaboratoryService $laboratoryService,
     ) {
         $this->laboratoryService = $laboratoryService;
+    }
+
+    protected function renderException(Throwable $th)
+    {
+        report($th);
+
+        if ($th instanceof QueryException && str_contains($th->getMessage(), 'lab_parameters.lab_test_id')) {
+            return JsonResponser::send(true, 'Lab details are not available for this hospital right now.', 'Internal Server Error', 500);
+        }
+
+        return JsonResponser::send(true, 'Something went wrong while processing your request.', 'Internal Server Error', 500);
     }
 
     public function index(Request $request)
@@ -55,7 +67,7 @@ class LabController extends Controller
 
             return JsonResponser::send(false, 'Record(s) found successfully', $records);
         } catch (\Throwable $th) {
-            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+            return $this->renderException($th);
         }
     }
 
@@ -175,7 +187,7 @@ class LabController extends Controller
 
             return JsonResponser::send(false, 'Record(s) found successfully.', $labTest, 200);
         } catch (Throwable $th) {
-            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500, $th);
+            return $this->renderException($th);
         }
     }
 
@@ -183,25 +195,29 @@ class LabController extends Controller
     {
         try {
             DB::connection('tenant');
-
-            $record = Laboratory::with([
+            $relations = [
                 'results.parameter',
                 'patient',
                 'visit.service',
                 'consultation:id,consulted_by',
                 'billingLogDetail',
                 'testService.serviceCategory',
-                'testService.labParameters' => function ($query) {
-                    $query->where('status', true)
-                        ->orderBy('display_order')
-                        ->orderBy('id');
-                },
                 'testService.serviceCategory.labParameters' => function ($query) {
                     $query->where('status', true)
                         ->orderBy('display_order')
                         ->orderBy('id');
                 }
-            ])->find($id);
+            ];
+
+            if ($this->laboratoryService->supportsLabTestParameters()) {
+                $relations['testService.labParameters'] = function ($query) {
+                    $query->where('status', true)
+                        ->orderBy('display_order')
+                        ->orderBy('id');
+                };
+            }
+
+            $record = Laboratory::with($relations)->find($id);
             if (!$record) {
                 return JsonResponser::send(true, 'Lab test not found.', [], 404);
             }
@@ -231,7 +247,7 @@ class LabController extends Controller
 
             return JsonResponser::send(false, 'Record(s) found successfully.', $record, 200);
         } catch (Throwable $th) {
-            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500, $th);
+            return $this->renderException($th);
         }
     }
 
