@@ -168,6 +168,30 @@ class LabParameterSeeder extends Seeder
                 ['name' => 'Bacteria', 'code' => 'U_BAC', 'unit' => null, 'reference_range' => 'Nil to scanty', 'input_type' => 'text'],
                 ['name' => 'Others', 'code' => 'U_OTH', 'unit' => null, 'reference_range' => null, 'input_type' => 'text'],
                 ['name' => 'Culture', 'code' => 'U_CULT', 'unit' => null, 'reference_range' => null, 'input_type' => 'textarea'],
+
+                // Gram Positive Antibiotic Sensitivity Panel
+                ['name' => 'Pefloxacin (Gram +ve)', 'code' => 'AST_GP_PEF', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Gentamycin (Gram +ve)', 'code' => 'AST_GP_GEN', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Amp-Clox (Gram +ve)', 'code' => 'AST_GP_AMC', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Zinnacef (Gram +ve)', 'code' => 'AST_GP_ZIN', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Amoxacillin (Gram +ve)', 'code' => 'AST_GP_AMX', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Rocephin (Gram +ve)', 'code' => 'AST_GP_ROC', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Ciprofloxacin (Gram +ve)', 'code' => 'AST_GP_CIP', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Azithromycin (Gram +ve)', 'code' => 'AST_GP_AZI', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Levofloxacin (Gram +ve)', 'code' => 'AST_GP_LEV', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Erythromycin (Gram +ve)', 'code' => 'AST_GP_ERY', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+
+                // Gram Negative Antibiotic Sensitivity Panel
+                ['name' => 'Lefloxacin (Gram -ve)', 'code' => 'AST_GN_LEF', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Cefotaxin (Gram -ve)', 'code' => 'AST_GN_CEF', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Sparfloxacin (Gram -ve)', 'code' => 'AST_GN_SPA', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Ciprofloxacin (Gram -ve)', 'code' => 'AST_GN_CIP', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Amoxacillin (Gram -ve)', 'code' => 'AST_GN_AMX', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Augmentin (Gram -ve)', 'code' => 'AST_GN_AUG', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Gentamycin (Gram -ve)', 'code' => 'AST_GN_GEN', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Pefloxacin (Gram -ve)', 'code' => 'AST_GN_PEF', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Tarivid (Gram -ve)', 'code' => 'AST_GN_TAR', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Azithromycin (Gram -ve)', 'code' => 'AST_GN_AZI', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
             ],
         ];
 
