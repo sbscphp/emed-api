@@ -6,9 +6,6 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 class RolePermissionSeeder extends Seeder
 {
@@ -26,8 +23,6 @@ class RolePermissionSeeder extends Seeder
             return;
         }
 
-        $this->truncateLaratrustTables();
-
         // $mapPermission = collect(config('role_permission_seeder.permissions_map'));
         // $config = config('role_permission_seeder.roles_structure');
         // $mapPermission = collect(config('role_permission_seeder.permissions_map'));
@@ -44,8 +39,7 @@ class RolePermissionSeeder extends Seeder
         ];
 
         foreach ($config as $key => $description) {
-            // Create a new role
-            $role = Role::firstOrCreate(
+            $role = Role::updateOrCreate(
                 [
                     'tenant_id' => $tenant->uuid,
                     'name'      => $key,
@@ -180,24 +174,4 @@ class RolePermissionSeeder extends Seeder
     //     DB::statement('SET FOREIGN_KEY_CHECKS=1;');
     // }
 
-    public function truncateLaratrustTables()
-    {
-        $this->command->info('Truncating User, Role and Permission tables');
-
-        Schema::disableForeignKeyConstraints();
-        DB::table('permission_role')->truncate();
-        DB::table('permission_user')->truncate();
-        DB::table('role_user')->truncate();
-
-        if (Config::get('role_permission_seeder.truncate_tables')) {
-            Role::truncate();
-            Permission::truncate();
-        }
-
-        if (Config::get('role_permission_seeder.truncate_tables') && Config::get('role_permission_seeder.create_users')) {
-            User::truncate();
-        }
-
-        Schema::enableForeignKeyConstraints();
-    }
 }

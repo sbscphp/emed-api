@@ -58,6 +58,29 @@ class LabParameterSeeder extends Seeder
                 ['name' => 'Culture Isolate', 'code' => 'CULT', 'unit' => null, 'reference_range' => null, 'input_type' => 'textarea'],
                 ['name' => 'Antibiotic Sensitivity', 'code' => 'SENS', 'unit' => null, 'reference_range' => null, 'input_type' => 'textarea'],
                 ['name' => 'Comment', 'code' => 'COMMENT', 'unit' => null, 'reference_range' => null, 'input_type' => 'textarea'],
+                // Gram Positive Antibiotic Sensitivity Panel
+                ['name' => 'Pefloxacin (Gram +ve)', 'code' => 'AST_GP_PEF', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Gentamycin (Gram +ve)', 'code' => 'AST_GP_GEN', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Amp-Clox (Gram +ve)', 'code' => 'AST_GP_AMC', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Zinnacef (Gram +ve)', 'code' => 'AST_GP_ZIN', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Amoxacillin (Gram +ve)', 'code' => 'AST_GP_AMX', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Rocephin (Gram +ve)', 'code' => 'AST_GP_ROC', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Ciprofloxacin (Gram +ve)', 'code' => 'AST_GP_CIP', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Azithromycin (Gram +ve)', 'code' => 'AST_GP_AZI', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Levofloxacin (Gram +ve)', 'code' => 'AST_GP_LEV', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Erythromycin (Gram +ve)', 'code' => 'AST_GP_ERY', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+
+                // Gram Negative Antibiotic Sensitivity Panel
+                ['name' => 'Lefloxacin (Gram -ve)', 'code' => 'AST_GN_LEF', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Cefotaxin (Gram -ve)', 'code' => 'AST_GN_CEF', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Sparfloxacin (Gram -ve)', 'code' => 'AST_GN_SPA', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Ciprofloxacin (Gram -ve)', 'code' => 'AST_GN_CIP', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Amoxacillin (Gram -ve)', 'code' => 'AST_GN_AMX', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Augmentin (Gram -ve)', 'code' => 'AST_GN_AUG', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Gentamycin (Gram -ve)', 'code' => 'AST_GN_GEN', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Pefloxacin (Gram -ve)', 'code' => 'AST_GN_PEF', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Tarivid (Gram -ve)', 'code' => 'AST_GN_TAR', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
+                ['name' => 'Azithromycin (Gram -ve)', 'code' => 'AST_GN_AZI', 'unit' => null, 'reference_range' => 'S/R', 'input_type' => 'select'],
             ],
             'SEROLOGY' => [
                 ['name' => 'HBsAg', 'code' => 'HBsAg', 'unit' => null, 'reference_range' => 'Negative'],
@@ -118,7 +141,34 @@ class LabParameterSeeder extends Seeder
                 ['name' => 'CA 125', 'code' => 'CA125', 'unit' => 'U/mL', 'reference_range' => '< 35'],
                 ['name' => 'CA 19-9', 'code' => 'CA199', 'unit' => 'U/mL', 'reference_range' => '< 37'],
                 ['name' => 'PSA', 'code' => 'PSA', 'unit' => 'ng/mL', 'reference_range' => '< 4'],
-            ]
+            ],
+            'URINALYSIS' => [
+                // Physical / Chemical (dipstick) section
+                ['name' => 'Colour', 'code' => 'U_COL', 'unit' => null, 'reference_range' => 'Pale Yellow', 'input_type' => 'text'],
+                ['name' => 'Appearance', 'code' => 'U_APP', 'unit' => null, 'reference_range' => 'Clear', 'input_type' => 'text'],
+                ['name' => 'Specific Gravity', 'code' => 'U_SG', 'unit' => null, 'reference_range' => '1.005 - 1.030', 'input_type' => 'text'],
+                ['name' => 'pH', 'code' => 'U_PH', 'unit' => null, 'reference_range' => '4.5 - 8.0', 'input_type' => 'text'],
+                ['name' => 'Protein', 'code' => 'U_PRO', 'unit' => null, 'reference_range' => 'Negative', 'input_type' => 'select'],
+                ['name' => 'Sugar', 'code' => 'U_GLU', 'unit' => null, 'reference_range' => 'Negative', 'input_type' => 'select'],
+                ['name' => 'Ketone', 'code' => 'U_KET', 'unit' => null, 'reference_range' => 'Negative', 'input_type' => 'select'],
+                ['name' => 'Bilirubin', 'code' => 'U_BIL', 'unit' => null, 'reference_range' => 'Negative', 'input_type' => 'select'],
+                ['name' => 'Occult Blood', 'code' => 'U_BLD', 'unit' => null, 'reference_range' => 'Negative', 'input_type' => 'select'],
+                ['name' => 'Nitrite', 'code' => 'U_NIT', 'unit' => null, 'reference_range' => 'Negative', 'input_type' => 'select'],
+                ['name' => 'Leucocyte Esterase (LEU)', 'code' => 'U_LEU', 'unit' => null, 'reference_range' => 'Negative', 'input_type' => 'select'],
+                ['name' => 'Urobilinogen', 'code' => 'U_URO', 'unit' => 'mg/dL', 'reference_range' => '0.2 - 1.0', 'input_type' => 'select'],
+
+                // Microscopy (M/C/S) section
+                ['name' => 'Pus Cells', 'code' => 'U_PUS', 'unit' => '/hpf', 'reference_range' => '0 - 5', 'input_type' => 'number'],
+                ['name' => 'Leucocytes', 'code' => 'U_WBC', 'unit' => '/hpf', 'reference_range' => '0 - 5', 'input_type' => 'number'],
+                ['name' => 'Red Blood Cells', 'code' => 'U_RBC', 'unit' => '/hpf', 'reference_range' => '0 - 2', 'input_type' => 'number'],
+                ['name' => 'Epithelial Cells', 'code' => 'U_EPI', 'unit' => null, 'reference_range' => 'Few', 'input_type' => 'text'],
+                ['name' => 'Crystals', 'code' => 'U_CRY', 'unit' => null, 'reference_range' => 'Nil', 'input_type' => 'text'],
+                ['name' => 'Casts', 'code' => 'U_CST', 'unit' => null, 'reference_range' => 'Nil', 'input_type' => 'text'],
+                ['name' => 'Yeast Cells', 'code' => 'U_YST', 'unit' => null, 'reference_range' => 'Nil', 'input_type' => 'text'],
+                ['name' => 'Bacteria', 'code' => 'U_BAC', 'unit' => null, 'reference_range' => 'Nil to scanty', 'input_type' => 'text'],
+                ['name' => 'Others', 'code' => 'U_OTH', 'unit' => null, 'reference_range' => null, 'input_type' => 'text'],
+                ['name' => 'Culture', 'code' => 'U_CULT', 'unit' => null, 'reference_range' => null, 'input_type' => 'textarea'],
+            ],
         ];
 
         foreach ($parameterMap as $categoryName => $parameters) {

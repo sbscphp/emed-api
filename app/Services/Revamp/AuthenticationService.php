@@ -211,7 +211,7 @@ class AuthenticationService
         );
 
         // Attach role to user (idempotent)
-        if (! $user->roles->contains($role->id)) {
+        if (!$user->roles->contains($role->id)) {
             $user->addRole($role);
         }
 

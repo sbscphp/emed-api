@@ -15,24 +15,28 @@ class PermissionTableSeeder extends Seeder
      */
     public function run(): void
     {
-        if (Tenant::current()) {
-            $apps = Config::get('permissions.apps');
+        $tenant = app()->bound('currentTenant') ? app('currentTenant') : Tenant::current();
 
-            foreach ($apps as $appName => $modules) {
-                foreach ($modules as $moduleName => $actions) {
-                    foreach ($actions as $action) {
-                        $name = "{$appName}.{$moduleName}.{$action}";
+        if (!$tenant) {
+            return;
+        }
 
-                        $record = Permission::updateOrCreate(
-                            ['name' => $name],
-                            [
-                                'module'       => $appName,
-                                'sub_module'   => null,
-                                'display_name' => ucfirst($action) . " " . $appName,
-                                'description'  => "Allows user to {$action} in {$appName} {$moduleName}",
-                                ]
-                            );
-                    }
+        $apps = Config::get('permissions.apps');
+
+        foreach ($apps as $appName => $modules) {
+            foreach ($modules as $moduleName => $actions) {
+                foreach ($actions as $action) {
+                    $name = "{$appName}.{$moduleName}.{$action}";
+
+                    Permission::updateOrCreate(
+                        ['name' => $name],
+                        [
+                            'module'       => $appName,
+                            'sub_module'   => $moduleName,
+                            'display_name' => ucfirst($action) . ' ' . $appName,
+                            'description'  => "Allows user to {$action} in {$appName} {$moduleName}",
+                        ]
+                    );
                 }
             }
         }
