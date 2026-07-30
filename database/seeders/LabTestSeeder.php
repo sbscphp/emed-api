@@ -30,6 +30,7 @@ class LabTestSeeder extends Seeder
         $immunologyCategory = ServiceCategory::where('name', 'IMMUNOLOGY')->first();
         $tumorMarkersCategory = ServiceCategory::where('name', 'TUMOR MARKERS')->first();
         $serologyCategory = ServiceCategory::where('name', 'SEROLOGY')->first();
+        $urinalysisCategory = ServiceCategory::where('name', 'URINALYSIS')->first();
 
         $labTest = [
             'CLINICAL CHEMISTRY' => [
@@ -251,7 +252,12 @@ class LabTestSeeder extends Seeder
                 ['tenant_id' => $tenant->uuid, 'service_unit_id' => $serviceUnit->id, 'service_category_id' => $serologyCategory->id, 'name' => 'Leishmaniasis Serology', 'class' => $serologyCategory->name, 'price' => 0.00, 'type' => 'General', 'created_at' => $now, 'updated_at' => $now],
                 ['tenant_id' => $tenant->uuid, 'service_unit_id' => $serviceUnit->id, 'service_category_id' => $serologyCategory->id, 'name' => 'Chagas Disease Serology', 'class' => $serologyCategory->name, 'price' => 0.00, 'type' => 'General', 'created_at' => $now, 'updated_at' => $now],
                 ['tenant_id' => $tenant->uuid, 'service_unit_id' => $serviceUnit->id, 'service_category_id' => $serologyCategory->id, 'name' => 'Leprosy Serology', 'class' => $serologyCategory->name, 'price' => 0.00, 'type' => 'General', 'created_at' => $now, 'updated_at' => $now]
-            ]
+            ],
+            'URINALYSIS' => [
+                ['tenant_id' => $tenant->uuid, 'service_unit_id' => $serviceUnit->id, 'service_category_id' => $urinalysisCategory->id, 'name' => 'Urinalysis (Complete)', 'class' => $urinalysisCategory->name, 'price' => 0.00, 'type' => 'General', 'created_at' => $now, 'updated_at' => $now],
+                ['tenant_id' => $tenant->uuid, 'service_unit_id' => $serviceUnit->id, 'service_category_id' => $urinalysisCategory->id, 'name' => 'Urinalysis (Dipstick Only)', 'class' => $urinalysisCategory->name, 'price' => 0.00, 'type' => 'General', 'created_at' => $now, 'updated_at' => $now],
+                ['tenant_id' => $tenant->uuid, 'service_unit_id' => $serviceUnit->id, 'service_category_id' => $urinalysisCategory->id, 'name' => 'Urine Microscopy (M/C/S)', 'class' => $urinalysisCategory->name, 'price' => 0.00, 'type' => 'General', 'created_at' => $now, 'updated_at' => $now],
+            ],
         ];
 
         $allTests = array_merge(...array_values($labTest));

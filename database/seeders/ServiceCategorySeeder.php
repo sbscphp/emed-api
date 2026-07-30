@@ -24,7 +24,8 @@ class ServiceCategorySeeder extends Seeder
             'IMMUNOLOGY',
             'ENDOCRINOLOGY',
             'PRENATAL SCREENING',
-            'TUMOR MARKERS'
+            'TUMOR MARKERS',
+            'URINALYSIS'
         ];
 
         foreach ($categories as $category) {
