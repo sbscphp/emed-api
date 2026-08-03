@@ -203,7 +203,7 @@ class LabParameterSeeder extends Seeder
             }
 
             foreach ($parameters as $index => $parameter) {
-                LabParameter::firstOrCreate(
+                LabParameter::updateOrCreate(
                     [
                         'service_category_id' => $category->id,
                         'name' => $parameter['name'],
