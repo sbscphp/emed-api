@@ -8,6 +8,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use App\Helpers\GeneralHelper;
 use App\Models\BillingLog;
+use App\Models\PatientVisit;
 use App\Models\Service;
 use App\Repositories\Laboratory\LaboratoryInterface;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -161,11 +162,23 @@ class ReportService
         if ($request->type === 'Patient') {
 
             $records->withCount([
-                'visits as total_patient_attended' => function ($q) use ($dateFilter) {
+                'visits as total_patient_visits' => function ($q) use ($dateFilter, $tenantId) {
+                    $q->where('tenant_id', $tenantId);
+
                     if ($dateFilter) {
                         $q->whereBetween('created_at', $dateFilter);
                     }
-                }
+                },
+            ]);
+
+            $records->addSelect([
+                'total_patient_attended' => PatientVisit::query()
+                    ->selectRaw('COUNT(DISTINCT patient_id)')
+                    ->where('tenant_id', $tenantId)
+                    ->whereColumn('patient_visits.service_id', 'services.id')
+                    ->when($dateFilter, function ($q) use ($dateFilter) {
+                        $q->whereBetween('created_at', $dateFilter);
+                    })
             ]);
         }
 
@@ -196,10 +209,25 @@ class ReportService
 
         // Post-process for financial
         if ($request->type === 'Patient') {
-            $totalPatient = $results->sum('total_patient_attended');
+            $totalPatientVisits = PatientVisit::query()
+                ->where('tenant_id', $tenantId)
+                ->when($dateFilter, function ($q) use ($dateFilter) {
+                    $q->whereBetween('created_at', $dateFilter);
+                })
+                ->count();
+
+            $totalPatientAttended = PatientVisit::query()
+                ->where('tenant_id', $tenantId)
+                ->when($dateFilter, function ($q) use ($dateFilter) {
+                    $q->whereBetween('created_at', $dateFilter);
+                })
+                ->distinct('patient_id')
+                ->count('patient_id');
             $total_amount_pending = $results->sum('pending_payment');
             return [
-                'total_patient' => $totalPatient,
+                'total_patient_visits' => $totalPatientVisits,
+                'total_patient_attended' => $totalPatientAttended,
+                'total_amount_pending' => $total_amount_pending,
                 'services' => $results, // The paginated Service records
             ];
         }
@@ -231,6 +259,8 @@ class ReportService
 
     public function fetchAllReportExport($records, $format, $type = null)
     {
+        $overallTotals = is_array($records) ? $records : [];
+
         // Normalize input
         if (is_array($records) && isset($records['services'])) {
             $recordsCollection = $records['services'];
@@ -256,20 +286,22 @@ class ReportService
        PATIENT REPORT
     ---------------------------------------------------------------------- */
         if ($type == 'Patient') {
-            $headers = ['Department', 'Total Patient Attended'];
+            $headers = ['Department', 'Total Patient Visits'];
 
             // Department rows
             $exportData = $recordsCollection->map(function ($record) {
                 return [
                     'Department'             => data_get($record, 'name', ''),
-                    'Total Patient Attended' => data_get($record, 'total_patient_attended', 0),
+                    'Total Patient Visits' => data_get($record, 'total_patient_visits', 0),
+                    // 'Total Patient Attended' => data_get($record, 'total_patient_attended', 0),
                 ];
             })->toArray();
 
             // Footer totals (NOT part of exportData)
             $footerTotals = [
                 'Department'             => 'TOTAL',
-                'Total Patient Attended' => $recordsCollection->sum('total_patient_attended'),
+                'Total Patient Visits' => data_get($overallTotals, 'total_patient_visits', $recordsCollection->sum('total_patient_visits')),
+                // 'Total Patient Attended' => data_get($overallTotals, 'total_patient_attended', $recordsCollection->sum('total_patient_attended')),
             ];
         }
         /* ----------------------------------------------------------------------
@@ -289,8 +321,8 @@ class ReportService
             // Summary footer (NOT part of exportData)
             $footerTotals = [
                 'Department'      => 'TOTAL',
-                'Total Revenue'   => $recordsCollection->sum('total_revenue'),
-                'Pending Payment' => $recordsCollection->sum('pending_payment'),
+                'Total Revenue'   => data_get($overallTotals, 'total_amount_paid', $recordsCollection->sum('total_revenue')),
+                'Pending Payment' => data_get($overallTotals, 'total_amount_pending', $recordsCollection->sum('pending_payment')),
             ];
         } else {
             throw new \Exception("Invalid report type.");
