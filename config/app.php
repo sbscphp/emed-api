@@ -125,4 +125,6 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'default_license_fee' => env('DEFAULT_LICENSE_FEE', 50000),
+
 ];
