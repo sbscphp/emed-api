@@ -192,7 +192,9 @@ class DashboardService
                     $q->where('action', 'like', "%{$request->search_param}%")
                         ->orWhere('description', 'like', "%{$request->search_param}%")
                         ->orWhereHas('causer', function ($subQ) use ($request) {
-                            $subQ->where('name', 'like', "%{$request->search_param}%");
+                            $subQ->where('first_name', 'like', "%{$request->search_param}%")
+                                ->orWhere('last_name', 'like', "%{$request->search_param}%")
+                                ->orWhereRaw("CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) LIKE ?", ["%{$request->search_param}%"]);
                         });
                 });
             })

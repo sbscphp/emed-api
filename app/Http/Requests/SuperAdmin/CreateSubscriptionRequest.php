@@ -16,7 +16,6 @@ class CreateSubscriptionRequest extends FormRequest
         return [
             'tenant_id' => 'required|integer|exists:landlord.tenants,id',
             'usage_fee_id' => 'required|integer|exists:landlord.usage_fees,id',
-            'license_fee' => 'required|numeric|min:0',
             'license_start_date' => 'required|date',
             'license_end_date' => 'required|date|after:license_start_date',
         ];
@@ -29,9 +28,6 @@ class CreateSubscriptionRequest extends FormRequest
             'tenant_id.exists' => 'The selected hospital/tenant does not exist.',
             'usage_fee_id.required' => 'Usage fee is required.',
             'usage_fee_id.exists' => 'The selected usage fee does not exist.',
-            'license_fee.required' => 'License fee is required.',
-            'license_fee.numeric' => 'License fee must be a number.',
-            'license_fee.min' => 'License fee must be at least 0.',
             'license_start_date.required' => 'License start date is required.',
             'license_start_date.date' => 'License start date must be a valid date.',
             'license_end_date.required' => 'License end date is required.',

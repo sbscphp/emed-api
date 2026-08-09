@@ -66,7 +66,7 @@ class SubscriptionService
         $subscription = Subscription::create([
             'tenant_id' => $request->input('tenant_id'),
             'usage_fee_id' => $request->input('usage_fee_id'),
-            'license_fee' => $request->input('license_fee'),
+            'license_fee' => config('app.default_license_fee', 50000),
             'license_start_date' => $request->input('license_start_date'),
             'license_end_date' => $request->input('license_end_date'),
             'status' => GeneralEnums::ACTIVE->value,
