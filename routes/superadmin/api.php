@@ -81,6 +81,7 @@ Route::prefix('subscriptionmanagement')->group(function () {
     Route::prefix('subscriptions')->group(function () {
         Route::get('/', [SubscriptionController::class, 'index']);
         Route::post('/create', [SubscriptionController::class, 'create']);
+        Route::get('/plans/{id}', [SubscriptionController::class, 'showPlan']);
         Route::get('/{id}', [SubscriptionController::class, 'show']);
         Route::put('/{id}/update', [SubscriptionController::class, 'update']);
         Route::put('/{id}/toggle-status', [SubscriptionController::class, 'toggleStatus']);

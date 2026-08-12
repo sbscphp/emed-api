@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\v1\SuperAdmin\Subscription;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\SuperAdmin\CreateSubscriptionRequest;
-use App\Http\Requests\SuperAdmin\UpdateSubscriptionRequest;
+use App\Http\Requests\SuperAdmin\SubscriptionPlanRequest;
+use App\Http\Requests\SuperAdmin\UpdateSubscriptionPlanRequest;
 use App\Responser\JsonResponser;
 use App\Services\SuperAdmin\Subscription\SubscriptionService;
 use Illuminate\Http\Request;
@@ -21,7 +21,27 @@ class SubscriptionController extends Controller
     public function index(Request $request)
     {
         try {
-            $records = $this->subscriptionService->overview($request);
+            $overview = $this->subscriptionService->overview($request);
+            $plans = $this->subscriptionService->getPlans($request);
+            $stats = $this->subscriptionService->stats($request);
+
+            $records = [
+                ...$stats,
+                'data' => $overview,
+                'plans' => $plans,
+            ];
+
+            if ($request['export']) {
+                return $this->subscriptionService->export($overview, $request['export']);
+            }
+
+            if (isset($request['paginate']) && !filter_var($request['paginate'], FILTER_VALIDATE_BOOLEAN)) {
+                $records = [
+                    ...$stats,
+                    'data' => $overview,
+                    'plans' => $plans,
+                ];
+            }
 
             return JsonResponser::send(false, 'Record(s) found successfully', $records);
         } catch (\Throwable $th) {
@@ -29,14 +49,14 @@ class SubscriptionController extends Controller
         }
     }
 
-    public function create(CreateSubscriptionRequest $request)
+    public function create(SubscriptionPlanRequest $request)
     {
         try {
             $record = $this->subscriptionService->create($request);
 
-            return JsonResponser::send(false, 'Subscription created successfully', $record, 201);
+            return JsonResponser::send(false, 'Subscription plan created successfully', $record, 201);
         } catch (\Throwable $th) {
-            return JsonResponser::send(true, $th->getMessage(), 'Failed to create subscription', 400);
+            return JsonResponser::send(true, $th->getMessage(), 'Failed to create subscription plan', 400);
         }
     }
 
@@ -51,14 +71,25 @@ class SubscriptionController extends Controller
         }
     }
 
-    public function update($id, UpdateSubscriptionRequest $request)
+    public function showPlan($id)
+    {
+        try {
+            $record = $this->subscriptionService->showPlan($id);
+
+            return JsonResponser::send(false, 'Subscription plan found successfully', $record);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), 'Subscription plan not found', 404);
+        }
+    }
+
+    public function update($id, UpdateSubscriptionPlanRequest $request)
     {
         try {
             $record = $this->subscriptionService->update($id, $request);
 
-            return JsonResponser::send(false, 'Subscription updated successfully', $record);
+            return JsonResponser::send(false, 'Subscription plan updated successfully', $record);
         } catch (\Throwable $th) {
-            return JsonResponser::send(true, $th->getMessage(), 'Failed to update subscription', 400);
+            return JsonResponser::send(true, $th->getMessage(), 'Failed to update subscription plan', 400);
         }
     }
 
@@ -67,9 +98,9 @@ class SubscriptionController extends Controller
         try {
             $record = $this->subscriptionService->toggleStatus($id);
 
-            return JsonResponser::send(false, 'Subscription status toggled successfully', $record);
+            return JsonResponser::send(false, 'Subscription plan status toggled successfully', $record);
         } catch (\Throwable $th) {
-            return JsonResponser::send(true, $th->getMessage(), 'Failed to toggle subscription status', 400);
+            return JsonResponser::send(true, $th->getMessage(), 'Failed to toggle subscription plan status', 400);
         }
     }
 
@@ -78,9 +109,9 @@ class SubscriptionController extends Controller
         try {
             $this->subscriptionService->delete($id);
 
-            return JsonResponser::send(false, 'Subscription deleted successfully', null, 204);
+            return JsonResponser::send(false, 'Subscription plan deleted successfully', null, 204);
         } catch (\Throwable $th) {
-            return JsonResponser::send(true, $th->getMessage(), 'Failed to delete subscription', 400);
+            return JsonResponser::send(true, $th->getMessage(), 'Failed to delete subscription plan', 400);
         }
     }
 }
