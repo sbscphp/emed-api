@@ -49,6 +49,34 @@ class SubscriptionController extends Controller
         }
     }
 
+    public function plans(Request $request)
+    {
+        try {
+            $overview = $this->subscriptionService->getPlans($request);
+            $stats = $this->subscriptionService->planStats($request);
+
+            $records = [
+                ...$stats,
+                'data' => $overview,
+            ];
+
+            if ($request['export']) {
+                return $this->subscriptionService->planExport($overview, $request['export']);
+            }
+
+            if (isset($request['paginate']) && !filter_var($request['paginate'], FILTER_VALIDATE_BOOLEAN)) {
+                $records = [
+                    ...$stats,
+                    'data' => $overview,
+                ];
+            }
+
+            return JsonResponser::send(false, 'Record(s) found successfully', $records);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
     public function create(SubscriptionPlanRequest $request)
     {
         try {

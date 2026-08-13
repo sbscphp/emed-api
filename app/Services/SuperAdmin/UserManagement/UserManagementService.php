@@ -4,10 +4,12 @@ namespace App\Services\SuperAdmin\UserManagement;
 
 use App\Enums\GeneralEnums;
 use App\Helpers\GeneralHelper;
+use App\Mail\UserDefaultPasswordMail;
 use App\Models\SuperAdminRole;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class UserManagementService
@@ -93,7 +95,7 @@ class UserManagementService
             'email'        => $request->input('email'),
             'phone_number' => $request->input('phone_number'),
             'status'       => $request->input('status', GeneralEnums::ACTIVE->value),
-            'password'     => Hash::make(Str::random(16)),
+            'password'     => Hash::make('password'), // Default password
             'is_verified'  => false,
             'is_completed' => false,
             'can_login'    => true,
@@ -101,6 +103,15 @@ class UserManagementService
 
         // Attach the selected super admin role
         $user->superAdminRoles()->attach($roleId);
+
+        $data = [
+            'firstname' => $user->first_name,
+            'lastname' => $user->last_name,
+            'email' => $user->email,
+            'default_password' => 'password',
+        ];
+
+        Mail::to($user->email)->send(new UserDefaultPasswordMail($data));
 
         GeneralHelper::storeLandlordAuditLog([
             'action_type' => 'Models\\User',

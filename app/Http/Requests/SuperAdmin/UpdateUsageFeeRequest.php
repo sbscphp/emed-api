@@ -19,7 +19,11 @@ class UpdateUsageFeeRequest extends FormRequest
             'name' => 'required|string|max:255|unique:landlord.usage_fees,name,' . $usageFeeId,
             'is_general_visit' => 'required|boolean',
             'is_unique_visit' => 'required|boolean',
-            'amount' => 'required|numeric|min:0',
+            'amount' => 'nullable|numeric|min:0',
+            'cycles' => 'nullable|array',
+            'cycles.monthly' => 'nullable|numeric|min:0',
+            'cycles.quarterly' => 'nullable|numeric|min:0',
+            'cycles.yearly' => 'nullable|numeric|min:0',
             'status' => 'required|string|in:Active,Inactive',
         ];
     }
@@ -44,9 +48,12 @@ class UpdateUsageFeeRequest extends FormRequest
             'is_general_visit.boolean' => 'The general visit flag must be true or false.',
             'is_unique_visit.required' => 'The unique visit flag is required.',
             'is_unique_visit.boolean' => 'The unique visit flag must be true or false.',
-            'amount.required' => 'Usage fee amount is required.',
             'amount.numeric' => 'Usage fee amount must be a number.',
             'amount.min' => 'Usage fee amount must be at least 0.',
+            'cycles.array' => 'Cycles must be an object with cycle keys.',
+            'cycles.monthly.numeric' => 'Monthly cycle amount must be a number.',
+            'cycles.quarterly.numeric' => 'Quarterly cycle amount must be a number.',
+            'cycles.yearly.numeric' => 'Yearly cycle amount must be a number.',
             'status.required' => 'Usage fee status is required.',
             'status.in' => 'Usage fee status must be either Active or Inactive.',
         ];

@@ -49,11 +49,31 @@ class ConfigurationService
 
     public function createUsageFee($request)
     {
+        $inputCycles = $request->input('cycles');
+
+        $normalizedCycles = null;
+        if (is_array($inputCycles)) {
+            $normalizedCycles = [];
+            foreach (['monthly', 'quarterly', 'yearly'] as $key) {
+                if (array_key_exists($key, $inputCycles)) {
+                    $normalizedCycles[$key] = $inputCycles[$key];
+                } elseif (array_key_exists(ucfirst($key), $inputCycles)) {
+                    $normalizedCycles[$key] = $inputCycles[ucfirst($key)];
+                }
+            }
+        }
+
+        $amount = $request->input('amount');
+        if ($amount === null && is_array($normalizedCycles) && array_key_exists('monthly', $normalizedCycles)) {
+            $amount = $normalizedCycles['monthly'];
+        }
+
         $usageFee = UsageFee::create([
             'name' => trim($request->input('name')),
             'is_general_visit' => $request->boolean('is_general_visit'),
             'is_unique_visit' => $request->boolean('is_unique_visit'),
-            'amount' => $request->input('amount'),
+            'amount' => $amount ?? 0,
+            'cycles' => $normalizedCycles,
             'status' => $request->input('status', GeneralEnums::ACTIVE->value),
         ]);
 
@@ -83,17 +103,37 @@ class ConfigurationService
             throw new \Exception('Usage fee not found.');
         }
 
-        $oldData = $usageFee->only(['name', 'is_general_visit', 'is_unique_visit', 'amount', 'status']);
+        $oldData = $usageFee->only(['name', 'is_general_visit', 'is_unique_visit', 'amount', 'cycles', 'status']);
+
+        $inputCycles = $request->input('cycles');
+
+        $normalizedCycles = $usageFee->cycles;
+        if (is_array($inputCycles)) {
+            $normalizedCycles = [];
+            foreach (['monthly', 'quarterly', 'yearly'] as $key) {
+                if (array_key_exists($key, $inputCycles)) {
+                    $normalizedCycles[$key] = $inputCycles[$key];
+                } elseif (array_key_exists(ucfirst($key), $inputCycles)) {
+                    $normalizedCycles[$key] = $inputCycles[ucfirst($key)];
+                }
+            }
+        }
+
+        $amount = $request->input('amount', $usageFee->amount);
+        if ($amount === null && is_array($normalizedCycles) && array_key_exists('monthly', $normalizedCycles)) {
+            $amount = $normalizedCycles['monthly'];
+        }
 
         $usageFee->update([
             'name' => trim($request->input('name')),
             'is_general_visit' => $request->boolean('is_general_visit'),
             'is_unique_visit' => $request->boolean('is_unique_visit'),
-            'amount' => $request->input('amount'),
+            'amount' => $amount,
+            'cycles' => $normalizedCycles,
             'status' => $request->input('status'),
         ]);
 
-        $newData = $usageFee->fresh()->only(['name', 'is_general_visit', 'is_unique_visit', 'amount', 'status']);
+        $newData = $usageFee->fresh()->only(['name', 'is_general_visit', 'is_unique_visit', 'amount', 'cycles', 'status']);
 
         GeneralHelper::storeLandlordAuditLog([
             'action_type' => 'Models\\UsageFee',
