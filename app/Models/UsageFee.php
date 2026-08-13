@@ -17,5 +17,6 @@ class UsageFee extends Model
         'is_general_visit' => 'boolean',
         'is_unique_visit' => 'boolean',
         'amount' => 'decimal:2',
+        'cycles' => 'array',
     ];
 }

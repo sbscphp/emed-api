@@ -80,6 +80,7 @@ Route::prefix('subscriptionmanagement')->group(function () {
 
     Route::prefix('subscriptions')->group(function () {
         Route::get('/', [SubscriptionController::class, 'index']);
+        Route::get('/plans', [SubscriptionController::class, 'plans']);
         Route::post('/create', [SubscriptionController::class, 'create']);
         Route::get('/plans/{id}', [SubscriptionController::class, 'showPlan']);
         Route::get('/{id}', [SubscriptionController::class, 'show']);

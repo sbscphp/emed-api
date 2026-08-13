@@ -62,7 +62,7 @@ class GenerateMonthlyUsageCharges extends Command
         $tenants = Tenant::with('subscription.usageFee')
             ->whereHas('subscription', function ($query) {
                 $query->where('status', 'Active')
-                      ->whereNotNull('usage_fee_id');
+                    ->whereNotNull('usage_fee_id');
             })
             ->get();
 
@@ -105,7 +105,6 @@ class GenerateMonthlyUsageCharges extends Command
                         ->table('patient_visits')
                         ->whereBetween('created_at', [$startDate, $endDate])
                         ->count();
-
                 } elseif ($usageFee->is_unique_visit) {
                     // Count DISTINCT patients who visited within the billing month
                     $totalVisits = DB::connection('tenant')
@@ -122,7 +121,11 @@ class GenerateMonthlyUsageCharges extends Command
                     continue;
                 }
 
-                $feePerVisit = (float) $usageFee->amount;
+                $feePerVisit = (float) (
+                    (is_array($usageFee->cycles) && array_key_exists('monthly', $usageFee->cycles) && $usageFee->cycles['monthly'] !== null)
+                    ? $usageFee->cycles['monthly']
+                    : $usageFee->amount
+                );
                 $totalAmount = $totalVisits * $feePerVisit;
 
                 // ── Restore landlord connection before writing charge record ──
@@ -145,11 +148,9 @@ class GenerateMonthlyUsageCharges extends Command
 
                 $this->info("  → Charged: {$totalVisits} visit(s) × ₦{$feePerVisit} = ₦{$totalAmount}");
                 $generated++;
-
             } catch (Throwable $e) {
                 $this->error("  → Error: " . $e->getMessage());
                 $failed++;
-
             } finally {
                 // Always restore landlord connection
                 $this->restoreLandlordConnection();

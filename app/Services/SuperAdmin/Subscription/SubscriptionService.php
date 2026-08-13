@@ -70,24 +70,6 @@ class SubscriptionService
     }
 
     /**
-     * Get list of subscription plans
-     */
-    public function getPlans($request)
-    {
-        $query = SubscriptionPlan::query()
-            ->with('prices')
-            ->when($request->search_param, function ($query) use ($request) {
-                $query->where('name', 'LIKE', '%' . $request->search_param . '%')
-                    ->orWhere('description', 'LIKE', '%' . $request->search_param . '%');
-            })
-            ->when($request->status, function ($query) use ($request) {
-                $query->where('status', $request->status);
-            });
-
-        return $query->orderBy('id', 'DESC')->get();
-    }
-
-    /**
      * Get subscription statistics
      */
     public function stats($request)
@@ -133,7 +115,7 @@ class SubscriptionService
                 'Hospital Name'  => $record->tenant->name ?? 'N/A',
                 'Country'        => $record->tenant->country ?? 'N/A',
                 'License Fee'    => $record->license_fee,
-                'Usage Fee'      => $record->usageFee->amount ?? 0,
+                'Usage Fee'      => $record->usageFee->cycles['monthly'] ?? $record->usageFee->amount ?? 0,
                 'Licence Period' => $record->license_start_date . ' - ' . $record->license_end_date,
             ];
         })->toArray();
@@ -153,6 +135,113 @@ class SubscriptionService
             'pdf' => Pdf::loadView('exports.patients', [
                 'patients' => $exportData
             ])->download('subscribers.pdf'),
+
+            default => throw new \Exception('Invalid export format.'),
+        };
+    }
+
+    /**
+     * Get list of subscription plans
+     */
+    public function getPlans($request)
+    {
+        $period = $request->input('period');
+        $startDateInput = $request->input('start_date');
+        $endDateInput = $request->input('end_date');
+
+        $customDate = [];
+        if ($period === 'custom date' && $startDateInput && $endDateInput) {
+            $customDate = [$startDateInput, $endDateInput];
+        }
+
+        $dateFilter = GeneralHelper::dateFilter($period, $customDate);
+
+        $query = SubscriptionPlan::query()
+            ->with('prices')
+            ->when($request->search_param, function ($query) use ($request) {
+                $query->where('name', 'LIKE', '%' . $request->search_param . '%')
+                    ->orWhere('description', 'LIKE', '%' . $request->search_param . '%');
+            })
+            ->when($request->status, function ($query) use ($request) {
+                $query->where('status', $request->status);
+            })
+            ->when($dateFilter, function ($query) use ($dateFilter) {
+                return $query->whereBetween('created_at', $dateFilter);
+            });
+
+        $paginate = $request->paginate ?? true;
+
+        if ($paginate) {
+            return $query->orderBy('id', 'DESC')->paginate($request->limit ?? 15);
+        }
+
+        return [
+            'records' => $query->orderBy('id', 'DESC')->get(),
+        ];
+    }
+
+    /**
+     * Get subscription statistics
+     */
+    public function planStats($request)
+    {
+        $period = $request->input('period');
+        $startDateInput = $request->input('start_date');
+        $endDateInput = $request->input('end_date');
+
+        $customDate = [];
+        if ($period === 'custom date' && $startDateInput && $endDateInput) {
+            $customDate = [$startDateInput, $endDateInput];
+        }
+
+        $dateFilter = GeneralHelper::dateFilter($period, $customDate);
+
+        $query = SubscriptionPlan::query()
+            ->when($dateFilter, function ($query) use ($dateFilter) {
+                return $query->whereBetween('created_at', $dateFilter);
+            });
+
+        $total = (clone $query)->count();
+        $active = (clone $query)->where('status', GeneralEnums::ACTIVE->value)->count();
+        $inactive = (clone $query)->where('status', GeneralEnums::INACTIVE->value)->count();
+
+        return [
+            'total' => $total,
+            'active' => $active,
+            'inactive' => $inactive,
+        ];
+    }
+
+    /**
+     * Export subscriber overview
+     */
+    public function planExport($data, $exportType = 'excel')
+    {
+        $records = is_array($data) && isset($data['records']) ? $data['records'] : $data;
+
+        $exportData = collect($records)->map(function ($record) {
+            return [
+                'Plan Name'  => $record->name ?? 'N/A',
+                'Description'        => $record->description ?? 'N/A',
+                'Status'    => $record->status ?? 'N/A',
+            ];
+        })->toArray();
+
+        $headers = !empty($exportData) ? array_keys($exportData[0]) : [];
+
+        return match (strtolower($exportType)) {
+            'csv' => ExportHelper::streamCsv(
+                $exportData,
+                $headers,
+                'subscription_plans.csv'
+            ),
+            'excel' => Excel::download(
+                new AuditLogExport(collect($exportData), $headers),
+                'subscription_plans.xlsx'
+            ),
+            'pdf' => Pdf::loadView('exports.patients', [
+                'patients' => $exportData
+            ])->download('subscription_plans.pdf'),
 
             default => throw new \Exception('Invalid export format.'),
         };
