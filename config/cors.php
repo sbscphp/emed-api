@@ -6,6 +6,7 @@ return [
     'allowed_origins' => [
         'http://localhost:5173',
         'http://localhost:5174',
+        'http://localhost:5175',
         'https://emed-application.vercel.app',
         'http://127.0.0.1:5500',
         'https://emed.quick-retail.com',
