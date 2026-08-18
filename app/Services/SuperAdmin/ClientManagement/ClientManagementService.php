@@ -98,7 +98,7 @@ class ClientManagementService
             'action_id' => $tenant->id,
             'action' => 'Create',
             'log_name' => 'Create Client',
-            'description' => sprintf('Created client hospital %s with tenant ID %s.', $tenant->name, $tenant->id),
+            'description' => sprintf('Created client hospital %s.', $tenant->name),
             'module_accessed' => 'Super Admin Client Management',
         ]);
 
@@ -166,7 +166,7 @@ class ClientManagementService
             'action_id' => $tenant->id,
             'action' => 'Update',
             'log_name' => 'Update Client',
-            'description' => sprintf('Updated client hospital %s with tenant ID %s.', $tenant->name, $tenant->id),
+            'description' => sprintf('Updated client hospital %s.', $tenant->name),
             'module_accessed' => 'Super Admin Client Management',
             'old_data' => $oldData,
             'new_data' => $newData,
@@ -244,7 +244,7 @@ class ClientManagementService
             'action_id' => $charge->id,
             'action' => 'Update',
             'log_name' => 'Update Client Usage Charge',
-            'description' => sprintf('Updated usage charge status from %s to %s for tenant %s.', $oldStatus, $charge->status, $charge->tenant_id),
+            'description' => sprintf('Updated usage charge status from %s to %s for hospital %s.', $oldStatus, $charge->status, $charge->tenant?->name ?? 'Unknown'),
             'module_accessed' => 'Super Admin Client Management',
             'old_data' => ['status' => $oldStatus],
             'new_data' => ['status' => $charge->status],
@@ -296,7 +296,7 @@ class ClientManagementService
             'action_id' => $tenant->id,
             'action' => 'Delete',
             'log_name' => 'Remove Client',
-            'description' => sprintf('Removed client hospital %s with tenant ID %s.', $tenant->name, $tenant->id),
+            'description' => sprintf('Removed client hospital %s.', $tenant->name),
             'module_accessed' => 'Super Admin Client Management',
         ]);
 

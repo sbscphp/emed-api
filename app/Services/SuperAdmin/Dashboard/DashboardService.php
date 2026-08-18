@@ -5,18 +5,22 @@ namespace App\Services\SuperAdmin\Dashboard;
 use App\Enums\GeneralEnums;
 use App\Models\ClientUsageCharge;
 use App\Models\LandlordAuditLog;
+use App\Models\Patient;
+use App\Models\PatientVisit;
 use App\Models\Subscription;
 use App\Models\Tenant;
+use App\Models\TenantUser;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Spatie\Multitenancy\Models\Tenant as MultitenancyTenant;
 
 class DashboardService
 {
     public function dashboard($request): array
     {
         return [
-            'stats'
-            => $this->getStats(),
+            'stats' => $this->getStats(),
             'platform_health'         => $this->getPlatformHealth(),
             // 'visit_distribution'      => $this->getVisitDistribution(),
             'top_hospitals'           => $this->getTopHospitals(),
@@ -35,12 +39,63 @@ class DashboardService
         $totalVisits = $this->getTotalVisits();
         $annualRevenue = $this->calculateAnnualRevenue();
 
+        $totalUsers = User::count();
+        $totalHospitalUsers = (int) TenantUser::query()
+            ->distinct('user_id')
+            ->count('user_id');
+        $tenantAggregates = $this->aggregateTenantCounters();
+
         return [
             'total_hospitals'         => $totalHospitals,
             'active_hospitals'        => $activeHospitals,
             'total_visits'            => $totalVisits,
             'annual_license_revenue'  => $annualRevenue,
+            'total_users'             => $totalUsers,
+            'total_patient_visits'    => $tenantAggregates['total_patient_visits'],
+            'total_patients'          => $tenantAggregates['total_patients'],
+            'total_hospital_users'    => $totalHospitalUsers,
         ];
+    }
+
+    /**
+     * Aggregate patient visits and patients across all tenant databases.
+     * Iterates each tenant once and collects both counters in a single pass.
+     */
+    private function aggregateTenantCounters(): array
+    {
+        $counters = [
+            'total_patient_visits' => 0,
+            'total_patients'       => 0,
+        ];
+
+        $tenants = Tenant::all(['id', 'database', 'status']);
+
+        foreach ($tenants as $tenant) {
+            try {
+                $tenant->makeCurrent();
+
+                try {
+                    $counters['total_patient_visits'] += (int) PatientVisit::on('tenant')->count();
+                } catch (\Throwable $th) {
+                    report($th);
+                }
+
+                try {
+                    $counters['total_patients'] += (int) Patient::on('tenant')->count();
+                } catch (\Throwable $th) {
+                    report($th);
+                }
+            } catch (\Throwable $th) {
+                report($th);
+            } finally {
+                MultitenancyTenant::forgetCurrent();
+                DB::purge('tenant');
+                DB::reconnect('landlord');
+                DB::setDefaultConnection('landlord');
+            }
+        }
+
+        return $counters;
     }
 
     /**
