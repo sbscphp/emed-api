@@ -274,11 +274,53 @@ class SubscriptionService
                 'action_id' => $plan->id,
                 'action' => 'Create',
                 'log_name' => 'Create Subscription Plan',
-                'description' => sprintf('Created subscription plan "%s" (ID: %s).', $plan->name, $plan->id),
+                'description' => sprintf('Created subscription plan "%s".', $plan->name),
                 'module_accessed' => 'Super Admin Subscription Management',
             ]);
 
             return $plan->load('prices');
+        });
+    }
+    public function assignClientUsageFee($request)
+    {
+        $tenantId = $request->validated('tenant_id');
+        $usageFeeId = $request->validated('usage_fee_id');
+
+        return DB::connection('landlord')->transaction(function () use ($tenantId, $usageFeeId) {
+            $subscription = Subscription::query()
+                ->where('tenant_id', $tenantId)
+                ->firstOr(function () use ($tenantId, $usageFeeId) {
+                    return Subscription::create([
+                        'tenant_id'         => $tenantId,
+                        'usage_fee_id'      => $usageFeeId,
+                        'subscription_plan_id' => null,
+                        'license_fee'       => 0,
+                        'license_start_date' => now()->toDateString(),
+                        'license_end_date'   => now()->addYear()->toDateString(),
+                        'status'            => GeneralEnums::ACTIVE->value,
+                    ]);
+                });
+
+            $oldData = $subscription->toArray();
+
+            $subscription->usage_fee_id = $usageFeeId;
+            $subscription->save();
+
+            $subscription->fresh()->load('tenant', 'usageFee');
+
+            GeneralHelper::storeLandlordAuditLog([
+                'action_type'     => 'Models\\Subscription',
+                'action_module'   => 'Super Admin Subscriptions',
+                'action_id'       => $subscription->id,
+                'action'          => 'Update',
+                'log_name'        => 'Assign Usage Fee',
+                'description'     => sprintf('Assigned usage fee "%s" to hospital "%s".', $subscription->usageFee?->name ?? 'Usage Fee', $subscription->tenant?->name ?? 'Hospital'),
+                'module_accessed' => 'Super Admin Subscription Management',
+                'old_data'        => $oldData,
+                'new_data'        => $subscription->toArray(),
+            ]);
+
+            return $subscription;
         });
     }
 
@@ -357,7 +399,7 @@ class SubscriptionService
                 'action_id' => $plan->id,
                 'action' => 'Update',
                 'log_name' => 'Update Subscription Plan',
-                'description' => sprintf('Updated subscription plan "%s" (ID: %s).', $plan->name, $plan->id),
+                'description' => sprintf('Updated subscription plan "%s".', $plan->name),
                 'module_accessed' => 'Super Admin Subscription Management',
                 'old_data' => $oldData,
                 'new_data' => $newData,
@@ -391,7 +433,7 @@ class SubscriptionService
             'action_id' => $plan->id,
             'action' => 'Toggle Status',
             'log_name' => 'Toggle Subscription Plan Status',
-            'description' => sprintf('Changed subscription plan "%s" (ID: %s) status from %s to %s.', $plan->name, $plan->id, $oldStatus, $plan->status),
+            'description' => sprintf('Changed subscription plan "%s" status from %s to %s.', $plan->name, $oldStatus, $plan->status),
             'module_accessed' => 'Super Admin Subscription Management',
             'old_data' => ['status' => $oldStatus],
             'new_data' => ['status' => $plan->status],
@@ -417,7 +459,7 @@ class SubscriptionService
             'action_id' => $plan->id,
             'action' => 'Delete',
             'log_name' => 'Delete Subscription Plan',
-            'description' => sprintf('Deleted subscription plan "%s" (ID: %s).', $plan->name, $plan->id),
+            'description' => sprintf('Deleted subscription plan "%s".', $plan->name),
             'module_accessed' => 'Super Admin Subscription Management',
         ]);
 

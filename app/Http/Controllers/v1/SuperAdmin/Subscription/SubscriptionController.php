@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\v1\SuperAdmin\Subscription;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SuperAdmin\AssignClientUsageFeeRequest;
 use App\Http\Requests\SuperAdmin\SubscriptionPlanRequest;
 use App\Http\Requests\SuperAdmin\UpdateSubscriptionPlanRequest;
 use App\Responser\JsonResponser;
@@ -85,6 +86,18 @@ class SubscriptionController extends Controller
             return JsonResponser::send(false, 'Subscription plan created successfully', $record, 201);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, $th->getMessage(), 'Failed to create subscription plan', 400);
+        }
+    }
+
+    public function assignClientUsageFee(AssignClientUsageFeeRequest $request)
+    {
+        try {
+            $record = $this->subscriptionService->assignClientUsageFee($request);
+
+            return JsonResponser::send(false, 'Usage fee assigned to hospital subscription successfully', $record, 200);
+        } catch (\Throwable $th) {
+            report($th);
+            return JsonResponser::send(true, 'Failed to assign usage fee', $th->getMessage(), 400);
         }
     }
 
