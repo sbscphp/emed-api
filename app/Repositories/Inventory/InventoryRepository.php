@@ -26,11 +26,16 @@ class InventoryRepository implements InventoryInterface
             $query->where(function ($q) use ($search) {
                 $q->where('batch_no', 'like', "%$search%")
                     ->orWhere('item_name', 'like', "%$search%")
+                    ->orWhere('category', 'like', "%$search%")
                     ->orWhere('supplier', 'like', "%$search%")
                     ->orWhereHas('medicineType', function ($qu) use ($search) {
                         $qu->where("type_name", "%$search%");
                     });
             });
+        }
+
+        if (!empty($filters['category'])) {
+            $query->where('category', $filters['category']);
         }
 
         if (!empty($filters['type_name'])) {
@@ -60,7 +65,8 @@ class InventoryRepository implements InventoryInterface
                 'id'    => $item->id,
                 'BatchNo' => $item->batch_no,
                 'ItemName' => $item->item_name,
-                'MedicineType' => $item->medicineType->type_name ?? '',
+                'Category' => $item->category,
+                'MedicineType' => $item->medicineType->type_name ?? 'Non medicine',
                 'Quantity' => $item->quantity,
                 'ReorderLevel' => $item->reorder_level,
                 'Supplier' => $item->supplier,
