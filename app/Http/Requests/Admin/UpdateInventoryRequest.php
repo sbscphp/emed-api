@@ -24,6 +24,7 @@ class UpdateInventoryRequest extends FormRequest
         return [
             'medication_id' => 'required_without:item_name',
             'item_name'     => 'required_without:medication_id',
+            'category' => 'nullable|string|max:255',
             'batch_no' => 'required|string',
             // 'medicine_type' => 'required|string',
             'medicine_type_id' => 'required|exists:tenant.medicine_types,id',
