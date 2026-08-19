@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\v1\Admin\Revamp;
 
 use App\Enums\GeneralEnums;
+use App\Exceptions\RegistrationException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Mail\TenantEmailVerification;
@@ -16,6 +17,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Throwable;
@@ -36,8 +38,16 @@ class AuthenticationController extends Controller
         try {
             $record = $this->authenticationService->create($request->all());
             return JsonResponser::send(false, 'Registration successful, please check your mail to verify your email.', $record, 200);
+        } catch (RegistrationException $th) {
+            // Something the caller can fix, e.g. a hospital name already in use.
+            return JsonResponser::send(true, $th->getMessage(), [], 400);
         } catch (\Throwable $th) {
-            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+            Log::error('Hospital registration failed.', [
+                'email' => $request->input('admin_email'),
+                'exception' => $th,
+            ]);
+
+            return JsonResponser::send(true, 'An error occurred while creating your account. Please try again.', [], 500, $th);
         }
     }
 
