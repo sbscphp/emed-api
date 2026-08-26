@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Helpers\ExportHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\AuditLogRequest;
 use App\Responser\JsonResponser;
@@ -13,6 +14,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Response as FacadesResponse;
 use App\Models\AuditLog;
+use App\Models\Medicine_Log;
+use App\Http\Resources\MedicineLogResouces;
+
 class AuditLogController extends Controller
 {
     protected $auditLogService;
@@ -20,6 +24,37 @@ class AuditLogController extends Controller
     public function __construct(AuditLogService $auditLogService)
     {
         $this->auditLogService = $auditLogService;
+    }
+
+    public function userActivityRecords(Request $request)
+    {
+
+        try {
+            $overview = $this->auditLogService->activityOverview($request);
+
+            $stats = $this->auditLogService->activityStats($request);
+            $records = [
+                ...$stats,
+                'data' => $overview
+            ];
+
+            if ($request['export']) {
+                return $this->auditLogService->activityExport($overview, $request['export']);
+            }
+
+            // if ($request['export'] === 'pdf') {
+            //     $pdf = Pdf::loadView('exports.audit_logs', ['logs' => $overview]);
+            //     return $pdf->download('audit_logs.pdf');
+            // }
+
+            if (!$request['paginate']) {
+                $records = $overview;
+            }
+
+            return JsonResponser::send(false, 'Record(s) found successfully', $records);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
     }
 
     public function userActivity(AuditLogRequest $request)
@@ -34,6 +69,8 @@ class AuditLogController extends Controller
             $activityType = $request->activity_type;
             $paginate = $request->paginate ?? false;
             $export = $request->export;
+            $action = $request->action;
+            $module_accessed = $request->module_accessed;
 
             $logs = $this->auditLogService->getAllAuditLogs(
                 $search,
@@ -42,7 +79,9 @@ class AuditLogController extends Controller
                 $endDate,
                 $activityType,
                 $paginate,
-                $export
+                $export,
+                $action,
+                $module_accessed
             );
 
             if ($export === 'csv' || $export === 'pdf') {
@@ -50,7 +89,7 @@ class AuditLogController extends Controller
             }
 
             if ($logs->isEmpty()) {
-                return JsonResponser::send(true, 'Record(s) not found.', null, 404);
+                return JsonResponser::send(true, 'Record(s) not found.', null, 200);
             }
 
             $response = [
@@ -64,38 +103,52 @@ class AuditLogController extends Controller
         }
     }
 
-    public function downloadAuditLog($downloadType, AuditLogRequest $request)
+    public function downloadAuditLog(AuditLogRequest $request)
     {
         try {
             DB::connection('tenant');
+            $downloadType = $request->downloadType;
+            // $search = $request->search;
+            // $sortBy = $request->sort_by ?? 'oldest';
+            // $startDate = $request->start_date;
+            // $endDate = $request->end_date;
+            // $activityType = $request->activity_type;
+            // $paginate = $request->paginate ?? false;
+            // $export = $request->export;
+            // $action = $request->action;
+            // $module_accessed = $request->module_accessed;
 
-            $search = $request->search;
-            $sortBy = $request->sort_by ?? 'oldest';
-            $startDate = $request->start_date;
-            $endDate = $request->end_date;
-            $activityType = $request->activity_type;
-            $paginate = false;
+            // $logs = $this->auditLogService->getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate, $downloadType, $export, $action, $module_accessed);
 
-            $logs = $this->auditLogService->getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate, $downloadType);
+            // if ($logs->isEmpty()) {
+            //     return JsonResponser::send(true, 'Record(s) not found for download.', null, 200);
+            // }
 
-            if ($logs->isEmpty()) {
-                return JsonResponser::send(true, 'Record(s) not found for download.', null, 404);
+            $overview = $this->auditLogService->activityOverview($request);
+            $exportData = $overview->map(function ($log) {
+                return [
+                    'User ID'         => $log->causer?->id ?? 'System',
+                    'User Name'       => $log->causer?->fullname ?? 'System',
+                    'User Role'       => $log->causer?->role ?? 'System',
+                    'Timestamp'       => $log->created_at->toDateTimeString(),
+                    'Action Taken'    => $log->action,
+                    'Module Accessed' => $log->module_accessed,
+                ];
+            })->toArray();
+
+            if ($downloadType === 'csv') {
+                return ExportHelper::streamCsv($exportData, null, 'logs.csv');
             }
 
-            switch (strtolower($downloadType)) {
-                case 'csv':
-                    return $this->exportCsv($logs);
-                    break;
-
-                case 'pdf':
-                    return $this->exportPdf($logs);
-                    break;
-
-                default:
-                    return JsonResponser::send(true, 'Invalid download type.', null, 400);
+            if ($downloadType === 'pdf') {
+                $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData])
+                    ->setPaper('A1', 'landscape');
+                return $pdf->download('logs.pdf');
             }
 
-            return JsonResponser::send(true, 'Record(s) found successfully.', $logs);
+            // return JsonResponser::send(true, 'Invalid download type.', null, 400);
+
+            return JsonResponser::send(true, 'Record(s) found successfully.', $overview);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'Internal Server error.', [], 500, $th);
         }
@@ -138,29 +191,84 @@ class AuditLogController extends Controller
     }
 
 
-    public function fetch_medical_log(){
+    public function fetch_medical_log(Request $request)
+    {
 
-     try {
+
+        try {
+            $validate = $request->validate([
+                "patient_status" => "nullable|string",
+                'status' => "nullable|string",
+                "export" => "nullable|string"
+            ]);
+            // $search = $validate['search'];
             config(['database.default' => 'tenant']);
-                DB::connection('tenant');
-                   $medical_log = AuditLog::whereIn('action_type', [
-                    'App\Models\MedicalHistory',
-                    'App\Models\Medication',
-                    'App\Models\MedicineType'
-                 ])->when($request->get('search'), function ($query, $search) {
-                    $query->where('action_type', 'LIKE', "%{$search}%");
-                  })->get();
-                 
-                if ($medical_log->isNotEmpty()) {
-                    DB::connection('tenant')->commit();
-                    return JsonResponser::send(true, 'Record(s) found successfully.', $medical_log);
-                } else {
-                 return JsonResponser::send(false, 'No record found.', []);
-                }
+            DB::connection('tenant');
+            $medical_log = Medicine_Log::with(["patient", "medication", "pharmacy"])
+                ->when(!empty($validate['patient_status']), function ($query, $validate) {
+                    $query->where('patient_status', 'LIKE', "%{$validate['patient_status']}%");
+                })
+                ->when(!empty($validate['status']), function ($query, $validate) {
+                    $query->where('status', 'LIKE', "%{$validate['status']}%");
+                })
+                ->paginate(10);
+
+            if (!empty($validate['export']) && $validate['export'] == 'pdf') {
+                $medical_log = Medicine_Log::with(["patient", "medication", "pharmacy"])->get();
+                $data = MedicineLogResouces::collection($medical_log)->resolve();
+                return ExportHelper::downloadPdf($data, 'medicine.pdf');
+            } else if (!empty($validate['export']) && $validate['export'] == 'csv') {
+                $medical_log = Medicine_Log::with(["patient", "medication", "pharmacy"])->get();
+                $data = MedicineLogResouces::collection($medical_log)->resolve();
+                return ExportHelper::streamCsv($data, null, 'medicine_' . now()->format('Ymd_His') . '.csv');
+            }
+
+            if ($medical_log->isNotEmpty()) {
+                DB::connection('tenant')->commit();
+                return JsonResponser::send(true, 'Record(s) found successfully.', $medical_log);
+            } else {
+                return JsonResponser::send(false, 'No record found.', []);
+            }
         } catch (\Throwable $th) {
             return JsonResponser::send(false, 'Internal Server Error.', [], 500, $th);
         }
-   
+    }
 
+
+    public function data_changes(Request $request)
+    {
+        try {
+            DB::connection('tenant')->beginTransaction();
+
+            $logs = $this->auditLogService->data_changes($request);
+
+            // Handle export
+            if (!empty($request['export'])) {
+                $exportData = $logs->map(function ($log) {
+                    return [
+                        'User ID'           => $log->causer->id ?? 'N/A',
+                        'User Name'         => $log->causer->fullname ?? ($log->causer->first_name . ' ' . $log->causer->last_name ?? 'N/A'),
+                        'Module'            => $log->log_name,
+                        'Timestamp'         => $log->created_at?->toDateTimeString() ?? 'N/A',
+                        'Reason for Update' => $log->description,
+                    ];
+                })->toArray();
+
+                if (strtolower($request['export']) === 'csv') {
+                    return ExportHelper::streamCsv($exportData, null, 'audit-logs.csv');
+                }
+
+                if (strtolower($request['export']) === 'pdf') {
+                    return ExportHelper::downloadPdf($exportData, 'audit-logs.pdf');
+                }
+            }
+
+            DB::connection('tenant')->commit();
+
+            return JsonResponser::send(false, 'Record(s) found successfully.', $logs);
+        } catch (\Throwable $th) {
+            DB::connection('tenant')->rollBack();
+            return JsonResponser::send(true, 'Internal Server Error.', [], 500, $th);
+        }
     }
 }

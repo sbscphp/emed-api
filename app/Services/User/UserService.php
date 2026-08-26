@@ -2,6 +2,14 @@
 
 namespace App\Services\User;
 
+use App\Http\Resources\AuditResources;
+use App\Models\AuditLog;
+use App\Models\City;
+use App\Models\Country;
+use App\Models\New_State;
+use App\Models\Region;
+use App\Models\Subregions;
+use App\Helpers\ExportHelper;
 use App\Repositories\User\UserRepositoryInterface;
 
 /**
@@ -32,6 +40,54 @@ class UserService
     public function create(array $data)
     {
         return $this->userRepositoryInterface->create($data);
+    }
+
+
+    public  function generateSecurePassword(): string
+    {
+        // Define the required character sets
+        $lowercase = 'abcdefghijklmnopqrstuvwxyz';
+        $uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $numbers = '0123456789';
+        $specialChars = '!@#$%^&*()-_=+<>?';
+
+        // Combine all character sets into one
+        $allChars = $lowercase . $uppercase . $numbers . $specialChars;
+
+        // Create a password with required criteria
+        $password = '';
+        $password .= $lowercase[rand(0, strlen($lowercase) - 1)];
+        $password .= $uppercase[rand(0, strlen($uppercase) - 1)];
+        $password .= $numbers[rand(0, strlen($numbers) - 1)];
+        $password .= $specialChars[rand(0, strlen($specialChars) - 1)];
+
+        // Fill the remaining characters randomly from the combined set
+        $remainingLength = rand(4, 16); // Remaining length to meet min and max limits (8 to 20)
+        for ($i = 0; $i < $remainingLength; $i++) {
+            $password .= $allChars[rand(0, strlen($allChars) - 1)];
+        }
+
+        // Shuffle the characters in the password to ensure random distribution
+        return str_shuffle($password);
+    }
+
+    public function generateRoleBasedPassword(string $roleName, string $firstName, string $lastName): string
+    {
+        // Get initials from first and last name
+        $initials = strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1));
+
+        // Define some symbols
+        $symbols = ['@', '#', '!', '$', '&'];
+
+        // Pick random symbol and number
+        $symbol = $symbols[array_rand($symbols)];
+        $number = rand(10, 999);
+
+        // Clean and capitalize role name (remove spaces like "Lab Technician" → "LabTechnician")
+        $roleSegment = ucfirst(str_replace(' ', '', $roleName));
+
+        // Build final password
+        return "{$symbol}{$roleSegment}{$initials}{$number}";
     }
 
     /**
@@ -105,5 +161,27 @@ class UserService
     public function getSystemReport($request)
     {
         return $this->userRepositoryInterface->getSystemReport($request);
+    }
+
+    public function user_activity($validate)
+    {
+        //AuditLog  AuditLogTransaction
+        // user_id action_type
+        $auditlog = AuditLog::with(['audit_log_transactions', 'causer' => function ($query) use ($validate) {
+            if (!empty($validate['name'])) {
+                $query->where('fullname', $validate['name']);
+            }
+
+            if (!empty($validate['status'])) {
+                $query->where('status', $validate['status']);
+            }
+        }, 'causer.userInformation'])->when(!empty($validate['action_type']), function ($query) use ($validate) {
+            //$query->where("user_id", $validate['user_id'])
+            $query->where('action_type', $validate['action_type']);
+        })->paginate($validate['limit'] ?? 10);
+
+
+
+        return $auditlog;
     }
 }

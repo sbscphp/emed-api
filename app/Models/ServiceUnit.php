@@ -11,8 +11,6 @@ class ServiceUnit extends Model
     protected $connection = 'tenant';
     protected $guarded = ['id'];
 
-    protected $fillable = ['name'];
-
     public function billingLogs()
     {
         return $this->hasMany(BillingLog::class);

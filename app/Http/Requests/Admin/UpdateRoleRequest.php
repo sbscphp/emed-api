@@ -14,9 +14,9 @@ class UpdateRoleRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => 'required|unique:tenant.roles,name,' . $this->route('id'),
+            'name' => 'nullable',
             'permissions' => 'nullable|array',
-            'permissions.*' => 'exists:tenant.permissions,name',
+            'permissions.*' => 'exists:tenant.permissions,id',
         ];
     }
 }

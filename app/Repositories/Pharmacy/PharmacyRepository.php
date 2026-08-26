@@ -9,6 +9,7 @@ use App\Models\Treatment;
 use App\Models\TreatmentFulfillment;
 use App\Responser\JsonResponser;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class PharmacyRepository implements PharmacyInterface
 {
@@ -23,15 +24,13 @@ class PharmacyRepository implements PharmacyInterface
     }
 
 
-    public function treatmentLogall($search = null)
+    public function treatmentLogall($search = null, $from,  $to)
     {
         DB::connection('tenant');
-
-        $query = Treatment::with([
+        $query = Treatment::on('tenant')->with([
             'patient:id,firstname,lastname,cardno,patient_type,patientno,status',
             'pharmacy:id,name'
         ]);
-
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -48,10 +47,16 @@ class PharmacyRepository implements PharmacyInterface
             });
         }
 
+        if (isset($from, $to)) {
+            $from = Carbon::parse($from)->startOfDay();
+            $to = Carbon::parse($to)->endOfDay();
+            $query->whereBetween('created_at', [$from, $to]);
+        }
+
         $treatments = $query->orderBy('created_at', 'desc')->paginate(10);
 
         foreach ($treatments as $treatment) {
-            $billingLog = BillingLog::where('patient_id', $treatment->patient->id)
+            $billingLog = BillingLog::on('tenant')->where('patient_id', $treatment->patient->id)
                 ->latest()
                 ->first();
 
@@ -59,7 +64,7 @@ class PharmacyRepository implements PharmacyInterface
             $treatment->status = $treatment->receiptno ? 'Fulfilled' : 'Not Fulfilled';
         }
 
-        return $treatments;
+        return $query->get();
     }
 
     public function getPatientTreatmentDetails($patientId)
@@ -72,14 +77,14 @@ class PharmacyRepository implements PharmacyInterface
         return $patient;
     }
 
-    public function fulfillPrescription(array $data)
+    public function fulfillPrescription($data)
     {
         DB::connection('tenant');
 
         $treatment = Treatment::with('fulfillment', 'patient')->find($data['treatment_id']);
 
         if (!$treatment) {
-            return JsonResponser::send(true, 'Treatment not found.', [], 404);
+            return JsonResponser::send(true, 'Treatment not found.', [], 204);
         }
 
         if (!is_null($treatment->receiptno)) {
@@ -94,6 +99,7 @@ class PharmacyRepository implements PharmacyInterface
 
         $fulfillment = TreatmentFulfillment::create([
             'treatment_id' => $treatment->id,
+            'patient_id' => $data['patient_id'],
             'dispensing_pharmacist' => $data['dispensing_pharmacist'],
             'dispensing_date' => $data['dispensing_date'],
             'quantity_dispensed' => $data['quantity_dispensed'],
@@ -131,16 +137,15 @@ class PharmacyRepository implements PharmacyInterface
      */
     public function update(array $data, $id)
     {
-         DB::connection('tenant')->beginTransaction();
+        DB::connection('tenant')->beginTransaction();
         $record = Pharmacy::findOrFail($id);
-        if($record){
-         $record->update($data);
-        DB::connection('tenant')->commit();
-        return $record;
-        }else{
-         DB::connection('tenant')->rollBack();  
+        if ($record) {
+            $record->update($data);
+            DB::connection('tenant')->commit();
+            return $record;
+        } else {
+            DB::connection('tenant')->rollBack();
         }
-      
     }
 
 

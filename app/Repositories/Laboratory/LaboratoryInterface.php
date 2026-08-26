@@ -64,6 +64,6 @@ interface LaboratoryInterface
      */
     public function findByAttribute($attr, $value);
 
-    public function getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage);
+    public function getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage, $export, $from, $to);
     public function getStats();
 }

@@ -8,23 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class Inventory extends Model
 {
     protected $connection = 'tenant';
-    protected $fillable = [
-        'batch_no',
-        'item_name',
-        'medicine_type_id',
-        'quantity',
-        'reorder_level',
-        'supplier',
-        'expiry_date',
-        'note',
-        'status',
-    ];
+    protected $guarded = ['id'];
 
     public function calculateStatus()
     {
-        if (Carbon::parse($this->expiry_date)->isPast()) {
-            return 'Expired';
-        }
+        // if (Carbon::parse($this->expiry_date)->isPast()) {
+        //     return 'Expired';
+        // }
 
         return $this->quantity < $this->reorder_level ? 'Low Stock' : 'Sufficient';
     }
@@ -34,6 +24,10 @@ class Inventory extends Model
         return $this->belongsTo(MedicineType::class);
     }
 
+    public function medication()
+    {
+        return $this->belongsTo(Medication::class, 'medication_id', 'id');
+    }
 
     protected static function booted()
     {

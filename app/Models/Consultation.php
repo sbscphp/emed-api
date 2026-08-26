@@ -9,23 +9,9 @@ class Consultation extends Model
     protected $guarded = ['id'];
     protected $connection = 'tenant';
     protected $table = 'patient_visit_consultation';
-    protected $fillable = [
-        'patient_id',
-        'admin_id',
-        'visitno',
-        'complaint',
-        'complaint_history',
-        'review',
-        'diagnosis',
-        'allergy',
-        'disease_pattern',
-        'disease_type',
-        'investigation',
-        'follow_up',
-        'followUp_date',
-        'referral',
-        'referral_detail',
-        'admitted'
+    protected $casts = [
+        'complaints' => 'array',
+        'allergies' => 'array',
     ];
 
     public function patient()
@@ -33,9 +19,19 @@ class Consultation extends Model
         return $this->belongsTo(Patient::class);
     }
 
-    public function lab()
+    public function patientVisit()
+    {
+        return $this->belongsTo(PatientVisit::class, 'visit_id');
+    }
+
+    public function labTest()
     {
         return $this->hasMany(Laboratory::class);
+    }
+
+    public function radiologyTest()
+    {
+        return $this->hasMany(Radiology::class);
     }
 
     public function treatment()
@@ -43,8 +39,13 @@ class Consultation extends Model
         return $this->hasMany(Treatment::class);
     }
 
-    // public function patientVisit()
-    // {
-    //     return $this->belongsTo(PatientVisit::class, 'visitno');
-    // }
+    public function surgery()
+    {
+        return $this->hasMany(Surgery::class);
+    }
+
+    public function consultedDoctor()
+    {
+        return $this->belongsTo(User::class, 'consulted_by');
+    }
 }

@@ -4,6 +4,7 @@ namespace App\Repositories\Inventory;
 
 use App\Helpers\ExportHelper;
 use App\Models\Inventory;
+use Carbon\Carbon;
 
 class InventoryRepository implements InventoryInterface
 {
@@ -17,7 +18,7 @@ class InventoryRepository implements InventoryInterface
         return Inventory::all();
     }
 
-    public function getAllWithFilters(array $filters = [], ?string $export = null)
+    public function getAllWithFilters(array $filters = [], ?string $export = null, $from, $to, $tenantId)
     {
         $query = Inventory::with('medicineType');
         if (!empty($filters['search'])) {
@@ -25,8 +26,38 @@ class InventoryRepository implements InventoryInterface
             $query->where(function ($q) use ($search) {
                 $q->where('batch_no', 'like', "%$search%")
                     ->orWhere('item_name', 'like', "%$search%")
-                    ->orWhere('supplier', 'like', "%$search%");
+                    ->orWhere('category', 'like', "%$search%")
+                    ->orWhere('supplier', 'like', "%$search%")
+                    ->orWhereHas('medicineType', function ($qu) use ($search) {
+                        $qu->where("type_name", "%$search%");
+                    });
             });
+        }
+
+        if (!empty($filters['category'])) {
+            $query->where('category', $filters['category']);
+        }
+
+        if (!empty($filters['type_name'])) {
+            $query->whereHas('medicineType', function ($qu) use ($filters) {
+                $qu->where("type_name", $filters['type_name']);
+            });
+        }
+
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status'])
+                ->whereDate('expiry_date', '>', now());
+        }
+
+        if (isset($filters['is_expired']) && filter_var($filters['is_expired'], FILTER_VALIDATE_BOOLEAN)) {
+            $query->whereDate('expiry_date', '<=', now());
+        }
+
+        if (!empty($from) && !empty($to)) {
+            $query->whereBetween('expiry_date', [
+                Carbon::parse($from)->startOfDay(),
+                Carbon::parse($to)->endOfDay()
+            ]);
         }
 
         $transformItem = function ($item) {
@@ -34,12 +65,14 @@ class InventoryRepository implements InventoryInterface
                 'id'    => $item->id,
                 'BatchNo' => $item->batch_no,
                 'ItemName' => $item->item_name,
-                'MedicineType' => $item->medicineType->type_name ?? '',
+                'Category' => $item->category,
+                'MedicineType' => $item->medicineType->type_name ?? 'Non medicine',
                 'Quantity' => $item->quantity,
                 'ReorderLevel' => $item->reorder_level,
                 'Supplier' => $item->supplier,
                 'ExpiryDate' => $item->expiry_date,
                 'Note' => $item->note,
+                'Status' => $item->status,
                 'Created At' => $item->created_at->toDateTimeString(),
             ];
         };
@@ -120,21 +153,7 @@ class InventoryRepository implements InventoryInterface
             return null;
         }
 
-        return [
-            'id' => $inventory->id,
-            'batch_no' => $inventory->batch_no,
-            'item_name' => $inventory->item_name,
-            'medicine_type_id' => $inventory->medicine_type_id,
-            'medicine_type' => $inventory->medicineType->type_name ?? null,
-            'quantity' => $inventory->quantity,
-            'reorder_level' => $inventory->reorder_level,
-            'supplier' => $inventory->supplier,
-            'expiry_date' => $inventory->expiry_date,
-            'note' => $inventory->note,
-            'status' => $inventory->status,
-            'created_at' => $inventory->created_at,
-            'updated_at' => $inventory->updated_at,
-        ];
+        return $inventory;
     }
 
 

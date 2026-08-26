@@ -29,12 +29,24 @@ class PharmacySupplyController extends Controller
         try {
             $search = $request->input('search');
             $isExport = $request->has('export');
+            $from = $request->from;
+            $to = $request->to;
+            $supplies = $this->supplyService->listSupplies($search, $isExport, $from, $to);
 
-            $supplies = $this->supplyService->listSupplies($search, $isExport);
+            $isEmpty = false;
 
-            if ($supplies->isEmpty()) {
-                return JsonResponser::send(true, 'No pharmacy supplies found.', [], 404);
+            if ($isExport && $supplies->isEmpty()) {
+                $isEmpty = true;
             }
+
+            if (!$isExport && $supplies->total() === 0) {
+                $isEmpty = true;
+            }
+
+            if ($isEmpty) {
+                return JsonResponser::send(true, 'No pharmacy supplies found.', [], 200);
+            }
+
 
             if ($isExport) {
                 $exportData = $supplies->map(function ($supply) {
@@ -72,7 +84,7 @@ class PharmacySupplyController extends Controller
         $supply = $this->supplyService->getSupplyById($id);
 
         if (!$supply) {
-            return JsonResponser::send(true, 'Supply not found.', [], 404);
+            return JsonResponser::send(true, 'Supply not found.', [], 200);
         }
 
         return JsonResponser::send(false, 'Supply retrieved successfully.', $supply);

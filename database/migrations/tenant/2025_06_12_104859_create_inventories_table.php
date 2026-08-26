@@ -13,15 +13,17 @@ return new class extends Migration
     {
         Schema::create('inventories', function (Blueprint $table) {
             $table->id();
-            $table->string('batch_no');
-            $table->string('item_name');
-            $table->foreignId('medicine_type_id')->constrained('medicine_types')->onDelete('cascade');
-            $table->unsignedInteger('quantity');
-            $table->unsignedInteger('reorder_level');
+            $table->unsignedBigInteger('medication_id')->nullable();
+            $table->unsignedBigInteger('medicine_type_id')->nullable();
+            $table->string('tenant_id')->nullable();
+            $table->string('batch_no')->nullable();
+            $table->string('item_name')->nullable();
+            $table->integer('quantity')->default(0);
+            $table->integer('reorder_level')->default(0);
             $table->string('supplier')->nullable();
-            $table->date('expiry_date');
+            $table->date('expiry_date')->nullable();
             $table->text('note')->nullable();
-            $table->enum('status', ['Expired', 'Low Stock', 'Sufficient'])->default('Sufficient');
+            $table->string('status')->default('Sufficient')->comment('Expired', 'Low Stock', 'Sufficient');
             $table->timestamps();
         });
     }

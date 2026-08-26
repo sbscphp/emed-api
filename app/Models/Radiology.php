@@ -2,26 +2,44 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Radiology extends Model
 {
+    use HasFactory, SoftDeletes;
     protected $guarded = ['id'];
     protected $connection = 'tenant';
     protected $table = 'patient_visit_radiology';
-    protected $fillable = [
-        'patient_id',
-        'admin_id',
-        'consultation_id',
-        'visitno',
-        'lab_dept',
-        'test_name',
-        'ordered_test',
-        'others'
-    ];
 
     public function patient()
     {
         return $this->belongsTo(Patient::class);
+    }
+
+    public function consultation()
+    {
+        return $this->belongsTo(Consultation::class, 'consultation_id');
+    }
+
+    public function visit()
+    {
+        return $this->belongsTo(PatientVisit::class, 'visit_id');
+    }
+
+    public function billingLogDetail()
+    {
+        return $this->belongsTo(BillingLogDetail::class, 'id', 'radiology_test_id');
+    }
+
+    public function result()
+    {
+        return $this->belongsTo(RadiologyResult::class, 'id', 'radiology_id');
+    }
+
+    public function results()
+    {
+        return $this->hasMany(RadiologyResult::class, 'radiology_id');
     }
 }

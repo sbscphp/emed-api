@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
+class LaratrustSetupTables extends Migration
 {
     /**
      * Run the migrations.
@@ -16,9 +16,11 @@ return new class extends Migration
         // Create table for storing roles
         Schema::create('roles', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('name')->unique();
+            $table->string('tenant_id')->nullable();
+            $table->string('name')->nullable();
             $table->string('display_name')->nullable();
             $table->string('description')->nullable();
+            $table->string('status')->default('Active')->comment('Active, Inactive');
             $table->timestamps();
         });
 
@@ -26,6 +28,8 @@ return new class extends Migration
         Schema::create('permissions', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('name')->unique();
+            $table->string('module')->nullable();
+            $table->string('sub_module')->nullable();
             $table->string('display_name')->nullable();
             $table->string('description')->nullable();
             $table->timestamps();
@@ -82,4 +86,4 @@ return new class extends Migration
         Schema::dropIfExists('role_user');
         Schema::dropIfExists('roles');
     }
-};
+}

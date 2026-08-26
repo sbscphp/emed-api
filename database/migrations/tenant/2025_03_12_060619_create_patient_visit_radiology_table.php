@@ -13,17 +13,17 @@ return new class extends Migration
     {
         Schema::create('patient_visit_radiology', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->string('tenant_id')->nullable();
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->foreignId('patient_id')->constrained('patients')->onDelete('cascade');
-            $table->unsignedBigInteger('admin_id');
+            $table->unsignedBigInteger('visit_id')->nullable();
             $table->unsignedBigInteger('consultation_id')->nullable();
-            $table->string('visitno');
-            $table->string('lab_dept')->nullable();
+            $table->unsignedBigInteger('test_id')->nullable();
             $table->string('test_name')->nullable();
-            $table->string('ordered_test')->nullable();
-            $table->string('others')->nullable();
+            $table->string('department')->nullable();
+            $table->string('status')->default('Not Ready')->comment('Ready', 'Not Ready');
             $table->timestamps();
-
-            $table->index('visitno');
+            $table->softDeletes();
         });
     }
 

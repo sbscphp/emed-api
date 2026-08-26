@@ -3,7 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
-
+use Illuminate\Support\Facades\DB;
 class StoreUserRequest extends FormRequest
 {
 
@@ -19,11 +19,14 @@ class StoreUserRequest extends FormRequest
     {
         return [
             'fullname' => 'required|string|max:255',
-            'phone_number' => 'required|string|max:15|unique:tenant.users,phone_number',
-            'email' => 'required|email|unique:tenant.users,email',
-            'role' => 'required|exists:tenant.roles,name',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'phone_number' => 'required|string|max:15',
+           // 'email' => 'required|email|unique:tenant.users,email',
+             'email' => 'required|email|max:255',
+             'role' => 'required',
             'date_of_birth' => 'required|date|before:today',
-            'password' => 'required|string|min:8',
+            //'password' => 'required|string|min:8',
         ];
     }
 
@@ -34,7 +37,7 @@ class StoreUserRequest extends FormRequest
     {
         return [
             'phone_number.unique' => 'The phone number is already in use.',
-            'email.unique' => 'The email address is already registered.',
+            'email' => 'The email address field is required.',
             'date_of_birth.before' => 'Date of birth must be a past date.',
         ];
     }

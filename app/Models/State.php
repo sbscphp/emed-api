@@ -10,6 +10,4 @@ class State extends Model
     use HasFactory;
     protected $connection = 'tenant';
     protected $guarded = ['id'];
-
-    protected $fillable = ['state_name'];
 }

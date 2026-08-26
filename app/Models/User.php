@@ -5,12 +5,14 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laratrust\Traits\HasRolesAndPermissions;
 // use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Sanctum\HasApiTokens;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use App\Models\Tenant;
 
 class User extends Authenticatable implements JWTSubject
 {
@@ -18,30 +20,15 @@ class User extends Authenticatable implements JWTSubject
     /**
      * @method bool hasRole(string|array $roles)
      */
-    use  HasRolesAndPermissions, HasFactory, Notifiable, HasApiTokens;
-    protected $fillable = [
-        'uuid',
-        'fullname',
-        'role',
-        'phone_number',
-        'email',
-        'password',
-        'tenant_id',
-        'is_verified',
-        'email_verified_at',
-        'status',
-        'can_login',
-        'is_active',
-        'remember_token',
-    ];
+    use  HasRolesAndPermissions, HasFactory, Notifiable, HasApiTokens, SoftDeletes;
     /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
      */
     protected $guarded = ['id'];
-    protected $connection = 'tenant';
-    protected $appends = ['role_names'];
+    protected $connection = 'landlord';
+    // protected $appends = ['role_names'];
 
 
     /**
@@ -92,16 +79,6 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasOne(UserInformation::class);
     }
 
-    public function register()
-    {
-        return $this->belongsTo(Registration::class);
-    }
-
-    public function tenant()
-    {
-        return $this->belongsTo(Tenant::class);
-    }
-
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class, 'role_user', 'user_id', 'role_id');
@@ -116,5 +93,50 @@ class User extends Authenticatable implements JWTSubject
     public function getRoleNamesAttribute()
     {
         return $this->roles->pluck('name');
+    }
+
+    // User.php
+    // public function tenants()
+    // {
+    //     return $this->belongsToMany(Tenant::class, 'tenant_user')
+    //         ->withPivot(['profile_picture', 'status'])
+    //         ->withTimestamps();
+    // }
+
+    public function tenants()
+    {
+        return $this->belongsToMany(Tenant::class, 'tenant_users');
+    }
+
+    public function currentTenant()
+    {
+        $currentTenant = Tenant::current();
+
+        return $this->tenants()->where('tenant_id', $currentTenant?->id);
+    }
+
+    public function getCurrentTenant()
+    {
+        $currentTenant = Tenant::current();
+
+        return $this->tenants()
+            ->where('tenant_id', $currentTenant?->id)
+            ->first();
+    }
+
+    public function tenantContext($tenantId)
+    {
+        return $this->hasOne(TenantUser::class, 'user_id')
+            ->where('tenant_id', $tenantId);
+    }
+
+    public function tenantUsers()
+    {
+        return $this->hasMany(TenantUser::class);
+    }
+
+    public function superAdminRoles()
+    {
+        return $this->belongsToMany(SuperAdminRole::class, 'super_admin_role_user', 'user_id', 'super_admin_role_id');
     }
 }

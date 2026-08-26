@@ -4,7 +4,7 @@ namespace App\Http\Requests\Auth;
 
 use App\Rules\Auth\ValidateIdentifier;
 use Illuminate\Foundation\Http\FormRequest;
-
+use Illuminate\Support\Facades\DB;
 class ResetPasswordLinkRequest extends FormRequest
 {
     /**
@@ -23,7 +23,7 @@ class ResetPasswordLinkRequest extends FormRequest
     public function rules()
     {
         return [
-            'email' => 'required|email|exists:tenant.users,email',
+            'email' => 'required|email|exists:users,email',
         ];
     }
 

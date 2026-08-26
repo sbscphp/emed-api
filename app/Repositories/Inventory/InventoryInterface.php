@@ -17,7 +17,7 @@ interface InventoryInterface
      */
     public function all();
 
-    public function getAllWithFilters(array $filters = [], ?string $export = null);
+    public function getAllWithFilters(array $filters = [], ?string $export = null, $from, $to, $tenantId);
     /**
      * Create new Inventory in the database.
      * 

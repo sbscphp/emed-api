@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('services', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('name');
+            $table->string('tenant_id')->nullable();
+            $table->string('name')->nullable();
+            $table->decimal('price', 10, 2)->default(0.00);
             $table->timestamps();
-
-            $table->index('name');
         });
     }
 

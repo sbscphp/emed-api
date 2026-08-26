@@ -5,6 +5,15 @@ namespace App\Services\Patient;
 use App\Models\Patient;
 use App\Repositories\Patient\PatientInterface;
 use Illuminate\Support\Collection;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+use App\Helpers\ExportHelper;
+use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Excel as ExcelFormat;
+use App\Http\Resources\PatientResourceExport;
+use App\Exports\PatientExport;
+use App\Exports\PatientReportExport;
+use App\Models\PatientVisit;
 
 /**
  * Class PatientService
@@ -136,11 +145,13 @@ class PatientService
         return $this->PatientInterface->getPatientReport($request);
     }
 
-    public function getAllRecordFiltered($search = null, $paginate = false, $perPage = 10)
+    public function getAllRecordFiltered($search = null, $paginate = false, $perPage = 10, $from, $to, $export, $gender, $status, $patient_type)
     {
         $query = Patient::query();
+        //with(['service', 'visits_recent']);
 
         if ($search) {
+            // status
             $query->where(function ($q) use ($search) {
                 $q->where('firstname', 'like', "%$search%")
                     ->orWhere('lastname', 'like', "%$search%")
@@ -150,9 +161,65 @@ class PatientService
                     ->orWhere('patientno', 'like', "%$search%")
                     ->orWhere('cardno', 'like', "%$search%")
                     ->orWhere('occupation', 'like', "%$search%")
-                    ->orWhere('homeaddress', 'like', "%$search%");
+                    ->orWhere('homeaddress', 'like', "%$search%")
+                    ->orWhere('gender', 'like', "%$search%")
+                    ->orWhere('status', 'like', "%$search%");
             });
         }
+        if (!empty($gender)) {
+            $query->where('gender', $gender);
+        }
+
+        if (!empty($status)) {
+            $query->where('status',  $status);
+        }
+
+        // patient_type
+
+        if (!empty($patient_type)) {
+            $query->where('patient_type',  $patient_type);
+        }
+
+        if (!empty($export)) {
+            // Get the data with necessary relationships if needed
+            $query = Patient::query();
+
+            // Apply any existing filters
+            if (!empty($from) && !empty($to)) {
+                $query->whereBetween('created_at', [
+                    Carbon::parse($from)->startOfDay(),
+                    Carbon::parse($to)->endOfDay()
+                ]);
+            }
+
+            // Get the data as a collection
+            $data = $query->latest()->get();
+
+            // Convert to array - the ExportHelper will handle the UTF-8 cleaning
+            $exportData = $data->toArray();
+
+
+            // else if ($export == 'csv') {
+            //     //  return ExportHelper::streamCsv($exportData, null, 'patients_' . now()->format('Ymd_His') . '.csv');
+            //     // return ExportHelper::streamCsv($data);
+            //     // $csv = new Csv($data);
+            //     //   PatientExport
+            //     // $data = Patient::get()->toArray();
+            //     //dd(json_encode([$export, $data]));
+            //     // return Excel::download(new PatientExport, 'patients.csv');
+
+            //     //return Excel::download(new PatientExport, 'patients.csv', ExcelFormat::CSV);
+
+
+            //     // return ExportHelper::streamCsv($data, null, 'patient_' . now()->format('Ymd_His') . '.csv');
+            //     // return Excel::download(new PatientExport, 'patients.csv', ExcelFormat::CSV);
+
+            // }
+        }
+
+        $query->when($from && $to, function ($q) use ($from, $to) {
+            $q->whereBetween('created_at', [Carbon::parse($from), Carbon::parse($to)]);
+        });
 
         if ($paginate) {
             return $query->latest()->paginate($perPage);

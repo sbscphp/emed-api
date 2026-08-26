@@ -1,0 +1,344 @@
+<?php
+
+namespace App\Http\Controllers\v1\Admin;
+
+use App\Helpers\ExportHelper;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\PatientResourceRecent;
+use App\Models\Appointment;
+use App\Models\BillingLog;
+use App\Models\Consultation;
+use App\Models\DrugHistory;
+use App\Models\FamilyHistory;
+use App\Models\Laboratory;
+use App\Models\Patient;
+use App\Models\PatientVisit;
+use App\Models\Radiology;
+use App\Models\Treatment;
+use App\Services\ServiceDepartment\ServiceDepartmentService;
+use Illuminate\Http\Request;
+use App\Responser\JsonResponser;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+
+class MainDashBoardStatsController extends Controller
+{
+    public $service_department_service;
+
+    public function __construct(ServiceDepartmentService $service_department_service)
+    {
+        $this->service_department_service = $service_department_service;
+    }
+    public function index(Request $request)
+    {
+
+        try {
+            $validated = $request->validate([
+                "filter_calender" => 'nullable|string|in:daily,monthly,yearly',
+                // state_date, end_date
+                "state_date" => "nullable|date",
+                "end_date" => "nullable|date",
+            ]);
+
+            $data = $this->service_department_service->main_dashboard($validated);
+
+            return JsonResponser::send(false, 'Fetched successfully.', $data);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Error fetching billing stats.', [], 500, $e);
+        }
+    }
+
+
+    public function top_drugs(Request $request)
+    {
+        try {
+            $data = $this->service_department_service->top_drugs($request);
+            return JsonResponser::send(false, ' fetched successfully.', $data);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Error fetching  .', [], 500, $e);
+        }
+    }
+
+
+    public function patient_diagnosis(Request $request)
+    {
+        try {
+            $data = $this->service_department_service->patient_diagnosis($request);
+            return JsonResponser::send(false, ' fetched successfully.', $data);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Error fetching  .', [], 500, $e);
+        }
+    }
+
+
+    public function recent_patient(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'search' => "nullable|string",
+                'patient_type' => "nullable|string",
+                'status' => "nullable|string",
+                'start_date' => "nullable|date",
+                "end_date" => "nullable|date",
+                'gender' => "nullable|string",
+            ]);
+            $data = $this->service_department_service->recent_patient($validated);
+            if (!empty($validated['export'])) {
+                $export =  $validated['export'];
+                // $exportData = PharmacyResourceList::collection($pharm)->resolve(); MedicationResource
+                $patient =  Patient::with('patient_visits_latest')->get();
+                if (count($patient) == 0) {
+                    return JsonResponser::send(true, 'No Data.', [], 500);
+                }
+                $exportData = PatientResourceRecent::collection($patient)->resolve();
+                if ($export === 'csv') {
+                    return ExportHelper::streamCsv($exportData, null, 'Laboratory.csv');
+                }
+
+                if ($export === 'pdf') {
+                    return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+                }
+            }
+            return JsonResponser::send(false, ' fetched successfully.', $data);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Error fetching  .', [], 500, $e);
+        }
+    }
+
+
+    public function yearly_patient(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'yearly' => "nullable|numeric",
+                'start_date' => "nullable|date",
+                "end_date" => "nullable|date",
+            ]);
+
+            $data =  Patient::selectRaw('MONTH(created_at) as month, COUNT(*) as total')->where('created_at', $validated['yearly'] ?? Carbon::now()->year())
+                ->groupBy(DB::raw('MONTH(created_at)'))
+                ->orderBy('month')
+                ->when(!empty($validated['state_date']) && !empty($validated['end_date']), function ($query) use ($validated) {
+                    // state_date, end_date
+                    $query->whereBetween('created_at', [Carbon::parse($validated['state_data']), Carbon::parse($validated['end_data'])]);
+                })
+                ->get()->map(function ($item) {
+                    $item->month = Carbon::create()->month($item->month)->format('M');
+                    return $item;
+                });
+
+            $patientin =  Patient::where('stage', 'triage')
+                ->when(!empty($validated['state_date']) && !empty($validated['end_date']), function ($query) use ($validated) {
+                    // state_date, end_date
+                    $query->whereBetween('created_at', [Carbon::parse($validated['state_data']), Carbon::parse($validated['end_data'])]);
+                })
+                ->count();
+            $patientout = Patient::where('stage', 'discharged')
+                ->when(!empty($validated['state_date']) && !empty($validated['end_date']), function ($query) use ($validated) {
+                    // state_date, end_date
+                    $query->whereBetween('created_at', [Carbon::parse($validated['state_data']), Carbon::parse($validated['end_data'])]);
+                })
+                ->count();
+
+            $output = [
+                'patientin' => $patientin,
+                'patientout' => $patientout,
+                "data" => $data
+            ];
+            return JsonResponser::send(false, ' fetched successfully.', $output);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Error fetching  .', [], 500, $e);
+        }
+    }
+
+    public function  patient_age_gender()
+    {
+        $total = Patient::count();
+
+        $age_0_18 = Patient::whereBetween('dob', [Carbon::now()->subYears(18), Carbon::now()])->count();
+        $age_19_35 = Patient::whereBetween('dob', [Carbon::now()->subYears(35), Carbon::now()->subYears(19)->subDay()])->count();
+        $age_36_plus = Patient::where('dob', '<', Carbon::now()->subYears(36))->count();
+
+        $male = Patient::whereIn('gender', ['male', 'Male', 'MALE'])->count();
+        $female = Patient::whereIn('gender', ['female', 'Female', 'FEMALE'])->count();
+        $results = [
+            '0-18' => $total ? round(($age_0_18 / $total) * 100, 2) : 0,
+            '19-35' => $total ? round(($age_19_35 / $total) * 100, 2) : 0,
+            '36+' => $total ? round(($age_36_plus / $total) * 100, 2) : 0,
+            'male' => $male,
+            'female' => $female
+
+        ];
+
+
+        return JsonResponser::send(false, ' fetched successfully.', $results);
+    }
+
+    public function  appointment(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'yearly' => "nullable|numeric",
+            ]);
+
+            $data =  Appointment::selectRaw('MONTH(created_at) as month, COUNT(*) as total')->where('created_at', $validated['yearly'] ?? Carbon::now()->year())
+                ->groupBy(DB::raw('MONTH(created_at)'))
+                ->orderBy('month')
+                ->get()->map(function ($item) {
+                    $item->month = Carbon::create()->month($item->month)->format('M');
+                    return $item;
+                });
+
+            return JsonResponser::send(false, ' fetched successfully.', $data);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Error fetching  .', [], 500, $e);
+        }
+    }
+
+    public function lab_test_year(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'yearly' => "nullable|numeric",
+                'start_date' => "nullable|date",
+                'end_date' => "nullable|date"
+            ]);
+            $year = $validated['yearly'] ?? Carbon::now()->year;
+
+            $startDate = !empty($validated['start_date']) ? Carbon::parse($validated['start_date']) : null;
+            $endDate = !empty($validated['end_date']) ? Carbon::parse($validated['end_date']) : null;
+
+            // Total lab records
+            $avarge_all = Laboratory::count();
+
+            // Lab records with 'complete' status
+            $avarge_complete = Laboratory::where('status', 'complete')->count();
+
+            // Total for the selected year
+            $total = Laboratory::whereYear('created_at', $year)->count();
+
+            // 'complete' records filtered by year and optional date range
+            $complete = Laboratory::whereYear('created_at', $year)
+                ->where('status', 'complete')
+                ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
+                    $query->whereBetween('created_at', [$startDate, $endDate]);
+                })
+                ->count();
+
+            // 'in progress' records filtered by year and optional date range
+            $progress = Laboratory::whereYear('created_at', $year)
+                ->where('status', 'in progress')
+                ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
+                    $query->whereBetween('created_at', [$startDate, $endDate]);
+                })
+                ->count();
+
+            // 'pending' records filtered by year and optional date range
+            $pending = Laboratory::whereYear('created_at', $year)
+                ->where('status', 'pending')
+                ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
+                    $query->whereBetween('created_at', [$startDate, $endDate]);
+                })
+                ->count();
+            $average_completion_rate = $avarge_all ? round(($avarge_complete / $avarge_all) * 100) : 0;
+            $data = [
+                "average_completion_rate" => $average_completion_rate,
+                "total_completion" => $avarge_complete,
+                "complete" => $complete,
+                "progress" => $progress,
+                'pending' => $pending
+            ];
+            return JsonResponser::send(false, ' fetched successfully.', $data);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Error fetching  .', [], 500, $e);
+        }
+    }
+
+
+
+    public function patient_consultation_summary_data(Request $request)
+    {
+
+        try {
+            $validated =  $request->validate([
+                'patient_visits_id' => "nullable|numeric"
+            ]);
+
+            $arr = [];
+
+            $data = PatientVisit::find(intval($validated['patient_visits_id']));
+
+            if ($data) {
+                $consultation = Consultation::where('visitno', $data->visitno)->first();
+                $radiology = Radiology::where('visitno', $data->visitno)->first();
+                $treatment = $consultation ? Treatment::where('consultation_id', $consultation->id)->first() : null;
+                $billingLogsForPatient = BillingLog::where('visit_id', $data->id)->first();
+                $patient = Patient::find(intval($data->patient_id));
+                $family_history = $consultation ? FamilyHistory::where('consultation_id',  $consultation->id)->first() : null;
+                $drug_history = $consultation ? DrugHistory::where('consultation_id',  $consultation->id)->first() : null;
+
+
+                $arr[] = [
+                    'Patientvisit' => $data,
+                    'consultation' => $consultation,
+                    'radiology' => $radiology,
+                    'treatment' => $treatment,
+                    'billing' => $billingLogsForPatient,
+                    "patient" => $patient,
+                    'family_history' => $family_history,
+                    "drug_history" => $drug_history
+                ];
+            }
+
+            return JsonResponser::send(false, 'Billing stats fetched successfully.', $arr);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Error fetching  .', [], 500, $e);
+        }
+    }
+
+    public function revenue(Request $request)
+    {
+        try {
+
+            $overview = $this->service_department_service->revenue($request);
+
+            return JsonResponser::send(false, 'Record(s) found successfully', $overview, 200);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Error fetching in and out patients.', [], 500, $e);
+        }
+    }
+
+    public function in_and_out_patient(Request $request)
+    {
+        try {
+
+            $overview = $this->service_department_service->in_and_out_patient($request);
+
+            return JsonResponser::send(false, 'Record(s) found successfully', $overview, 200);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Error fetching in and out patients.', [], 500, $e);
+        }
+    }
+
+    public function appointments(Request $request)
+    {
+        try {
+            $overview = $this->service_department_service->appointments($request);
+
+            return JsonResponser::send(false, 'Record(s) found successfully', $overview, 200);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Error fetching appointments.', [], 500, $e);
+        }
+    }
+
+    public function departments()
+    {
+        try {
+            $overview = $this->service_department_service->departments();
+
+            return JsonResponser::send(false, 'Record(s) found successfully', $overview, 200);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Error fetching departments.', [], 500, $e);
+        }
+    }
+}

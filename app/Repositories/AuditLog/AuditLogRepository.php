@@ -89,26 +89,39 @@ class AuditLogRepository implements AuditLogInterface
      *
      * @param \App\Models\AuditLog
      */
-    public function getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate, $export = null)
+    public function getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate, $export = null, $action, $module_accessed)
     {
+
         $query = AuditLog::with(['audit_log_transactions', 'causer']);
 
         if (isset($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('action_type', 'LIKE', '%' . $search . '%')
                     ->orWhere('log_name', 'LIKE', '%' . $search . '%')
+                    ->orWhere('action', 'LIKE', '%' . $search . '%')
+                    ->orWhere('module_accessed', 'LIKE', '%' . $search . '%')
+                    ->orWhere('action_module', 'LIKE', '%' . $search . '%')
                     ->orWhereHas('causer', function ($q2) use ($search) {
-                        $q2->where('fullname', 'LIKE', '%' . $search . '%');
+                        $q2->where('fullname', 'LIKE', '%' . $search . '%')
+                            ->orWhere('id',   intval($search));
                     });
             });
         }
 
-        if (isset($startDate) && isset($endDate)) {
+        if (!empty($startDate) && !empty($endDate)) {
             $query->whereBetween('created_at', [Carbon::parse($startDate), Carbon::parse($endDate)]);
         }
 
         if (isset($activityType)) {
             $query->where('description', $activityType);
+        }
+
+        if (!empty($module_accessed)) {
+            $query->where("module_accessed",  'LIKE', "%{$module_accessed}%");
+        }
+
+        if (!empty($action)) {
+            $query->where("action_type",  'LIKE', "%{$action}%");
         }
 
         if (isset($sortBy)) {
@@ -118,7 +131,7 @@ class AuditLogRepository implements AuditLogInterface
         }
 
         // Handle export (CSV or PDF)
-        if ($export === 'csv' || $export === 'pdf') {
+        if (!empty($export) || $export === 'csv' || $export === 'pdf') {
             $logs = $query->get();
 
             $exportData = $logs->map(function ($log) {
@@ -143,6 +156,6 @@ class AuditLogRepository implements AuditLogInterface
         }
 
         // Paginated or full result
-        return $paginate ? $query->paginate(10) : $query->get();
+        return $paginate ? $query->orderBy('id', 'DESC')->paginate(10) : $query->orderBy('id', 'DESC')->get();
     }
 }

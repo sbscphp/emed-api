@@ -12,25 +12,14 @@ class Pharmacy extends Model
     protected $guarded = ['id'];
     protected $connection = 'tenant';
 
-    protected $fillable = [
-        'name',
-        'type',
-        'address',
-        'state_id',
-        'phone_number',
-        'assigned_pharmacist',
-        'license_number',
-        'active',
-        'email_address',
-        'pharmacy_id',
-        'opening_time',
-        'closing_time'
-    ];
-
-
     public function state()
     {
         return $this->belongsTo(State::class, 'state_id');
+    }
+
+    public function medication()
+    {
+        return $this->hasOne(Medication::class);
     }
     /**
      * @property User $pharmacist
@@ -44,6 +33,11 @@ class Pharmacy extends Model
     public function treatments()
     {
         return $this->hasMany(Treatment::class);
+    }
+
+    public function treatments_one()
+    {
+        return $this->hasOne(Treatment::class, 'id', 'pharmacy_id');
     }
 
     public function consultations()

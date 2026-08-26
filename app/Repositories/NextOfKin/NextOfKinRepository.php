@@ -36,14 +36,9 @@ class NextOfKinRepository implements NextOfKinInterface
      * @param int $id
      * @return \App\Models\NextOfKin
      */
-    public function update(array $data, $id)
+    public function update($data, $id)
     {
-        $record = NextOfKin::where('patient_id',  $id)->first();
-        if( $record){
-        $record->update($data);
-        return $record;
-        }
-      return null;
+        
     }
 
 

@@ -13,16 +13,14 @@ return new class extends Migration
     {
         Schema::create('lab_test_results', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->foreignId('patient_visit_lab_id')->constrained('patient_visit_lab')->onDelete('cascade');
-            $table->string('visitno')->nullable();
-            $table->string('test_name');
+            $table->string('tenant_id')->nullable();
+            $table->unsignedBigInteger('patient_visit_lab_id')->nullable();
+            $table->string('visit_id')->nullable();
+            $table->string('test');
             $table->string('result')->nullable();
-            $table->dateTime('date_recorded')->nullable();
-            $table->unsignedBigInteger('recorded_by')->nullable();
+            $table->string('reference_range')->nullable();
+            $table->string('status')->nullable()->comment('Not Ready, Ready');
             $table->timestamps();
-
-            $table->index('result');
-            $table->index('visitno');
         });
     }
 

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\State;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -61,6 +62,11 @@ class StateSeeder extends Seeder
             ['id' => 37, 'state_name' => 'Zamfara State'],
         ];
 
-        DB::table('states')->insert($states);
+        foreach ($states as $state) {
+            State::firstOrCreate(
+                ['id' => $state['id']],
+                ['state_name' => $state['state_name']]
+            );
+        }
     }
 }

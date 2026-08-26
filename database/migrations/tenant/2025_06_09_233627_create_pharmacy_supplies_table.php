@@ -13,14 +13,15 @@ return new class extends Migration
     {
         Schema::create('pharmacy_supplies', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('pharmacy_id')->constrained('pharmacies')->onDelete('cascade');
-            $table->string('product_name');
-            $table->string('product_category');
-            $table->integer('quantity_supplied');
-            $table->string('stock_level');
-            $table->string('supplier_name');
+            $table->string('tenant_id')->nullable();
+            $table->unsignedBigInteger('pharmacy_id')->nullable();
             $table->string('batch_number')->nullable();
-            $table->date('supplied_date');
+            $table->string('product_name')->nullable();
+            $table->string('product_category')->nullable();
+            $table->integer('quantity_supplied')->nullable();
+            $table->string('stock_level')->nullable();
+            $table->string('supplier_name')->nullable();
+            $table->date('supplied_date')->nullable();
             $table->timestamps();
         });
     }

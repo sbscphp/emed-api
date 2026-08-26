@@ -12,7 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Pagination\LengthAwarePaginator;
-
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PatientRepository implements PatientInterface
 {
@@ -165,22 +165,23 @@ class PatientRepository implements PatientInterface
     public function getPatientReport(Request $request)
     {
         $request->validate([
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
         ]);
 
-        $start = $request->start_date;
-        $end = $request->end_date;
-        $download = $request->boolean('download', false);
+        $start = Carbon::parse($request->start_date);
+        $end = Carbon::parse($request->end_date);
+        $download = $request->boolean('download', 0);
         $perPage = $request->integer('per_page', 10);
         $currentPage = $request->integer('page', 1);
-
-        $patients = Patient::with('service')
-            ->whereBetween('created_at', [$start, $end])
-            ->get();
+        $export  = $request->export;
+        $is_paginated =  $request->is_paginated;
+        $patients = Patient::with('service')->when(!empty($start) && !empty($end),  function ($query) use ($start, $end) {
+            $query->whereBetween('created_at', [$start, $end]);
+        })->get();
 
         if ($patients->isEmpty()) {
-            return JsonResponser::send(false, 'No patient records found for the selected date range.', [], 200);
+            return JsonResponser::send(false, 'No patient records found for the selected date range.', [], 422);
         }
 
         $grouped = $patients->groupBy(fn($p) => optional($p->service)->name ?? 'Unknown');
@@ -194,9 +195,18 @@ class PatientRepository implements PatientInterface
         })->values();
 
         $grandTotal = $patients->count();
+        // dd(json_encode($report));
+        if (intval($download)) {
+            if ($export == 'xlsx') {
+                return Excel::download(new PatientReportExport($report, $grandTotal), 'patient_report_' . now()->format('Ymd_His') . '.xlsx');
+            } else if ($export == 'pdf') {
+                $pdf = Pdf::loadView('reports.patient_report', [
+                    'report' => $report,
+                    'grandTotal' => $grandTotal,
+                ]);
 
-        if ($download) {
-            return Excel::download(new PatientReportExport($report, $grandTotal), 'patient_report_' . now()->format('Ymd_His') . '.xlsx');
+                return $pdf->download('patient_report_' . now()->format('Ymd_His') . '.pdf');
+            }
         }
 
         $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
@@ -207,8 +217,10 @@ class PatientRepository implements PatientInterface
             ['path' => url()->current(), 'query' => $request->query()]
         );
 
+        $data =  intval($is_paginated) ? $paginated : $report;
+
         return JsonResponser::send(false, 'Patient report generated successfully.', [
-            'data' => $paginated,
+            'data' => $data,
             'grand_total' => $grandTotal,
         ]);
     }

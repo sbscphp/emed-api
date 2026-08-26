@@ -14,20 +14,25 @@ class StoreMedicationInventoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'vendor_id' => 'nullable|exists:tenant.vendors,id',
-            'medication_id' => 'nullable|exists:tenant.medications,id',
-            'pharmacy_id' => 'nullable|exists:tenant.pharmacies,id',
-            'shipment_no' => 'nullable|string|max:255',
-            'batch_no' => 'required|string|max:255',
-            'mfg_date' => 'required|date',
-            'expiry_date' => 'required|date|after_or_equal:mfg_date',
-            'date_of_shipment' => 'nullable|date|after_or_equal:today',
-            'expected_delivery_date' => 'nullable|date|after_or_equal:date_of_shipment',
-            'received_qty' => 'nullable|integer|min:1',
-            'shipment_status' => 'required|in:pending,incomplete,complete,received',
-            'active_ingredient' => 'nullable|string|max:255',
-            'brand_name' => 'nullable|string|max:255',
-            'price' => 'nullable|numeric|min:0',
+            'active_ingredient' => 'nullable',
+            'brand_name' => 'nullable',
+            'received_qty' => 'nullable',
+            'order_placed_by' => 'nullable',
+            'mfg_date' => 'nullable',
+            'batch_no' => 'nullable',
+            'expiry_date' => 'nullable',
+            'price' => 'nullable',
+            'vendor_id' => 'required|numeric|exists:tenant.vendors,id',
+            'delivery_location' => 'nullable',
+            'date_of_shipment' => 'nullable',
+            'expected_delivery_date' => 'nullable',
+            'courier_service' => 'nullable',
+            'tracking_number' => 'nullable',
+            'current_location' => 'nullable',
+            'dispatched_date' => 'nullable',
+            'delivery_note' => 'nullable',
+            'support_doc' => 'nullable',
+            'support_file' => 'nullable'
         ];
     }
 }

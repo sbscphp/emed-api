@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Enums\ListModuleEnums;
 use App\Helpers\ExportHelper;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
@@ -12,6 +13,7 @@ use App\Services\MedicineType\MedicineTypeService;
 use App\Services\User\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class MedicineTypeController extends Controller
 {
@@ -26,8 +28,8 @@ class MedicineTypeController extends Controller
     public function index(Request $request)
     {
         try {
-            $filters = $request->only(['search', 'type', 'export']);
-            $types = $this->medicineTypeService->all($filters);
+            $filters = $request->only(['search', 'type', 'export', 'from', 'to']);
+            $types = $this->medicineTypeService->all($filters, $request);
 
             if (isset($filters['export'])) {
                 $exportData = $types->map(function ($type) {
@@ -58,16 +60,21 @@ class MedicineTypeController extends Controller
     {
         try {
             $currentUser = Auth::user();
-            $user = $this->userService->find($currentUser->id);
-
-            $created = $this->medicineTypeService->create($request->validated());
+            //$user = $this->userService->find($currentUser->id);
+            $user = User::on('tenant')->where('email', $currentUser['email'])->first();
+            $tenantId = $request->header('X-Tenant-ID');
+            $validated = array_merge($request->validated(), [
+                'tenant_id'        => $tenantId,
+            ]);
+            $created = $this->medicineTypeService->create($validated);
             $dataToLog = [
-                'causer_id' => $user->id,
+                'causer_id' => $currentUser->id,
                 'action_id' => $created->id,
                 'action' => 'Create',
                 'action_type' => "Models\MedicineType",
                 'log_name' => "Medicine Type created successfully",
-                'description' => "{$user->firstname} {$user->lastname} created a new Medicine: {$created->name}",
+                'description' => "{$currentUser->firstname} {$currentUser->lastname} created a new Medicine: {$created->name}",
+                'module_accessed' => ListModuleEnums::PHARMACY
             ];
 
             GeneralHelper::storeAuditLog($dataToLog);
@@ -83,7 +90,7 @@ class MedicineTypeController extends Controller
             $type = $this->medicineTypeService->find($id);
 
             if (!$type) {
-                return JsonResponser::send(true, 'Medicine type not found.', [], 404);
+                return JsonResponser::send(true, 'Medicine type not found.', [], 200);
             }
 
             return JsonResponser::send(false, 'Medicine type retrieved successfully.', $type);
@@ -99,7 +106,7 @@ class MedicineTypeController extends Controller
 
             return JsonResponser::send(false, 'Medicine type updated successfully.', $updated);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return JsonResponser::send(true, 'Medicine type not found.', [], 404);
+            return JsonResponser::send(true, 'Medicine type not found.', [], 200);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Internal server error.', [], 500, $e);
         }
@@ -111,7 +118,7 @@ class MedicineTypeController extends Controller
             $deleted = $this->medicineTypeService->delete($id);
             return JsonResponser::send(false, 'Medicine type deleted successfully.');
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return JsonResponser::send(true, 'Medicine type not found.', [], 404);
+            return JsonResponser::send(true, 'Medicine type not found.', [], 200);
         } catch (\Exception $e) {
             return JsonResponser::send(true, 'Internal server error.', [], 500, $e);
         }

@@ -9,6 +9,8 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\FinancialReportExport;
 use App\Helpers\ExportHelper;
+use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class BillingLogRepository implements BillingLogRepositoryInterface
 {
@@ -17,71 +19,126 @@ class BillingLogRepository implements BillingLogRepositoryInterface
         return BillingLog::create($data);
     }
 
-    public function all(Request $request)
+    public function all($request)
     {
-        $query = BillingLog::with(['serviceType', 'serviceUnit', 'patient.service']);
+        $query = BillingLog::with([
+            'serviceType',
+            'serviceUnit',
+            // patient_type
+            'patient.service'
+        ]);
 
-        if ($request->filled('search')) {
-            $search = $request->search;
+
+        if (!empty($request['patient_type'])) {
+            $query->whereHas('patient', function ($q) use ($request) {
+                $q->where('patient_type', 'like', "%{$request['patient_type']}%");
+            });
+        }
+
+
+        if (!empty($request['patient_service_unit'])) {
+            $query->whereHas('serviceUnit', function ($q) use ($request) {
+                $q->where('name', 'like', "%{$request['patient_service_unit']}%");
+            });
+        }
+
+        if (!empty($request['patient_service_type'])) {
+            $query->whereHas('serviceType', function ($q) use ($request) {
+                $q->where('name',  'like',  "%{$request['patient_service_type']}%");
+            });
+        }
+
+        if (!empty($request['item'])) {
+            $query->where('patient_name', 'like', "%{$request['item']}%");
+        }
+
+        // if (!empty($request['search'])) {
+        //     $search = $request['search'];
+        //     $query->where(function ($q) use ($search) {
+        //         $q->where('invoice_number', 'like', "%$search%")
+        //             ->orWhere('item_name', 'like', "%$search%")
+        //             ->orWhere('payment_status', 'like', "%$search%")
+        //             ->orWhereHas('patient', function ($pq) use ($search) {
+        //                 $pq->where('firstname', 'like', "%$search%")
+        //                     ->orWhere('lastname', 'like', "%$search%")
+        //                     ->orWhere('patientno', 'like', "%$search%")
+        //                     ->orWhere('cardno', 'like', "%$search%");
+        //             });
+        //     });
+        // }
+
+        if (!empty($request['search'])) {
+            $search = $request['search'];
+
             $query->where(function ($q) use ($search) {
                 $q->where('invoice_number', 'like', "%$search%")
+                    ->orWhere('patient_name', 'like', "%$search%")
                     ->orWhere('item_name', 'like', "%$search%")
                     ->orWhere('payment_status', 'like', "%$search%")
                     ->orWhereHas('patient', function ($pq) use ($search) {
-                        $pq->where('firstname', 'like', "%$search%")
-                            ->orWhere('lastname', 'like', "%$search%")
+                        $pq->where('firstname', 'like', "%{$search}%")
+                            ->orWhere('lastname', 'like', "%{$search}%")
                             ->orWhere('patientno', 'like', "%$search%")
                             ->orWhere('cardno', 'like', "%$search%");
                     });
             });
         }
 
-        if ($request->filled('payment_status')) {
-            $query->where('payment_status', $request->payment_status);
+        // if (!empty($request['payment_status'])) {
+        //     $payment_status =   $request['payment_status'];
+        //     $query->where(function ($q) use ($payment_status) {
+        //         $q->where('payment_status', $payment_status);
+        //     });
+        // }
+
+        if (!empty($request['payment_status'])) {
+            $query->where('payment_status', $request['payment_status']);
         }
 
-        if ($request->filled('service_type_id')) {
-            $query->where('service_type_id', $request->service_type_id);
+        // if (!empty($request['service_type_id'])) {
+        //     $query->where('service_type_id', $request['service_type_id']);
+        // }
+
+        // if (!empty($request['service_unit_id'])) {
+        //     $query->where('service_unit_id', $request['service_unit_id']);
+        // }
+
+
+        if (!empty($request['from']) && !empty($request['to'])) {
+            $query->whereBetween('created_at', [
+                Carbon::parse($request['from'])->startOfDay(),
+                Carbon::parse($request['to'])->endOfDay()
+            ]);
         }
 
-        if ($request->filled('service_unit_id')) {
-            $query->where('service_unit_id', $request->service_unit_id);
-        }
+        // if (!empty($request['export'])) {
+        //     $billings = $query->get();
 
-        if ($request->has('export')) {
-            $billings = $query->get();
+        //     $exportData = $billings->map(function ($item) {
+        //         return [
+        //             'Invoice Number' => $item->invoice_number,
+        //             'Patient Name' => $item->patient->firstname . ' ' . $item->patient->lastname,
+        //             'Patient No' => $item->patient->patientno,
+        //             'Card No' => $item->patient->cardno,
+        //             'Billing Date' => $item->billing_date,
+        //             'Item Name' => $item->item_name,
+        //             'Quantity' => $item->quantity,
+        //             'Unit Price' => $item->unit_price,
+        //             'Sub Total' => $item->sub_total,
+        //             'Tax Amount' => $item->tax_amount,
+        //             'Grand Total' => $item->grand_total,
+        //             'Payment Method' => $item->payment_method,
+        //             'Payment Status' => $item->payment_status,
+        //             'Service Type' => $item->serviceType->name ?? '',
+        //             'Service Unit' => $item->serviceUnit->name ?? '',
+        //             'Created At' => $item->created_at->toDateTimeString(),
+        //         ];
+        //     });
 
-            $exportData = $billings->map(function ($item) {
-                return [
-                    'Invoice Number' => $item->invoice_number,
-                    'Patient Name' => $item->patient->firstname . ' ' . $item->patient->lastname,
-                    'Patient No' => $item->patient->patientno,
-                    'Card No' => $item->patient->cardno,
-                    'Billing Date' => $item->billing_date,
-                    'Item Name' => $item->item_name,
-                    'Quantity' => $item->quantity,
-                    'Unit Price' => $item->unit_price,
-                    'Sub Total' => $item->sub_total,
-                    'Tax Amount' => $item->tax_amount,
-                    'Grand Total' => $item->grand_total,
-                    'Payment Method' => $item->payment_method,
-                    'Payment Status' => $item->payment_status,
-                    'Service Type' => $item->serviceType->name ?? '',
-                    'Service Unit' => $item->serviceUnit->name ?? '',
-                    'Created At' => $item->created_at->toDateTimeString(),
-                ];
-            });
 
-            if ($request->export === 'csv') {
-                return ExportHelper::streamCsv($exportData->toArray(), null, 'billing-records.csv');
-            }
 
-            if ($request->export === 'pdf') {
-                return ExportHelper::downloadPdf($exportData->toArray(), 'billing-records.pdf');
-            }
-
-            return JsonResponser::send(true, 'Invalid export format specified.', null, 400);
-        }
+        //       return response()->json($exportData);
+        // }
 
         // Default paginate
         return $query->latest()->paginate(10);
@@ -139,7 +196,8 @@ class BillingLogRepository implements BillingLogRepositoryInterface
         $download = $request->boolean('download', false);
         $perPage = $request->integer('per_page', 10);
         $currentPage = $request->integer('page', 1);
-
+        $export = $request->export;
+        $is_paginated = $request->is_paginated;
         $billingLogs = BillingLog::with('serviceType')
             ->whereBetween('created_at', [$start, $end])
             ->get();
@@ -168,7 +226,17 @@ class BillingLogRepository implements BillingLogRepositoryInterface
         $totalPending = $report->sum('pending_payment');
 
         if ($download) {
-            return Excel::download(new FinancialReportExport($report), 'financial_report_' . now()->format('Ymd_His') . '.xlsx');
+            if ($export == 'xlsx') {
+                return Excel::download(new FinancialReportExport($report), 'financial_report_' . now()->format('Ymd_His') . '.xlsx');
+            } else if ($export == 'pdf') {
+                $pdf = Pdf::loadView('reports.financial_report', [
+                    'report' => $report,
+                    'totalrevenue' => $totalRevenue,
+                    'totalpending' => $totalPending
+                ]);
+
+                return $pdf->download('financial_report_' . now()->format('Ymd_His') . '.pdf');
+            }
         }
 
         $paginated = new LengthAwarePaginator(
@@ -178,9 +246,9 @@ class BillingLogRepository implements BillingLogRepositoryInterface
             $currentPage,
             ['path' => url()->current(), 'query' => $request->query()]
         );
-
+        $data = $is_paginated ? $paginated : $report;
         return JsonResponser::send(false, 'Financial Report Generated Successfully.', [
-            'data' => $paginated,
+            'data' => $data,
             'sub_totals' => [
                 'total_revenue' => $totalRevenue,
                 'pending_payment' => $totalPending,

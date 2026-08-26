@@ -13,10 +13,27 @@ return new class extends Migration
     {
         Schema::create('tenants', function (Blueprint $table) {
             $table->id();
+            $table->string('uuid')->unique()->nullable();
             $table->string('name');
             $table->string('domain')->unique();
             $table->string('database')->unique();
+            $table->string('state_city')->nullable();
+            $table->string('registration_number')->nullable();
+            $table->string('email')->unique()->nullable();
+            $table->string('phone_number')->nullable();
+            $table->string('address')->nullable();
+            $table->string('theme_color')->nullable();
+            $table->string('logo')->nullable();
+            $table->string('license')->nullable();
             $table->timestamps();
         });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down()
+    {
+        Schema::dropIfExists('tenants');
     }
 };

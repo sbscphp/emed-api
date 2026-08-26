@@ -16,9 +16,9 @@ interface PharmacyInterface
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
     public function all();
-    public function treatmentLogall();
+    public function treatmentLogall($search, $from,  $to);
     public function getPatientTreatmentDetails(int $patientId);
-    public function fulfillPrescription(array $data);
+    public function fulfillPrescription($data);
 
 
     /**

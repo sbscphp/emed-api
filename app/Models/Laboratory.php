@@ -2,23 +2,16 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Laboratory extends Model
 {
+    use HasFactory, SoftDeletes;
     protected $guarded = ['id'];
     protected $connection = 'tenant';
     protected $table = 'patient_visit_lab';
-    protected $fillable = [
-        'patient_id',
-        'admin_id',
-        'consultation_id',
-        'visitno',
-        'lab_dept',
-        'test_name',
-        'ordered_test',
-        'others'
-    ];
 
     public function patient()
     {
@@ -28,5 +21,37 @@ class Laboratory extends Model
     public function consultation()
     {
         return $this->belongsTo(Consultation::class);
+    }
+
+    public function visit()
+    {
+        return $this->belongsTo(PatientVisit::class, 'visit_id');
+    }
+
+    public function billingLogDetail()
+    {
+        return $this->belongsTo(BillingLogDetail::class, 'id', 'lab_test_id');
+    }
+
+    public function results()
+    {
+        return $this->hasMany(LaboratoryResult::class, 'patient_visit_lab_id');
+    }
+
+    public function testService()
+    {
+        return $this->belongsTo(LabService::class, 'test_id');
+    }
+
+    public function billingLogs()
+    {
+        return $this->hasOneThrough(
+            BillingLog::class,         // Final model
+            PatientVisit::class,       // Intermediate model
+            'visitno',                 // Foreign key on PatientVisit for PatientVisitLab (referenced by 'visitno')
+            'visit_id',                // Foreign key on BillingLog pointing to PatientVisit (visit_id = id)
+            'visitno',                 // Local key on PatientVisitLab
+            'id'                       // Local key on PatientVisit
+        );
     }
 }

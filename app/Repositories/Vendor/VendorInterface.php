@@ -15,7 +15,7 @@ interface VendorInterface
      * 
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    public function all(array $filters = [], ?string $export = null);
+    public function all(array $filters = [], ?string $export = null, $from, $to, $tenantId);
 
 
     /**
@@ -64,6 +64,6 @@ interface VendorInterface
      */
     public function findByAttribute($attr, $value);
 
-               
+
     public function update_status($validated, $id);
 }

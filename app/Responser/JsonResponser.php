@@ -12,7 +12,7 @@ class JsonResponser
      * Return a new JSON response with paginated data
      *
      * @param int $status
-     * @param StaffStrength\ApiMgt\Http\Collections\ApiPaginatedCollection $data
+     * @param mixed $data
      * @param string|null $message
      * @return Illuminate\Http\JsonResponse
      */
@@ -34,9 +34,11 @@ class JsonResponser
     /**
      * Return a new JSON response with paginated data
      *
-     * @param int $status
-     * @param Array $data
-     * @param string|null $message
+     * @param bool $error
+     * @param string $message
+     * @param mixed $data
+     * @param int $statusCode
+     * @param \Throwable|null $th
      * @return Illuminate\Http\JsonResponse
      */
     public static function send(

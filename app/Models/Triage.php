@@ -11,16 +11,6 @@ class Triage extends Model
 
     protected $guarded = ['id'];
     protected $connection = 'tenant';
-    protected $fillable = [
-        'patient_id',
-        'user_id',
-        'blood_pressure',
-        'pulse_bpm',
-        'sugar_level',
-        'weight_kg',
-        'temperature',
-        'severity',
-    ];
     protected $casts = [
         'blood_pressure' => 'array',
     ];
@@ -31,8 +21,8 @@ class Triage extends Model
         return $this->belongsTo(Patient::class);
     }
 
-    // public function user()
-    // {
-    //     return $this->belongsTo(User::class, 'user_id');
-    // }
+    public function visit()
+    {
+        return $this->belongsTo(PatientVisit::class, 'visit_id');
+    }
 }

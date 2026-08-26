@@ -3,6 +3,7 @@
 namespace App\Repositories\MedicineType;
 
 use App\Models\MedicineType;
+use Carbon\Carbon;
 
 class MedicineTypeRepository implements MedicineTypeInterface
 {
@@ -11,9 +12,10 @@ class MedicineTypeRepository implements MedicineTypeInterface
      * 
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    public function all($filters)
+    public function all($filters, $request)
     {
-        $query = MedicineType::query();
+        $tenantId = $request->header('X-Tenant-ID');
+        $query = MedicineType::query()->where('tenant_id', $tenantId);
 
         if (!empty($filters['search'])) {
             $query->where('type_name', 'like', '%' . $filters['search'] . '%');
@@ -22,6 +24,13 @@ class MedicineTypeRepository implements MedicineTypeInterface
         if (isset($filters['type']) && $filters['type'] === 'all') {
             return $query->orderByDesc('date_added')->get();
         }
+
+        $query->when(!empty($filters['from']) && !empty($filters['to']), function ($q) use ($filters) {
+            $q->whereBetween('date_added', [
+                Carbon::parse($filters['from'])->startOfDay(),
+                Carbon::parse($filters['to'])->endOfDay()
+            ]);
+        });
 
         return $query->orderByDesc('date_added')->paginate(10);
     }

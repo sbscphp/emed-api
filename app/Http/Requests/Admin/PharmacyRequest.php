@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
+
 class PharmacyRequest extends FormRequest
 {
     /**
@@ -25,36 +26,23 @@ class PharmacyRequest extends FormRequest
             'name' => 'required|string|max:255',
             'type' => 'nullable|string',
             'address' => 'nullable|string',
-            'state_id' => 'required|exists:tenant.states,id',
+            'state_id' => 'required',
             'phone_number' => 'nullable|string|max:20',
             'opening_time' => 'required|date_format:H:i',
             'closing_time' => 'required|date_format:H:i|after:opening_time',
-            'assigned_pharmacist' => 'nullable|exists:users,id',
+            'assigned_pharmacist' => 'nullable',
             'license_number' => 'nullable|string|max:255',
-          //  'email_address' => 'nullable|email|max:255|exists:tenant.pharmacies,email_address',
-          // 'email_address' => 'nullable|email|max:255|exists:pharmacies,email_address',
+            'email_address' => 'nullable|email|max:255',
+            'active_ingredent' => "nullable|string",
+            // 'email_address' => 'nullable|email|max:255|exists:pharmacies,email_address',
             // 'pharmacy_id' => 'required|string|unique:tenant.pharmacies,pharmacy_id',
-        //    'email_address' => [
-        //             'nullable',
-        //             'email',
-        //             'max:255',
-        //             Rule::exists('pharmacies', 'email_address')->connection('tenant'),
-        //         ],
-        'email_address' => [
-                'nullable',
-                'email',
-                'max:255',
-                function ($attribute, $value, $fail) {
-                    $exists = DB::connection('tenant')
-                        ->table('pharmacies')
-                        ->where('email_address', $value)
-                        ->exists();
+            //    'email_address' => [
+            //             'nullable',
+            //             'email',
+            //             'max:255',
+            //             Rule::exists('pharmacies', 'email_address')->connection('tenant'),
+            //         ],
 
-                    if (!$exists) {
-                        $fail('The selected email address is invalid.');
-                    }
-                },
-            ],
             'active' => 'boolean',
         ];
     }

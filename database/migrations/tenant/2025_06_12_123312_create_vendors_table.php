@@ -13,13 +13,15 @@ return new class extends Migration
     {
         Schema::create('vendors', function (Blueprint $table) {
             $table->id();
-            $table->string('vendor_name');
+            $table->string('tenant_id')->nullable();
+            $table->string('registration_no')->nullable();
+            $table->string('vendor_name')->nullable();
             $table->string('contact_person')->nullable();
             $table->string('phone_number')->nullable();
             $table->string('email')->nullable();
             $table->string('address')->nullable();
-            $table->string('registration_no')->nullable();
-            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->string('status')->default('Active')->comment('Active', 'Inactive');
+            $table->string('category')->nullable()->comment('Equipment', 'Pharmacy Supply', 'Consumables', 'Stationary');
             $table->timestamps();
         });
     }

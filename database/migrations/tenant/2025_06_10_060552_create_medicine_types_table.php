@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('medicine_types', function (Blueprint $table) {
             $table->id();
+            $table->string('tenant_id')->nullable();
             $table->string('type_name');
             $table->timestamp('date_added')->useCurrent();
             $table->timestamps();

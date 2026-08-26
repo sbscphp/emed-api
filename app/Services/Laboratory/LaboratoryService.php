@@ -2,7 +2,12 @@
 
 namespace App\Services\Laboratory;
 
+use App\Helpers\ExportHelper;
+use App\Helpers\UserMgtHelper;
+use App\Models\Laboratory;
+use App\Models\LaboratoryResult;
 use App\Repositories\Laboratory\LaboratoryInterface;
+use Carbon\Carbon;
 
 /**
  * Class LaboratoryService
@@ -94,13 +99,131 @@ class LaboratoryService
         return $this->LaboratoryInterface->findByAttribute($attr, $value);
     }
 
-    public function getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage)
+    public function getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage, $export, $from, $to)
     {
-        return $this->LaboratoryInterface->getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage);
+        // return $this->LaboratoryInterface->getAllLabRecords($search, $status, $paginate, $paymentStatus, $perPage, $export, $from, $to);
+        $query = Laboratory::query()
+            ->with('consultation.pharmacist')
+            ->join('patients', 'patient_visit_lab.patient_id', '=', 'patients.id')
+            ->leftJoin('billing_logs', 'patient_visit_lab.patient_id', '=', 'billing_logs.patient_id')
+            ->select(
+                'patient_visit_lab.*',
+                'patients.firstname',
+                'patients.lastname',
+                'patients.patientno',
+                'patients.cardno',
+                'billing_logs.id as billing_id',
+                'billing_logs.sub_total as billing_amount',
+                'billing_logs.payment_status as billing_status'
+            );
+
+        // Optional filters (ensure variables are defined before this block: $search, $status, $from, $to, $export, $perPage, $paginate)
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('patients.firstname', 'LIKE', "%{$search}%")
+                    ->orWhere('patients.lastname', 'LIKE', "%{$search}%")
+                    ->orWhere('patients.patientno', 'LIKE', "%{$search}%")
+                    ->orWhere('patients.cardno', 'LIKE', "%{$search}%");
+            });
+        }
+
+        if (!empty($status)) {
+            $query->where('patient_visit_lab.test_status', $status);
+        }
+
+        if (!empty($paymentStatus)) {
+            $query->where('patient_visit_lab.payment_status', $paymentStatus);
+        }
+
+        if (!empty($from) && !empty($to)) {
+            $query->whereBetween('patient_visit_lab.created_at', [
+                Carbon::parse($from)->startOfDay(),
+                Carbon::parse($to)->endOfDay()
+            ]);
+        }
+
+        $query->orderBy('patient_visit_lab.created_at', 'desc');
+
+        // Export handling
+        // if (!empty($export)) {
+        //     $records = $query->get();
+
+        //     $exportData = $records->map(function ($item) {
+        //         return [
+        //             'Patient Name' => "{$item->firstname} {$item->lastname}",
+        //             'Patient No' => $item->patientno,
+        //             'Card No' => $item->cardno,
+        //             'Visit No' => $item->visitno,
+        //             'Lab Dept' => $item->lab_dept,
+        //             'Test Name' => $item->test_name,
+        //             'Ordered Tests' => $item->ordered_test,
+        //             'Others' => $item->others,
+        //             'Test Status' => $item->test_status,
+        //             'Payment Status' => $item->payment_status,
+        //             'Billing Amount' => $item->billing_amount,
+        //             'Billing Status' => $item->billing_status,
+        //             'Created At' => $item->created_at->toDateTimeString(),
+        //         ];
+        //     });
+
+        //     if ($export === 'csv') {
+        //         return ExportHelper::streamCsv($exportData->toArray(), null, 'lab-records.csv');
+        //     }
+
+        //     if ($export === 'pdf') {
+        //         return ExportHelper::downloadPdf($exportData->toArray(), 'lab-records.pdf');
+        //     }
+        // }
+
+        // Optional pagination (uncomment if needed)
+        return $paginate ? $query->paginate($perPage ?? 10) : $query->get();
     }
 
     public function getStats()
     {
         return $this->LaboratoryInterface->getStats();
+    }
+
+    public function updateTest($data, $test)
+    {
+
+        $test->update([
+            'test_status'   => $data->status
+        ]);
+
+        return $test->refresh();
+    }
+
+    public function updateResult($data, $test)
+    {
+
+        $currentUserInstance = UserMgtHelper::userInstance();
+        $tenant = $currentUserInstance->tenant->domain;
+
+        // Create lab result
+        foreach ($data->results as $item) {
+            $record = LaboratoryResult::updateOrCreate(
+                [
+                    'patient_visit_lab_id' => $test->id, // Unique match key
+                    'test' => $item['test'],
+                ],
+                [
+                    'tenant_domain'    => $tenant,
+                    'visitno'          => $test->visitno,
+                    'result'           => $item['result'],
+                    'reference_range'  => $item['reference_range'],
+                    'status'           => 'Ready'
+                ]
+            );
+        }
+
+        $test->update([
+            'specimen_type' => $data->specimen_type,
+            'notes'         => $data->notes,
+            'requested_by'  => $data->requested_by,
+            // 'test_status'   => 'completed'
+        ]);
+
+        return $record;
     }
 }

@@ -14,13 +14,14 @@ return new class extends Migration
         Schema::create('audit_logs', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('uuid', 36)->unique();
-            $table->mediumText('action_type')->nullable();
-            $table->mediumText('action_module')->nullable();
             $table->unsignedBigInteger('causer_id');
             $table->unsignedBigInteger('action_id');
+            $table->string('action')->nullable();
+            $table->mediumText('action_type')->nullable();
+            $table->mediumText('action_module')->nullable();
+            $table->string('module_accessed')->nullable();
             $table->mediumText('log_name')->nullable();
             $table->text('description')->nullable();
-            $table->foreign('causer_id')->references('id')->on('users')->onDelete('cascade');
             $table->timestamps();
         });
     }

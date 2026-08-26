@@ -14,6 +14,8 @@ use App\Http\Middleware\PharmacyAccessMiddleware;
 use App\Http\Middleware\LaboratoryAccessMiddleware;
 use App\Http\Middleware\DashboardAccessMiddleware;
 use App\Http\Middleware\CheckAdminOrSuperAdmin;
+use App\Http\Middleware\SuperAdmin;
+use Illuminate\Support\Facades\Route;
 
 // other imports
 
@@ -23,8 +25,14 @@ return Application::configure(basePath: dirname(__DIR__))
         api: __DIR__ . '/../routes/api.php',
         commands: __DIR__ . '/../routes/console.php',
         health: '/up',
+        then: function () {
+            Route::prefix('api/v1/superadmin')
+                ->middleware(["super_admin"])
+                ->group(base_path('routes/superadmin/api.php'));
+        }
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->append(\App\Http\Middleware\SecureHeaders::class);
         $middleware->alias([
             'tenant' => CurrentTenantMiddleware::class,
             'role.record' => RecordsAccessMiddleware::class,
@@ -35,6 +43,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role.laboratory' => LaboratoryAccessMiddleware::class,
             'role.dashboard' => DashboardAccessMiddleware::class,
             'admin.superadmin' => CheckAdminOrSuperAdmin::class,
+            "super_admin" => SuperAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

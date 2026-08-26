@@ -18,9 +18,9 @@ class PharmacySupplyService
         return $this->supplyRepo->store($data);
     }
 
-    public function listSupplies($search,  $isExport)
+    public function listSupplies($search,  $isExport, $from, $to)
     {
-        return $this->supplyRepo->getAll($search,  $isExport);
+        return $this->supplyRepo->getAll($search,  $isExport, $from, $to);
     }
 
     public function getSupplyById(int $id)

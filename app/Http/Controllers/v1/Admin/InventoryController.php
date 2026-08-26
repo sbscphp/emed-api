@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Enums\ListModuleEnums;
 use App\Http\Controllers\Controller;
 use App\Responser\JsonResponser;
 use App\Services\Inventory\InventoryService;
 use App\Helpers\GeneralHelper;
 use App\Http\Requests\Admin\StoreInventoryRequest;
 use App\Http\Requests\Admin\UpdateInventoryRequest;
+use App\Models\Inventory;
+use App\Models\Medication;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -25,43 +29,68 @@ class InventoryController extends Controller
     {
         try {
             config(['database.default' => 'tenant']);
-            $filters = $request->only(['search']);
+            $tenantId = $request->header('X-Tenant-ID');
+            $filters = $request->only(['search', 'type_name', 'status', 'is_expired', 'category']);
             $export = $request->input('export');
-
-            $data = $this->service->all($filters, $export);
+            $from = $request->from;
+            $to = $request->to;
+            $data = $this->service->all($filters, $export, $from, $to, $tenantId);
 
             if ($data instanceof \Symfony\Component\HttpFoundation\Response) {
                 return $data;
             }
 
             if ($data->isEmpty()) {
-                return JsonResponser::send(true, 'Inventory not found.', null, 404);
+                return JsonResponser::send(true, 'Inventory not found.', null, 200);
             }
 
             return JsonResponser::send(false, 'Inventory list fetched successfully', $data);
         } catch (\InvalidArgumentException $e) {
             return JsonResponser::send(true, $e->getMessage(), null, 400);
         } catch (\Exception $e) {
-            return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+            return JsonResponser::send(true, $e->getMessage(), 'Internal Server Error', 500, $e);
         }
     }
 
 
     public function show($id)
     {
-         config(['database.default' => 'tenant']);
+        config(['database.default' => 'tenant']);
         return response()->json($this->service->find($id));
     }
 
     public function store(StoreInventoryRequest $request)
     {
-         config(['database.default' => 'tenant']);
+        config(['database.default' => 'tenant']);
         DB::connection('tenant')->beginTransaction();
 
         try {
             $currentUser = Auth::user();
+            $tenantId = $request->header('X-Tenant-ID');
+            if ($request->filled('item_name')) {
+                $checkInventoryItemName = Inventory::where('item_name', $request->item_name)->first();
+                if ($checkInventoryItemName) {
+                    return JsonResponser::send(true, 'Item name already exist.', [], 422);
+                }
+            }
+            if ($request->filled('inventory_id')) {
+                $inventory = Inventory::find($request->inventory_id);
+                if (!$inventory) {
+                    return JsonResponser::send(true, 'Inventory drug not found.', [], 422);
+                }
+
+                if ($inventory->expiry_date && Carbon::parse($inventory->expiry_date)->isPast()) {
+                    return JsonResponser::send(true, 'Inventory drug expired', [], 422);
+                }
+
+                if ($request->quantity_requested > $inventory->quantity) {
+                    return JsonResponser::send(true, 'Quantity requested is greater than quantity available in inventory stock', [], 422);
+                }
+            }
+            $tenantId = $request->header('X-Tenant-ID');
             $validated = array_merge($request->validated(), [
                 'created_by' => $currentUser->id,
+                // 'tenant_id' => $tenantId,
             ]);
 
             $inventory = $this->service->create($validated);
@@ -73,23 +102,31 @@ class InventoryController extends Controller
                 'action_type' => "Models\\Inventory",
                 'log_name' => "Inventory item created",
                 'description' => "{$currentUser->firstname} {$currentUser->lastname} added inventory: {$inventory->item_name} [Batch: {$inventory->batch_no}]",
+                'module_accessed' => ListModuleEnums::Inventory
             ]);
 
             DB::connection('tenant')->commit();
             return JsonResponser::send(false, 'Inventory created successfully', $inventory, 201);
         } catch (\Exception $e) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+            return JsonResponser::send(true, $e->getMessage(), 'Internal Server Error', 500, $e);
         }
     }
 
     public function update(UpdateInventoryRequest $request, $id)
     {
-         config(['database.default' => 'tenant']);
+        config(['database.default' => 'tenant']);
         DB::connection('tenant')->beginTransaction();
 
         try {
             $currentUser = Auth::user();
+
+            if ($request->filled('medication_id')) {
+                $drug = Medication::find($request->medication_id);
+                if (!$drug) {
+                    return JsonResponser::send(true, 'Medication not found.', [], 422);
+                }
+            }
             $validated = array_merge($request->validated(), [
                 'updated_by' => $currentUser->id,
             ]);
@@ -103,28 +140,30 @@ class InventoryController extends Controller
                 'action_type' => "Models\\Inventory",
                 'log_name' => "Inventory item updated",
                 'description' => "{$currentUser->firstname} {$currentUser->lastname} updated inventory: {$inventory->item_name} [Batch: {$inventory->batch_no}]",
+                'module_accessed' => ListModuleEnums::Inventory
             ]);
 
             DB::connection('tenant')->commit();
             return JsonResponser::send(false, 'Inventory updated successfully', $inventory);
         } catch (\Exception $e) {
             DB::connection('tenant')->rollBack();
-            return JsonResponser::send(true, 'Internal server error', [], 500, $e);
+            return JsonResponser::send(true, $e->getMessage(), 'Internal Server Error', 500, $e);
         }
     }
 
     public function destroy($id)
     {
-         config(['database.default' => 'tenant']);
+        config(['database.default' => 'tenant']);
         $deleted = $this->service->delete($id);
         return JsonResponser::send(false, 'Inventory deleted successfully', $deleted);
     }
 
-    public function getInventoryStats()
+    public function getInventoryStats(Request $request)
     {
         try {
-             config(['database.default' => 'tenant']);
-            $stats = $this->service->getInventoryStats();
+            config(['database.default' => 'tenant']);
+            $tenantId = $request->header('X-Tenant-ID');
+            $stats = $this->service->getInventoryStats($tenantId);
 
             return JsonResponser::send(
                 false,

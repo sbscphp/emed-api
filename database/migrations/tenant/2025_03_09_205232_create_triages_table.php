@@ -13,10 +13,11 @@ return new class extends Migration
     {
         Schema::create('triages', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('patient_id')->constrained()->onDelete('cascade');
-            $table->unsignedBigInteger('user_id');
-            $table->integer('blood_pressure_systolic');
-            $table->integer('blood_pressure_diastolic');
+            $table->string('tenant_id')->nullable();
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->unsignedBigInteger('patient_id')->nullable();
+            $table->unsignedBigInteger('visit_id')->nullable();
+            $table->json('blood_pressure')->nullable();
             $table->integer('pulse_bpm');
             $table->decimal('sugar_level', 5, 2);
             $table->decimal('weight_kg', 5, 2);

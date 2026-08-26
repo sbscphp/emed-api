@@ -3,10 +3,14 @@
     "name": "laravel/laravel",
     "type": "project",
     "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "keywords": [
+        "laravel",
+        "framework"
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "azeemade/bulk-upload": "^1.0",
         "barryvdh/laravel-dompdf": "^3.1",
         "cloudinary-labs/cloudinary-laravel": "^2.2",
         "hidehalo/nanoid-php": "^2.0",
@@ -14,8 +18,11 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "maatwebsite/excel": "^3.1",
+        "openspout/openspout": "^4.28",
+        "phpoffice/phpspreadsheet": "*",
         "santigarcor/laratrust": "^8.3",
         "spatie/laravel-multitenancy": "^4.0",
+        "stancl/tenancy": "^3.9",
         "tymon/jwt-auth": "^2.1"
     },
     "require-dev": {

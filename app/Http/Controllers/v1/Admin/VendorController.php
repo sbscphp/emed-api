@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Enums\ListModuleEnums;
 use App\Http\Controllers\Controller;
 use App\Responser\JsonResponser;
 use App\Helpers\GeneralHelper;
 use App\Http\Requests\Admin\StoreVendorRequest;
 use App\Http\Requests\Admin\UpdateVendorRequest;
 use App\Http\Requests\Admin\UpdateStatusVendorRequest;
+use App\Models\User;
+use App\Models\Vendor;
 use App\Services\Vendor\VendorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,16 +28,22 @@ class VendorController extends Controller
     public function index(Request $request)
     {
         try {
-              config(['database.default' => 'tenant']);
-            $filters = $request->only(['search', 'type', 'export']);
-            $data = $this->service->all($filters, $filters['export'] ?? null);
+            $tenantId = $request->header('X-Tenant-ID');
+            config(['database.default' => 'tenant']);
+            $filters = $request->only(['search', 'type', 'export', 'vendor_name', 'contact_person', 'email', 'phone_number', 'status', 'category']);
+            // vendor_name,  contact_person, email,  phone_number
+
+            $from = $request->from;
+            $to = $request->to;
+
+            $data = $this->service->all($filters, $filters['export'] ?? null, $from, $to, $tenantId);
 
             if ($data instanceof \Symfony\Component\HttpFoundation\Response) {
                 return $data;
             }
 
             if ($data->isEmpty()) {
-                return JsonResponser::send(true, 'No vendors found.', null, 404);
+                return JsonResponser::send(true, 'No vendors found.', null, 200);
             }
 
             return JsonResponser::send(false, 'Vendors fetched successfully.', $data);
@@ -45,16 +54,31 @@ class VendorController extends Controller
         }
     }
 
+    public function all(Request $request)
+    {
+        try {
+            // config(['database.default' => 'tenant']);
+            $tenantId = $request->header('X-Tenant-ID');
+            $records = Vendor::where('tenant_id', $tenantId)->orderBy('created_at', 'desc')->get();
+
+            return JsonResponser::send(false, 'Vendors fetched successfully.', $records);
+        } catch (\InvalidArgumentException $e) {
+            return JsonResponser::send(true, $e->getMessage(), null, 400);
+        } catch (\Exception $e) {
+            return JsonResponser::send(true, 'Internal server error.', [], 500);
+        }
+    }
+
 
     public function show($id)
     {
-        
+
         try {
-             config(['database.default' => 'tenant']);
+            config(['database.default' => 'tenant']);
             $vendor = $this->service->find($id);
 
             if (!$vendor) {
-                return JsonResponser::send(true, 'Vendor not found.', null, 404);
+                return JsonResponser::send(true, 'Vendor not found.', null, 200);
             }
 
             return JsonResponser::send(false, 'Vendor details fetched successfully', $vendor);
@@ -65,16 +89,25 @@ class VendorController extends Controller
 
     public function store(StoreVendorRequest $request)
     {
-        DB::connection('tenant')->beginTransaction();
+
 
         try {
-            $currentUser = Auth::user();
+            DB::connection('tenant')->beginTransaction();
+            $currentUser = auth()->user();
+            $tenantId = $request->header('X-Tenant-ID');
             $validated = array_merge($request->validated(), [
                 'created_by' => $currentUser->id,
+                'tenant_id' => $tenantId,
             ]);
 
-            $vendor = $this->service->create($validated);
+            $checkVendorName = Vendor::where('vendor_name', $validated['vendor_name'])->first();
 
+            if ($checkVendorName) {
+                return JsonResponser::send(true, 'Vendor with this name already exists.', null, 400);
+            }
+
+            $vendor = $this->service->create($validated);
+            $main_user = User::on("tenant")->where("email",  $currentUser->email)->first() ?? null;
             GeneralHelper::storeAuditLog([
                 'causer_id' => $currentUser->id,
                 'action_id' => $vendor->id,
@@ -82,6 +115,7 @@ class VendorController extends Controller
                 'action_type' => "Models\\Vendor",
                 'log_name' => "Vendor created",
                 'description' => "{$currentUser->firstname} {$currentUser->lastname} created vendor: {$vendor->name}",
+                'module_accessed' => ListModuleEnums::Records
             ]);
 
             DB::connection('tenant')->commit();
@@ -104,14 +138,16 @@ class VendorController extends Controller
 
             $vendor = $this->service->update($validated, $id);
 
-            GeneralHelper::storeAuditLog([
-                'causer_id' => $currentUser->id,
-                'action_id' => $vendor->id,
-                'action' => 'Update',
-                'action_type' => "Models\\Vendor",
-                'log_name' => "Vendor updated",
-                'description' => "{$currentUser->firstname} {$currentUser->lastname} updated vendor: {$vendor->name}",
-            ]);
+            // GeneralHelper::storeAuditLog([
+            //     'causer_id' => $currentUser->id,
+            //     'action_id' => $vendor->id,
+            //     'action' => 'Update',
+            //     'action_type' => "Models\\Vendor",
+            //     'log_name' => "Vendor updated",
+            //     'description' => "{$currentUser->firstname} {$currentUser->lastname} updated vendor: {$vendor->name}",
+            //     'module_accessed' => ListModuleEnums::Records
+
+            // ]);
 
             DB::connection('tenant')->commit();
             return JsonResponser::send(false, 'Vendor updated successfully', $vendor);
@@ -129,7 +165,7 @@ class VendorController extends Controller
             $deleted = $this->service->delete($id);
 
             if (!$deleted) {
-                return JsonResponser::send(true, 'Vendor not found.', null, 404);
+                return JsonResponser::send(true, 'Vendor not found.', null, 200);
             }
 
             return JsonResponser::send(false, 'Vendor deleted successfully', $deleted);
@@ -138,29 +174,33 @@ class VendorController extends Controller
         }
     }
 
-    public function getVendorStats()
+    public function getVendorStats(Request $request)
     {
-          
+
         try {
-            config(['database.default' => 'tenant']);
-            $stats = $this->service->getVendorStats();
+            DB::connection('tenant')->beginTransaction();
+            $tenantId = $request->header('X-Tenant-ID');
+            $stats = $this->service->getVendorStats($tenantId);
+            DB::connection('tenant')->commit();
             return JsonResponser::send(false, 'Vendor stats fetched successfully', $stats);
         } catch (\Exception $e) {
+            DB::connection('tenant')->rollBack();
             return JsonResponser::send(true, 'Internal server error', [], 500, $e);
         }
     }
 
-    public function update_status(UpdateStatusVendorRequest $request, $id){
-    try {
-        config(['database.default' => 'tenant']);
-         DB::connection('landlord')->beginTransaction();
-         $validated = $request->validated();
-          $result = $this->service->update_status($validated, $id);
-        //    DB::connection('landlord')->commit();
-        return JsonResponser::send(false, 'Vendor stats fetched successfully', $result);
-     } catch (\Throwable $th) {
-     DB::connection('landlord')->rollBack();
-     return JsonResponser::send(true, 'Internal server error', [], 500, $th);
-     }
+    public function update_status(UpdateStatusVendorRequest $request, $id)
+    {
+        try {
+            config(['database.default' => 'tenant']);
+            DB::connection('landlord')->beginTransaction();
+            $validated = $request->validated();
+            $result = $this->service->update_status($validated, $id);
+            //    DB::connection('landlord')->commit();
+            return JsonResponser::send(false, 'Vendor stats fetched successfully', $result);
+        } catch (\Throwable $th) {
+            DB::connection('landlord')->rollBack();
+            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+        }
     }
 }

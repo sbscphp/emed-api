@@ -2,7 +2,14 @@
 
 namespace App\Services\Radiology;
 
+use App\Helpers\FileUploadHelper;
+use App\Helpers\UserMgtHelper;
+use App\Models\BillingLog;
+use App\Models\Radiology;
+use App\Models\RadiologyResult;
 use App\Repositories\Radiology\RadiologyInterface;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Class RadiologyService
@@ -92,5 +99,255 @@ class RadiologyService
     public function findByAttribute($attr, $value)
     {
         return $this->RadiologyInterface->findByAttribute($attr, $value);
+    }
+
+    public function radiology_list($validated)
+    {
+
+        // $radiology = Radiology::with(['consultation.patient_visits.billingLogsForPatient', 'consulted_by', 'consultation.patient'])
+        //     ->when(!empty($validated['search']), function ($query) use ($validated) {
+        //         $query->where("test_name", $validated['search'])
+        //             ->whereHas('consultation.patient', function ($q1) use ($validated) {
+        //                 $q1->where('firstname', 'like', "%{$validated['search']}%")
+        //                     ->orWhere('lastname', 'like', "%{$validated['search']}%")
+        //                     ->orWhere('patientno', 'like', "%{$validated['search']}%");
+        //             })
+        //             ->orWhereHas('consultation.patient_visits.billingLogsForPatient', function ($query) use ($validated) {
+        //                 // payment_status
+        //                 $query->where('payment_status', $validated['search']);
+        //             });
+        //     });
+
+        $radiology = Radiology::with([
+            'consultation.patientVisit.billingLogsForPatient',
+            'consulted_by',
+            'consultation.patient'
+        ])
+            ->when(!empty($validated['search']), function ($query) use ($validated) {
+                $query->where(function ($q) use ($validated) {
+                    $q->where("test_name", 'like', "%{$validated['search']}%")
+                        ->orWhereHas('consultation.patient', function ($q1) use ($validated) {
+                            $q1->where('firstname', 'like', "%{$validated['search']}%")
+                                ->orWhere('lastname', 'like', "%{$validated['search']}%")
+                                ->orWhere('patientno', 'like', "%{$validated['search']}%");
+                        })
+                        ->orWhereHas('consultation.patientVisit.billingLogsForPatient', function ($q2) use ($validated) {
+                            $q2->where('payment_status', 'like', "%{$validated['search']}%");
+                        });
+                });
+            });
+
+
+        if (!empty($validated['phone_number'])) {
+            $radiology->whereHas('consultation.patient', function ($q1) use ($validated) {
+                $q1->where("phoneno", $validated["phone_number"]);
+            });
+        }
+
+        if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
+            $startDate = $validated['start_date'];
+            $endDate = $validated['end_date'];
+            $radiology->whereBetween('created_at', [Carbon::parse($startDate), Carbon::parse($endDate)]);
+        }
+
+        if (!empty($validated['test_status'])) {
+            // $radiology->where('test_status', $validated['test_status']);
+            $radiology->whereRaw('LOWER(test_status) = ?', [strtolower($validated['test_status'])]);
+        }
+
+
+
+        if (!empty($validated['test_name'])) {
+            // $radiology->where('test_name', $validated['test_status']);
+            $radiology->whereRaw('LOWER(test_name) = ?', [strtolower($validated['test_status'])]);
+        }
+
+
+        if (!empty($validated['payment_status'])) {
+            $radiology->whereHas('consultation.patientVisit.billingLogsForPatient', function ($q1) use ($validated) {
+                // $q1->where("payment_status", $validated["payment_status"]);
+                $q1->whereRaw('LOWER(payment_status) = ?', [strtolower($validated['payment_status'])]);
+            });
+        }
+
+        $today = Radiology::whereDate('created_at', Carbon::today())
+            ->distinct('patient_id')
+            ->count('patient_id');
+        $tested_today = Radiology::whereDate('created_at', Carbon::today())
+            ->count();
+
+        $payments =  Radiology::with([
+            'consultation.patientVisit',
+        ])->get();
+
+        $arr = [];
+        foreach ($payments as $payment) {
+            $payment->consultation?->patientVisit?->id;
+
+            if ($payment->consultation?->patientVisit?->id) {
+                $bill = BillingLog::where("visit_id", $payment->consultation?->patientVisit?->id)->first();
+                if ($bill) {
+                    $arr[] =  [
+                        $bill
+                    ];
+                }
+            }
+        }
+
+        return [
+            'data' => $radiology->paginate(10),
+            "today" => $today,
+            'tested_today' => $tested_today,
+            'payment_confirm' => count($arr)
+
+        ];
+        // return   $radiology->paginate(10);
+    }
+
+
+    public function radiology_patient($validated)
+    {
+        $radiology = Radiology::with([
+            'consultation.patientVisit.billingLogsForPatient',
+            'consultation.patientVisit.patient',
+            'consulted_by',
+            'result'
+        ])
+            ->whereHas('consultation.patientVisit.patient', function ($q) use ($validated) {
+                $q->where('id', $validated['patient_id']);
+            });
+
+
+        if (!empty($validated['search'])) {
+            $radiology->where(function ($query) use ($validated) {
+                $query->where("test_name", 'like', "%{$validated['search']}%")
+                    ->orWhereHas('consultation.patientVisit.patient', function ($q3) use ($validated) {
+                        $q3->where(function ($q4) use ($validated) {
+                            $q4->where('firstname', 'like', "%{$validated['search']}%")
+                                ->orWhere('lastname', 'like', "%{$validated['search']}%")
+                                ->orWhere('patientno', 'like', "%{$validated['search']}%");
+                        });
+                    })
+                    ->orWhereHas('consultation.patientVisit.billingLogsForPatient', function ($q5) use ($validated) {
+                        $q5->where('payment_status', 'like', "%{$validated['search']}%")
+                            ->orWhere('payment_method', 'like', "%{$validated['search']}%");
+                    });
+            });
+        }
+
+
+        if (!empty($validated['phone_number'])) {
+            $radiology->whereHas('consultation.patientVisit.patient', function ($q) use ($validated) {
+                $q->where("phoneno", $validated["phone_number"]);
+            });
+        }
+
+
+        if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
+            $radiology->whereBetween('created_at', [
+                Carbon::parse($validated['start_date'])->startOfDay(),
+                Carbon::parse($validated['end_date'])->endOfDay()
+            ]);
+        }
+
+        if (!empty($validated['test_status'])) {
+            // $radiology->where('test_status', $validated['test_status']);
+            $radiology->whereRaw('LOWER(test_status) = ?', [strtolower($validated['test_status'])]);
+        }
+
+        if (!empty($validated['test_name'])) {
+            // $radiology->where('test_name', $validated['test_name']);
+            $radiology->whereRaw('LOWER(test_name) = ?', [strtolower($validated['test_name'])]);
+        }
+
+
+        if (!empty($validated['payment_status'])) {
+            $radiology->whereHas('consultation.patientVisit.billingLogsForPatient', function ($q) use ($validated) {
+                // $q->where("payment_status", $validated["payment_status"]);
+                $q->whereRaw('LOWER(payment_status) = ?', [strtolower($validated['payment_status'])]);
+            });
+        }
+
+
+        return $radiology->paginate(10);
+    }
+
+    public function result($data)
+    {
+
+        $currentUserInstance = UserMgtHelper::userInstance();
+        $userId = $currentUserInstance->id;
+        $tenant = $currentUserInstance->tenant->domain;
+
+        $resultImage = isset($data->result_img) && !empty($data->result_img)
+            ? FileUploadHelper::singleStringFileUpload($data->result_img, "radiology_results")
+            : null;
+
+        // Create radiology result
+        $record = RadiologyResult::create([
+            'tenant_domain' => $tenant,
+            'user_id' => $userId,
+            'radiology_id' => $data->radiology_id,
+            'patient_id' => $data->patient_id,
+            'examination_type' => $data->examination_type,
+            'clinical_indication' => $data->clinical_indication,
+            'technique' => $data->technique,
+            'findings' => $data->findings,
+            'result_img' => $resultImage,
+        ]);
+
+        $radio = Radiology::find($data->radiology_id);
+        if ($radio) {
+            $radio->update([
+                "test_status" => "completed",
+                // "payment_status" => "pending"
+            ]);
+        }
+
+
+        return $record;
+    }
+
+    public function updateResult($data, $result)
+    {
+        $currentUserInstance = UserMgtHelper::userInstance();
+        $userId = $currentUserInstance->id;
+
+        $resultImage = isset($data->result_img) && !empty($data->result_img)
+            ? FileUploadHelper::singleStringFileUpload($data->result_img, "radiology_results")
+            : $result->result_img; // Keep existing image if not provided
+
+        // Update radiology result
+        $result->update([
+            'updated_by' => $userId,
+            // 'radiology_id' => $data->radiology_id,
+            // 'patient_id' => $data->patient_id,
+            'examination_type' => $data->examination_type,
+            'clinical_indication' => $data->clinical_indication,
+            'technique' => $data->technique,
+            'findings' => $data->findings,
+            'result_img' => $resultImage,
+            'status' => 'Ready', // Update status if provided
+        ]);
+
+        $radiology = Radiology::find($result->radiology_id);
+        if ($radiology) {
+            // Check if all results for this radiology are "Ready"
+            $allReady = RadiologyResult::where('radiology_id', $radiology->id)
+                ->where('status', '!=', 'Ready')
+                ->doesntExist();
+            // test_status
+
+            $radiology->update([
+                "test_status" => "completed",
+                // "payment_status" => "pending"
+            ]);
+
+            if ($allReady) {
+                $radiology->update(['status' => 'Completed']);
+            }
+        }
+
+        return $result->refresh();
     }
 }

@@ -29,7 +29,7 @@ class PatientVisitRepository implements PatientVisitInterface
     {
         $patientcreate = PatientVisit::create($data);
         $data = $patientcreate->load('patient');
-       return  PatientResources::make($data);
+        return  PatientResources::make($data);
     }
 
 
@@ -131,7 +131,6 @@ class PatientVisitRepository implements PatientVisitInterface
                         ->orWhere('email', 'like', '%' . $search . '%')
                         ->orWhere('patientno', 'like', '%' . $search . '%');
                 });
-
         }
 
         if ($stage) {
@@ -159,18 +158,9 @@ class PatientVisitRepository implements PatientVisitInterface
      * @param [type] $date
      * @return void
      */
-    public function getPatientForConsultation($search, $sortBy, $date=Null, $paginate, $perPage)
+    public function getPatientForConsultation($search, $sortBy, $date = Null, $paginate, $perPage, $patient_type,  $stage, $status)
     {
-        $query = PatientVisit::with(['patient','patient.triage']);
-       // $query->join('billings', 'patient_visits.visitno', '=', 'billings.visitno');
-        $query->select(
-            'patient_id',
-            'visitno',
-            'arrival_date',
-            'departure_date',
-            'stage',
-            'status'
-        );
+        $query = PatientVisit::with(['patient', 'patient.triage', 'consultation']);
 
         if (isset($search)) {
             $query->where('visitno', 'like', '%' . $search . '%')
@@ -182,16 +172,32 @@ class PatientVisitRepository implements PatientVisitInterface
                         ->orWhere('patientno', 'like', '%' . $search . '%')
                         ->orWhere('cardno', 'like', '%' . $search . '%');
                 });
-
         }
 
-        if(isset($date)){
+        if (isset($date)) {
             $query->whereDate('arrival_date', Carbon::parse($date)->toDateString());
         }
 
-        $query->where('stage', 'consultation');
-        $query->where('status', 'ongoing');
-       // $query->where('billings.payment_status', 'paid');
+        if (!empty($patient_type)) {
+            $query->whereHas('patient',  function ($q) use ($patient_type) {
+                $q->where('patient_type',  $patient_type);
+            });
+        }
+
+        if (!empty($stage)) {
+            $query->where('stage', $stage);
+        }
+
+        if (!empty($status)) {
+            $query->where('status', $status);
+        }
+        //  ->where('stage', 'consultation')
+
+
+        // ->where('status', 'ongoing')
+
+
+        // $query->where('billings.payment_status', 'paid');
         $query->orderBy('created_at', $sortBy);
 
         return $paginate ? $query->paginate($perPage) : $query->get();

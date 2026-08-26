@@ -15,7 +15,7 @@ interface PharmacyRequestInterface
      * 
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    public function all();
+    public function all($search, $from, $to, $paginate, $tenantId);
 
 
     /**
@@ -35,6 +35,9 @@ interface PharmacyRequestInterface
      * @return \App\Models\PharmacyRequest
      */
     public function update(array $data, $id);
+
+
+    public function supply(array $data, $id);
 
 
     /**

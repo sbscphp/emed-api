@@ -22,14 +22,17 @@ class StoreInventoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'batch_no' => 'required|string',
-            'item_name' => 'required|string',
+            'medication_id' => 'required_without:item_name',
+            'item_name'     => 'required_without:medication_id',
+            'category' => 'nullable|string|max:255',
+            'batch_no' => 'nullable|string',
             // 'medicine_type' => 'required|string',
-            'medicine_type_id' => 'required|exists:tenant.medicine_types,id',
+            // 'medicine_type_id' => 'required|exists:tenant.medicine_types,id',
+            'medicine_type_id' => 'nullable|exists:tenant.medicine_types,id',
             'quantity' => 'required|integer|min:0',
             'reorder_level' => 'required|integer|min:0',
             'supplier' => 'nullable|string',
-            'expiry_date' => 'required|date',
+            'expiry_date' => 'nullable|date',
             'note' => 'nullable|string',
         ];
     }

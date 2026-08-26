@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Auth;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\DB;
 
 class TenantOnboardingRequest extends FormRequest
 {
@@ -25,23 +26,96 @@ class TenantOnboardingRequest extends FormRequest
     {
         return [
             // Hospital Details
-            'name'          => 'required|string',
-            'state_city'             => 'required|string',
-            'registration_number'    => 'required|string',
-            'email'         => 'required|email',
-            'phone_number'  => 'required|numeric',
-            'address'                => 'required|string',
-            'license'                => 'nullable|file|max:3000',
+            'name' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    $exists = DB::connection('landlord')
+                        ->table('registrations')
+                        ->where('name', $value)
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('The name already exists.');
+                    }
+                },
+            ],
+
+            'state_city' => 'required|string',
+            'registration_number' => 'required|string',
+
+            'phone_number' => [
+                'required',
+                'numeric',
+                function ($attribute, $value, $fail) {
+                    $exists = DB::connection('landlord')
+                        ->table('registrations')
+                        ->where('phone_number', $value)
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('Phone number already exists.');
+                    }
+                },
+            ],
+
+            'email' => [
+                'required',
+                'email:rfc,dns',
+                function ($attribute, $value, $fail) {
+                    $exists = DB::connection('landlord')
+                        ->table('registrations')
+                        ->where('email', $value)
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('Email already exists.');
+                    }
+                },
+            ],
+
+            'address' => 'required|string',
+            'license' => 'nullable|file|max:3000',
 
             // Admin Details
-            'admin_fullname'         => 'required|string',
-            'admin_role'             => 'required|string',
-            'admin_phone_number'     => 'required|numeric',
-            'admin_email'            => 'required|email|unique:users,email',
-            'admin_password'      => 'required|confirmed|min:6',
+            'admin_fullname' => 'required|string',
+            'admin_role' => 'required|string',
+
+            'admin_phone_number' => [
+                'required',
+                'numeric',
+                function ($attribute, $value, $fail) {
+                    $exists = DB::connection('landlord')
+                        ->table('users')
+                        ->where('phone_number', $value)
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('Admin phone number already exists.');
+                    }
+                },
+            ],
+
+            'admin_email' => [
+                'required',
+                'email:rfc,dns',
+                function ($attribute, $value, $fail) {
+                    $exists = DB::connection('landlord')
+                        ->table('users')
+                        ->where('email', $value)
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('Admin email already exists.');
+                    }
+                },
+            ],
+
+            'admin_password' => 'required|confirmed|min:6',
             'admin_password_confirm' => 'sometimes|same:admin_password',
         ];
     }
+
 
     /**
      * Get custom messages for validator errors.

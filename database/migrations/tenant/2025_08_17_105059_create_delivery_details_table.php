@@ -1,0 +1,37 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('delivery_details', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->string('tenant_id')->nullable();
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->unsignedBigInteger('patient_id')->nullable();
+            $table->unsignedBigInteger('visit_id')->nullable();
+            $table->string('delivery_mode')->nullable();
+            $table->string('labor_onset')->nullable();
+            $table->string('complications')->nullable();
+            $table->string('pain_management')->nullable();
+            $table->foreign('patient_id')->references('id')->on('patients')->onDelete('cascade');
+            $table->timestamps();
+            $table->softDeletes();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('delivery_details');
+    }
+};

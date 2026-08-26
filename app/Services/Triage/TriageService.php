@@ -8,7 +8,9 @@ use App\Models\PatientVisit;
 use App\Models\Triage;
 use App\Repositories\Triage\TriageInterface;
 use App\Responser\JsonResponser;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 /**
  * Class TriageService
@@ -109,15 +111,21 @@ class TriageService
         return $this->TriageInterface->getByPatientId($patientId);
     }
 
-    public function getPatientsAndStatsByService($serviceId, $search = null)
-    {
-        DB::connection('tenant');
-
+    public function getPatientsAndStatsByService(
+        $serviceId,
+        $search,
+        $from,
+        $to,
+        $payment_status,
+        $patient_status,
+        $patient_type
+    ) {
         $today = now()->toDateString();
 
-        $query = PatientVisit::join('patients', 'patient_visits.patient_id', '=', 'patients.id')
+        $baseQuery = PatientVisit::join('patients', 'patient_visits.patient_id', '=', 'patients.id')
             ->join('services', 'patients.service_id', '=', 'services.id')
             ->leftJoin('triages', 'patient_visits.patient_id', '=', 'triages.patient_id')
+            ->leftJoin('billing_logs', 'patient_visits.id', '=', 'billing_logs.visit_id')
             ->where('services.id', $serviceId)
             ->select(
                 'patient_visits.id as id',
@@ -133,36 +141,55 @@ class TriageService
                 'services.name as service_name',
                 'patient_visits.created_at as visit_date',
                 DB::raw('COALESCE(triages.severity, 0) as acuity'),
-                'patient_visits.stage as patient_status'
+                'patient_visits.stage as patient_status',
+                'billing_logs.payment_status',
+                'billing_logs.payment_method',
+                'patients.status'
             );
 
+        // Search filter
         if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('patients.firstname', 'like', "%$search%")
-                    ->orWhere('patients.lastname', 'like', "%$search%")
-                    ->orWhere('patients.cardno', 'like', "%$search%")
-                    ->orWhere('patients.patientno', 'like', "%$search%")
-                    ->orWhere('patient_visits.stage', 'like', "%$search%")
-                    ->orWhere('triages.severity', 'like', "%$search%");
+            $baseQuery->where(function ($q) use ($search) {
+                $q->where('patients.firstname', 'like', "%{$search}%")
+                    ->orWhere('patients.lastname', 'like', "%{$search}%")
+                    ->orWhere('patients.cardno', 'like', "%{$search}%")
+                    ->orWhere('patients.patientno', 'like', "%{$search}%")
+                    ->orWhere('patient_visits.stage', 'like', "%{$search}%")
+                    ->orWhere('triages.severity', 'like', "%{$search}%");
             });
         }
 
-        $patients = $query->orderBy('patient_visits.created_at', 'desc')->paginate(10);
-
-        foreach ($patients as $patient) {
-            $billingLog = BillingLog::where('patient_id', $patient->patient_id)
-                ->where('service_type_id', $serviceId)
-                ->latest()
-                ->first();
-
-            $patient->payment_status = $billingLog->payment_status ?? 'pending';
+        // Filters
+        if (!empty($patient_status)) {
+            $baseQuery->where('patient_visits.stage', $patient_status);
         }
+
+        if (!empty($patient_type)) {
+            $baseQuery->where('patients.patient_type', $patient_type);
+        }
+
+        if (!empty($payment_status)) {
+            $baseQuery->where('billing_logs.payment_status', $payment_status);
+        }
+
+        // Date range
+        $baseQuery->when($from && $to, function ($q) use ($from, $to) {
+            $q->whereBetween('patient_visits.arrival_date', [
+                Carbon::parse($from)->startOfDay(),
+                Carbon::parse($to)->endOfDay()
+            ]);
+        });
+
+        $exportQuery = clone $baseQuery;
+
+        $patients = $baseQuery->orderBy('patient_visits.created_at', 'desc')->paginate(10);
 
         $stats = $this->generateServiceStats($serviceId, $today);
 
         return [
+            'query'    => $exportQuery,
             'patients' => $patients,
-            'stats' => $stats
+            'stats'    => $stats,
         ];
     }
 
@@ -187,7 +214,7 @@ class TriageService
         $patients = $query->get();
 
         if ($patients->isEmpty()) {
-            return JsonResponser::send(true, 'No triage records found for export.', null, 404);
+            return JsonResponser::send(true, 'No triage records found for export.', null, 204);
         }
 
         $exportData = $patients->map(function ($p) {
@@ -209,7 +236,11 @@ class TriageService
 
         switch (strtolower($format)) {
             case 'pdf':
-                return ExportHelper::downloadPdf($exportData, "{$filename}.pdf", 'exports.triage_patients');
+                // return ExportHelper::downloadPdf($exportData, "{$filename}.pdf", 'exports.triage_patients');
+                // return $pdf->download('lab-records.pdf');
+                $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData])
+                    ->setPaper('A1', 'landscape');
+                return $pdf->download("{$filename}.pdf");
             case 'csv':
             default:
                 return ExportHelper::streamCsv($exportData, null, "{$filename}.csv");
@@ -281,9 +312,9 @@ class TriageService
         return $query->count();
     }
 
-    public function getAllInvestigationOrders($search = null)
+    public function investigationOrdersQuery($search = null, $patientType = null, $patientStatus = null, $paymentStatus = null)
     {
-        $query = PatientVisit::join('patients', 'patient_visits.patient_id', '=', 'patients.id')
+        $query = PatientVisit::with('billingLogsForPatient')->join('patients', 'patient_visits.patient_id', '=', 'patients.id')
             ->join('services', 'patients.service_id', '=', 'services.id')
             ->leftJoin('triages', 'patient_visits.patient_id', '=', 'triages.patient_id')
             ->select(
@@ -312,19 +343,29 @@ class TriageService
             });
         }
 
-        $patients = $query->paginate(10);
+        if (!empty($patientType)) {
+            $query->where('patients.patient_type',  $patientType);
+        }
 
-        $statsQuery = clone $query;
+        if (!empty($patientStatus)) {
+            // dd($patientStatus);
+            $query->where('patient_visits.stage',  $patientStatus);
+        }
+        if (!empty($paymentStatus)) {
+            $query->whereRelation('billingLogsForPatient', 'payment_status',  $paymentStatus);
+        }
 
-        $stats = [
-            'total_patients' => $statsQuery->count(),
-            'pending_patients' => (clone $statsQuery)->where('patient_visits.stage', 'triaged')->count(),
-            'order_available' => (clone $statsQuery)->where('patient_visits.stage', '!=', 'triaged')->count(),
-        ];
+        return $query;
+    }
+
+    public function getInvestigationStats($search = null)
+    {
+        $baseQuery = $this->investigationOrdersQuery($search);
 
         return [
-            'patients' => $patients,
-            'stats' => $stats
+            'total_patients'    => (clone $baseQuery)->count(),
+            'pending_patients'  => (clone $baseQuery)->where('patient_visits.stage', 'triaged')->count(),
+            'order_available'   => (clone $baseQuery)->where('patient_visits.stage', '!=', 'triaged')->count(),
         ];
     }
 }

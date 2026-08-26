@@ -11,11 +11,19 @@ class RoleRepository implements RoleInterface
      * 
      * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    public function all()
+    public function all($tenantId, $request)
     {
-        return Role::paginate(20);
+        return Role::query()->where('tenant_id', $tenantId)
+            ->when(!empty($request['search_param']), function ($query) use ($request) {
+                $query->where(function ($q) use ($request) {
+                    $q->where('name', 'LIKE', '%' . $request['search_param'] . '%')
+                        ->orWhere('display_name', 'LIKE', '%' . $request['search_param'] . '%');
+                });
+            })
+            ->when(!empty($request['status']), function ($query) use ($request) {
+                $query->where('status', $request['status']);
+            });
     }
-
 
     /**
      * Create new Role in the database.

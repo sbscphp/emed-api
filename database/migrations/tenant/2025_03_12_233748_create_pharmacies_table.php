@@ -13,11 +13,19 @@ return new class extends Migration
     {
         Schema::create('pharmacies', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->enum('type', ['main', 'sub'])->nullable();
-            $table->string('address')->nullable();
+            $table->string('tenant_id')->nullable();
+            $table->unsignedBigInteger('assigned_pharmacist')->nullable();
             $table->unsignedBigInteger('state_id')->nullable();
-            $table->boolean('active')->default(1);
+            $table->string('pharmacy_id')->unique();
+            $table->string('name');
+            $table->string('license_number')->nullable();
+            $table->string('phone_number')->nullable();
+            $table->string('email_address')->nullable();
+            $table->time('opening_time')->nullable();
+            $table->time('closing_time')->nullable();
+            $table->string('address')->nullable();
+            $table->string('type')->nullable()->comment('main', 'sub');
+            $table->boolean('active')->default(true)->comment(true, false);
             $table->timestamps();
         });
     }

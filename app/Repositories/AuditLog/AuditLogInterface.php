@@ -70,5 +70,5 @@ interface AuditLogInterface
      *
      * @param \App\Models\AuditLog
      */
-    public function getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate, $export = null);
+    public function getAllAuditLogs($search, $sortBy, $startDate, $endDate, $activityType, $paginate, $export = null, $action, $module_accessed);
 }
