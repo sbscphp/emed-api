@@ -22,22 +22,30 @@ class CurrentTenantMiddleware
 
     public function handle(Request $request, Closure $next): Response
     {
-        $user = Auth::user();
-        if ($user && $user->tenant_id) {
-            $tenant = Tenant::find($user->tenant_id);
-        } else {
-            $tenant = Tenant::where('domain', $request->getHost())->first();
+
+        $host = $request->getHost();
+        $mainDomain = env('CENTRAL_DOMAIN', 'emed.com');
+
+        if (!str_ends_with($host, $mainDomain)) {
+            return response()->json(['message' => 'Invalid tenant domain.'], 400);
         }
 
-        if ($tenant) {
-            $tenant->makeCurrent();
+        $subdomain = str_replace('.' . $mainDomain, '', $host);
+        $tenantDomain = $subdomain . '.' . $mainDomain;
 
-            config(['database.connections.tenant.database' => $tenant->database]);
-            DB::purge('tenant');
-            DB::reconnect('tenant');
-        } else {
-            return response()->json(['error' => "Tenant not found for domain or user: " . $request->getHost()], 404);
+        $tenant = Tenant::where('domain', $tenantDomain)->first();
+        if (!$tenant) {
+            return response()->json(['message' => 'Tenant not found.'], 404);
         }
+
+        // Set tenant globally and database connection
+        $tenant->makeCurrent();
+        config(['database.connections.tenant.database' => $tenant->database]);
+        DB::purge('tenant');
+        DB::reconnect('tenant');
+
+        // Share tenant globally
+        app()->instance('currentTenant', $tenant);
 
         return $next($request);
     }

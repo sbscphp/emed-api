@@ -470,10 +470,11 @@ class RecordManagementController extends Controller
             $request->validate([
                 'stage' => 'required|string'
             ]);
-            DB::connection('tenant');
 
             $currentUser = Auth::user();
+
             $user = $this->userService->find($currentUser->id);
+
             if (is_null($user)) {
                 return JsonResponser::send(true, 'User not found.', null, 404);
             }
@@ -528,7 +529,6 @@ class RecordManagementController extends Controller
     public function allRecords(Request $request)
     {
         try {
-            DB::connection('tenant');
 
             $search = $request->search;
             $paginate = $request->paginate ?? false;

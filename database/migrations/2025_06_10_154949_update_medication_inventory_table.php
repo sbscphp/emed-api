@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('shipment_no')->nullable()->change();
             $table->unsignedInteger('received_qty')->nullable()->change();
 
-            $table->string('active_ingredient')->nullable()->after('vendor');
+            $table->string('active_ingredient')->nullable();
             $table->string('brand_name')->nullable()->after('active_ingredient');
             $table->decimal('price', 10, 2)->nullable()->after('brand_name');
         });

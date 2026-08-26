@@ -10,8 +10,9 @@ class CreateMedicationInventoryTable extends Migration
     {
         Schema::create('medication_inventory', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('medication_id')->constrained()->onDelete('cascade');
-            $table->foreignId('pharmacy_id')->constrained()->onDelete('cascade');
+            $table->unsignedBigInteger('medication_id');
+            $table->unsignedBigInteger('pharmacy_id');
+            $table->unsignedBigInteger('vendor_id');
             $table->string('shipment_no');
             $table->string('batch_no');
             $table->date('mfg_date');
@@ -20,8 +21,11 @@ class CreateMedicationInventoryTable extends Migration
             $table->date('expected_delivery_date')->nullable();
             $table->unsignedInteger('received_qty');
             $table->unsignedInteger('current_stock')->default(0);
-            $table->string('vendor');
+            $table->string('vendor')->nullable();
             $table->enum('shipment_status', ['pending', 'incomplete', 'complete', 'received'])->default('pending');
+            $table->foreign('pharmacy_id')->references('id')->on('pharmacies')->onDelete('cascade');
+            $table->foreign('vendor_id')->references('id')->on('vendors')->onDelete('cascade');
+            $table->foreign('medication_id')->references('id')->on('medications')->onDelete('cascade');
             $table->timestamps();
         });
     }

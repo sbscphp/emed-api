@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('batch_no');
             $table->string('item_name');
-            $table->foreignId('medicine_type_id')->constrained('medicine_types')->onDelete('cascade');
+            $table->unsignedBigInteger('medicine_type_id')->nullable();
             $table->unsignedInteger('quantity');
             $table->unsignedInteger('reorder_level');
             $table->string('supplier')->nullable();
