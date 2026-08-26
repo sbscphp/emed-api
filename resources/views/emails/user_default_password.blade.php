@@ -54,14 +54,14 @@
             font-size: 16px;
             text-align: center;
             text-decoration: none;
-            background-color: #2F4FDC;
+            background-color: #234E44;
             color: #fff;
             border-radius: 5px;
             transition: background-color 0.3s;
         }
 
         .button:hover {
-            background-color: #0740dc8d;
+            background-color: #3a6b5c;
         }
 
         .password-pic {
@@ -80,7 +80,7 @@
         }
 
         .footer a {
-            color: #0740dc8d;
+            color: #3a6b5c;
             text-decoration: none;
         }
     </style>
@@ -89,7 +89,7 @@
 <body>
     <div class="container">
         <div class="u-row"
-            style="margin: 0 auto;min-width: 320px;max-width: 600px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: #2F4FDC;">
+            style="margin: 0 auto;min-width: 320px;max-width: 600px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: #234E44;">
             <div
                 style="border-collapse: collapse;display: table;width: 100%;height: 100%;background-color: transparent;">
                 <!--[if (mso)|(IE)]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding: 0px;background-color: transparent;" align="center"><table cellpadding="0" cellspacing="0" border="0" style="width:600px;"><tr style="background-color: #000;"><![endif]-->
@@ -114,14 +114,7 @@
                                                 <tr>
                                                     <td style="padding-right: 0px;padding-left: 0px;" align="center">
                                                         <span
-                                                            style="font-size: 14px; line-height: 140%; color: #fff;">Emeddiaries
-                                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                                width="1em" height="1em" viewBox="0 0 24 24">
-                                                                <path fill="currentColor"
-                                                                    d="M12.14 2a10 10 0 1 0 10 10a10 10 0 0 0-10-10m0 18a8 8 0 1 1 8-8a8 8 0 0 1-8 8" />
-                                                                <path fill="currentColor"
-                                                                    d="M16.14 10a3 3 0 0 0-3-3h-5v10h2v-4h1.46l2.67 4h2.4l-2.75-4.12A3 3 0 0 0 16.14 10m-3 1h-3V9h3a1 1 0 0 1 0 2" />
-                                                            </svg> </span>
+                                                            style="font-size: 16px; line-height: 140%; color: #fff; font-weight: 600;">Enugu International Hospital</span>
 
                                                     </td>
                                                 </tr>
@@ -190,10 +183,10 @@
 
 
         <p>If you have any questions or need further assistance, feel free to reach out to our customer support team at
-           <a href="mailto:support@emeddiaries.com"><strong style="color: #2F4FDC; text-decoration: underline;">support@emeddiaries.com</strong></a>
+           <a href="mailto:support@enuguhospital.com"><strong style="color: #234E44; text-decoration: underline;">support@enuguhospital.com</strong></a>
 
         <div class="footer">
-            <p>This email was sent from {{ env('APP_NAME') }}. &copy; {{ date('Y') }} Emeddiaries. All rights
+            <p>This email was sent from {{ config('app.name') }}. &copy; {{ date('Y') }} Enugu International Hospital. All rights
                 reserved. | <a href="#">Terms and Conditions</a></p>
         </div>
     </div>

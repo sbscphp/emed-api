@@ -19,15 +19,15 @@
 
                     <!-- Header -->
                     <tr>
-                        <td align="center" style="background-color:#eaf2ff;">
-                            <img src="https://res.cloudinary.com/dlcenmo5x/image/upload/v1763377653/Document/upload_43142_1763377652/kcjk71hu1pmprnko4tls.png"
-                                alt="Hospital Logo" width="80" style="margin: 20px 0;">
+                        <td align="center" style="background-color:#f0f4f2;">
+                            <img src="{{ asset('assets/img/enugu-logo.png') }}"
+                                alt="Enugu International Hospital" width="90" style="margin: 20px 0;">
                         </td>
                     </tr>
 
                     <!-- Hospital Name -->
                     <tr>
-                        <td align="center" style="padding-top: 10px; font-size:22px; font-weight:700; color:#2F4FDC;">
+                        <td align="center" style="padding-top: 10px; font-size:22px; font-weight:700; color:#234E44;">
                             {{ strtoupper($hospitalName) }}
                         </td>
                     </tr>
@@ -35,7 +35,7 @@
                     <!-- Main Heading -->
                     <tr>
                         <td align="center"
-                            style="padding: 10px 25px 25px; font-size:18px; font-weight:600; color:#2F4FDC;">
+                            style="padding: 10px 25px 25px; font-size:18px; font-weight:600; color:#234E44;">
                             Welcome to {{ $hospitalName }} Hospital Management System
                         </td>
                     </tr>
@@ -63,9 +63,9 @@
                             style="padding: 30px 30px; font-size:12px; color:#999999; line-height:18px; border-top:1px solid #eee;">
                             This email was sent to
                             <a href="mailto:{{ $email }}"
-                                style="color:#2F4FDC; text-decoration:none;">{{ $email }}</a>.<br>
+                                style="color:#234E44; text-decoration:none;">{{ $email }}</a>.<br>
                             If you were not expecting this, please ignore this email.<br><br>
-                            © {{ date('Y') }} {{ $hospitalName }}, Lagos State, Nigeria.
+                            © {{ date('Y') }} {{ $hospitalName }}, Enugu State, Nigeria.
                             <br><br>
 
                             <!-- Social icons -->

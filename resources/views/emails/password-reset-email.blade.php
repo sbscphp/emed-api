@@ -21,9 +21,8 @@
                     <!-- Top image / logo -->
                     <tr>
                         <td align="center" style="background:#ffffff; padding-top:26px; padding-bottom:8px;">
-                            <!-- Replace this with the banner or logo you want -->
-                            <img src="https://res.cloudinary.com/dlcenmo5x/image/upload/v1763377653/Document/upload_43142_1763377652/kcjk71hu1pmprnko4tls.png"
-                                alt="EMED Logo" width="140"
+                            <img src="{{ asset('assets/img/enugu-logo.png') }}"
+                                alt="Enugu International Hospital" width="120"
                                 style="display:block; border:0; outline:none; text-decoration:none;">
                         </td>
                     </tr>
@@ -41,7 +40,7 @@
                     <!-- Title (centered) -->
                     <tr>
                         <td align="center" style="padding:26px 30px 8px;">
-                            <h2 style="margin:0; color:#6b46ff; font-size:22px; font-weight:700; letter-spacing:0.2px;">
+                            <h2 style="margin:0; color:#234E44; font-size:22px; font-weight:700; letter-spacing:0.2px;">
                                 Reset Password
                             </h2>
                         </td>
@@ -66,8 +65,8 @@
 
                             <p style="margin:0 0 18px;">
                                 If you didn’t initiate this request, please contact our support team immediately at
-                                <a href="mailto:support@emed.com"
-                                    style="color:#6b46ff; text-decoration:none;">support@emed.com</a>.
+                                <a href="mailto:support@enuguhospital.com"
+                                    style="color:#234E44; text-decoration:none;">support@enuguhospital.com</a>.
                             </p>
 
                             <!-- Centered button -->
@@ -75,7 +74,7 @@
                                 <tr>
                                     <td align="center" style="padding-top:8px; padding-bottom:6px;">
                                         <a href="{{ $data['url'] }}" target="_blank"
-                                            style="display:inline-block; padding:14px 34px; background:#6b46ff; color:#fff; text-decoration:none; border-radius:8px; font-weight:600; font-size:16px;">
+                                            style="display:inline-block; padding:14px 34px; background:#234E44; color:#fff; text-decoration:none; border-radius:8px; font-weight:600; font-size:16px;">
                                             Reset Password
                                         </a>
                                     </td>
@@ -95,7 +94,7 @@
                         <td align="center"
                             style="background:#f8fafc; padding:18px 24px; color:#9aa3b2; font-size:13px;">
                             <div style="max-width:520px;">
-                                <p style="margin:8px 0 6px;">© {{ date('Y') }} {{ env('APP_NAME') }}. Lagos State,
+                                <p style="margin:8px 0 6px;">© {{ date('Y') }} {{ config('app.name') }}. Enugu State,
                                     Nigeria.</p>
 
                                 <!-- social icons (optional) -->

@@ -19,23 +19,23 @@
 
                     <!-- Header -->
                     <tr>
-                        <td align="center" style="background-color:#f5f3ff;">
-                            <img src="https://res.cloudinary.com/dlcenmo5x/image/upload/v1763377653/Document/upload_43142_1763377652/kcjk71hu1pmprnko4tls.png"
-                                alt="EMED Team" width="600" style="display:block; max-width:100%; height:auto;">
+                        <td align="center" style="background-color:#f0f4f2; padding: 24px 0;">
+                            <img src="{{ asset('assets/img/enugu-logo.png') }}"
+                                alt="Enugu International Hospital" width="110" style="display:block; max-width:100%; height:auto;">
                         </td>
                     </tr>
 
-                    <!-- EMED Text -->
+                    <!-- Brand Text -->
                     <tr>
-                        <td align="center" style="padding-top: 10px; font-size:22px; font-weight:700; color:#7F56D9;">
-                            EMED
+                        <td align="center" style="padding-top: 10px; font-size:22px; font-weight:700; color:#234E44;">
+                            Enugu International Hospital
                         </td>
                     </tr>
 
                     <!-- Main Heading -->
                     <tr>
                         <td align="center"
-                            style="padding: 10px 25px 25px; font-size:18px; font-weight:600; color:#7F56D9;">
+                            style="padding: 10px 25px 25px; font-size:18px; font-weight:600; color:#234E44;">
                             Verify Your Email to Access Your Account
                         </td>
                     </tr>
@@ -46,10 +46,10 @@
                             style="padding: 0 40px 10px; color:#333333; font-size:15px; line-height:24px;">
                             <p>Hello {{ $name }},</p>
 
-                            <p>Thank you for signing up with EMED. Your OTP verification code is:</p>
+                            <p>Thank you for signing up with Enugu International Hospital. Your OTP verification code is:</p>
 
                             <!-- OTP -->
-                            <p style="font-size: 22px; font-weight:bold; color:#7F56D9; margin: 10px 0;">
+                            <p style="font-size: 22px; font-weight:bold; color:#234E44; margin: 10px 0;">
                                 {{ $token }}
                             </p>
 
@@ -57,7 +57,7 @@
                                 you can safely ignore this email.</p>
 
                             <p style="margin-top: 25px;">Best regards,<br>
-                                The EMR Team
+                                The Enugu International Hospital Team
                             </p>
                         </td>
                     </tr>
@@ -68,10 +68,10 @@
                             style="padding: 30px 30px; font-size:12px; color:#999999; line-height:18px; border-top:1px solid #eee;">
                             This email was sent to
                             <a href="mailto:{{ $email }}"
-                                style="color:#7F56D9; text-decoration:none;">{{ $email }}</a>.
+                                style="color:#234E44; text-decoration:none;">{{ $email }}</a>.
                             If you'd rather not receive this kind of email, you can unsubscribe or manage your email
                             preferences.<br><br>
-                            © 2024 EMED, Lagos State, Nigeria.
+                            © {{ date('Y') }} Enugu International Hospital, Enugu State, Nigeria.
                             <br><br>
 
                             <!-- Social icons -->
