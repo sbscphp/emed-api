@@ -65,8 +65,8 @@
 
                             <p style="margin:0 0 18px;">
                                 If you didn’t initiate this request, please contact our support team immediately at
-                                <a href="mailto:support@enuguhospital.com"
-                                    style="color:#234E44; text-decoration:none;">support@enuguhospital.com</a>.
+                                <a href="mailto:support@enuguinternationalhospital.com"
+                                    style="color:#234E44; text-decoration:none;">support@enuguinternationalhospital.com</a>.
                             </p>
 
                             <!-- Centered button -->

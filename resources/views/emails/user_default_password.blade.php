@@ -183,7 +183,7 @@
 
 
         <p>If you have any questions or need further assistance, feel free to reach out to our customer support team at
-           <a href="mailto:support@enuguhospital.com"><strong style="color: #234E44; text-decoration: underline;">support@enuguhospital.com</strong></a>
+           <a href="mailto:support@enuguinternationalhospital.com"><strong style="color: #234E44; text-decoration: underline;">support@enuguinternationalhospital.com</strong></a>
 
         <div class="footer">
             <p>This email was sent from {{ config('app.name') }}. &copy; {{ date('Y') }} Enugu International Hospital. All rights
