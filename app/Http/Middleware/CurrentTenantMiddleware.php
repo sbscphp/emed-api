@@ -23,32 +23,6 @@ class CurrentTenantMiddleware
 
     public function handle(Request $request, Closure $next): Response
     {
-<<<<<<< HEAD
-
-        $host = $request->getHost();
-        $mainDomain = env('CENTRAL_DOMAIN', 'emed.com');
-
-        if (!str_ends_with($host, $mainDomain)) {
-            return response()->json(['message' => 'Invalid tenant domain.'], 400);
-        }
-
-        $subdomain = str_replace('.' . $mainDomain, '', $host);
-        $tenantDomain = $subdomain . '.' . $mainDomain;
-
-        $tenant = Tenant::where('domain', $tenantDomain)->first();
-        if (!$tenant) {
-            return response()->json(['message' => 'Tenant not found.'], 404);
-        }
-
-        // Set tenant globally and database connection
-        $tenant->makeCurrent();
-        config(['database.connections.tenant.database' => $tenant->database]);
-        DB::purge('tenant');
-        DB::reconnect('tenant');
-
-        // Share tenant globally
-        app()->instance('currentTenant', $tenant);
-=======
         $tenantUuid = $request->header('X-Tenant-ID');
 
         if (!$tenantUuid) {
@@ -69,8 +43,12 @@ class CurrentTenantMiddleware
             ], 404);
         }
 
+        // makeCurrent() switches the tenant DB connection via
+        // ConditionalSwitchTenantDatabaseTask (see config/multitenancy.php).
         $tenant->makeCurrent();
->>>>>>> ca83960a576e2e0230b3b5362b15e03904876553
+
+        // Share tenant globally for seeders/services that read app('currentTenant').
+        app()->instance('currentTenant', $tenant);
 
         return $next($request);
     }
