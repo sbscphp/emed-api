@@ -39,9 +39,15 @@ class InventoryRepository implements InventoryInterface
         }
 
         if (!empty($filters['type_name'])) {
-            $query->whereHas('medicineType', function ($qu) use ($filters) {
-                $qu->where("type_name", $filters['type_name']);
-            });
+            $typeName = $filters['type_name'];
+
+            if ($this->isNonMedicineType($typeName)) {
+                $query->whereDoesntHave('medicineType');
+            } else {
+                $query->whereHas('medicineType', function ($qu) use ($typeName) {
+                    $qu->where("type_name", $typeName);
+                });
+            }
         }
 
         if (!empty($filters['status'])) {
@@ -97,6 +103,20 @@ class InventoryRepository implements InventoryInterface
         return $paginated;
     }
 
+
+
+    /**
+     * Determine whether the given type name refers to items without a medicine type.
+     *
+     * @param string $typeName
+     * @return bool
+     */
+    protected function isNonMedicineType($typeName)
+    {
+        $normalized = strtolower(str_replace(['-', ' '], '_', trim($typeName)));
+
+        return $normalized === 'non_medicine';
+    }
 
 
     /**
