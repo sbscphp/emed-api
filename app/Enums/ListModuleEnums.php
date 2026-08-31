@@ -14,6 +14,9 @@ enum ListModuleEnums: string
     case Laboratory = 'Laboratory';
     case Logs = 'Logs';
     case NURSE = 'Nurse';
+    case Department = 'Department';
+    case Appointment = 'Appointment';
+    case Admission = 'Admission';
 }
 
 

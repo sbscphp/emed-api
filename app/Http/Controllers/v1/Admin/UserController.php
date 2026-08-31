@@ -275,7 +275,7 @@ class UserController extends Controller
                     'user_id'   => $user->id,
                 ],
                 [
-                    'status'        => $request['status'],
+                    'status'        => $request['status'] ?: GeneralEnums::ACTIVE->value,
                     'date_of_birth' => $request['date_of_birth'],
                     'is_active'     => 1,
                 ]
@@ -403,18 +403,16 @@ class UserController extends Controller
             $permissions = $tenantRole->permissions()->pluck('id')->toArray();
             $user->permissions()->sync($permissions);
 
-            // Update TenantUser row
-            TenantUser::on('landlord')->updateOrCreate(
-                [
-                    'tenant_id' => $tenant->id,
-                    'user_id'   => $user->id,
-                ],
-                [
-                    'status'        => $request['status'],
-                    'date_of_birth' => $request['date_of_birth'],
-                    'is_active'     => $request['is_active'] ?? 1,
-                ]
-            );
+            // Update TenantUser row (keep existing values when a field is not supplied)
+            $tenantUser = TenantUser::on('landlord')->firstOrNew([
+                'tenant_id' => $tenant->id,
+                'user_id'   => $user->id,
+            ]);
+
+            $tenantUser->status        = $request['status'] ?: ($tenantUser->status ?: GeneralEnums::ACTIVE->value);
+            $tenantUser->date_of_birth = $request['date_of_birth'] ?: $tenantUser->date_of_birth;
+            $tenantUser->is_active     = $request['is_active'] ?? $tenantUser->is_active ?? 1;
+            $tenantUser->save();
 
             DB::connection('landlord')->commit();
 

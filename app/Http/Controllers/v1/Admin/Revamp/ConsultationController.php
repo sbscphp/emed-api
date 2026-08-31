@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1\Admin\Revamp;
 
+use App\Enums\AppointmentStatusEnums;
 use App\Enums\GeneralEnums;
 use App\Enums\ListModuleEnums;
 use App\Enums\PatientVisitStatusEnums;
@@ -12,6 +13,7 @@ use App\Http\Requests\Admin\SurgeryRequest;
 use App\Http\Requests\Admin\TreatmentRequest;
 use App\Http\Requests\ConsultationLaborartoryRequest;
 use App\Http\Requests\ConsultationRadiologyRequest;
+use App\Models\Appointment;
 use App\Models\Consultation;
 use App\Models\Notification;
 use App\Models\Patient;
@@ -240,6 +242,16 @@ class ConsultationController extends Controller
             if ($consultation->patientVisit) {
                 $consultation->patientVisit->update([
                     'status' => PatientVisitStatusEnums::COMPLETED->value
+                ]);
+            }
+
+            $currentAppointment = Appointment::where('visit_id', $consultation->visit_id)
+                ->where('status', AppointmentStatusEnums::CHECKED_IN->value)
+                ->first();
+
+            if ($currentAppointment) {
+                $currentAppointment->update([
+                    'status' => AppointmentStatusEnums::COMPLETED->value
                 ]);
             }
 

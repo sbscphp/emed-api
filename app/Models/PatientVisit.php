@@ -41,6 +41,11 @@ class PatientVisit extends Model
         return $this->hasOne(Consultation::class, 'visit_id', 'id');
     }
 
+    public function admission()
+    {
+        return $this->hasOne(AdmittedPatient::class, 'visit_id', 'id')->latestOfMany();
+    }
+
     public function billingLogs()
     {
         return $this->hasMany(BillingLog::class, 'patient_id', 'patient_id')

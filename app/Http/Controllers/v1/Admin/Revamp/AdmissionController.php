@@ -3,9 +3,17 @@
 namespace App\Http\Controllers\v1\Admin\Revamp;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admission\CancelAdmissionRequest;
+use App\Http\Requests\Admission\DischargeAdmissionRequest;
+use App\Http\Requests\Admission\EmergencyAdmissionRequest;
+use App\Http\Requests\Admission\ScheduleAdmissionRequest;
+use App\Http\Requests\Admission\StoreAdmissionRequest;
+use App\Http\Requests\Admission\TransferAdmissionRequest;
+use App\Http\Requests\Admission\UpdateAdmissionRequest;
+use App\Http\Resources\AdmissionDetailResource;
+use App\Http\Resources\AdmissionResource;
+use App\Http\Resources\PatientVisitHistoryResource;
 use App\Models\Patient;
-use App\Models\PatientVisit;
-use App\Models\User;
 use App\Responser\JsonResponser;
 use App\Services\Revamp\AdmissionService;
 use App\Services\Revamp\PatientService;
@@ -24,6 +32,10 @@ class AdmissionController extends Controller
         $this->patientService = $patientService;
     }
 
+    /**
+     * The admissions listing behind the All, Active, Scheduled, Discharged and
+     * Cancelled tabs.
+     */
     public function index(Request $request)
     {
         try {
@@ -32,20 +44,23 @@ class AdmissionController extends Controller
             }
 
             $overview = $this->admissionService->overview($request);
+
+            if ($request->has('export') && !empty($request->query('export'))) {
+                return $this->admissionService->export($overview, $request->query('export'));
+            }
+
             $stats = $this->admissionService->stats($request);
 
             $records = [
                 ...$stats,
-                'data' => $overview,
+                'data' => $request->paginate
+                    ? AdmissionResource::collection($overview)->response()->getData(true)
+                    : AdmissionResource::collection($overview),
             ];
-
-            if (!$request->paginate) {
-                $records = $overview;
-            }
 
             return JsonResponser::send(false, 'Record(s) found successfully', $records);
         } catch (Throwable $th) {
-            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+            return JsonResponser::send(true, 'Internal Server Error', $th->getMessage(), 500, $th);
         }
     }
 
@@ -58,9 +73,9 @@ class AdmissionController extends Controller
                 return JsonResponser::send(true, 'Admission record not found.', [], 404);
             }
 
-            return JsonResponser::send(false, 'Record found successfully', $admission);
+            return JsonResponser::send(false, 'Record found successfully', new AdmissionDetailResource($admission));
         } catch (Throwable $th) {
-            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+            return JsonResponser::send(true, 'Internal Server Error', $th->getMessage(), 500, $th);
         }
     }
 
@@ -75,11 +90,52 @@ class AdmissionController extends Controller
 
             return JsonResponser::send(false, 'Record(s) found successfully', $wards);
         } catch (Throwable $th) {
-            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+            return JsonResponser::send(true, 'Internal Server Error', $th->getMessage(), 500, $th);
         }
     }
 
-    public function admitPatient(Request $request)
+    /**
+     * The bed spaces of a ward, so the form can offer the free ones.
+     */
+    public function wardBedSpaces(Request $request, $wardId)
+    {
+        try {
+            if (!$request->header('X-Tenant-ID')) {
+                return JsonResponser::send(true, 'X-Tenant-ID header is required.', [], 422);
+            }
+
+            $bedSpaces = $this->admissionService->getWardBedSpaces($request, $wardId);
+
+            return JsonResponser::send(false, 'Record(s) found successfully', $bedSpaces);
+        } catch (Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), [], 422);
+        }
+    }
+
+    /**
+     * The option lists (admission types, departments, wards, statuses) the
+     * admission forms are built from.
+     */
+    public function options(Request $request)
+    {
+        try {
+            if (!$request->header('X-Tenant-ID')) {
+                return JsonResponser::send(true, 'X-Tenant-ID header is required.', [], 422);
+            }
+
+            $options = $this->admissionService->getAdmissionOptions($request);
+
+            return JsonResponser::send(false, 'Record(s) found successfully', $options);
+        } catch (Throwable $th) {
+            return JsonResponser::send(true, 'Internal Server Error', $th->getMessage(), 500, $th);
+        }
+    }
+
+    /**
+     * Admit a patient — either completing an admission initiated from a
+     * consultation or raising a brand new one.
+     */
+    public function admitPatient(StoreAdmissionRequest $request)
     {
         try {
             if (!$request->header('X-Tenant-ID')) {
@@ -88,13 +144,98 @@ class AdmissionController extends Controller
 
             $admission = $this->admissionService->admitPatient($request);
 
-            return JsonResponser::send(false, 'Ward assigned successfully', $admission);
+            return JsonResponser::send(false, 'Patient admitted successfully', new AdmissionDetailResource($admission), 201);
         } catch (Throwable $th) {
-            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+            return JsonResponser::send(true, $th->getMessage(), [], 422);
         }
     }
 
-    public function dischargePatient(Request $request)
+    /**
+     * Schedule an admission for a future date.
+     */
+    public function scheduleAdmission(ScheduleAdmissionRequest $request)
+    {
+        try {
+            if (!$request->header('X-Tenant-ID')) {
+                return JsonResponser::send(true, 'X-Tenant-ID header is required.', [], 422);
+            }
+
+            $admission = $this->admissionService->scheduleAdmission($request);
+
+            return JsonResponser::send(false, 'Admission scheduled successfully', new AdmissionDetailResource($admission), 201);
+        } catch (Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), [], 422);
+        }
+    }
+
+    /**
+     * Admit a patient through the emergency route, registering them first when
+     * they are not already on file.
+     */
+    public function emergencyAdmission(EmergencyAdmissionRequest $request)
+    {
+        try {
+            if (!$request->header('X-Tenant-ID')) {
+                return JsonResponser::send(true, 'X-Tenant-ID header is required.', [], 422);
+            }
+
+            $admission = $this->admissionService->emergencyAdmission($request);
+
+            return JsonResponser::send(false, 'Emergency admission created successfully', new AdmissionDetailResource($admission), 201);
+        } catch (Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), [], 422);
+        }
+    }
+
+    public function updateAdmission(UpdateAdmissionRequest $request, $id)
+    {
+        try {
+            if (!$request->header('X-Tenant-ID')) {
+                return JsonResponser::send(true, 'X-Tenant-ID header is required.', [], 422);
+            }
+
+            $admission = $this->admissionService->updateAdmission($request, $id);
+
+            return JsonResponser::send(false, 'Admission updated successfully', new AdmissionDetailResource($admission));
+        } catch (Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), [], 422);
+        }
+    }
+
+    /**
+     * Move an admitted patient to a different ward and bed.
+     */
+    public function transferPatient(TransferAdmissionRequest $request)
+    {
+        try {
+            if (!$request->header('X-Tenant-ID')) {
+                return JsonResponser::send(true, 'X-Tenant-ID header is required.', [], 422);
+            }
+
+            $admission = $this->admissionService->transferAdmission($request);
+
+            return JsonResponser::send(false, 'Patient transferred successfully', new AdmissionDetailResource($admission));
+        } catch (Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), [], 422);
+        }
+    }
+
+    public function cancelAdmission(CancelAdmissionRequest $request)
+    {
+        try {
+            if (!$request->header('X-Tenant-ID')) {
+                return JsonResponser::send(true, 'X-Tenant-ID header is required.', [], 422);
+            }
+
+            $admission = $this->admissionService->cancelAdmission($request);
+
+            return JsonResponser::send(false, 'Admission cancelled successfully', new AdmissionDetailResource($admission));
+        } catch (Throwable $th) {
+            return JsonResponser::send(true, $th->getMessage(), [], 422);
+        }
+    }
+
+    public function dischargePatient(DischargeAdmissionRequest $request)
     {
         try {
             if (!$request->header('X-Tenant-ID')) {
@@ -103,9 +244,9 @@ class AdmissionController extends Controller
 
             $admission = $this->admissionService->dischargePatient($request);
 
-            return JsonResponser::send(false, 'Patient discharged successfully', $admission);
+            return JsonResponser::send(false, 'Patient discharged successfully', new AdmissionDetailResource($admission));
         } catch (Throwable $th) {
-            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+            return JsonResponser::send(true, $th->getMessage(), [], 422);
         }
     }
 
@@ -120,32 +261,40 @@ class AdmissionController extends Controller
 
             return JsonResponser::send(false, 'Record found successfully', $patientDetails);
         } catch (Throwable $th) {
-            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+            return JsonResponser::send(true, 'Internal Server Error', $th->getMessage(), 500, $th);
         }
     }
 
+    /**
+     * The patient's visit history, carrying the ward, bed and attending doctor
+     * of the admission each visit produced.
+     */
     public function viewPatientVisit(Request $request)
     {
         try {
             $overview = $this->patientService->patientVisitOverview($request);
 
-            $records = [
-                'data' => $overview
-            ];
-
             if ($request->export) {
                 $format = $request->export;
                 return $this->patientService->patientVisitExport($overview, $format);
             }
+
+            $records = [
+                'data' => $request->paginate
+                    ? PatientVisitHistoryResource::collection($overview)->response()->getData(true)
+                    : PatientVisitHistoryResource::collection($overview),
+            ];
+
             if (!$request->paginate) {
-                $records = $overview;
+                $records = PatientVisitHistoryResource::collection($overview);
             }
 
             return JsonResponser::send(false, 'Record(s) found successfully', $records);
         } catch (Throwable $th) {
-            return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+            return JsonResponser::send(true, 'Internal Server Error', $th->getMessage(), 500, $th);
         }
     }
+
 
     public function patientCareNotes(Request $request)
     {
