@@ -4,8 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\State;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 class StateSeeder extends Seeder
 {
@@ -14,14 +12,10 @@ class StateSeeder extends Seeder
      */
     public function run(): void
     {
-
-        Schema::disableForeignKeyConstraints();
-
-        DB::table('states')->delete();
-        DB::statement('ALTER TABLE states AUTO_INCREMENT = 1');
-
-        Schema::enableForeignKeyConstraints();
-
+        // No truncate here: the old DB::table('states') wipe ran on the default
+        // (landlord) connection while State writes to the tenant one, so it
+        // emptied the wrong database. firstOrCreate on the id already makes
+        // this seeder safe to re-run.
         $states = [
             ['id' => 1, 'state_name' => 'Abia State'],
             ['id' => 2, 'state_name' => 'Adamawa State'],
