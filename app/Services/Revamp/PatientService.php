@@ -2,6 +2,7 @@
 
 namespace App\Services\Revamp;
 
+use App\Enums\AppointmentStatusEnums;
 use App\Enums\GeneralEnums;
 use App\Enums\ListModuleEnums;
 use App\Enums\PatientVisitStageEnums;
@@ -11,6 +12,7 @@ use App\Repositories\Patient\PatientInterface;
 use App\Helpers\ExportHelper;
 use App\Helpers\FileUploadHelper;
 use App\Helpers\GeneralHelper;
+use App\Models\Appointment;
 use App\Models\BillingLog;
 use App\Models\BillingLogDetail;
 use App\Models\CareNote;
@@ -738,7 +740,9 @@ class PatientService
             })->when(($request['sort_by'] ?? null) === 'date_descending', function ($query) {
                 $query->orderBy('arrival_date', 'DESC');
             })
-            ->with('patient', 'service', 'patientBilling', 'consultation');
+            // admission and consultedDoctor carry the ward, bed and attending
+            // doctor the visit history table shows.
+            ->with('patient', 'service', 'patientBilling', 'consultation.consultedDoctor', 'admission.ward', 'admission.doctor');
 
         if (!empty($request['paginate']) && empty($request['export'])) {
             return $records->orderBy('id', 'DESC')->paginate($request['limit'] ?? 15);
@@ -842,6 +846,18 @@ class PatientService
                 'quantity' => 1,
                 'amount' => $service->price
             ]);
+
+            $fetchAppointment = Appointment::where('patient_id', $patient->id)
+                ->where('date', Carbon::now()->format('Y-m-d'))
+                ->where('status', AppointmentStatusEnums::SCHEDULED->value)
+                ->first();
+
+            if ($fetchAppointment) {
+                $fetchAppointment->update([
+                    'visit_id' => $patientVisit->id,
+                    'status' => AppointmentStatusEnums::CHECKED_IN->value,
+                ]);
+            }
 
             // update patient registaration staus
             // $patient->update([

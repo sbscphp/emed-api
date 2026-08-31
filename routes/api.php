@@ -35,10 +35,13 @@ use App\Http\Controllers\v1\Admin\Lab_Service_Controller;
 use App\Http\Controllers\v1\Admin\PharmacyServiceController;
 use App\Http\Controllers\v1\Admin\Radiology_service_Controller;
 use App\Http\Controllers\v1\Admin\Revamp\AdmissionController;
+use App\Http\Controllers\v1\Admin\Revamp\AppointmentController;
 use App\Http\Controllers\v1\Admin\Revamp\AuthenticationController;
 use App\Http\Controllers\v1\Admin\Revamp\BillingController as RevampBillingController;
+use App\Http\Controllers\v1\Admin\Revamp\BillingServiceController;
 use App\Http\Controllers\v1\Admin\Revamp\ConsultationController as RevampConsultationController;
 use App\Http\Controllers\v1\Admin\Revamp\DashboardController;
+use App\Http\Controllers\v1\Admin\Revamp\DepartmentController;
 use App\Http\Controllers\v1\Admin\Revamp\LabController as RevampLabController;
 use App\Http\Controllers\v1\Admin\Revamp\LabParameterController;
 use App\Http\Controllers\v1\Admin\Revamp\PharmacyController as RevampPharmacyController;
@@ -571,10 +574,16 @@ Route::group(["prefix" => "v1"], function () {
 
                 Route::group(['prefix' => 'admissions'], function () {
                     Route::get('/', [AdmissionController::class, 'index']);
-                    Route::get('/{id}', [AdmissionController::class, 'show']);
+                    Route::get('/form/options', [AdmissionController::class, 'options']);
                     Route::get('/fetch/wards', [AdmissionController::class, 'wards']);
+                    Route::get('/fetch/wards/{wardId}/bed-spaces', [AdmissionController::class, 'wardBedSpaces']);
                     Route::post('/admit/patient', [AdmissionController::class, 'admitPatient']);
+                    Route::post('/schedule/patient', [AdmissionController::class, 'scheduleAdmission']);
+                    Route::post('/emergency/patient', [AdmissionController::class, 'emergencyAdmission']);
+                    Route::post('/transfer/patient', [AdmissionController::class, 'transferPatient']);
+                    Route::post('/cancel/patient', [AdmissionController::class, 'cancelAdmission']);
                     Route::post('/discharge/patient', [AdmissionController::class, 'dischargePatient']);
+                    Route::put('/update/{id}', [AdmissionController::class, 'updateAdmission']);
                     Route::get('/patients/{id}', [AdmissionController::class, 'viewPatient']);
                     Route::get('/all/patients/visits', [AdmissionController::class, 'viewPatientVisit']);
                     Route::get('/all/patients/care-notes', [AdmissionController::class, 'patientCareNotes']);
@@ -585,12 +594,39 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/all/patients/drug-charts', [AdmissionController::class, 'patientDrugCharts']);
                     Route::post('/add/patients/drug-charts', [AdmissionController::class, 'addPatientDrugCharts']);
                     Route::get('/view/patients/drug-charts/{id}', [AdmissionController::class, 'viewPatientDrugCharts']);
+                    // Kept last so the static admission routes above are matched first.
+                    Route::get('/{id}', [AdmissionController::class, 'show'])->whereNumber('id');
                 });
 
                 Route::group(['prefix' => 'notifications'], function () {
                     Route::get('/', [NotificationController::class, "index"]);
                     Route::put('/mark_read/{id}', [NotificationController::class, 'markAsRead']);
                     Route::post('/all/mark_read', [NotificationController::class, 'markAllAsRead']);
+                });
+
+                Route::group(['prefix' => 'departments'], function () {
+                    Route::get('/', [DepartmentController::class, "index"]);
+                    Route::post('/', [DepartmentController::class, 'store']);
+                    Route::get('/{id}', [DepartmentController::class, 'show']);
+                    Route::put('/{id}', [DepartmentController::class, 'update']);
+                    Route::put('/toggle-status/{id}', [DepartmentController::class, 'toggleStatus']);
+                    Route::delete('/{id}', [DepartmentController::class, 'destroy']);
+                });
+
+                Route::group(['prefix' => 'appointments'], function () {
+                    Route::get('/', [AppointmentController::class, "index"]);
+                    Route::post('/', [AppointmentController::class, 'store']);
+                    Route::get('/{id}', [AppointmentController::class, 'show']);
+                    Route::put('/{id}', [AppointmentController::class, 'update']);
+                    Route::delete('/{id}', [AppointmentController::class, 'destroy']);
+                });
+
+                Route::group(['prefix' => 'billing_services'], function () {
+                    Route::get('/', [BillingServiceController::class, "index"]);
+                    Route::post('/', [BillingServiceController::class, 'store']);
+                    Route::get('/{id}', [BillingServiceController::class, 'show']);
+                    Route::put('/{id}', [BillingServiceController::class, 'update']);
+                    Route::delete('/{id}', [BillingServiceController::class, 'destroy']);
                 });
             });
         });

@@ -26,6 +26,7 @@ class StoreUserRequest extends FormRequest
              'email' => 'required|email|max:255',
              'role' => 'required',
             'date_of_birth' => 'required|date|before:today',
+            'status' => 'nullable|string|in:Active,Inactive',
             //'password' => 'required|string|min:8',
         ];
     }
@@ -39,6 +40,7 @@ class StoreUserRequest extends FormRequest
             'phone_number.unique' => 'The phone number is already in use.',
             'email' => 'The email address field is required.',
             'date_of_birth.before' => 'Date of birth must be a past date.',
+            'status.in' => 'Status must be either Active or Inactive.',
         ];
     }
 }
