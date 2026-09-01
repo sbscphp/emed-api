@@ -30,7 +30,7 @@ class InventoryController extends Controller
         try {
             config(['database.default' => 'tenant']);
             $tenantId = $request->header('X-Tenant-ID');
-            $filters = $request->only(['search', 'type_name', 'status', 'is_expired', 'category']);
+            $filters = $request->only(['search', 'type', 'type_name', 'status', 'is_expired', 'category']);
             $export = $request->input('export');
             $from = $request->from;
             $to = $request->to;
