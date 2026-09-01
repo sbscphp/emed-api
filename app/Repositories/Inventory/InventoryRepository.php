@@ -50,6 +50,21 @@ class InventoryRepository implements InventoryInterface
             }
         }
 
+        // Whether an item is a medicine at all, which is a coarser question
+        // than type_name asks. The two are independent, so a request carrying
+        // both narrows on both.
+        if (!empty($filters['type'])) {
+            $type = $this->normalizeType($filters['type']);
+
+            if ($type === 'non_medicine') {
+                $query->whereDoesntHave('medicineType');
+            } elseif ($type === 'medicine') {
+                $query->whereHas('medicineType');
+            } else {
+                throw new \InvalidArgumentException('Invalid type specified. Expected medicine or non-medicine.');
+            }
+        }
+
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status'])
                 ->whereDate('expiry_date', '>', now());
@@ -113,9 +128,20 @@ class InventoryRepository implements InventoryInterface
      */
     protected function isNonMedicineType($typeName)
     {
-        $normalized = strtolower(str_replace(['-', ' '], '_', trim($typeName)));
+        return $this->normalizeType($typeName) === 'non_medicine';
+    }
 
-        return $normalized === 'non_medicine';
+
+    /**
+     * Reduce a type written any of the ways the clients send it — "non-medicine",
+     * "Non Medicine", "non_medicine" — to one comparable form.
+     *
+     * @param string $type
+     * @return string
+     */
+    protected function normalizeType($type)
+    {
+        return strtolower(str_replace(['-', ' '], '_', trim($type)));
     }
 
 
