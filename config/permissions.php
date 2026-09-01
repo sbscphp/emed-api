@@ -19,6 +19,9 @@ return [
         'admission' => [
             'management' => ['create', 'view', 'modify'],
         ],
+        'appointment' => [
+            'management' => ['create', 'view', 'modify'],
+        ],
         'consultant' => [
             'management' => ['create', 'view', 'modify'],
         ],

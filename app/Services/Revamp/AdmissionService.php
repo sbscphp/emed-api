@@ -211,6 +211,45 @@ class AdmissionService
     }
 
     /**
+     * A patient as the Patient Information tab of the admitted patient screen
+     * reads them: their personal details, the ward and bed they are on and
+     * their emergency contact.
+     *
+     * The admission the profile describes is attached as a currentAdmission
+     * relation — the stay the patient is currently on, falling back to their
+     * most recent one so a discharged patient still shows where they were.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id  The patient id.
+     * @return \App\Models\Patient|null
+     */
+    public function getAdmittedPatientProfile($request, $id)
+    {
+        $patient = Patient::query()
+            ->with(['nextOfKin', 'emergencyContact', 'visits_recent'])
+            ->find($id);
+
+        if (!$patient) {
+            return null;
+        }
+
+        $admissions = AdmittedPatient::query()
+            ->forTenant($request->header('X-Tenant-ID'))
+            ->with(['ward', 'bedSpace'])
+            ->where('patient_id', $patient->id);
+
+        $admission = (clone $admissions)
+            ->where('status', AdmissionStatusEnums::ADMITTED->value)
+            ->latest('id')
+            ->first()
+            ?: $admissions->latest('id')->first();
+
+        $patient->setRelation('currentAdmission', $admission);
+
+        return $patient;
+    }
+
+    /**
      * The wards of the current tenant with their bed capacity.
      *
      * @param  \Illuminate\Http\Request  $request

@@ -8,6 +8,8 @@ use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
 use App\Http\Middleware\RecordsAccessMiddleware;
 use App\Http\Middleware\NurseAccessMiddleware;
+use App\Http\Middleware\AdmissionAccessMiddleware;
+use App\Http\Middleware\AppointmentAccessMiddleware;
 use App\Http\Middleware\ConsultationAccessMiddleware;
 use App\Http\Middleware\BillingAccessMiddleware;
 use App\Http\Middleware\PharmacyAccessMiddleware;
@@ -37,6 +39,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant' => CurrentTenantMiddleware::class,
             'role.record' => RecordsAccessMiddleware::class,
             'role.nurse' => NurseAccessMiddleware::class,
+            'role.admission' => AdmissionAccessMiddleware::class,
+            'role.appointment' => AppointmentAccessMiddleware::class,
             'role.consultant' => ConsultationAccessMiddleware::class,
             'role.billing' => BillingAccessMiddleware::class,
             'role.pharmacy' => PharmacyAccessMiddleware::class,

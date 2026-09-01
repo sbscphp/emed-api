@@ -12,12 +12,11 @@ use App\Http\Requests\Admission\TransferAdmissionRequest;
 use App\Http\Requests\Admission\UpdateAdmissionRequest;
 use App\Http\Resources\AdmissionDetailResource;
 use App\Http\Resources\AdmissionResource;
+use App\Http\Resources\AdmittedPatientProfileResource;
 use App\Http\Resources\PatientVisitHistoryResource;
-use App\Models\Patient;
 use App\Responser\JsonResponser;
 use App\Services\Revamp\AdmissionService;
 use App\Services\Revamp\PatientService;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Throwable;
 
@@ -250,16 +249,21 @@ class AdmissionController extends Controller
         }
     }
 
-    public function viewPatient($id)
+    /**
+     * The Patient Information tab of the admitted patient screen: the header
+     * strip, personal information, location information and the emergency
+     * contact.
+     */
+    public function viewPatient(Request $request, $id)
     {
         try {
-            $patientDetails = Patient::with(['nextOfKin', 'emergencyContact'])->find($id);
+            $patientDetails = $this->admissionService->getAdmittedPatientProfile($request, $id);
+
             if (!$patientDetails) {
                 return JsonResponser::send(true, 'Patient Record not found.', null, 422);
             }
-            $patientDetails->visit_date = $patientDetails->visits_recent ? Carbon::parse($patientDetails->visits_recent->arrival_date) : null;
 
-            return JsonResponser::send(false, 'Record found successfully', $patientDetails);
+            return JsonResponser::send(false, 'Record found successfully', new AdmittedPatientProfileResource($patientDetails));
         } catch (Throwable $th) {
             return JsonResponser::send(true, 'Internal Server Error', $th->getMessage(), 500, $th);
         }
