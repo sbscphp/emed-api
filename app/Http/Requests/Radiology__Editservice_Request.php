@@ -24,7 +24,18 @@ class Radiology__Editservice_Request extends FormRequest
         return [
             "id" => "required|exists:tenant.radiology_services,id",
             "name" => "required|string",
-            "price" => "required|integer",
+            // numeric, not integer: radiology prices carry kobo, and integer
+            // rejected every price that did.
+            "price" => "required|numeric|min:0",
+            "radiology_category_id" => "required|exists:tenant.radiology_categories,id",
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'radiology_category_id.required' => 'Select the imaging category this service belongs to.',
+            'radiology_category_id.exists' => 'The selected radiology category does not exist.',
         ];
     }
 }

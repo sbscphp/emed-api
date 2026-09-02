@@ -577,6 +577,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/lab_Service_all', [Lab_Service_Controller::class, "labService_all"]);
 
 
+                    Route::get('/all_radiology_category', [Radiology_service_Controller::class, "all_radiology_category"]);
                     Route::post('/create_radiology_service', [Radiology_service_Controller::class, "create_radiology_service"]);
                     Route::put('/edit_radiology_service', [Radiology_service_Controller::class, "edit_radiology_service"]);
                     Route::get('/all_radiology_service', [Radiology_service_Controller::class, "all_radiology_service"]);
