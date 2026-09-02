@@ -25,6 +25,9 @@ class DatabaseSeeder extends Seeder
                 DepartmentSeeder::class,
                 LabParameterSeeder::class,
                 LabTestSeeder::class,
+                // Must precede RadiologyTestSeeder: the tests are filed under
+                // the categories it creates.
+                RadiologyCategorySeeder::class,
                 RadiologyTestSeeder::class,
                 BillingServiceSeeder::class,
                 StateSeeder::class,

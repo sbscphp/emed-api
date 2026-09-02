@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\ServiceUnit;
+use App\Models\RadiologyCategory;
 use App\Models\RadiologyService;
 use Carbon\Carbon;
 
@@ -97,12 +98,35 @@ class RadiologyTestSeeder extends Seeder
             ]
         ];
 
-        $allTests = array_merge(...array_values($radiologyTest));
-        foreach ($allTests as $test) {
-            RadiologyService::firstOrCreate(
-                ['name' => $test['name'], 'tenant_id' => $test['tenant_id']],
-                $test
-            );
+        // The modality is read from the key each block is filed under, so it is
+        // stated once per group rather than repeated on every test row.
+        $categories = RadiologyCategory::whereIn('name', array_keys($radiologyTest))
+            ->pluck('id', 'name');
+
+        foreach ($radiologyTest as $categoryName => $tests) {
+            $categoryId = $categories[$categoryName] ?? null;
+
+            if (!$categoryId) {
+                $this->command?->warn("Radiology category '{$categoryName}' is missing — run RadiologyCategorySeeder first.");
+            }
+
+            foreach ($tests as $test) {
+                $test['radiology_category_id'] = $categoryId;
+
+                $service = RadiologyService::updateOrCreate(
+                    ['name' => $test['name'], 'tenant_id' => $test['tenant_id']],
+                    $test
+                );
+
+                // Hospitals seeded before categories existed already hold these
+                // rows, so the modality is filled in on the way past. Only when
+                // it is still empty: re-seeding must not undo a category a
+                // hospital moved by hand, and a blanket update would reset the
+                // prices they have since set.
+                if ($categoryId && empty($service->radiology_category_id)) {
+                    $service->forceFill(['radiology_category_id' => $categoryId])->save();
+                }
+            }
         }
     }
 }
