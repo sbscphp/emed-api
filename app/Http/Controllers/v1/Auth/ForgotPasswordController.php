@@ -94,6 +94,11 @@ class ForgotPasswordController extends Controller
             }
 
             $user->password = Hash::make($validatedData['password']);
+            // Choosing a password through a reset is still choosing one, so the
+            // temporary password prompt has to clear here too. Left set, the
+            // patient app would keep offering "create password" to someone who
+            // has already replaced the credentials we mailed them.
+            $user->must_change_password = 0;
             $user->save();
 
             DB::connection('landlord')->table('password_reset_tokens')

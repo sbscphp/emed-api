@@ -75,6 +75,14 @@ class RolePermissionSeeder extends Seeder
                 'description' => 'This role can access all the billing modules of the software and have all the privileges within the system.',
                 'modules' => ['billing'],
             ],
+            // Patients sign into the mobile app, never the hospital console, so
+            // this role deliberately carries no permissions at all. It exists so
+            // a patient account can be told apart from a staff account, which is
+            // what keeps patients out of the staff user list.
+            'patient' => [
+                'description' => 'This role is held by patients of the hospital. It grants access to the patient mobile app only and no hospital console module.',
+                'modules' => [],
+            ],
         ];
 
         foreach ($config as $key => $definition) {

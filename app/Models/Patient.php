@@ -230,6 +230,14 @@ class Patient extends Model implements BulkUploadable
         return $this->belongsTo(Service::class, 'service_id');
     }
 
+    /**
+     * The landlord user account this patient signs into the mobile app with.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
     public function nextOfKin()
     {
         return $this->hasOne(NextOfKin::class);

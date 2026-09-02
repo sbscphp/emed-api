@@ -22,6 +22,7 @@ use App\Http\Controllers\v1\Admin\UserController;
 use App\Http\Controllers\v1\Admin\VendorController;
 use App\Http\Controllers\v1\Auth\ForgotPasswordController;
 use App\Http\Controllers\v1\Auth\LoginController;
+use App\Http\Controllers\v1\Patient\PatientAuthController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\v1\Admin\MainDashBoardStatsController;
 // use App\Http\Controllers\v1\Admin\ArtisanController;
@@ -106,6 +107,36 @@ Route::group(["prefix" => "v1"], function () {
     });
     Route::post('/logout', [RegistrationController::class, 'logout']);
 
+    /** PATIENT MOBILE APP */
+    Route::group(['prefix' => 'patient'], function () {
+        // The patient's own hospitals, looked up from the email or phone number
+        // they type — a patient can be registered by more than one of them.
+        Route::post('/hospitals', [PatientAuthController::class, 'hospitals']);
+
+        Route::group(['prefix' => 'auth'], function () {
+            Route::post('/verify-invitation', [PatientAuthController::class, 'verifyInvitation']);
+            Route::post('/create-password', [PatientAuthController::class, 'createPassword']);
+            Route::post('/login', [PatientAuthController::class, 'login']);
+
+            // Password reset by one time code rather than an emailed link: the
+            // app never leaves itself, so there is no browser to land a link in.
+            // Throttled because one endpoint sends mail and the other guesses a
+            // six digit code.
+            Route::post('/request-reset-password', [PatientAuthController::class, 'requestPasswordReset'])
+                ->middleware('throttle:5,10');
+            Route::post('/verify-reset-otp', [PatientAuthController::class, 'verifyPasswordResetOtp'])
+                ->middleware('throttle:10,10');
+            Route::post('/reset-password', [PatientAuthController::class, 'resetPassword']);
+        });
+
+        Route::group(['middleware' => ['auth:api']], function () {
+            Route::post('/auth/logout', [PatientAuthController::class, 'logout']);
+            Route::get('/hospitals/mine', [PatientAuthController::class, 'myHospitals']);
+            Route::put('/biometric', [PatientAuthController::class, 'biometric']);
+            Route::put('/change-password', [PatientAuthController::class, 'changePassword']);
+        });
+    });
+
     Route::group(["middleware" => ["auth:api"]], function () {
         Route::group(['middleware' => ["tenant"]], function () {
             Route::group(['prefix' => 'general'], function () {
@@ -165,6 +196,9 @@ Route::group(["prefix" => "v1"], function () {
                         Route::delete('/delete/patient-document/{id}', [RecordManagementController::class, 'deletePatientDocument']);
                         Route::delete('/delete/{id}', [RecordManagementController::class, 'delete']);
                         // Bulk Upload (must be declared before the /{id} wildcard)
+                        // Re-send the patient app invitation (declared before the
+                        // /{id} wildcard so it is not swallowed by it).
+                        Route::post('/resend-invitation/{id}', [RecordManagementController::class, 'resendInvitation']);
                         Route::post('/bulk-upload', [RecordManagementController::class, 'bulkUpload']);
                         Route::get('/bulk-upload/template', [BulkUploadController::class, 'template']);
                         Route::get('/bulk-upload/{batch_id}/errors', [BulkUploadController::class, 'errors'])->name('patient-bulk-upload.errors');
