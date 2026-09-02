@@ -4,6 +4,7 @@ namespace App\Http\Controllers\v1\Admin;
 
 use App\Enums\GeneralEnums;
 use App\Enums\ListModuleEnums;
+use App\Enums\RoleEnums;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreUserRequest;
@@ -110,7 +111,12 @@ class UserController extends Controller
     {
         try {
             $tenantId = $request->header('X-Tenant-ID');
-            $record = Role::where('tenant_id', $tenantId)->orderBy('id', 'DESC')->get();
+            // Roles a staff account can be given. Patient is left out: it is
+            // granted by the patient registration flow, never picked here.
+            $record = Role::where('tenant_id', $tenantId)
+                ->where('name', '!=', RoleEnums::PATIENT->value)
+                ->orderBy('id', 'DESC')
+                ->get();
 
             return JsonResponser::send(false, 'Record found successfully', $record, 200);
         } catch (\Throwable $th) {
@@ -218,6 +224,12 @@ class UserController extends Controller
             $tenantRole = Role::where('tenant_id', $tenantUuid)->find($request['role']);
             if (!$tenantRole) {
                 return JsonResponser::send(true, 'Invalid role selected.', [], 422);
+            }
+
+            // Patient accounts are created by registering a patient record, not
+            // from the staff user form, and they never appear in this list.
+            if ($tenantRole->name === RoleEnums::PATIENT->value) {
+                return JsonResponser::send(true, 'Patient accounts are created from patient registration.', [], 422);
             }
 
             // 2️⃣ Check if user exists in landlord DB

@@ -2,6 +2,7 @@
 
 namespace App\Repositories\User;
 
+use App\Enums\RoleEnums;
 use App\Models\AuditLog;
 use App\Models\User;
 use App\Responser\JsonResponser;
@@ -39,6 +40,8 @@ class UserRepository implements UserRepositoryInterface
         $tenant->makeCurrent();
         $tenantId = $tenant->id;
 
+        $tenantDb = DB::connection('tenant')->getDatabaseName();
+
         // Base query
         $query = User::query()
             ->select('users.*', 'tenant_users.status as tenant_status')
@@ -48,6 +51,20 @@ class UserRepository implements UserRepositoryInterface
             ->with(['tenantUsers' => function ($q) use ($tenantId) {
                 $q->where('tenant_id', $tenantId)->whereNull('deleted_at');
             }]);
+
+        // This is the hospital's staff list. Patients hold an account on the
+        // same table so they can sign into the patient mobile app, and they are
+        // told apart by the patient role, so they are excluded here rather than
+        // by a column on users: the same person may be staff at one hospital
+        // and a patient at another.
+        $query->whereNotExists(function ($sub) use ($tenantDb, $tenant) {
+            $sub->select(DB::raw(1))
+                ->from("$tenantDb.role_user")
+                ->join("$tenantDb.roles", 'roles.id', '=', 'role_user.role_id')
+                ->whereRaw('role_user.user_id = users.id')
+                ->where('roles.tenant_id', $tenant->uuid)
+                ->where('roles.name', RoleEnums::PATIENT->value);
+        });
 
         // Search filter
         if (!empty($search)) {
@@ -73,7 +90,6 @@ class UserRepository implements UserRepositoryInterface
         // Role filter (manual)
         if (!empty($filters['role'])) {
             $roleId = $filters['role'];
-            $tenantDb = DB::connection('tenant')->getDatabaseName();
 
             $query->whereExists(function ($sub) use ($tenantDb, $tenant, $roleId) {
                 $sub->select(DB::raw(1))

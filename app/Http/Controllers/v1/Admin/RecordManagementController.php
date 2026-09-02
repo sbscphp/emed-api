@@ -15,7 +15,9 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Notification;
 use App\Models\Patient;
 use App\Models\PatientVisit;
+use App\Models\Tenant;
 use App\Models\User;
+use App\Services\Patient\PatientAccountService;
 use App\Services\Revamp\PatientService;
 use Azeemade\BulkUpload\Services\BulkUploadService;
 use Throwable;
@@ -24,11 +26,14 @@ class RecordManagementController extends Controller
 {
 
     protected PatientService $patientService;
+    protected PatientAccountService $patientAccountService;
 
     public function __construct(
         PatientService $patientService,
+        PatientAccountService $patientAccountService,
     ) {
         $this->patientService = $patientService;
+        $this->patientAccountService = $patientAccountService;
     }
 
     public function index(Request $request)
@@ -61,10 +66,22 @@ class RecordManagementController extends Controller
     {
         try {
             DB::connection('tenant')->beginTransaction();
+            // The patient's app account lives on the landlord database, so both
+            // connections have to succeed or fail together.
+            DB::connection('landlord')->beginTransaction();
+
             $currentUser = Auth::user();
             $tenantId = $request->header('X-Tenant-ID');
+            $tenant = Tenant::where('uuid', $tenantId)->first();
+
+            if (!$tenant) {
+                $this->rollbackPatientRegistration();
+                return JsonResponser::send(true, 'Invalid tenant provided.', null, 400);
+            }
+
             $patientExists = Patient::where('tenant_id', $tenantId)->where('firstname', $request->firstname)->where('lastname', $request->lastname)->first();
             if ($patientExists) {
+                $this->rollbackPatientRegistration();
                 return JsonResponser::send(true, 'A patient with the same firstname and lastname already exists.', null, 422);
             }
 
@@ -75,11 +92,19 @@ class RecordManagementController extends Controller
                     ->first();
 
                 if ($cardNoExists) {
+                    $this->rollbackPatientRegistration();
                     return JsonResponser::send(true, 'Card Number already exists.', null, 422);
                 }
             }
 
             $patient = $this->patientService->create($request);
+
+            // Give the patient the landlord account they sign into the patient
+            // mobile app with. The invitation mail waits until both connections
+            // have committed, so a rolled back registration never mails out
+            // credentials for a patient who does not exist.
+            $account = $this->patientAccountService->provision($patient, $tenant);
+
             $dataToLog = [
                 'causer_id' => $currentUser->id,
                 'action_id' => $patient->id,
@@ -93,7 +118,6 @@ class RecordManagementController extends Controller
             GeneralHelper::storeAuditLog($dataToLog);
 
             // Create notification
-            $tenant = $currentUser->currentTenant->first();
             $notificationData = [
                 'user_id' => $currentUser->id,
                 'tenant_domain' => $tenant->domain,
@@ -105,12 +129,115 @@ class RecordManagementController extends Controller
             ];
             Notification::create($notificationData);
 
+            DB::connection('landlord')->commit();
             DB::connection('tenant')->commit();
-            return JsonResponser::send(false, 'Patient details created successfully', ['patient' => $patient], 201);
+
+            $invitationSent = $this->patientAccountService->sendInvitation(
+                $account['user'],
+                $patient,
+                $tenant,
+                $account['password']
+            );
+
+            return JsonResponser::send(false, 'Patient details created successfully', [
+                'patient' => $patient->fresh(),
+                'app_account' => [
+                    'user_id'          => $account['user']->id,
+                    'email'            => $account['user']->email,
+                    'is_new_account'   => $account['is_new'],
+                    'invitation_sent'  => $invitationSent,
+                ],
+            ], 201);
         } catch (\Throwable $th) {
-            DB::connection('tenant')->rollBack();
+            $this->rollbackPatientRegistration();
             return JsonResponser::send(true, 'Internal server error', [], 500, $th);
         }
+    }
+
+    /**
+     * Re-send a patient's app invitation with a fresh temporary password.
+     *
+     * For the patient who never received the first mail, or whose verification
+     * expired after they lost it. Pass reset_password to also overwrite a
+     * password the patient has already chosen for themselves.
+     */
+    public function resendInvitation(Request $request, $id)
+    {
+        DB::connection('landlord')->beginTransaction();
+
+        try {
+            $currentUser = Auth::user();
+            $tenantId = $request->header('X-Tenant-ID');
+            $tenant = Tenant::where('uuid', $tenantId)->first();
+
+            if (!$tenant) {
+                DB::connection('landlord')->rollBack();
+                return JsonResponser::send(true, 'Invalid tenant provided.', null, 400);
+            }
+
+            $patient = Patient::find($id);
+
+            if (!$patient) {
+                DB::connection('landlord')->rollBack();
+                return JsonResponser::send(true, 'Patient record not found.', null, 404);
+            }
+
+            if (empty($patient->email)) {
+                DB::connection('landlord')->rollBack();
+                return JsonResponser::send(true, 'This patient has no email address to send an invitation to.', null, 422);
+            }
+
+            $account = $this->patientAccountService->resendInvitation(
+                $patient,
+                $tenant,
+                $request->boolean('reset_password')
+            );
+
+            $dataToLog = [
+                'causer_id' => $currentUser->id,
+                'action_id' => $patient->id,
+                'action' => 'Update',
+                'action_type' => "Models\Patient",
+                'log_name' => "Patient app invitation resent",
+                'description' => "{$currentUser['fullname']} resent the patient app invitation to {$patient->email}",
+                'module_accessed' => ListModuleEnums::Records,
+            ];
+            GeneralHelper::storeAuditLog($dataToLog);
+
+            DB::connection('landlord')->commit();
+
+            // Mailed only once the new password is safely stored, so a failed
+            // send never leaves the patient holding credentials we discarded.
+            $invitationSent = $this->patientAccountService->sendInvitation(
+                $account['user'],
+                $patient,
+                $tenant,
+                $account['password']
+            );
+
+            return JsonResponser::send(false, 'Invitation resent successfully.', [
+                'email' => $account['user']->email,
+                'invitation_sent' => $invitationSent,
+            ], 200);
+        } catch (\RuntimeException $th) {
+            DB::connection('landlord')->rollBack();
+            return JsonResponser::send(true, $th->getMessage(), [], 409);
+        } catch (\Throwable $th) {
+            DB::connection('landlord')->rollBack();
+            return JsonResponser::send(true, 'Internal server error', [], 500, $th);
+        }
+    }
+
+    /**
+     * Undo both halves of a patient registration.
+     *
+     * The patient lives on the tenant database and their app account on the
+     * landlord one, so neither may be left behind without the other.
+     */
+    private function rollbackPatientRegistration(): void
+    {
+        DB::connection('landlord')->rollBack();
+        DB::connection('tenant')->rollBack();
     }
 
     public function update(Request $request, $id)

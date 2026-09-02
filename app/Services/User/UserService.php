@@ -71,6 +71,43 @@ class UserService
         return str_shuffle($password);
     }
 
+    /**
+     * Build a temporary password that satisfies the patient app's password
+     * rules (minimum 8 characters, upper, lower, number, special character)
+     * while staying readable enough to be retyped from an email.
+     *
+     * Characters that are easily confused when read off a screen (O/0, l/1, …)
+     * are left out on purpose, and the characters are drawn with random_int so
+     * the password cannot be guessed the way generateRoleBasedPassword() can.
+     */
+    public function generateTemporaryPassword(int $length = 12): string
+    {
+        $lowercase = 'abcdefghijkmnpqrstuvwxyz';
+        $uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+        $numbers = '23456789';
+        $specialChars = '@#$%&*!?';
+
+        $length = max(8, $length);
+        $allChars = $lowercase . $uppercase . $numbers . $specialChars;
+
+        // Seed one character from every set so the result always passes the
+        // rules, then fill the rest at random.
+        $characters = [
+            $lowercase[random_int(0, strlen($lowercase) - 1)],
+            $uppercase[random_int(0, strlen($uppercase) - 1)],
+            $numbers[random_int(0, strlen($numbers) - 1)],
+            $specialChars[random_int(0, strlen($specialChars) - 1)],
+        ];
+
+        for ($i = count($characters); $i < $length; $i++) {
+            $characters[] = $allChars[random_int(0, strlen($allChars) - 1)];
+        }
+
+        shuffle($characters);
+
+        return implode('', $characters);
+    }
+
     public function generateRoleBasedPassword(string $roleName, string $firstName, string $lastName): string
     {
         // Get initials from first and last name
