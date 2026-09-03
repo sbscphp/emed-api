@@ -3,12 +3,16 @@
 namespace App\Services\Revamp;
 
 use App\Enums\ListModuleEnums;
+use App\Enums\RoleEnums;
 use App\Helpers\ExportHelper;
 use App\Helpers\GeneralHelper;
 use App\Http\Requests\StoreDepartmentRequest;
 use App\Http\Requests\UpdateDepartmentRequest;
 use App\Models\Department;
+use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class DepartmentService
@@ -182,6 +186,130 @@ class DepartmentService
         ), $oldData, []);
 
         return $department;
+    }
+
+    /**
+     * The doctors assigned to a department, and the consultants that could be.
+     *
+     * The patient app walks a patient from "Select Department" to "Select your
+     * preferred doctor", so a department has to know who consults in it. This is
+     * what fills that list in.
+     *
+     * @param  int  $id
+     * @param  \Illuminate\Http\Request|null  $request
+     * @return array{assigned:\Illuminate\Support\Collection, available:\Illuminate\Support\Collection}
+     */
+    public function doctors($id, $request = null)
+    {
+        $department = $this->findOrFail($id, $request);
+        $consultants = $this->consultants($request);
+        $assignedIds = $department->doctorIds();
+
+        return [
+            'assigned' => $consultants->whereIn('id', $assignedIds)->values(),
+            'available' => $consultants->values(),
+        ];
+    }
+
+    /**
+     * Replace the doctors assigned to a department.
+     *
+     * A full replacement rather than an add and a remove: the screen behind it
+     * is a checklist, and it posts the list it ended up with.
+     *
+     * @param  int  $id
+     * @param  array<int, int>  $doctorIds
+     * @param  \Illuminate\Http\Request|null  $request
+     * @return \App\Models\Department
+     */
+    public function syncDoctors($id, array $doctorIds, $request = null)
+    {
+        $department = $this->findOrFail($id, $request);
+        $tenantUuid = $this->tenantUuid($request);
+        $oldIds = $department->doctorIds();
+
+        // Only this hospital's consultants may be assigned, whatever was posted.
+        $doctorIds = $this->consultants($request)
+            ->pluck('id')
+            ->intersect(array_map('intval', $doctorIds))
+            ->values();
+
+        DB::connection('tenant')->transaction(function () use ($department, $doctorIds, $tenantUuid) {
+            DB::connection('tenant')->table('department_user')
+                ->where('department_id', $department->id)
+                ->delete();
+
+            if ($doctorIds->isEmpty()) {
+                return;
+            }
+
+            DB::connection('tenant')->table('department_user')->insert(
+                $doctorIds->map(fn($doctorId) => [
+                    'tenant_uuid' => $tenantUuid,
+                    'department_id' => $department->id,
+                    'user_id' => $doctorId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ])->all()
+            );
+        });
+
+        $this->log($department, 'Update', 'Department doctors updated successfully', sprintf(
+            '%s assigned %d doctor(s) to the department: %s',
+            $this->causerName(),
+            $doctorIds->count(),
+            $department->name
+        ), ['doctor_ids' => $oldIds], ['doctor_ids' => $doctorIds->all()]);
+
+        return $department;
+    }
+
+    /**
+     * Every consultant of the current hospital.
+     *
+     * Roles and their pivot live in the tenant database while users live on the
+     * landlord one, so the ids are read on one connection and spent on the other
+     * rather than joined across both.
+     *
+     * @param  \Illuminate\Http\Request|null  $request
+     * @return \Illuminate\Support\Collection<int, \App\Models\User>
+     */
+    protected function consultants($request = null)
+    {
+        $tenant = Tenant::where('uuid', $this->tenantUuid($request))->first();
+
+        if (!$tenant) {
+            return collect();
+        }
+
+        $roleUserIds = DB::connection('tenant')
+            ->table('role_user')
+            ->join('roles', 'roles.id', '=', 'role_user.role_id')
+            ->where('roles.tenant_id', $tenant->uuid)
+            ->where('roles.name', RoleEnums::CONSULTANT->value)
+            ->pluck('role_user.user_id')
+            ->all();
+
+        if (empty($roleUserIds)) {
+            return collect();
+        }
+
+        $memberIds = DB::connection('landlord')
+            ->table('tenant_users')
+            ->where('tenant_id', $tenant->id)
+            ->whereIn('user_id', $roleUserIds)
+            ->whereNull('deleted_at')
+            ->pluck('user_id')
+            ->all();
+
+        if (empty($memberIds)) {
+            return collect();
+        }
+
+        return User::on('landlord')
+            ->whereIn('id', $memberIds)
+            ->orderBy('fullname')
+            ->get(['id', 'uuid', 'fullname', 'first_name', 'last_name', 'email', 'profile_picture']);
     }
 
     /**

@@ -62,12 +62,18 @@ return [
     |--------------------------------------------------------------------------
     |
     | Here you may specify the default timezone for your application, which
-    | will be used by the PHP date and date-time functions. The timezone
-    | is set to "UTC" by default as it is suitable for most use cases.
+    | will be used by the PHP date and date-time functions.
+    |
+    | This is the timezone the hospitals operate in, not UTC. Timestamps are
+    | written with Carbon::now() and read back raw — nothing in the application
+    | converts between a storage zone and a display zone — so this value is the
+    | wall clock the whole product runs on. Leave it on UTC and every "Today"
+    | filter, every stat card and every recorded-at line drifts by the offset,
+    | which lands them on the wrong day for the hour either side of midnight.
     |
     */
 
-    'timezone' => env('APP_TIMEZONE', 'UTC'),
+    'timezone' => env('APP_TIMEZONE', 'Africa/Lagos'),
 
     /*
     |--------------------------------------------------------------------------
