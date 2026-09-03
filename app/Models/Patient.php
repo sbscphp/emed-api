@@ -248,6 +248,44 @@ class Patient extends Model implements BulkUploadable
         return $this->hasOne(EmergencyContact::class);
     }
 
+    /**
+     * Every next of kin on record, rather than only the first.
+     *
+     * The patient app lets a patient keep more than one, and the table has
+     * always allowed it — nextOfKin() picks one arbitrarily because the admin
+     * screens only ever show one.
+     */
+    public function nextOfKins()
+    {
+        return $this->hasMany(NextOfKin::class);
+    }
+
+    public function emergencyContacts()
+    {
+        return $this->hasMany(EmergencyContact::class);
+    }
+
+    /**
+     * The patient's allergy list.
+     *
+     * Named apart from the `allergies` json column this model already casts, so
+     * the two can sit side by side while the column is still written by the
+     * admin registration form.
+     */
+    public function allergyRecords()
+    {
+        return $this->hasMany(PatientAllergy::class);
+    }
+
+    /**
+     * The long term conditions the patient keeps on their own profile, which
+     * are not the clinical medicalHistory() the doctor records.
+     */
+    public function medicalConditions()
+    {
+        return $this->hasMany(PatientMedicalCondition::class);
+    }
+
     public function visits()
     {
         return $this->hasMany(PatientVisit::class);

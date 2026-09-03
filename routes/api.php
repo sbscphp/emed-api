@@ -107,35 +107,14 @@ Route::group(["prefix" => "v1"], function () {
     });
     Route::post('/logout', [RegistrationController::class, 'logout']);
 
-    /** PATIENT MOBILE APP */
-    Route::group(['prefix' => 'patient'], function () {
-        // The patient's own hospitals, looked up from the email or phone number
-        // they type — a patient can be registered by more than one of them.
-        Route::post('/hospitals', [PatientAuthController::class, 'hospitals']);
-
-        Route::group(['prefix' => 'auth'], function () {
-            Route::post('/verify-invitation', [PatientAuthController::class, 'verifyInvitation']);
-            Route::post('/create-password', [PatientAuthController::class, 'createPassword']);
-            Route::post('/login', [PatientAuthController::class, 'login']);
-
-            // Password reset by one time code rather than an emailed link: the
-            // app never leaves itself, so there is no browser to land a link in.
-            // Throttled because one endpoint sends mail and the other guesses a
-            // six digit code.
-            Route::post('/request-reset-password', [PatientAuthController::class, 'requestPasswordReset'])
-                ->middleware('throttle:5,10');
-            Route::post('/verify-reset-otp', [PatientAuthController::class, 'verifyPasswordResetOtp'])
-                ->middleware('throttle:10,10');
-            Route::post('/reset-password', [PatientAuthController::class, 'resetPassword']);
-        });
-
-        Route::group(['middleware' => ['auth:api']], function () {
-            Route::post('/auth/logout', [PatientAuthController::class, 'logout']);
-            Route::get('/hospitals/mine', [PatientAuthController::class, 'myHospitals']);
-            Route::put('/biometric', [PatientAuthController::class, 'biometric']);
-            Route::put('/change-password', [PatientAuthController::class, 'changePassword']);
-        });
-    });
+    /**
+     * PATIENT MOBILE APP
+     *
+     * Moved out to routes/mobile.php, where the app's endpoints are grouped one
+     * module at a time (auth, account, appointment, ...) instead of being spread
+     * through this file. That group is registered in bootstrap/app.php and is
+     * served under /api/v1/mobile.
+     */
 
     Route::group(["middleware" => ["auth:api"]], function () {
         Route::group(['middleware' => ["tenant"]], function () {
@@ -642,6 +621,11 @@ Route::group(["prefix" => "v1"], function () {
                 Route::group(['prefix' => 'departments'], function () {
                     Route::get('/', [DepartmentController::class, "index"]);
                     Route::post('/', [DepartmentController::class, 'store']);
+                    // The doctors that consult in a department, which is what the
+                    // patient app's booking flow offers once a department is
+                    // chosen. Declared before the /{id} wildcard.
+                    Route::get('/{id}/doctors', [DepartmentController::class, 'doctors'])->whereNumber('id');
+                    Route::put('/{id}/doctors', [DepartmentController::class, 'syncDoctors'])->whereNumber('id');
                     Route::get('/{id}', [DepartmentController::class, 'show']);
                     Route::put('/{id}', [DepartmentController::class, 'update']);
                     Route::put('/toggle-status/{id}', [DepartmentController::class, 'toggleStatus']);

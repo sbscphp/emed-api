@@ -28,6 +28,26 @@ class Laboratory extends Model
         return $this->belongsTo(PatientVisit::class, 'visit_id');
     }
 
+    /**
+     * The doctor who ordered the test — the "Ordered By" line on the patient
+     * app's result screen.
+     *
+     * Users live on the landlord connection, so this stays a plain belongsTo
+     * (resolved with a separate query) and carries no database level foreign key.
+     */
+    public function orderedBy()
+    {
+        return $this->belongsTo(User::class, 'consultedBy', 'id');
+    }
+
+    /**
+     * Whether the laboratory has released this result.
+     */
+    public function getIsReleasedAttribute(): bool
+    {
+        return $this->status === 'Ready';
+    }
+
     public function billingLogDetail()
     {
         return $this->belongsTo(BillingLogDetail::class, 'id', 'lab_test_id');

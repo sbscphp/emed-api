@@ -31,6 +31,14 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::prefix('api/v1/superadmin')
                 ->middleware(["super_admin"])
                 ->group(base_path('routes/superadmin/api.php'));
+
+            // Every endpoint the patient mobile app calls, grouped by module in
+            // its own file rather than buried in the admin routes. The prefix
+            // stays api/v1 so the URLs are unchanged — only where they are
+            // declared moved.
+            Route::prefix('api/v1')
+                ->middleware('api')
+                ->group(base_path('routes/mobile.php'));
         }
     )
     ->withMiddleware(function (Middleware $middleware) {
