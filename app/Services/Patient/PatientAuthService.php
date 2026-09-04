@@ -11,6 +11,7 @@ use App\Models\PatientVerificationToken;
 use App\Models\Tenant;
 use App\Models\TenantUser;
 use App\Models\User;
+use App\Services\Patient\Concerns\ResolvesPatientProfile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -35,6 +36,8 @@ use Tymon\JWTAuth\Facades\JWTAuth;
  */
 class PatientAuthService
 {
+    use ResolvesPatientProfile;
+
     /** The invitation we found matches an account that still has to set a password. */
     public const STATUS_INVITATION_FOUND = 'invitation_found';
 
@@ -689,18 +692,36 @@ class PatientAuthService
             'address' => $tenant->address,
         ];
         $profile['current_tenant_user'] = $tenantUser;
+
+        // Resolved once, so `dob` and `date_of_birth` below cannot disagree with
+        // each other or with the Personal Information screen, which resolves it
+        // the same way.
+        $dob = $this->resolveDob($patient, $tenantUser);
+
         $profile['patient'] = $patient ? [
-            'id'         => $patient->id,
-            'patientno'  => $patient->patientno,
-            'cardno'     => $patient->cardno,
-            'firstname'  => $patient->firstname,
-            'lastname'   => $patient->lastname,
-            'middlename' => $patient->middlename,
-            'gender'     => $patient->gender,
-            'dob'        => $patient->dob,
-            'bloodgroup' => $patient->bloodgroup,
-            'genotype'   => $patient->genotype,
-            'status'     => $patient->status,
+            'id'             => $patient->id,
+            'patientno'      => $patient->patientno,
+            'cardno'         => $patient->cardno,
+            'firstname'      => $patient->firstname,
+            'lastname'       => $patient->lastname,
+            'middlename'     => $patient->middlename,
+            'gender'         => $patient->gender,
+
+            // `dob` is kept under its old name for the app already reading it.
+            // `date_of_birth` matches what the profile endpoints call it, and
+            // the label is the form those screens print.
+            'dob'                 => $dob,
+            'date_of_birth'       => $dob,
+            'date_of_birth_label' => $this->toDate($dob, 'd F Y'),
+
+            'home_address'   => $patient->homeaddress,
+            'phone_number'   => $patient->phoneno,
+            'email'          => $patient->email,
+            'marital_status' => $patient->marital_status,
+
+            'bloodgroup'     => $patient->bloodgroup,
+            'genotype'       => $patient->genotype,
+            'status'         => $patient->status,
         ] : null;
 
         return $profile;

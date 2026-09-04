@@ -40,6 +40,7 @@ use App\Http\Controllers\v1\Admin\Revamp\AppointmentController;
 use App\Http\Controllers\v1\Admin\Revamp\AuthenticationController;
 use App\Http\Controllers\v1\Admin\Revamp\BillingController as RevampBillingController;
 use App\Http\Controllers\v1\Admin\Revamp\BillingServiceController;
+use App\Http\Controllers\v1\Admin\Revamp\PayoutAccountController;
 use App\Http\Controllers\v1\Admin\Revamp\ConsultationController as RevampConsultationController;
 use App\Http\Controllers\v1\Admin\Revamp\DashboardController;
 use App\Http\Controllers\v1\Admin\Revamp\DepartmentController;
@@ -367,6 +368,25 @@ Route::group(["prefix" => "v1"], function () {
 
                 // Billing routes
                 Route::group(['prefix' => 'billing'], function () {
+
+                    // Where this hospital is settled when a patient pays from
+                    // the mobile app. Patients pay the platform's Paystack
+                    // account and Paystack splits each charge to the hospital's
+                    // subaccount, which is what these details register. No API
+                    // key is involved — the hospital supplies a bank account,
+                    // the platform holds the keys.
+                    //
+                    // Declared before /{id} so the static segments are matched
+                    // as themselves rather than read as an id.
+                    Route::group(['prefix' => 'payout-account'], function () {
+                        Route::get('/banks', [PayoutAccountController::class, 'banks']);
+                        Route::post('/resolve', [PayoutAccountController::class, 'resolve']);
+                        Route::post('/retry', [PayoutAccountController::class, 'retry']);
+
+                        Route::get('/', [PayoutAccountController::class, 'show']);
+                        Route::put('/', [PayoutAccountController::class, 'update']);
+                    });
+
                     Route::get('/', [RevampBillingController::class, 'index']);
                     Route::get('/view/{id}', [RevampBillingController::class, 'viewBilling']);
                     Route::post('/make/payment', [RevampBillingController::class, 'makePayment']);

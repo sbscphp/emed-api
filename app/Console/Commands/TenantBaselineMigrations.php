@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Commands\Concerns\BaselinesMigrations;
 use App\Models\Tenant;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 /**
  * Record migrations whose tables a tenant database already has.
@@ -16,14 +16,16 @@ use Illuminate\Support\Facades\Schema;
  * create migrations and dies on the first "table already exists", which blocks
  * every new migration behind them.
  *
- * This command closes that gap the way a baseline should: a create migration
- * whose tables are all present is written into `migrations` as already run,
- * without executing a single statement. Anything else — a migration that
- * creates a table which really is missing, or one that only alters tables — is
- * left alone for `migrate` to run normally.
+ * The reconciliation itself lives in BaselinesMigrations, which the landlord
+ * command shares — the two differ only in which connection they point at and
+ * which folder they read.
+ *
+ * @see \App\Console\Commands\LandlordBaselineMigrations for the landlord equivalent.
  */
 class TenantBaselineMigrations extends Command
 {
+    use BaselinesMigrations;
+
     protected $signature = 'tenants:baseline-migrations
                             {--tenant= : Limit to one tenant, by id, uuid, database or name}
                             {--path=database/migrations/tenant : Migration folder to reconcile}
@@ -42,7 +44,7 @@ class TenantBaselineMigrations extends Command
         }
 
         $pretend = (bool) $this->option('pretend');
-        $migrations = $this->migrationFiles();
+        $migrations = $this->migrationFiles($this->option('path'));
 
         if (empty($migrations)) {
             $this->error("No migrations found in {$this->option('path')}.");
@@ -58,7 +60,7 @@ class TenantBaselineMigrations extends Command
 
             try {
                 $this->useTenantConnection($tenant);
-                $this->baselineTenant($migrations, $pretend);
+                $this->baselineConnection('tenant', $migrations, $pretend);
             } catch (\Throwable $th) {
                 $this->error("  Failed: {$th->getMessage()}");
             }
@@ -72,121 +74,6 @@ class TenantBaselineMigrations extends Command
             : 'Baseline complete. Run the tenant migrations now.');
 
         return self::SUCCESS;
-    }
-
-    /**
-     * Reconcile the tenant the connection currently points at.
-     */
-    protected function baselineTenant(array $migrations, bool $pretend): void
-    {
-        $connection = DB::connection('tenant');
-
-        if (!Schema::connection('tenant')->hasTable('migrations')) {
-            $this->warn('  No migrations table — run migrate on this tenant first.');
-
-            return;
-        }
-
-        $alreadyRun = $connection->table('migrations')->pluck('migration')->all();
-        $batch = ((int) $connection->table('migrations')->max('batch')) + 1;
-
-        $toRecord = [];
-        $leftPending = [];
-
-        foreach ($migrations as $name => $file) {
-            if (in_array($name, $alreadyRun, true)) {
-                continue;
-            }
-
-            $tables = $this->tablesCreatedBy($file);
-
-            // Only a migration whose whole job is creating tables can be
-            // baselined, and only when every one of them is already there. A
-            // half applied one has to run so the missing half is created.
-            if (empty($tables) || !$this->allTablesExist($tables)) {
-                $leftPending[] = $name;
-
-                continue;
-            }
-
-            $toRecord[] = [
-                'migration' => $name,
-                'batch'     => $batch,
-            ];
-        }
-
-        if (empty($toRecord)) {
-            $this->line('  Nothing to baseline.');
-        } else {
-            foreach ($toRecord as $row) {
-                $this->line("  <fg=yellow>baseline</> {$row['migration']}");
-            }
-
-            if (!$pretend) {
-                $connection->table('migrations')->insert($toRecord);
-            }
-
-            $this->line('  <fg=green>' . count($toRecord) . ' migration(s) recorded as already run (batch ' . $batch . ').</>');
-        }
-
-        foreach ($leftPending as $name) {
-            $this->line("  <fg=cyan>will run</> {$name}");
-        }
-    }
-
-    /**
-     * Every table a migration creates, read from its Schema::create() calls.
-     *
-     * Read from the source rather than guessed from the file name: the folder
-     * holds names that do not match their table (create_registartion_services
-     * builds registration_services), and a guess there would baseline a
-     * migration whose table is actually missing.
-     */
-    protected function tablesCreatedBy(string $file): array
-    {
-        $source = file_get_contents($file);
-
-        // A migration that alters as well as creates is not a pure create, and
-        // its alters cannot be verified from here, so it is left to migrate.
-        if (preg_match('/Schema::(?:connection\([^)]*\)->)?table\s*\(/', $source)) {
-            return [];
-        }
-
-        preg_match_all(
-            '/Schema::(?:connection\([^)]*\)->)?create\s*\(\s*[\'"]([^\'"]+)[\'"]/',
-            $source,
-            $matches
-        );
-
-        return array_unique($matches[1]);
-    }
-
-    protected function allTablesExist(array $tables): bool
-    {
-        foreach ($tables as $table) {
-            if (!Schema::connection('tenant')->hasTable($table)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * Migration file names mapped to their paths, in the order migrate runs them.
-     */
-    protected function migrationFiles(): array
-    {
-        $files = glob(base_path($this->option('path')) . '/*.php') ?: [];
-
-        $migrations = [];
-        foreach ($files as $file) {
-            $migrations[basename($file, '.php')] = $file;
-        }
-
-        ksort($migrations);
-
-        return $migrations;
     }
 
     /**

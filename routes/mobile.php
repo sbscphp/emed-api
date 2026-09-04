@@ -2,13 +2,17 @@
 
 use App\Http\Controllers\v1\Patient\AdmissionController;
 use App\Http\Controllers\v1\Patient\AppointmentController;
+use App\Http\Controllers\v1\Patient\BillingController;
 use App\Http\Controllers\v1\Patient\DashboardController;
+use App\Http\Controllers\v1\Patient\HospitalController;
 use App\Http\Controllers\v1\Patient\LaboratoryController;
+use App\Http\Controllers\v1\Patient\NotificationController;
 use App\Http\Controllers\v1\Patient\PatientAuthController;
 use App\Http\Controllers\v1\Patient\ProfileController;
 use App\Http\Controllers\v1\Patient\RadiologyController;
 use App\Http\Controllers\v1\Patient\RecordController;
 use App\Http\Controllers\v1\Patient\VitalsController;
+use App\Http\Controllers\v1\PaymentSupportController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -44,6 +48,39 @@ use Illuminate\Support\Facades\Route;
 | account rather than about any one hospital.
 |
 */
+
+/*
+|--------------------------------------------------------------------------
+| Shared Payment Links
+|--------------------------------------------------------------------------
+|
+| The public side of "Request payment support": a patient generates a link and
+| sends it to somebody they trust, who opens it in a browser and pays towards
+| the bill.
+|
+| Outside the patient group and outside auth, because the caller is a friend of
+| the patient with no account here. Everything a token would normally establish
+| is established by the link itself — the token names the request, the request
+| names the bill, and the bill names the hospital — which is also why there is no
+| tenant header on these.
+|
+| What a caller can see is bounded by PaymentSupportService::publicView(), which
+| builds the payload field by field: a first name, the service the bill is for,
+| the hospital and the amounts. Throttled, because an unauthenticated endpoint
+| that resolves a token is worth guessing at.
+|
+*/
+Route::group(['prefix' => 'support', 'middleware' => ['throttle:30,1']], function () {
+    Route::get('/{token}', [PaymentSupportController::class, 'show'])
+        ->where('token', '[A-Za-z0-9]{16,64}');
+
+    Route::post('/{token}/contribute', [PaymentSupportController::class, 'contribute'])
+        ->where('token', '[A-Za-z0-9]{16,64}');
+
+    Route::get('/{token}/verify/{reference}', [PaymentSupportController::class, 'verify'])
+        ->where('token', '[A-Za-z0-9]{16,64}')
+        ->where('reference', '[A-Za-z0-9\-_]+');
+});
 
 Route::group(['prefix' => 'patient'], function () {
 
@@ -87,6 +124,23 @@ Route::group(['prefix' => 'patient'], function () {
         Route::get('/hospitals/mine', [PatientAuthController::class, 'myHospitals']);
         Route::put('/biometric', [PatientAuthController::class, 'biometric']);
         Route::put('/change-password', [PatientAuthController::class, 'changePassword']);
+
+        /*
+        |------------------------------------------------------------------
+        | Linked Hospitals Module
+        |------------------------------------------------------------------
+        |
+        | The hospitals that have registered this account, and one of them
+        | opened up. No tenant middleware: the hospital is what is being asked
+        | about rather than what the request is scoped to, and a patient must be
+        | able to see the list before they have chosen one.
+        |
+        */
+        Route::group(['prefix' => 'hospitals'], function () {
+            Route::get('/', [HospitalController::class, 'index']);
+            Route::get('/{uuid}', [HospitalController::class, 'show'])
+                ->where('uuid', '[0-9a-fA-F-]{36}');
+        });
     });
 
     /*
@@ -162,6 +216,58 @@ Route::group(['prefix' => 'patient'], function () {
             Route::get('/{id}', [RadiologyController::class, 'show'])->whereNumber('id');
             Route::get('/{id}/history', [RadiologyController::class, 'history'])->whereNumber('id');
             Route::get('/{id}/download', [RadiologyController::class, 'download'])->whereNumber('id');
+        });
+
+        /*
+        |------------------------------------------------------------------
+        | Billing Module
+        |------------------------------------------------------------------
+        |
+        | What the hospital has billed the patient, paying it, and asking others
+        | to help pay it.
+        |
+        | Paying is two calls, never one. /pay writes the payment and hands back
+        | a Paystack page; /verify is what settles the bill, and only on
+        | Paystack's word. There is no webhook, so /verify is also how a payment
+        | nobody came back from is recovered — it is safe to call repeatedly.
+        |
+        | The static segments are declared before /{id} so they are matched as
+        | themselves rather than read as an id.
+        |
+        */
+        Route::group(['prefix' => 'billing'], function () {
+            Route::get('/', [BillingController::class, 'index']);
+
+            Route::get('/payments/{reference}/verify', [BillingController::class, 'verify'])
+                ->where('reference', '[A-Za-z0-9\-_]+');
+
+            Route::get('/support', [BillingController::class, 'supportRequests']);
+            Route::get('/support/{id}', [BillingController::class, 'showSupport'])->whereNumber('id');
+            Route::put('/support/{id}/cancel', [BillingController::class, 'cancelSupport'])->whereNumber('id');
+
+            Route::get('/{id}', [BillingController::class, 'show'])->whereNumber('id');
+            Route::post('/{id}/pay', [BillingController::class, 'pay'])->whereNumber('id');
+            Route::post('/{id}/support', [BillingController::class, 'createSupport'])->whereNumber('id');
+        });
+
+        /*
+        |------------------------------------------------------------------
+        | Notification Module
+        |------------------------------------------------------------------
+        |
+        | Read only. Rows are written by whichever module had something to tell
+        | the patient — the lab releasing a result, a payment confirming, a
+        | friend contributing to a bill.
+        |
+        */
+        Route::group(['prefix' => 'notifications'], function () {
+            // Declared before the /{id} wildcard so they are not read as ids.
+            Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
+            Route::put('/read-all', [NotificationController::class, 'markAllAsRead']);
+
+            Route::get('/', [NotificationController::class, 'index']);
+            Route::get('/{id}', [NotificationController::class, 'show'])->whereNumber('id');
+            Route::put('/{id}/read', [NotificationController::class, 'markAsRead'])->whereNumber('id');
         });
 
         /*

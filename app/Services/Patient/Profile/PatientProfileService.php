@@ -6,10 +6,13 @@ use App\Exceptions\PatientAppException;
 use App\Models\EmergencyContact;
 use App\Models\NextOfKin;
 use App\Models\PatientAllergy;
+use App\Models\Patient;
 use App\Models\PatientMedicalCondition;
+use App\Services\Patient\Concerns\ResolvesPatientProfile;
 use App\Services\Patient\PatientContextService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Class PatientProfileService
@@ -24,9 +27,15 @@ use Illuminate\Database\Eloquent\Model;
  * that registered them, and editing a profile at one hospital should not change
  * how they sign in to another. Account level changes have their own endpoints
  * under /patient/change-password and /patient/biometric.
+ *
+ * The one thing written outside the patient record is the date of birth on the
+ * membership row for this hospital, which is per hospital rather than shared and
+ * is kept in step so the two cannot disagree — see ResolvesPatientProfile.
  */
 class PatientProfileService
 {
+    use ResolvesPatientProfile;
+
     /**
      * The two kinds of person the emergency section keeps.
      *
@@ -81,8 +90,13 @@ class PatientProfileService
             'first_name' => $patient->firstname,
             'last_name' => $patient->lastname,
             'middle_name' => $patient->middlename,
-            'date_of_birth' => $this->formatDate($patient->dob, 'Y-m-d'),
-            'date_of_birth_label' => $this->formatDate($patient->dob, 'd F Y'),
+            // Resolved rather than read straight off the record: the account
+            // carries a date of birth of its own, and a patient registered
+            // through one form and filed through another can have it there and
+            // not here. Reading only the record is what made this screen show
+            // null while the login response showed a date.
+            'date_of_birth' => $this->dob($patient),
+            'date_of_birth_label' => $this->toDate($this->dob($patient), 'd F Y'),
             'gender' => $patient->gender,
             'phone_number' => $patient->phoneno,
             'email' => $patient->email,
@@ -139,7 +153,37 @@ class PatientProfileService
             $patient->refresh();
         }
 
+        // The account keeps its own copy, written when the patient registered.
+        // Saving to one and not the other is what let the two drift apart in the
+        // first place, so a new date is written to both.
+        if (!empty($changes['dob'])) {
+            $this->syncAccountDob($changes['dob']);
+        }
+
         return $this->personalInformation();
+    }
+
+    /**
+     * Carry a new date of birth onto the account's membership row.
+     *
+     * Never allowed to fail the save: the hospital's record is the one the
+     * patient just corrected, and it has already been written by the time this
+     * runs.
+     */
+    protected function syncAccountDob(string $dob): void
+    {
+        try {
+            $tenantUser = $this->context->tenantUser();
+
+            if ($tenantUser && (string) $tenantUser->date_of_birth !== $dob) {
+                $tenantUser->forceFill(['date_of_birth' => $dob])->save();
+            }
+        } catch (\Throwable $th) {
+            Log::warning('Could not carry a new date of birth onto the patient account.', [
+                'patient_id' => $this->context->patient()->id,
+                'exception' => $th->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -542,29 +586,15 @@ class PatientProfileService
     }
 
     /**
-     * Format a date column that may or may not have been cast.
+     * The patient's date of birth for this screen.
      *
-     * `patients.dob` is a plain string on the model — the admin screens read it
-     * raw and casting it now would change the shape of every existing patient
-     * payload — and optional() on a string quietly answers null for a format()
-     * call rather than failing, which is how a date of birth ends up missing
-     * from a screen that was told to show it.
-     *
-     * @param  mixed  $value
-     * @param  string  $format
-     * @return string|null
+     * Falls back to the date the account was registered with when the hospital's
+     * own record has none, so the profile screen and the login response cannot
+     * answer differently. See ResolvesPatientProfile for why there are two.
      */
-    protected function formatDate($value, string $format): ?string
+    protected function dob(Patient $patient): ?string
     {
-        if (empty($value)) {
-            return null;
-        }
-
-        try {
-            return Carbon::parse($value)->format($format);
-        } catch (\Throwable $th) {
-            return null;
-        }
+        return $this->resolveDob($patient, $this->context->tenantUser());
     }
 
     /**
