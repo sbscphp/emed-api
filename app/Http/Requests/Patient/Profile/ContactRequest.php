@@ -56,4 +56,12 @@ class ContactRequest extends PatientRequest
             'relationship.required' => 'Say how this person is related to you.',
         ];
     }
+
+    /**
+     * An edit here has to carry something to edit; see the base class.
+     */
+    protected function rejectEmptyUpdates(): bool
+    {
+        return true;
+    }
 }

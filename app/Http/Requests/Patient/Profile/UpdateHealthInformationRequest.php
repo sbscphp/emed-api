@@ -53,4 +53,12 @@ class UpdateHealthInformationRequest extends PatientRequest
             'genotype.in' => 'Choose one of: ' . implode(', ', self::GENOTYPES) . '.',
         ];
     }
+
+    /**
+     * An edit here has to carry something to edit; see the base class.
+     */
+    protected function rejectEmptyUpdates(): bool
+    {
+        return true;
+    }
 }

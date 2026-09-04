@@ -598,8 +598,9 @@ class PatientProfileService
     }
 
     /**
-     * A diagnosis date the patient gives as a month and a year, stored as the
-     * first of that month.
+     * The diagnosis date exactly as the patient gave it. A month and a year
+     * ("Aug 2018") is all Carbon can place on the first of that month, but a
+     * full date keeps the day the patient chose.
      *
      * @param  string|null  $value
      * @return string|null
@@ -611,7 +612,7 @@ class PatientProfileService
         }
 
         try {
-            return Carbon::parse($value)->startOfMonth()->toDateString();
+            return Carbon::parse($value)->toDateString();
         } catch (\Throwable $th) {
             throw new PatientAppException('That diagnosis date could not be understood.', 422);
         }

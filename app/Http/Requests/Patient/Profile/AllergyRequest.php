@@ -45,4 +45,12 @@ class AllergyRequest extends PatientRequest
             'reaction.max' => 'Please keep the reaction under 1000 characters.',
         ];
     }
+
+    /**
+     * An edit here has to carry something to edit; see the base class.
+     */
+    protected function rejectEmptyUpdates(): bool
+    {
+        return true;
+    }
 }

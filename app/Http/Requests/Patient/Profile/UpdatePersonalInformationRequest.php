@@ -47,4 +47,12 @@ class UpdatePersonalInformationRequest extends PatientRequest
             'email.email' => 'Enter a valid email address.',
         ];
     }
+
+    /**
+     * An edit here has to carry something to edit; see the base class.
+     */
+    protected function rejectEmptyUpdates(): bool
+    {
+        return true;
+    }
 }

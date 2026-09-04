@@ -7,9 +7,9 @@ use App\Http\Requests\Patient\PatientRequest;
 /**
  * Adding or editing a medical condition.
  *
- * The diagnosis date is a month and a year on the screen, so anything Carbon can
- * read as a date is accepted — "2018-08", "Aug 2018", "2018-08-14" — and the
- * service stores the first of that month.
+ * Anything Carbon can read as a date is accepted — "2018-08", "Aug 2018",
+ * "2018-08-14" — and the service stores it as given, so a full date keeps its
+ * day and a bare month falls on the first.
  */
 class MedicalConditionRequest extends PatientRequest
 {
@@ -42,5 +42,13 @@ class MedicalConditionRequest extends PatientRequest
             'diagnosed_at.before_or_equal' => 'A diagnosis date cannot be in the future.',
             'notes.max' => 'Please keep your notes under 2000 characters.',
         ];
+    }
+
+    /**
+     * An edit here has to carry something to edit; see the base class.
+     */
+    protected function rejectEmptyUpdates(): bool
+    {
+        return true;
     }
 }
