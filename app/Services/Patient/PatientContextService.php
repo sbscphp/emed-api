@@ -33,6 +33,8 @@ class PatientContextService
 
     protected ?Patient $patient = null;
 
+    protected ?TenantUser $tenantUser = null;
+
     /**
      * The hospital the current request is about.
      *
@@ -123,6 +125,31 @@ class PatientContextService
         }
 
         return $this->patient = $patient;
+    }
+
+    /**
+     * The account's membership row for this hospital.
+     *
+     * Holds what was captured when the account was registered rather than what
+     * the hospital's own patient record holds — the display name it signed up
+     * under, and the date of birth it was given. Read when the patient record
+     * is missing a detail the account still remembers.
+     *
+     * Memoised alongside the rest: a request that needs it usually needs it
+     * more than once.
+     *
+     * @throws \App\Exceptions\PatientAppException
+     */
+    public function tenantUser(): ?TenantUser
+    {
+        if ($this->tenantUser) {
+            return $this->tenantUser;
+        }
+
+        return $this->tenantUser = TenantUser::on('landlord')
+            ->where('tenant_id', $this->tenant()->id)
+            ->where('user_id', $this->user()->id)
+            ->first();
     }
 
     /**

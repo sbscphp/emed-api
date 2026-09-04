@@ -14,6 +14,7 @@ use App\Models\PatientVisit;
 use App\Models\Radiology;
 use App\Models\RadiologyResult;
 use App\Repositories\Laboratory\LaboratoryInterface;
+use App\Services\Patient\Notification\PatientNotificationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 
@@ -29,7 +30,16 @@ class RadiologyService
      * Laboratory constructor.
      *
      */
-    public function __construct(LaboratoryInterface $LaboratoryInterface) {}
+    /**
+     * The patient app's notification writer.
+     *
+     * Releasing a report is the moment the patient can see it, so it is also
+     * the moment they are told.
+     */
+    public function __construct(
+        LaboratoryInterface $LaboratoryInterface,
+        protected PatientNotificationService $patientNotifications
+    ) {}
 
     /**
      * Retrieve all Laboratory.
@@ -179,6 +189,10 @@ class RadiologyService
             'user_id'    => $currentUserInstance->id,
             'status'   => 'Ready'
         ]);
+
+        // The patient can see the report the moment it is Ready, so this is
+        // where they are told. Never allowed to fail the release.
+        $this->patientNotifications->resultReleased($test, 'radiology');
 
         $visit = PatientVisit::find($test->visit_id);
         $totalTests = Radiology::where('visit_id', $visit->id)->count();

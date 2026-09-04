@@ -13,6 +13,7 @@ use App\Models\Laboratory;
 use App\Models\LaboratoryResult;
 use App\Models\PatientVisit;
 use App\Repositories\Laboratory\LaboratoryInterface;
+use App\Services\Patient\Notification\PatientNotificationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 
@@ -30,9 +31,22 @@ class LaboratoryService
      * Laboratory constructor.
      *
      */
-    public function __construct(LaboratoryInterface $LaboratoryInterface, LabParameterService $labParameterService)
-    {
+    /**
+     * The patient app's notification writer.
+     *
+     * Releasing a result is the moment the patient can see it, so it is also the
+     * moment they are told. Held here rather than resolved at the call site so
+     * the dependency is visible on the class.
+     */
+    protected PatientNotificationService $patientNotifications;
+
+    public function __construct(
+        LaboratoryInterface $LaboratoryInterface,
+        LabParameterService $labParameterService,
+        PatientNotificationService $patientNotifications
+    ) {
         $this->labParameterService = $labParameterService;
+        $this->patientNotifications = $patientNotifications;
     }
 
     public function supportsLabTestParameters(): bool
@@ -250,6 +264,10 @@ class LaboratoryService
             // 'requested_by'  => $data->requested_by,
             'status'   => 'Ready'
         ]);
+
+        // The patient can see the result the moment it is Ready, so this is
+        // where they are told. Never allowed to fail the release.
+        $this->patientNotifications->resultReleased($test, 'laboratory');
 
         $visit = PatientVisit::find($test->visit_id);
         $totalLabRequests = Laboratory::where('visit_id', $visit->id)->count();
