@@ -27,6 +27,11 @@ class RadiologyResultDetailResource extends JsonResource
 
         return [
             'id' => $this->id,
+
+            // The test this was ordered from, which /{testId}/history is asked
+            // for by. Null on rows written before it was recorded.
+            'test_id' => $this->test_id,
+
             'test_name' => $this->test_name,
             'department' => $this->department,
             'is_released' => $isReleased,

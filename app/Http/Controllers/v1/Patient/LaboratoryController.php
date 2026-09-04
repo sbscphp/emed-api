@@ -9,6 +9,7 @@ use App\Http\Resources\Patient\LabResultDetailResource;
 use App\Http\Resources\Patient\LabResultResource;
 use App\Responser\JsonResponser;
 use App\Services\Patient\Laboratory\PatientLaboratoryService;
+use Illuminate\Http\Request;
 use Throwable;
 
 /**
@@ -72,14 +73,20 @@ class LaboratoryController extends Controller
     }
 
     /**
-     * GET /v1/patient/laboratory/{id}/history
+     * GET /v1/patient/laboratory/{testId}/history
      *
-     * "View Previous Reports" — the released reports of the same test.
+     * "View Previous Reports" — every released result this patient has for one
+     * test, across every visit they have ever made.
+     *
+     * The id here is the test's id in the laboratory catalogue, the `test_id`
+     * the list and detail payloads carry, and not the id of a single result.
+     * Pass `?exclude={id}` to leave the result currently on screen out of its
+     * own history.
      */
-    public function history($id)
+    public function history(Request $request, $testId)
     {
         try {
-            $records = $this->laboratoryService->history($id);
+            $records = $this->laboratoryService->history($testId, $request->query('exclude'));
 
             return JsonResponser::send(
                 false,

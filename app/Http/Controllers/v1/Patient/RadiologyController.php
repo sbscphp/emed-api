@@ -9,6 +9,7 @@ use App\Http\Resources\Patient\RadiologyResultDetailResource;
 use App\Http\Resources\Patient\RadiologyResultResource;
 use App\Responser\JsonResponser;
 use App\Services\Patient\Radiology\PatientRadiologyService;
+use Illuminate\Http\Request;
 use Throwable;
 
 /**
@@ -72,14 +73,20 @@ class RadiologyController extends Controller
     }
 
     /**
-     * GET /v1/patient/radiology/{id}/history
+     * GET /v1/patient/radiology/{testId}/history
      *
-     * "View Previous Reports" — the released reports of the same examination.
+     * "View Previous Reports" — every released report this patient has for one
+     * examination, across every visit they have ever made.
+     *
+     * The id here is the examination's id in the radiology catalogue, the
+     * `test_id` the list and detail payloads carry, and not the id of a single
+     * report. Pass `?exclude={id}` to leave the report currently on screen out
+     * of its own history.
      */
-    public function history($id)
+    public function history(Request $request, $testId)
     {
         try {
-            $records = $this->radiologyService->history($id);
+            $records = $this->radiologyService->history($testId, $request->query('exclude'));
 
             return JsonResponser::send(
                 false,
