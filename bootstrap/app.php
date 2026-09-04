@@ -43,6 +43,12 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->append(\App\Http\Middleware\SecureHeaders::class);
+
+        // PHP parses a form body only for POST, so a PUT or PATCH carrying
+        // multipart/form-data reaches the application empty and an update
+        // silently writes nothing while answering 200. Prepended so the body is
+        // readable before anything validates it.
+        $middleware->prepend(\App\Http\Middleware\ParseFormDataForPutRequests::class);
         $middleware->alias([
             'tenant' => CurrentTenantMiddleware::class,
             'role.record' => RecordsAccessMiddleware::class,
