@@ -3,6 +3,7 @@
 namespace App\Services\Patient\Laboratory;
 
 use App\Models\Laboratory;
+use App\Models\LabService;
 use App\Services\Patient\Diagnostics\DiagnosticResultService;
 use Illuminate\Database\Eloquent\Model;
 
@@ -55,5 +56,21 @@ class PatientLaboratoryService extends DiagnosticResultService
     protected function notFoundMessage(): string
     {
         return 'We could not find that laboratory result.';
+    }
+
+    /**
+     * The hospital's laboratory test catalogue, which patient_visit_lab.test_id
+     * is an id in.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    protected function testCatalogue()
+    {
+        return LabService::query();
+    }
+
+    protected function testNotFoundMessage(): string
+    {
+        return 'We could not find that laboratory test.';
     }
 }

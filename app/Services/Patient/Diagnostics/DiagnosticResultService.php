@@ -73,6 +73,24 @@ abstract class DiagnosticResultService
     abstract protected function notFoundMessage(): string;
 
     /**
+     * A fresh query over this module's catalogue of tests — the table that
+     * patient_visit_lab.test_id / patient_visit_radiology.test_id points at.
+     *
+     * History is asked for by test rather than by record, so the catalogue is
+     * what turns the id in the URL into a test the patient may have taken on
+     * any number of visits.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    abstract protected function testCatalogue();
+
+    /**
+     * What to call the test when the catalogue has never heard of it and the
+     * patient has no record ordered from it either.
+     */
+    abstract protected function testNotFoundMessage(): string;
+
+    /**
      * The list behind the All / Released / Pending tabs.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -147,35 +165,59 @@ abstract class DiagnosticResultService
     }
 
     /**
-     * The previous reports of the same test, behind "View Previous Reports".
+     * Every released report this patient holds for one test, behind "View
+     * Previous Reports".
      *
-     * Only released ones: a report still being worked on is not something to
-     * offer for download, and the current record is left out because it is the
-     * one the patient is already looking at.
+     * The id in the URL is the test's id in this module's catalogue
+     * (lab_services / radiology_services), not the id of a single order. A
+     * patient takes the same test across many visits and each visit writes its
+     * own row, so asking by test is what gathers those rows into one history;
+     * asking by order id could only ever describe the visit already on screen.
      *
-     * @param  int  $id
+     * Only released records are listed — one still being worked on has no
+     * report to look back at. Rows written before test_id was recorded are
+     * still found, by the name the catalogue holds for that test, so a
+     * patient's older visits do not fall out of their history.
+     *
+     * @param  int  $testId  id in this module's test catalogue
+     * @param  int|null  $exclude  id of the record on screen, left out of its
+     *                             own history when the app passes it
      * @return \Illuminate\Support\Collection
      *
      * @throws \App\Exceptions\PatientAppException
      */
-    public function history($id)
+    public function history($testId, $exclude = null)
     {
-        $record = $this->show($id);
+        $test = $this->testCatalogue()->find($testId);
 
-        return $this->newQuery()
-            ->where('id', '!=', $record->id)
+        $records = $this->newQuery()
             ->where('status', self::RELEASED)
-            ->when(!empty($record->test_name), function ($query) use ($record) {
-                $query->where('test_name', $record->test_name);
-            }, function ($query) use ($record) {
-                // A record with no test name falls back to the test it was
-                // ordered from, so history is never the patient's whole file.
-                $query->where('test_id', $record->test_id);
+            ->where(function ($query) use ($testId, $test) {
+                $query->where('test_id', $testId);
+
+                // Rows from before test_id was recorded carry only the name the
+                // test was ordered under.
+                if ($test && !empty($test->name)) {
+                    $query->orWhere(function ($q) use ($test) {
+                        $q->whereNull('test_id')->where('test_name', $test->name);
+                    });
+                }
+            })
+            ->when($exclude, function ($query) use ($exclude) {
+                $query->where('id', '!=', $exclude);
             })
             ->with($this->relations())
             ->orderBy('created_at', 'DESC')
-            ->get()
-            ->map(fn($order) => $this->decorate($order));
+            ->orderBy('id', 'DESC')
+            ->get();
+
+        // An unknown test is an error; a known test the patient has simply
+        // never taken is an empty history, which the screen shows as such.
+        if (!$test && $records->isEmpty()) {
+            throw new PatientAppException($this->testNotFoundMessage(), 404);
+        }
+
+        return $records->map(fn($order) => $this->decorate($order));
     }
 
     /**

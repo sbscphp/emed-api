@@ -3,6 +3,7 @@
 namespace App\Services\Patient\Radiology;
 
 use App\Models\Radiology;
+use App\Models\RadiologyService;
 use App\Services\Patient\Diagnostics\DiagnosticResultService;
 use Illuminate\Database\Eloquent\Model;
 
@@ -55,5 +56,21 @@ class PatientRadiologyService extends DiagnosticResultService
     protected function notFoundMessage(): string
     {
         return 'We could not find that radiology report.';
+    }
+
+    /**
+     * The hospital's radiology service catalogue, which
+     * patient_visit_radiology.test_id is an id in.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    protected function testCatalogue()
+    {
+        return RadiologyService::query();
+    }
+
+    protected function testNotFoundMessage(): string
+    {
+        return 'We could not find that radiology examination.';
     }
 }
