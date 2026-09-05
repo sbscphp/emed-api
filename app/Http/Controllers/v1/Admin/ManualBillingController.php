@@ -108,7 +108,7 @@ class ManualBillingController extends Controller
 
             return JsonResponser::send(false, 'Payment recorded successfully', [
                 'transaction' => $transaction,
-                'billing'     => $billing->fresh(['patient', 'billingLogDetails', 'transactions']),
+                'billing'     => $billing->fresh(['patient', 'billingLogDetails.serviceUnit', 'transactions']),
             ]);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'An error occurred while recording the payment.', [], 500, $th);

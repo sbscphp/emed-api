@@ -71,7 +71,7 @@ class ManualBillingService
 
             $this->audit($billing, 'Create', 'Created manual billing ' . $billing->invoice_number);
 
-            return $billing->fresh(['patient', 'billingLogDetails', 'transactions']);
+            return $billing->fresh(['patient', 'billingLogDetails.serviceUnit', 'transactions']);
         });
     }
 
@@ -130,7 +130,7 @@ class ManualBillingService
 
             $this->audit($billing, 'Update', 'Updated manual billing ' . $billing->invoice_number);
 
-            return $billing->fresh(['patient', 'billingLogDetails', 'transactions']);
+            return $billing->fresh(['patient', 'billingLogDetails.serviceUnit', 'transactions']);
         });
     }
 
@@ -143,7 +143,7 @@ class ManualBillingService
 
     public function index(Request $request)
     {
-        $query = BillingLog::with(['patient', 'billingLogDetails'])
+        $query = BillingLog::with(['patient', 'billingLogDetails.serviceUnit'])
             ->where('type', BillingTypeEnum::MANUAL->value);
 
         if ($request->filled('patient_id')) {
