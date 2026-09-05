@@ -16,6 +16,11 @@ class BillingLog extends Model
         return $this->hasMany(BillingLogDetail::class, 'billing_id');
     }
 
+    public function transactions()
+    {
+        return $this->hasMany(PaymentTransaction::class, 'billing_id');
+    }
+
     public function service()
     {
         return $this->belongsTo(Service::class, 'service_type_id');
