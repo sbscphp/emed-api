@@ -238,10 +238,15 @@ class ManualBillingService
 
     private function generateInvoiceNumber(): string
     {
-        $last = BillingLog::whereNotNull('invoice_number')->orderByDesc('id')->first();
-        $next = $last ? ((int) filter_var($last->invoice_number, FILTER_SANITIZE_NUMBER_INT)) + 1 : 1;
+        // Increment from the highest existing INV-number. We take the numeric part
+        // via REPLACE (not filter_var, which keeps the '-' and turns INV-0001 into
+        // -1) and MAX (not latest-by-id) so a stray/duplicate number can't stall
+        // the sequence.
+        $maxNumber = (int) BillingLog::whereNotNull('invoice_number')
+            ->selectRaw("MAX(CAST(REPLACE(invoice_number, 'INV-', '') AS UNSIGNED)) as max_no")
+            ->value('max_no');
 
-        return 'INV-' . str_pad((string) $next, 4, '0', STR_PAD_LEFT);
+        return 'INV-' . str_pad((string) ($maxNumber + 1), 4, '0', STR_PAD_LEFT);
     }
 
     private function audit(BillingLog $billing, string $action, string $description): void
