@@ -4,6 +4,7 @@ namespace App\Services\Revamp;
 
 use App\Enums\BillingTypeEnum;
 use App\Enums\GeneralEnums;
+use App\Enums\TransactionStatusEnum;
 use App\Helpers\GeneralHelper;
 use App\Enums\ListModuleEnums;
 use App\Models\BillingLog;
@@ -36,7 +37,8 @@ class ManualBillingService
             $itemsTotal = array_sum(array_column($lines, 'line_amount'));
             $discount   = (float) ($data['discount'] ?? 0);
             $taxAmount  = (float) ($data['tax_amount'] ?? 0);
-            $grandTotal = max(0, $itemsTotal - $discount);
+            // Grand total is VAT-inclusive: subtotal - discount + VAT.
+            $grandTotal = max(0, $itemsTotal - $discount + $taxAmount);
 
             $billing = BillingLog::create([
                 'tenant_id'          => $this->tenantId(),
@@ -48,7 +50,7 @@ class ManualBillingService
                 'billing_date'       => $data['billing_date'] ?? now()->toDateString(),
                 'discount'           => $discount,
                 'tax_amount'         => $taxAmount,
-                'total_amount'       => $taxAmount,
+                'total_amount'       => $itemsTotal,
                 'grand_total'        => $grandTotal,
                 'amount_paid'        => 0,
                 'amount_outstanding' => $grandTotal,
@@ -116,13 +118,20 @@ class ManualBillingService
                 $billing->billing_date = $data['billing_date'];
             }
 
-            // Recompute totals against the (possibly new) line items and paid amounts.
+            // Recompute totals. grand_total is VAT-inclusive (subtotal - discount + VAT);
+            // amount paid is taken from the successful payment ledger, not line-item sums,
+            // so the VAT portion (which has no line item) is accounted for correctly.
             $itemsTotal = (float) $billing->billingLogDetails()->sum('amount');
-            $paidTotal  = (float) $billing->billingLogDetails()->sum('amount_paid');
-            $billing->grand_total        = max(0, $itemsTotal - (float) ($billing->discount ?? 0));
-            $billing->amount_paid        = min($paidTotal, $billing->grand_total);
+            $discount   = (float) ($billing->discount ?? 0);
+            $tax        = (float) ($billing->tax_amount ?? 0);
+            $paid       = (float) $billing->transactions()
+                ->where('status', TransactionStatusEnum::SUCCESS->value)
+                ->sum('amount');
+
+            $billing->total_amount       = $itemsTotal;
+            $billing->grand_total        = max(0, $itemsTotal - $discount + $tax);
+            $billing->amount_paid        = min($paid, $billing->grand_total);
             $billing->amount_outstanding = max(0, $billing->grand_total - $billing->amount_paid);
-            $billing->total_amount       = (float) $billing->amount_paid + (float) ($billing->tax_amount ?? 0);
             $billing->payment_status     = $billing->amount_paid <= 0
                 ? GeneralEnums::PENDING->value
                 : ($billing->amount_paid < $billing->grand_total ? GeneralEnums::PART_PAID->value : GeneralEnums::PAID->value);

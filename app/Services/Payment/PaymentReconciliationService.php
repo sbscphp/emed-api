@@ -47,17 +47,22 @@ class PaymentReconciliationService
         }
 
         $itemsTotal = (float) $billing->billingLogDetails()->sum('amount');
-        $paidTotal  = (float) $billing->billingLogDetails()->sum('amount_paid');
         $discount   = (float) ($billing->discount ?? 0);
+        $tax        = (float) ($billing->tax_amount ?? 0);
+        // Paid comes from the successful payment ledger (not line-item sums) so the VAT
+        // portion — which has no line item to absorb it — counts toward what's been paid.
+        $paid       = (float) $billing->transactions()
+            ->where('status', TransactionStatusEnum::SUCCESS->value)
+            ->sum('amount');
 
-        $billing->grand_total        = max(0, $itemsTotal - $discount);
-        $billing->amount_paid        = min($paidTotal, $billing->grand_total);
+        $billing->total_amount       = $itemsTotal;
+        $billing->grand_total        = max(0, $itemsTotal - $discount + $tax);
+        $billing->amount_paid        = min($paid, $billing->grand_total);
         $billing->amount_outstanding = max(0, $billing->grand_total - $billing->amount_paid);
         $billing->payment_status     = $this->statusFor($billing->amount_paid, $billing->grand_total);
-        $billing->total_amount       = (float) $billing->amount_paid + (float) ($billing->tax_amount ?? 0);
         $billing->save();
 
-        return $billing->fresh(['patient', 'billingLogDetails', 'transactions']);
+        return $billing->fresh(['patient', 'billingLogDetails.serviceUnit', 'transactions']);
     }
 
     /**
