@@ -18,7 +18,8 @@
                     <tr>
                         <td align="center" style="background:#f0f4f2; padding:24px 0;">
                             <img src="{{ asset('assets/img/enugu-logo.png') }}" alt="Enugu International Hospital"
-                                width="110" style="display:block;">
+                                width="80" height="80"
+                                style="display:block; width:80px; height:80px; max-width:80px;">
                         </td>
                     </tr>
 
