@@ -47,6 +47,12 @@ use App\Http\Controllers\v1\Admin\Revamp\ReportController as RevampReportControl
 use App\Http\Controllers\v1\Admin\Revamp\ServiceCategoryController;
 use App\Http\Controllers\v1\Admin\Revamp\WardBedController;
 use App\Http\Controllers\v1\GeneralController;
+use App\Http\Controllers\v1\Admin\RateCardController;
+use App\Http\Controllers\v1\Admin\ManualBillingController;
+use App\Http\Controllers\v1\Patient\PatientAuthController;
+use App\Http\Controllers\v1\Patient\PatientInvoiceController;
+use App\Http\Controllers\v1\Patient\PatientPaymentController;
+use App\Http\Controllers\Webhooks\PaystackWebhookController;
 use App\Services\HivAids\HivAidsService;
 // use App\Models\Immunization;
 use Illuminate\Support\Facades\Route;
@@ -102,6 +108,32 @@ Route::group(["prefix" => "v1"], function () {
         // Route::post('/register', [RegistrationController::class, 'onboardTenant']);
     });
     Route::post('/logout', [RegistrationController::class, 'logout']);
+
+    // Paystack card payment webhook — public (signature-verified); tenant resolved
+    // from the transaction metadata inside the controller.
+    Route::post('/webhooks/paystack', [PaystackWebhookController::class, 'handle']);
+
+    // Mobile-app patient portal. Auth/reset need tenant context (X-Tenant-ID header)
+    // but not a logged-in patient; everything else runs on the `patient` guard.
+    Route::group(['prefix' => 'patient'], function () {
+        Route::group(['middleware' => ['tenant']], function () {
+            Route::post('/login', [PatientAuthController::class, 'login']);
+            Route::post('/forgot-password', [PatientAuthController::class, 'forgotPassword']);
+            Route::post('/reset-password', [PatientAuthController::class, 'resetPassword']);
+
+            Route::group(['middleware' => ['auth:patient']], function () {
+                Route::get('/me', [PatientAuthController::class, 'me']);
+                Route::post('/logout', [PatientAuthController::class, 'logout']);
+                Route::post('/change-password', [PatientAuthController::class, 'changePassword']);
+
+                Route::get('/invoices', [PatientInvoiceController::class, 'index']);
+                Route::get('/invoices/{id}', [PatientInvoiceController::class, 'show']);
+
+                Route::post('/payments/card/initialize', [PatientPaymentController::class, 'initializeCard']);
+                Route::post('/payments/card/verify', [PatientPaymentController::class, 'verifyCard']);
+            });
+        });
+    });
 
     Route::group(["middleware" => ["auth:api"]], function () {
         Route::group(['middleware' => ["tenant"]], function () {
@@ -368,6 +400,24 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/service-type/all', [BillingController::class, 'getBillingByServiceType']);
                     Route::post('/createservice', [BillingController::class, 'createservice']);
                     Route::post('/editservice', [BillingController::class, 'editservice']);
+                });
+
+                // Rate card catalog (billing manager maintained price list)
+                Route::group(['prefix' => 'rate-card', 'middleware' => 'role.billing'], function () {
+                    Route::get('/', [RateCardController::class, 'index']);
+                    Route::post('/', [RateCardController::class, 'store']);
+                    Route::get('/{id}', [RateCardController::class, 'show']);
+                    Route::put('/{id}', [RateCardController::class, 'update']);
+                    Route::delete('/{id}', [RateCardController::class, 'destroy']);
+                });
+
+                // Manual (standalone) billing + manual payment reconciliation
+                Route::group(['prefix' => 'manual-billing', 'middleware' => 'role.billing'], function () {
+                    Route::get('/', [ManualBillingController::class, 'index']);
+                    Route::post('/', [ManualBillingController::class, 'store']);
+                    Route::post('/payment', [ManualBillingController::class, 'recordPayment']);
+                    Route::get('/{id}', [ManualBillingController::class, 'show']);
+                    Route::put('/{id}', [ManualBillingController::class, 'update']);
                 });
 
                 // Old Billing routes
