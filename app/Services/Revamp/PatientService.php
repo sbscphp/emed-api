@@ -63,9 +63,11 @@ class PatientService
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
         $tenantId = $request->header('X-Tenant-ID');
+        $scopeId = \App\Helpers\RoleHelper::consultantScopeId($tenantId);
 
         $records = Patient::query()
             ->where('tenant_id', $tenantId)
+            ->when($scopeId, fn ($q) => $q->whereHas('visits', fn ($v) => $v->where('doctor_id', $scopeId)))
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->where('firstname', 'LIKE', '%' . $request['search_param'] . '%')
@@ -106,14 +108,24 @@ class PatientService
         }
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
         $tenantId = $request->header('X-Tenant-ID');
-        $query = Patient::query()->where('tenant_id', $tenantId);
+        $scopeId = \App\Helpers\RoleHelper::consultantScopeId($tenantId);
+
+        // For a consultant, restrict counts to their own patients/visits.
+        $visitScope = function ($q) use ($scopeId) {
+            return $q->when($scopeId, fn ($qq) => $qq->whereIn('visit_id', PatientVisit::where('doctor_id', $scopeId)->select('id')));
+        };
+
+        $query = Patient::query()->where('tenant_id', $tenantId)
+            ->when($scopeId, fn ($q) => $q->whereHas('visits', fn ($v) => $v->where('doctor_id', $scopeId)));
         $total = (clone $query)->count();
         $patientLog = (clone $query)->count();
         $admitted = (clone $query)->where('status', GeneralEnums::ADMITTED->value)->count();
-        $patientVisitToday = PatientVisit::where('tenant_id', $tenantId)->whereDate('created_at', now()->toDateString())->count();
-        $consultantFollowUpPatient = Consultation::where('tenant_id', $tenantId)->where('schedule_a_follow_up', 1)->count();
-        $hivFollowUpPatient = CounsellingDetail::where('tenant_id', $tenantId)->where('schedule_a_follow_up', 1)->count();
-        $immunizationFollowUpPatient = Immunization::where('tenant_id', $tenantId)->where('schedule_a_follow_up', 1)->count();
+        $patientVisitToday = PatientVisit::where('tenant_id', $tenantId)
+            ->when($scopeId, fn ($q) => $q->where('doctor_id', $scopeId))
+            ->whereDate('created_at', now()->toDateString())->count();
+        $consultantFollowUpPatient = $visitScope(Consultation::where('tenant_id', $tenantId)->where('schedule_a_follow_up', 1))->count();
+        $hivFollowUpPatient = $visitScope(CounsellingDetail::where('tenant_id', $tenantId)->where('schedule_a_follow_up', 1))->count();
+        $immunizationFollowUpPatient = $visitScope(Immunization::where('tenant_id', $tenantId)->where('schedule_a_follow_up', 1))->count();
         $followUpPatient = $consultantFollowUpPatient + $hivFollowUpPatient + $immunizationFollowUpPatient;
 
         return [
@@ -713,10 +725,12 @@ class PatientService
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
         $tenantId = $request->header('X-Tenant-ID');
+        $scopeId = \App\Helpers\RoleHelper::consultantScopeId($tenantId);
 
         $records = PatientVisit::query()
             ->where('tenant_id', $tenantId)
             ->where('patient_id', $request->patient_id)
+            ->when($scopeId, fn ($q) => $q->where('doctor_id', $scopeId))
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->where('visitno', 'LIKE', '%' . $request['search_param'] . '%')
