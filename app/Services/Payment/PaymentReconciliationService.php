@@ -67,6 +67,12 @@ class PaymentReconciliationService
      */
     public function recordManualPayment(BillingLog $billing, float $amount, string $channel, array $context = []): PaymentTransaction
     {
+        // Never let the ledger record more than the bill owes.
+        $outstanding = round((float) $billing->amount_outstanding, 2);
+        if (round($amount, 2) > $outstanding) {
+            throw new \RuntimeException("Amount exceeds the outstanding balance of {$outstanding}.");
+        }
+
         return DB::connection('tenant')->transaction(function () use ($billing, $amount, $channel, $context) {
             $transaction = PaymentTransaction::create([
                 'tenant_id'    => $billing->tenant_id,

@@ -90,6 +90,11 @@ class ManualBillingController extends Controller
                 return JsonResponser::send(true, 'This billing is already fully paid.', [], 422);
             }
 
+            $outstanding = round((float) $billing->amount_outstanding, 2);
+            if (round((float) $request->amount, 2) > $outstanding) {
+                return JsonResponser::send(true, "Amount exceeds the outstanding balance of {$outstanding}.", [], 422);
+            }
+
             $transaction = $this->reconciliation->recordManualPayment(
                 $billing,
                 (float) $request->amount,
