@@ -11,9 +11,11 @@ use App\Models\BillingLog;
 use App\Models\BillingLogDetail;
 use App\Models\Patient;
 use App\Models\RateCardItem;
+use App\Services\Billing\InvoiceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Standalone (patient-only, no clinical visit) manual billing: the billing manager
@@ -23,6 +25,8 @@ use Illuminate\Support\Facades\DB;
  */
 class ManualBillingService
 {
+    public function __construct(private InvoiceService $invoiceService) {}
+
     private function tenantId(): ?string
     {
         return app()->bound('currentTenant') ? app('currentTenant')->uuid : null;
@@ -30,7 +34,7 @@ class ManualBillingService
 
     public function create(array $data): BillingLog
     {
-        return DB::connection('tenant')->transaction(function () use ($data) {
+        $billing = DB::connection('tenant')->transaction(function () use ($data) {
             $patient = Patient::findOrFail($data['patient_id']);
             $lines   = $this->resolveLines($data['items']);
 
@@ -75,6 +79,19 @@ class ManualBillingService
 
             return $billing->fresh(['patient', 'billingLogDetails.serviceUnit', 'transactions']);
         });
+
+        // Auto-email the invoice once the bill is committed. Best-effort: a mail
+        // failure (or a patient with no email) must never fail the billing.
+        try {
+            $this->invoiceService->sendToPatient($billing);
+        } catch (\Throwable $e) {
+            Log::error('Failed to auto-send manual billing invoice.', [
+                'invoice'   => $billing->invoice_number,
+                'exception' => $e->getMessage(),
+            ]);
+        }
+
+        return $billing;
     }
 
     public function update($id, array $data): BillingLog

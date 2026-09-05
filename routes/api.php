@@ -127,6 +127,7 @@ Route::group(["prefix" => "v1"], function () {
                 Route::post('/change-password', [PatientAuthController::class, 'changePassword']);
 
                 Route::get('/invoices', [PatientInvoiceController::class, 'index']);
+                Route::get('/invoices/{id}/download', [PatientInvoiceController::class, 'downloadInvoice']);
                 Route::get('/invoices/{id}', [PatientInvoiceController::class, 'show']);
 
                 Route::post('/payments/card/initialize', [PatientPaymentController::class, 'initializeCard']);
@@ -416,6 +417,8 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/', [ManualBillingController::class, 'index']);
                     Route::post('/', [ManualBillingController::class, 'store']);
                     Route::post('/payment', [ManualBillingController::class, 'recordPayment']);
+                    Route::get('/{id}/invoice', [ManualBillingController::class, 'downloadInvoice']);
+                    Route::post('/{id}/send-invoice', [ManualBillingController::class, 'sendInvoice']);
                     Route::get('/{id}', [ManualBillingController::class, 'show']);
                     Route::put('/{id}', [ManualBillingController::class, 'update']);
                 });

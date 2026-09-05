@@ -19,6 +19,7 @@ class ManualBillingController extends Controller
     public function __construct(
         private ManualBillingService $manualBillingService,
         private PaymentReconciliationService $reconciliation,
+        private \App\Services\Billing\InvoiceService $invoiceService,
     ) {}
 
     public function index(Request $request)
@@ -112,6 +113,47 @@ class ManualBillingController extends Controller
             ]);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'An error occurred while recording the payment.', [], 500, $th);
+        }
+    }
+
+    /**
+     * Download the invoice for a manual billing as a PDF.
+     */
+    public function downloadInvoice($id)
+    {
+        try {
+            $billing = $this->manualBillingService->find($id);
+
+            return $this->invoiceService->download($billing);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'Invoice not found.', [], 404, $th);
+        }
+    }
+
+    /**
+     * (Re)send the invoice PDF to the patient's email, or to an override address.
+     */
+    public function sendInvoice(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => ['nullable', 'email'],
+        ]);
+
+        if ($validator->fails()) {
+            return JsonResponser::send(true, $validator->errors()->first(), $validator->errors()->all(), 400);
+        }
+
+        try {
+            $billing = $this->manualBillingService->find($id);
+            $sent = $this->invoiceService->sendToPatient($billing, $request->email);
+
+            if (!$sent) {
+                return JsonResponser::send(true, 'No email address available for this patient. Provide an email to send to.', [], 422);
+            }
+
+            return JsonResponser::send(false, 'Invoice sent successfully', []);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'An error occurred while sending the invoice.', [], 500, $th);
         }
     }
 }

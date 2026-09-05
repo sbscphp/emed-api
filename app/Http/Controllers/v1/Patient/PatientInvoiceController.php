@@ -5,10 +5,13 @@ namespace App\Http\Controllers\v1\Patient;
 use App\Http\Controllers\Controller;
 use App\Models\BillingLog;
 use App\Responser\JsonResponser;
+use App\Services\Billing\InvoiceService;
 use Illuminate\Http\Request;
 
 class PatientInvoiceController extends Controller
 {
+    public function __construct(private InvoiceService $invoiceService) {}
+
     /**
      * List the authenticated patient's invoices. Every query is scoped to
      * auth('patient')->id so a patient can only ever see their own bills.
@@ -54,6 +57,26 @@ class PatientInvoiceController extends Controller
             return JsonResponser::send(false, 'Invoice found successfully', $invoice);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'An error occurred while fetching the invoice.', [], 500, $th);
+        }
+    }
+
+    /**
+     * Download the authenticated patient's own invoice as a PDF.
+     */
+    public function downloadInvoice($id)
+    {
+        try {
+            $invoice = BillingLog::where('patient_id', auth('patient')->id())
+                ->where('id', $id)
+                ->first();
+
+            if (!$invoice) {
+                return JsonResponser::send(true, 'Invoice not found.', [], 404);
+            }
+
+            return $this->invoiceService->download($invoice);
+        } catch (\Throwable $th) {
+            return JsonResponser::send(true, 'An error occurred while downloading the invoice.', [], 500, $th);
         }
     }
 }
