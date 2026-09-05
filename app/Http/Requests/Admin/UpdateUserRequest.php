@@ -26,6 +26,13 @@ class UpdateUserRequest extends FormRequest
             'role' => 'required',
             'date_of_birth' => 'nullable|date|before:today',
             // 'password' => 'nullable|string|min:8',
+
+            // Consultant rate card (applied only when the role is consultant).
+            'use_default_rate'  => 'nullable|boolean',
+            'first_visit_price' => 'nullable|numeric|min:0',
+            'returning_price'   => 'nullable|numeric|min:0',
+            'markup_type'       => 'nullable|in:fixed,percentage',
+            'markup_value'      => 'nullable|numeric|min:0',
         ];
     }
 

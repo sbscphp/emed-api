@@ -279,6 +279,7 @@ class RecordManagementController extends Controller
             $request->validate([
                 'patient_id' => 'required',
                 'service_id' => 'required',
+                'doctor_id'  => 'nullable',
                 // 'stage' => 'required|string'
             ]);
 

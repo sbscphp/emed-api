@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\v1\Admin;
 
+use App\Enums\GeneralEnums;
 use App\Enums\ListModuleEnums;
 use App\Helpers\ExportHelper;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\TriageRequest;
+use App\Models\BillingLog;
 use App\Models\Laboratory;
 use App\Models\Notification;
 use App\Models\Patient;
@@ -74,6 +76,14 @@ class TriageController extends Controller
             $visit = PatientVisit::find($request->visit_id);
             if (!$visit) {
                 return JsonResponser::send(true, 'Patient visit not yet initiated.', null, 200);
+            }
+
+            // Registration + consultation billing for this visit must be fully paid
+            // before the nurse can start triage.
+            $visitBilling = BillingLog::where('visit_id', $visit->id)->orderBy('id')->first();
+            if (!$visitBilling || $visitBilling->payment_status !== GeneralEnums::PAID->value) {
+                DB::connection('tenant')->rollBack();
+                return JsonResponser::send(true, 'Registration and consultation billing must be fully paid before triage.', [], 402);
             }
 
             $triage = $this->patientVisitService->create($request);

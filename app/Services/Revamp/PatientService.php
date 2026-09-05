@@ -207,6 +207,7 @@ class PatientService
                 'employee_id' => $request->employee_id,
                 'company_name' => $request->company_name,
                 'allergies' => $request->allergies,
+                'preferred_doctor_id' => $request->preferred_doctor_id,
             ]);
 
             // create next of kin
@@ -790,11 +791,18 @@ class PatientService
             }
 
             $serviceUnit = ServiceUnit::where('name', 'Registration')->where('tenant_id', $tenantId)->first();
-            if (empty($service)) {
+            if (empty($serviceUnit)) {
                 throw new \Exception("Registration service unit not found.");
             }
             // Find patient
             $patient = Patient::find($request->patient_id);
+
+            // Doctor assigned for this visit (explicit, else the patient's preferred doctor).
+            $doctorId = $request->doctor_id ?? $patient->preferred_doctor_id;
+
+            // First visit if the patient has no prior visits.
+            $isFirstVisit = PatientVisit::where('patient_id', $patient->id)->count() === 0;
+
             // Initiate Patient visit
             $patientVisit = PatientVisit::create([
                 'tenant_id' => $tenantId,
@@ -802,6 +810,7 @@ class PatientService
                 'visitno' => 'VIS' . GeneralHelper::generateUniqueRandomId($patient->firstname),
                 'patient_id' => $patient->id,
                 'service_id' => $request->service_id,
+                'doctor_id' => $doctorId,
                 // 'stage' => PatientVisitStageEnums::VISIT,
                 'arrival_date' => now(),
                 'status' => PatientVisitStatusEnums::VISIT_INITIATED->value,
@@ -819,29 +828,64 @@ class PatientService
                 'idLength' => 6,
             ]);
 
-            //store billing info
-            $patientBilling = BillingLog::create([
-                'tenant_id' => $tenantId,
-                'updated_by' => $currentUser->id,
-                'visit_id' => $patientVisit->id,
-                'patient_id' => $patient->id,
-                'invoice_number' => $invoiceNumber,
-                'patient_name' => $patient->firstname . ' ' . $patient->lastname,
-                'billing_date' => now(),
-                'service_type_id' => $request->service_id,
+            // One billing header per visit (idempotent on visit_id).
+            $patientBilling = BillingLog::firstOrCreate(
+                [
+                    'visit_id'  => $patientVisit->id,
+                    'tenant_id' => $tenantId,
+                ],
+                [
+                    'updated_by'      => $currentUser->id,
+                    'patient_id'      => $patient->id,
+                    'invoice_number'  => $invoiceNumber,
+                    'patient_name'    => $patient->firstname . ' ' . $patient->lastname,
+                    'billing_date'    => now(),
+                    'service_type_id' => $request->service_id,
+                    'service_unit_id' => $serviceUnit->id,
+                    'type'            => \App\Enums\BillingTypeEnum::CLINICAL->value,
+                    'payment_status'  => GeneralEnums::PENDING->value,
+                ]
+            );
+
+            // Registration line item.
+            BillingLogDetail::create([
+                'tenant_id'       => $tenantId,
+                'billing_id'      => $patientBilling->id,
                 'service_unit_id' => $serviceUnit->id,
-                'grand_total' => $service->price
+                'item_name'       => $service->name,
+                'quantity'        => 1,
+                'amount'          => $service->price,
+                'status'          => GeneralEnums::PENDING->value,
             ]);
 
-            //update billing log details
-            BillingLogDetail::create([
-                'tenant_id'        => $tenantId,
-                'billing_id' => $patientBilling->id,
-                'service_unit_id' => $serviceUnit->id,
-                'item_name' => $service->name,
-                'quantity' => 1,
-                'amount' => $service->price
-            ]);
+            // Consultation line item (doctor fee + admin markup, as one total),
+            // only when a doctor is assigned to the visit.
+            if ($doctorId) {
+                $consultationUnit = ServiceUnit::where('name', 'Consultation')
+                    ->where('tenant_id', $tenantId)
+                    ->first();
+
+                $rate = app(\App\Services\Billing\ConsultantRateService::class)
+                    ->resolveFor((int) $doctorId, $isFirstVisit);
+
+                BillingLogDetail::create([
+                    'tenant_id'       => $tenantId,
+                    'billing_id'      => $patientBilling->id,
+                    'service_unit_id' => $consultationUnit?->id,
+                    'item_name'       => 'Consultation',
+                    'quantity'        => 1,
+                    'amount'          => $rate['total'],
+                    'status'          => GeneralEnums::PENDING->value,
+                ]);
+            }
+
+            // Recompute header totals from the line items.
+            $itemsTotal = (float) $patientBilling->billingLogDetails()->sum('amount');
+            $patientBilling->total_amount       = $itemsTotal;
+            $patientBilling->grand_total        = max(0, $itemsTotal - (float) ($patientBilling->discount ?? 0) + (float) ($patientBilling->tax_amount ?? 0));
+            $patientBilling->amount_outstanding = $patientBilling->grand_total;
+            $patientBilling->payment_status     = GeneralEnums::PENDING->value;
+            $patientBilling->save();
 
             // update patient registaration staus
             // $patient->update([

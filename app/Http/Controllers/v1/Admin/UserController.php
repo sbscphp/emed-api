@@ -281,6 +281,16 @@ class UserController extends Controller
                 ]
             );
 
+            // Consultant rate card: full-time doctors use the default (no custom row).
+            if ($tenantRole->name === 'consultant' && !$request->boolean('use_default_rate')) {
+                app(\App\Services\Billing\ConsultantRateService::class)->upsertForUser($user->id, [
+                    'first_visit_price' => $request['first_visit_price'] ?? 0,
+                    'returning_price'   => $request['returning_price'] ?? 0,
+                    'markup_type'       => $request['markup_type'] ?? 'fixed',
+                    'markup_value'      => $request['markup_value'] ?? 0,
+                ]);
+            }
+
             // 9️⃣ Send onboarding email only if new user
             if ($isNewUser) {
                 $maildata = [
@@ -415,6 +425,16 @@ class UserController extends Controller
                     'is_active'     => $request['is_active'] ?? 1,
                 ]
             );
+
+            // Consultant rate card: full-time doctors use the default (no custom row).
+            if ($tenantRole->name === 'consultant' && !$request->boolean('use_default_rate')) {
+                app(\App\Services\Billing\ConsultantRateService::class)->upsertForUser($user->id, [
+                    'first_visit_price' => $request['first_visit_price'] ?? 0,
+                    'returning_price'   => $request['returning_price'] ?? 0,
+                    'markup_type'       => $request['markup_type'] ?? 'fixed',
+                    'markup_value'      => $request['markup_value'] ?? 0,
+                ]);
+            }
 
             DB::connection('landlord')->commit();
 

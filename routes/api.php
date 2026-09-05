@@ -48,6 +48,7 @@ use App\Http\Controllers\v1\Admin\Revamp\ServiceCategoryController;
 use App\Http\Controllers\v1\Admin\Revamp\WardBedController;
 use App\Http\Controllers\v1\GeneralController;
 use App\Http\Controllers\v1\Admin\RateCardController;
+use App\Http\Controllers\v1\Admin\ConsultantRateCardController;
 use App\Http\Controllers\v1\Admin\ManualBillingController;
 use App\Http\Controllers\v1\Patient\PatientAuthController;
 use App\Http\Controllers\v1\Patient\PatientInvoiceController;
@@ -410,6 +411,18 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/{id}', [RateCardController::class, 'show']);
                     Route::put('/{id}', [RateCardController::class, 'update']);
                     Route::delete('/{id}', [RateCardController::class, 'destroy']);
+                });
+
+                // Consultants list (for the doctor dropdown at registration/visit)
+                Route::get('/consultants', [ConsultantRateCardController::class, 'consultants']);
+
+                // Consultant rate cards (admin-managed doctor consultation pricing)
+                Route::group(['prefix' => 'consultant-rates', 'middleware' => 'admin.superadmin'], function () {
+                    Route::get('/', [ConsultantRateCardController::class, 'index']);
+                    Route::get('/default', [ConsultantRateCardController::class, 'getDefault']);
+                    Route::put('/default', [ConsultantRateCardController::class, 'setDefault']);
+                    Route::get('/{userId}', [ConsultantRateCardController::class, 'showForUser']);
+                    Route::put('/{userId}', [ConsultantRateCardController::class, 'upsertForUser']);
                 });
 
                 // Manual (standalone) billing + manual payment reconciliation
