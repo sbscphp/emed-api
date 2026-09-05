@@ -54,6 +54,7 @@ class TenantMigrate extends Command
                 $output = [];
                 Artisan::call('migrate', [
                     '--path' => 'database/migrations/tenant', // Specify the tenant migrations folder
+                    '--force' => true, // Run non-interactively (required under APP_ENV=production)
                 ], $output);
 
                 // Display the output of the migrate command
