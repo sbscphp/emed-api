@@ -315,8 +315,10 @@ class RecordManagementController extends Controller
                         'status'         => PatientVisitStatusEnums::COMPLETED->value,
                         'departure_date' => Carbon::now()->format('Y-m-d H:i:s'),
                     ]);
+                } elseif (\App\Helpers\VisitPolicy::closeStaleOutpatient($patientVisit)) {
+                    // Prior-day outpatient visit — auto-closed; fall through to create a new visit for today.
                 } else {
-                    // Patient still has an ongoing visit
+                    // Patient still has an ongoing (same-day or admitted) visit
                     return JsonResponser::send(false, 'A visit is already ongoing for this patient.', null, 422);
                 }
             }

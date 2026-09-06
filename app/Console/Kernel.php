@@ -21,6 +21,9 @@ class Kernel extends ConsoleKernel
         // Laravel's lastDayOfMonth() dynamically resolves the correct final day
         // regardless of whether the month has 28, 29, 30, or 31 days.
         $schedule->command('charges:generate-monthly')->lastDayOfMonth('00:00');
+
+        // Close outpatient visits left open past their day (admissions exempt).
+        $schedule->command('visits:close-stale')->dailyAt('00:15');
     }
 
 

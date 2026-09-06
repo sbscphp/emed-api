@@ -180,6 +180,15 @@ class ConsultationService
 
             $currentUser = Auth::user();
             $visit = PatientVisit::find($request->visit_id);
+
+            // A visit belongs to its day; you cannot continue a consultation on a
+            // prior-day outpatient visit. (This runs inside the controller's tenant
+            // transaction, so we only detect here; the visit is closed by the nightly
+            // visits:close-stale job and by the initiate-visit path.)
+            if ($visit && \App\Helpers\VisitPolicy::isStaleOutpatient($visit)) {
+                throw new \Exception('This visit is from a previous day. Please initiate a new visit for today.');
+            }
+
             $patient = Patient::find($request->patient_id);
             $request['consulted_by'] = $currentUser->id;
             $tenantId = $request->header('X-Tenant-ID');

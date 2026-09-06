@@ -78,6 +78,14 @@ class TriageController extends Controller
                 return JsonResponser::send(true, 'Patient visit not yet initiated.', null, 200);
             }
 
+            // A visit belongs to its day; a prior-day outpatient visit can't be triaged.
+            if (\App\Helpers\VisitPolicy::isStaleOutpatient($visit)) {
+                DB::connection('tenant')->rollBack();
+                // Close it outside the (rolled-back) transaction so the state sticks.
+                \App\Helpers\VisitPolicy::closeStaleOutpatient($visit);
+                return JsonResponser::send(true, 'This visit is from a previous day. Please initiate a new visit for today.', [], 422);
+            }
+
             // Registration + consultation billing for this visit must be fully paid
             // before the nurse can start triage.
             $visitBilling = BillingLog::where('visit_id', $visit->id)->orderBy('id')->first();
