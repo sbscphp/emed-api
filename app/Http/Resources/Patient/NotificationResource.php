@@ -13,6 +13,10 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * what tapping the row should open. The deep link itself is not composed here —
  * the app owns its own routing, so the payload names a kind of record and an id
  * and leaves the screen to the app.
+ *
+ * `hospital` rides on every row, and `billing` on every row that names a bill.
+ * Both are put on the model by PatientNotificationService, which is where the
+ * lookups belong.
  */
 class NotificationResource extends JsonResource
 {
@@ -34,6 +38,11 @@ class NotificationResource extends JsonResource
             'is_read' => !$this->is_unread,
             'read_at' => optional($this->read_at)->toDateTimeString(),
 
+            // Which hospital the row came from. On every notification, because
+            // an account is shared by the hospitals that registered it and the
+            // message alone does not say which one is talking.
+            'hospital' => $this->hospital ?: null,
+
             'created_at' => optional($this->created_at)->toDateTimeString(),
             'date' => optional($this->created_at)->format('d M Y'),
             'time' => optional($this->created_at)->format('h:i A'),
@@ -43,6 +52,11 @@ class NotificationResource extends JsonResource
             // notification needs no change here.
             'data' => $data,
 
+            // The invoice behind a billing notification: its number, what it
+            // stands paid at, and how it was paid. On the list as well as the
+            // detail screen; null only on a row that names no bill.
+            'billing' => $this->billing ?: null,
+
             // The one action the screen offers, named so the app does not have
             // to map every type to a button label of its own.
             'action' => $this->action(),
@@ -51,6 +65,11 @@ class NotificationResource extends JsonResource
 
     /**
      * The button at the bottom of the detail screen, when there is one.
+     *
+     * Matched on the notification's type, which is one of
+     * Notification::PATIENT_TYPES. An invoice number or a payment method is a
+     * field on the bill rather than a kind of notification, so neither belongs
+     * here — they are answered in the `billing` block above.
      *
      * @return array<string, string>|null
      */

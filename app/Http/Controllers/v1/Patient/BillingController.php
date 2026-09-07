@@ -22,9 +22,10 @@ use Throwable;
  * The billing module of the patient mobile app.
  *
  * Three things happen here. The patient reads what they have been billed and
- * what is still owed; they pay a bill, which is a checkout started in one call
- * and confirmed in another; and they raise a link asking people they trust to
- * help pay one, then watch what comes in.
+ * what is still owed, and downloads a receipt for anything settled; they pay a
+ * bill, which is a checkout started in one call and confirmed in another; and
+ * they raise a link asking people they trust to help pay one, then watch what
+ * comes in.
  *
  * Paying is never one call. `pay` writes the payment and hands back a Paystack
  * page; `verify` is what actually settles the bill, and only on Paystack's word.
@@ -42,13 +43,13 @@ class BillingController extends Controller
     /**
      * GET /v1/patient/billing
      *
-     * The Billing screen: the summary card, the outstanding list and the paid
-     * list, filtered by `tab`, `search_param` or a date.
+     * The Billing screen: the summary card and one list of bills, narrowed by
+     * `tab` — outstanding, paid, or all — and by `search_param` or a date.
      *
-     * Both lists page independently — `outstanding_page` and `paid_page` — so
-     * "View all" on one of them can walk its pages while the other stays put.
-     * Send `paginate=1` to get pages, `limit` on its own for the first few rows
-     * of each, and neither for the lot.
+     * One list means one page cursor, so `page` walks it as it does everywhere
+     * else in the app. Send `paginate=1` for pages, `limit` on its own for the
+     * first few rows, and neither for the lot. The summary still counts both
+     * sides, so the tab that is not being listed can still be labelled.
      */
     public function index(BillingIndexRequest $request)
     {
@@ -58,8 +59,7 @@ class BillingController extends Controller
             return JsonResponser::send(false, 'Bills retrieved successfully.', [
                 'summary' => $records['summary'],
                 'filter' => $records['filter'],
-                'outstanding' => $this->list($records['outstanding'], $request->paginate),
-                'paid' => $this->list($records['paid'], $request->paginate),
+                'records' => $this->list($records['bills'], $request->paginate),
             ], 200);
         } catch (PatientAppException $th) {
             return JsonResponser::send(true, $th->getMessage(), [], $th->status());
@@ -111,10 +111,34 @@ class BillingController extends Controller
     }
 
     /**
+     * GET /v1/patient/billing/{id}/receipt
+     *
+     * "Download Receipt" on a paid invoice. Streams the PDF rather than
+     * answering in the JSON envelope, so the app can hand it straight to the
+     * file system or a share sheet. A bill still carrying a balance answers 409
+     * rather than an empty document.
+     */
+    public function receipt($id)
+    {
+        try {
+            return $this->billingService->receipt($id);
+        } catch (PatientAppException $th) {
+            return JsonResponser::send(true, $th->getMessage(), [], $th->status());
+        } catch (Throwable $th) {
+            return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
+        }
+    }
+
+    /**
      * POST /v1/patient/billing/{id}/pay
      *
      * Start a checkout. Answers with the Paystack page to open and the reference
      * to verify afterwards. Nothing has been paid at this point.
+     *
+     * `callback_url` is the page Paystack returns the payer to when checkout
+     * closes — the same page whether it succeeded or not, so it is what the app
+     * watches for to know the sheet is done, not what tells it the outcome.
+     * Only `verify` settles anything.
      */
     public function pay(InitiatePaymentRequest $request, $id)
     {
@@ -129,6 +153,48 @@ class BillingController extends Controller
                 'amount' => $checkout['amount'],
                 'currency' => $checkout['currency'],
                 'channels' => $checkout['channels'],
+                'callback_url' => $checkout['callback_url'],
+                'payment' => new PaymentResource($checkout['payment']),
+            ], 200);
+        } catch (PatientAppException $th) {
+            return JsonResponser::send(true, $th->getMessage(), [], $th->status());
+        } catch (Throwable $th) {
+            return JsonResponser::send(true, 'Internal server error.', [], 500, $th);
+        }
+    }
+
+    /**
+     * POST /v1/patient/billing/pay-all
+     *
+     * "Pay now" on the Outstanding Bills card: one checkout for everything the
+     * patient still owes this hospital.
+     *
+     * No ids are sent. The app has no business deciding which invoices are
+     * outstanding, and a list travelling over the wire is a list that can arrive
+     * stale — the set is read on the server from the same query the card's total
+     * comes from, and travels back under `bills` so the app can show what is
+     * about to be paid.
+     *
+     * Settled by the same `verify` as any other payment; which invoice each
+     * naira lands on is worked out there, oldest bill first.
+     */
+    public function payAll(InitiatePaymentRequest $request)
+    {
+        try {
+            $checkout = $this->paymentService->initiateAll($request->validated());
+
+            return JsonResponser::send(false, 'Payment initiated successfully.', [
+                'reference' => $checkout['reference'],
+                'authorization_url' => $checkout['authorization_url'],
+                'access_code' => $checkout['access_code'],
+                'public_key' => $checkout['public_key'],
+                'amount' => $checkout['amount'],
+                'currency' => $checkout['currency'],
+                'channels' => $checkout['channels'],
+                'callback_url' => $checkout['callback_url'],
+                'bills' => $checkout['bills'],
+                'bills_count' => $checkout['bills_count'],
+                'outstanding_total' => $checkout['outstanding_total'],
                 'payment' => new PaymentResource($checkout['payment']),
             ], 200);
         } catch (PatientAppException $th) {
@@ -158,7 +224,13 @@ class BillingController extends Controller
                 [
                     'settled' => $result['settled'],
                     'already_settled' => $result['already_settled'],
+
+                    // The invoice the checkout was raised against, and — for a
+                    // "pay all" charge — every invoice it cleared, each with the
+                    // share of the payment that landed on it.
                     'bill' => $result['bill'],
+                    'bills' => $result['bills'],
+                    'is_bulk' => $result['is_bulk'],
                     'payment' => new PaymentResource($result['payment']),
                 ],
                 200
@@ -200,6 +272,8 @@ class BillingController extends Controller
      * Every support request this patient has raised at this hospital, newest
      * first. Send `paginate=1` for pages, `limit` on its own for the first few,
      * and `status` to narrow to one of Active / Completed / Expired / Cancelled.
+     *
+     * The list sits under `records`, as it does on the Billing screen.
      */
     public function supportRequests(SupportIndexRequest $request)
     {
@@ -209,7 +283,9 @@ class BillingController extends Controller
             return JsonResponser::send(
                 false,
                 'Support requests retrieved successfully.',
-                $this->list($records, $request->paginate, SupportRequestResource::class),
+                [
+                    'records' => $this->list($records, $request->paginate, SupportRequestResource::class),
+                ],
                 200
             );
         } catch (PatientAppException $th) {

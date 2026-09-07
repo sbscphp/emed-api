@@ -45,12 +45,8 @@ return [
     | `support_url` is where a patient's share link points. That link opens a web
     | page rather than the app, so it is configured rather than derived from
     | APP_URL, and it differs per environment — a link generated on staging must
-    | not send a supporter to production. The three are held as separate keys so
-    | one .env can carry all of them and the environment picks, rather than the
-    | value having to be rewritten on every deploy.
-    |
-    | PAYMENT_SUPPORT_URL still wins when it is set, which is the escape hatch
-    | for a tunnel or a review app that is none of the three.
+    | not send a supporter to production. Each deploy sets PAYMENT_SUPPORT_URL to
+    | its own value, so nothing here is inferred from APP_ENV.
     |
     */
     'paystack' => [
@@ -61,11 +57,7 @@ return [
         'commission_percent' => (float) env('PAYSTACK_COMMISSION_PERCENT', 0),
         'channels' => ['card', 'bank_transfer'],
         'callback_url' => env('PAYSTACK_CALLBACK_URL'),
-        'support_url' => env('PAYMENT_SUPPORT_URL') ?: match (env('APP_ENV', 'production')) {
-            'local', 'development', 'testing' => env('LOCAL_PAYMENT_SUPPORT_URL', 'http://127.0.0.1:8000/payment-support'),
-            'staging' => env('STAGING_PAYMENT_SUPPORT_URL'),
-            default => env('LIVE_PAYMENT_SUPPORT_URL'),
-        },
+        'support_url' => env('PAYMENT_SUPPORT_URL'),
         'support_link_days' => (int) env('PAYMENT_SUPPORT_LINK_DAYS', 7),
         'timeout' => (int) env('PAYSTACK_TIMEOUT', 30),
     ],

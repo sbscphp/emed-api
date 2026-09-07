@@ -11,7 +11,10 @@ use Illuminate\Validation\Rule;
  *
  * Every field is optional, because the same endpoint serves three small
  * screens: the reschedule sheet, the reason field and the meeting platform
- * switcher. What may not be touched at all is the status — cancelling has its
+ * switcher. A reschedule sheet may also send reschedule_reason, which is
+ * recorded against the move and left alone by the other two screens.
+ *
+ * What may not be touched at all is the status — cancelling has its
  * own endpoint, and completing one is the hospital's business.
  */
 class UpdateAppointmentRequest extends PatientRequest
@@ -30,6 +33,7 @@ class UpdateAppointmentRequest extends PatientRequest
             'date' => ['sometimes', 'required', 'date', 'after_or_equal:today'],
             'time' => ['sometimes', 'required', 'date_format:H:i,H:i:s,h:i A,h:iA'],
             'reason' => ['sometimes', 'nullable', 'string', 'max:5000'],
+            'reschedule_reason' => ['sometimes', 'nullable', 'string', 'max:5000'],
             'meeting_platform' => ['sometimes', 'nullable', 'string', Rule::in($this->meetingPlatforms())],
         ];
     }
@@ -49,6 +53,7 @@ class UpdateAppointmentRequest extends PatientRequest
             'time.date_format' => 'Select a valid time slot, for example 09:00 AM.',
             'meeting_platform.in' => 'That meeting platform is not one of the supported options.',
             'reason.max' => 'Please keep the reason for your visit under 5000 characters.',
+            'reschedule_reason.max' => 'Please keep the reason for rescheduling under 5000 characters.',
         ];
     }
 

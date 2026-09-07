@@ -63,6 +63,7 @@ class AppointmentDetailResource extends JsonResource
             'booked_by' => $this->booking_source,
             'cancelled_at' => optional($this->cancelled_at)->toDateTimeString(),
             'cancellation_reason' => $this->cancellation_reason,
+            'reschedule_reason' => $this->reschedule_reason,
             'check_in' => $this->check_in ?: null,
             'actions' => $this->actions ?: null,
             'created_at' => optional($this->created_at)->toDateTimeString(),

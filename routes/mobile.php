@@ -231,12 +231,24 @@ Route::group(['prefix' => 'patient'], function () {
         | Paystack's word. There is no webhook, so /verify is also how a payment
         | nobody came back from is recovered — it is safe to call repeatedly.
         |
+        | /pay-all is the same two calls for every outstanding bill at once —
+        | the "Pay now" button on the Outstanding Bills card. It takes no ids:
+        | which invoices are outstanding is read on the server, from the same
+        | query the card's total is counted from. /{id}/pay is untouched and
+        | still pays one bill.
+        |
+        | /{id}/receipt streams the PDF receipt for a bill that has been settled,
+        | rendered on demand from the invoice and the payments that cleared it,
+        | the same way the laboratory and radiology reports are.
+        |
         | The static segments are declared before /{id} so they are matched as
         | themselves rather than read as an id.
         |
         */
         Route::group(['prefix' => 'billing'], function () {
             Route::get('/', [BillingController::class, 'index']);
+
+            Route::post('/pay-all', [BillingController::class, 'payAll']);
 
             Route::get('/payments/{reference}/verify', [BillingController::class, 'verify'])
                 ->where('reference', '[A-Za-z0-9\-_]+');
@@ -246,6 +258,7 @@ Route::group(['prefix' => 'patient'], function () {
             Route::put('/support/{id}/cancel', [BillingController::class, 'cancelSupport'])->whereNumber('id');
 
             Route::get('/{id}', [BillingController::class, 'show'])->whereNumber('id');
+            Route::get('/{id}/receipt', [BillingController::class, 'receipt'])->whereNumber('id');
             Route::post('/{id}/pay', [BillingController::class, 'pay'])->whereNumber('id');
             Route::post('/{id}/support', [BillingController::class, 'createSupport'])->whereNumber('id');
         });

@@ -345,6 +345,12 @@ class PatientAppointmentService
             $changes['reason'] = $data['reason'];
         }
 
+        // The "why" behind a move, kept apart from the reason the patient is
+        // coming in for so a reschedule does not overwrite it.
+        if (array_key_exists('reschedule_reason', $data)) {
+            $changes['reschedule_reason'] = $data['reschedule_reason'];
+        }
+
         $visitType = $changes['visit_type'] ?? $record->visit_type;
 
         if (array_key_exists('meeting_platform', $data) || array_key_exists('visit_type', $changes)) {
@@ -391,14 +397,19 @@ class PatientAppointmentService
         $record->refresh()->load($this->relations);
 
         if ($isMoving) {
+            // Only a reason sent with this move is announced; a reason left over
+            // from an earlier one says nothing about why the slot changed now.
+            $why = $changes['reschedule_reason'] ?? null;
+
             $this->notifyHospital(
                 $record,
                 'Appointment Rescheduled',
                 sprintf(
-                    '%s moved the appointment %s to %s.',
+                    '%s moved the appointment %s to %s.%s',
                     $this->patientName($record),
                     $record->appointment_no,
-                    $this->readableMoment($record)
+                    $this->readableMoment($record),
+                    $why ? ' Reason: ' . $why : ''
                 )
             );
         }

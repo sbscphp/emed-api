@@ -6,11 +6,18 @@ use App\Http\Requests\Patient\PatientRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * Starting a checkout for one of the patient's own bills.
+ * Starting a checkout for the patient's own bills — one of them, or all of them.
+ *
+ * Shared by /billing/{id}/pay and /billing/pay-all, because the body is the
+ * same either way: what differs is which bills the server puts the money on,
+ * which is its decision and not the client's. /pay-all in particular takes no
+ * ids — the outstanding set is read on the server.
  *
  * `amount` is optional: leaving it out pays the whole outstanding balance, which
- * is what the Pay Bill button does. Sending one is a part payment, and the
- * service refuses anything larger than the bill is owed.
+ * is what the Pay Bill and Pay Now buttons do. Sending one is a part payment,
+ * and the service refuses anything larger than is owed — by the one bill for
+ * /pay, and across every outstanding bill for /pay-all, where it clears the
+ * oldest invoices first.
  *
  * `channels` is constrained to the two the app offers. It is validated rather
  * than passed through so a client cannot open a channel — USSD, QR, a saved

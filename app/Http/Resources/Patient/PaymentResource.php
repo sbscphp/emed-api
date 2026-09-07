@@ -27,7 +27,13 @@ class PaymentResource extends JsonResource
         return [
             'id' => $this->id,
             'reference' => $this->reference,
+
+            // The invoice this was raised against, then every invoice it
+            // covers — the same single id twice for an ordinary payment, and
+            // the whole outstanding set for a "pay all" charge.
             'billing_id' => $this->billing_id,
+            'billing_ids' => $this->covered_billing_ids,
+            'is_bulk' => (bool) $this->is_bulk,
 
             'amount' => round((float) $this->amount, 2),
             'currency' => $this->currency,
