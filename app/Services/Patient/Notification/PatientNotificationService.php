@@ -3,8 +3,10 @@
 namespace App\Services\Patient\Notification;
 
 use App\Exceptions\PatientAppException;
+use App\Models\BillingLog;
 use App\Models\Notification;
 use App\Models\Patient;
+use App\Models\PatientPayment;
 use App\Models\Tenant;
 use App\Services\Patient\PatientContextService;
 use Illuminate\Support\Carbon;
@@ -58,13 +60,19 @@ class PatientNotificationService
         $unread = Notification::query()->forPatient($user->id)->unread()->count();
 
         if (!empty($request['paginate'])) {
+            $page = $query->paginate($request['limit'] ?? 20);
+
+            $this->decorate($page->getCollection());
+
             return [
                 'unread_count' => $unread,
-                'records' => $query->paginate($request['limit'] ?? 20),
+                'records' => $page,
             ];
         }
 
         $records = $query->limit($request['limit'] ?? 50)->get();
+
+        $this->decorate($records);
 
         return [
             'unread_count' => $unread,
@@ -91,7 +99,14 @@ class PatientNotificationService
             throw new PatientAppException('We could not find that notification.', 404);
         }
 
-        return $this->markAsRead($notification);
+        $notification = $this->markAsRead($notification);
+
+        // Decorated after the read is written, never before: the hospital and
+        // the invoice are set onto the model with setAttribute, which leaves it
+        // dirty, and a save() after that would try to write them as columns.
+        $this->decorate(collect([$notification]));
+
+        return $notification;
     }
 
     /**
@@ -226,6 +241,185 @@ class PatientNotificationService
 
             return null;
         }
+    }
+
+    /**
+     * Attach what the rows cannot answer for themselves.
+     *
+     * Takes the whole list rather than one row at a time, and is the only way
+     * rows are decorated — the detail screen passes a collection of one. The
+     * invoices and payments the rows point at are read in one query each, so a
+     * page of fifty notifications costs the same two queries as a single one
+     * rather than a hundred.
+     *
+     * The rows are mutated in place, which is what lets a paginator's own
+     * collection be handed straight in.
+     *
+     * @param  \Illuminate\Support\Collection  $records
+     * @return \Illuminate\Support\Collection
+     */
+    protected function decorate($records)
+    {
+        $tenant = $this->context->tenant();
+
+        // The hospital goes onto every row. A patient's account is shared by
+        // the hospitals that registered it, and the app lists one hospital at a
+        // time, but the row itself says only what happened — not where — so the
+        // screen would have nothing to print under the title.
+        //
+        // Read from the request context rather than from `tenant_domain`,
+        // because these rows live in that hospital's own database: the row being
+        // readable at all is what says which hospital it belongs to.
+        $hospital = [
+            'uuid' => $tenant->uuid,
+            'name' => $tenant->name,
+            'logo' => $tenant->logo,
+        ];
+
+        $bills = $this->billsFor($records);
+        $payments = $this->paymentsFor($records);
+
+        foreach ($records as $record) {
+            $record->setAttribute('hospital', $hospital);
+            $record->setAttribute('billing', $this->billingFor($record, $bills, $payments));
+        }
+
+        return $records;
+    }
+
+    /**
+     * The invoice a billing notification is about.
+     *
+     * "Payment successful" is worth reading for the invoice number, what the
+     * bill now stands paid at and how it was paid — none of which the row
+     * itself stores. They are read from the bill instead, live, so a
+     * notification from last month reflects what the invoice says today rather
+     * than what it said when the row was written.
+     *
+     * Keyed off `billing_id` in the row's own data rather than off a list of
+     * types, so any notification that names a bill gets the block and a new kind
+     * of billing notification needs no change here.
+     *
+     * @param  \Illuminate\Support\Collection  $bills
+     * @param  \Illuminate\Support\Collection  $payments
+     * @return array<string, mixed>|null
+     */
+    protected function billingFor(Notification $notification, $bills, $payments): ?array
+    {
+        $data = $notification->data ?: [];
+        $bill = $bills->get($data['billing_id'] ?? null);
+
+        if (!$bill) {
+            return null;
+        }
+
+        return [
+            'billing_id' => $bill->id,
+            'invoice_number' => $bill->invoice_number,
+            'amount_paid' => round((float) $bill->amount_paid, 2),
+            'payment_method' => $this->paymentMethod($bill, $data, $payments),
+        ];
+    }
+
+    /**
+     * Every bill the list points at, in one query, keyed by id.
+     *
+     * Scoped to the signed in patient, so a row naming a bill that is not
+     * theirs simply finds nothing. A lookup that fails answers with an empty
+     * set rather than throwing: a notification screen must not go down over the
+     * invoice behind one of its rows.
+     *
+     * @param  \Illuminate\Support\Collection  $records
+     * @return \Illuminate\Support\Collection
+     */
+    protected function billsFor($records)
+    {
+        $ids = $this->idsFrom($records, 'billing_id');
+
+        if ($ids->isEmpty()) {
+            return collect();
+        }
+
+        try {
+            return BillingLog::query()
+                ->where('patient_id', $this->context->patient()->id)
+                ->whereIn('id', $ids->all())
+                ->get()
+                ->keyBy('id');
+        } catch (\Throwable $th) {
+            Log::warning('Could not attach billing detail to patient notifications.', [
+                'billing_ids' => $ids->all(),
+                'exception' => $th->getMessage(),
+            ]);
+
+            return collect();
+        }
+    }
+
+    /**
+     * Every payment the list points at, in one query, keyed by id.
+     *
+     * @param  \Illuminate\Support\Collection  $records
+     * @return \Illuminate\Support\Collection
+     */
+    protected function paymentsFor($records)
+    {
+        $ids = $this->idsFrom($records, 'payment_id');
+
+        if ($ids->isEmpty()) {
+            return collect();
+        }
+
+        try {
+            return PatientPayment::query()
+                ->whereIn('id', $ids->all())
+                ->get()
+                ->keyBy('id');
+        } catch (\Throwable $th) {
+            Log::warning('Could not read the payments behind patient notifications.', [
+                'payment_ids' => $ids->all(),
+                'exception' => $th->getMessage(),
+            ]);
+
+            return collect();
+        }
+    }
+
+    /**
+     * The ids one key of the rows' `data` points at, deduplicated.
+     *
+     * @param  \Illuminate\Support\Collection  $records
+     * @return \Illuminate\Support\Collection
+     */
+    protected function idsFrom($records, string $key)
+    {
+        return collect($records)
+            ->map(fn($record) => ($record->data ?: [])[$key] ?? null)
+            ->filter()
+            ->unique()
+            ->values();
+    }
+
+    /**
+     * How the bill was paid.
+     *
+     * A notification about one payment answers with that payment's channel,
+     * which is what the patient actually used — card, bank transfer. The bill's
+     * own column is the fallback, for a row that names a bill without naming a
+     * payment.
+     *
+     * @param  array<string, mixed>  $data
+     * @param  \Illuminate\Support\Collection  $payments
+     */
+    protected function paymentMethod(BillingLog $bill, array $data, $payments): ?string
+    {
+        $payment = $payments->get($data['payment_id'] ?? null);
+
+        if ($payment && !empty($payment->channel)) {
+            return $payment->channel;
+        }
+
+        return $bill->payment_method;
     }
 
     /**

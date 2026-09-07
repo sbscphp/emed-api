@@ -7,6 +7,7 @@ use App\Models\BillingLog;
 use App\Models\PatientPayment;
 use App\Services\Patient\Concerns\ResolvesDateFilters;
 use App\Services\Patient\PatientContextService;
+use App\Services\Patient\Reports\PatientReportService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -16,8 +17,8 @@ use Illuminate\Support\Arr;
  * Class PatientBillingService
  *
  * The patient app's Billing screen: what this hospital has billed the patient
- * for, split into what is still owed and what has been settled, and one invoice
- * opened up.
+ * for, as one list the `tab` narrows to what is still owed or to what has been
+ * settled, and one invoice opened up.
  *
  * Read only as far as the ledger goes. A patient never edits a bill — the
  * hospital raises it and the payment services below move money onto it. What
@@ -32,6 +33,8 @@ use Illuminate\Support\Arr;
  * no total at all.
  *
  * @see \App\Services\Patient\Billing\PatientPaymentService for paying one.
+ * @see \App\Services\Patient\Reports\PatientReportService for the receipt a
+ *      settled bill downloads as.
  */
 class PatientBillingService
 {
@@ -44,15 +47,18 @@ class PatientBillingService
      */
     public const TABS = ['all', 'outstanding', 'paid'];
 
-    public function __construct(protected PatientContextService $context) {}
+    public function __construct(
+        protected PatientContextService $context,
+        protected PatientReportService $reports,
+    ) {}
 
     /**
      * The Billing screen.
      *
-     * Returns both lists in one call because the screen shows both at once — an
-     * outstanding section with the "Pay now" summary above it, and a paid
-     * section under "View all". Asking for them separately would mean two round
-     * trips for one screen.
+     * One list, whichever tab is showing: `outstanding` narrows it to what is
+     * still owed, `paid` to what has been settled, and `all` leaves it whole.
+     * The summary above it counts both sides either way, so the screen can label
+     * the tab it is not currently listing.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return array<string, mixed>
@@ -63,13 +69,12 @@ class PatientBillingService
 
         return [
             'summary' => $this->summary(),
-            'filter' => $this->appliedFilter($request),
 
-            // A tab narrows the screen to one list. The other side is still
-            // answered — empty, and paginated if the request was — so the shape
-            // of the response never depends on which tab was asked for.
-            'outstanding' => $this->records($request, 'outstanding', $tab === 'paid'),
-            'paid' => $this->records($request, 'paid', $tab === 'outstanding'),
+            // The tab travels back with the filter because the list is no longer
+            // named after it — a page of bills on its own would not say which
+            // side of the ledger it holds.
+            'filter' => ['tab' => $tab] + $this->appliedFilter($request),
+            'bills' => $this->records($request, $tab),
         ];
     }
 
@@ -103,19 +108,14 @@ class PatientBillingService
     }
 
     /**
-     * One side of the list.
+     * The list, narrowed to the tab being shown.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  string  $side  outstanding or paid
-     * @param  bool  $skip  the tab excluded this side; answer empty rather than absent
+     * @param  string  $tab  all, outstanding or paid
      * @return \Illuminate\Support\Collection|\Illuminate\Contracts\Pagination\LengthAwarePaginator
      */
-    public function records($request, string $side, bool $skip = false)
+    public function records($request, string $tab = 'all')
     {
-        if ($skip) {
-            return $this->present(collect(), $request, $side);
-        }
-
         $dateFilter = $this->dateFilter($request);
 
         $query = $this->newQuery()
@@ -140,31 +140,48 @@ class PatientBillingService
         // patient's invoices at one hospital, so it is filtered in PHP and the
         // paginator is built from the result.
         $records = $query->get()
-            ->filter(fn($bill) => $side === 'outstanding'
-                ? $this->outstandingFor($bill) > 0
-                : $this->outstandingFor($bill) <= 0)
+            ->filter(fn($bill) => $this->matchesTab($bill, $tab))
             ->map(fn($bill) => $this->decorate($bill))
             ->values();
 
-        return $this->present($records, $request, $side);
+        return $this->present($records, $request);
     }
 
     /**
-     * Hand one side back the way the request asked for it.
+     * Whether a bill belongs on the tab being shown.
+     *
+     * An unrecognised tab keeps the bill: `tab` is validated against TABS on the
+     * way in, so the only value that reaches here besides the two is `all`.
+     */
+    protected function matchesTab(BillingLog $bill, string $tab): bool
+    {
+        if ($tab === 'outstanding') {
+            return $this->outstandingFor($bill) > 0;
+        }
+
+        if ($tab === 'paid') {
+            return $this->outstandingFor($bill) <= 0;
+        }
+
+        return true;
+    }
+
+    /**
+     * Hand the list back the way the request asked for it.
      *
      * Three shapes, in order of specificity. `paginate` gives a page with the
      * totals and links around it, which is what "View all" opens. A bare `limit`
      * gives the first few rows and nothing else, which is what the summary
-     * screen shows above each "View all". Neither gives the lot.
+     * screen shows above "View all". Neither gives the lot.
      *
      * @param  \Illuminate\Support\Collection  $records
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Support\Collection|\Illuminate\Contracts\Pagination\LengthAwarePaginator
      */
-    protected function present($records, $request, string $side)
+    protected function present($records, $request)
     {
         if (!empty($request['paginate'])) {
-            return $this->paginate($records, $request, $side);
+            return $this->paginate($records, $request);
         }
 
         if (!empty($request['limit'])) {
@@ -175,25 +192,23 @@ class PatientBillingService
     }
 
     /**
-     * Turn one side into a page.
+     * Turn the list into a page.
      *
      * Built from the filtered collection rather than by the query builder,
-     * because which side a bill belongs to is derived in PHP — see the note in
-     * records(). The count the paginator reports is therefore the real number of
-     * matching invoices, not the number of rows on the page.
+     * because which side of the ledger a bill falls on is derived in PHP — see
+     * the note in records(). The count the paginator reports is therefore the
+     * real number of matching invoices, not the number of rows on the page.
      *
-     * Each side carries its own page parameter. The screen shows both lists at
-     * once, and a single `page` would move them together: opening page 2 of the
-     * paid list would silently drop the patient's first outstanding bills.
+     * One list means the ordinary `page` parameter, so this endpoint pages like
+     * every other list in the app.
      *
      * @param  \Illuminate\Support\Collection  $records
      * @param  \Illuminate\Http\Request  $request
      */
-    protected function paginate($records, $request, string $side): LengthAwarePaginator
+    protected function paginate($records, $request): LengthAwarePaginator
     {
-        $pageName = $side . '_page';
         $perPage = max(1, (int) ($request['limit'] ?? 15));
-        $page = max(1, (int) LengthAwarePaginator::resolveCurrentPage($pageName));
+        $page = max(1, (int) LengthAwarePaginator::resolveCurrentPage());
 
         return new LengthAwarePaginator(
             $records->forPage($page, $perPage)->values(),
@@ -202,11 +217,10 @@ class PatientBillingService
             $page,
             [
                 'path' => LengthAwarePaginator::resolveCurrentPath(),
-                'pageName' => $pageName,
 
                 // The filters travel with the links, so page 2 of a search is
                 // still that search rather than the unfiltered list.
-                'query' => Arr::except($request->query(), [$pageName]),
+                'query' => Arr::except($request->query(), ['page']),
             ]
         );
     }
@@ -228,6 +242,48 @@ class PatientBillingService
     }
 
     /**
+     * "Download Receipt" on a bill the patient has paid.
+     *
+     * Streamed rather than answered in the JSON envelope, the way the
+     * laboratory and radiology reports are, so the app can hand the bytes
+     * straight to the file system or a share sheet.
+     *
+     * A bill still carrying a balance has no receipt to give: what would be on
+     * it is the payments list the detail screen already shows.
+     *
+     * @param  int  $id
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse
+     *
+     * @throws \App\Exceptions\PatientAppException
+     */
+    public function receipt($id)
+    {
+        $bill = $this->show($id);
+
+        if (!$bill->is_settled) {
+            throw new PatientAppException('A receipt is available once this bill has been paid in full.', 409);
+        }
+
+        $pdf = $this->reports->receipt($bill, $this->context->tenant(), $this->context->patient());
+        $fileName = $this->receiptFileName($bill);
+
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf;
+        }, $fileName, [
+            'Content-Type' => 'application/pdf',
+            'Content-Length' => (string) strlen($pdf),
+        ]);
+    }
+
+    /**
+     * What the receipt downloads as, named after the invoice it settles.
+     */
+    protected function receiptFileName(BillingLog $bill): string
+    {
+        return $this->reports->fileName($bill->invoice_number ?: ('Bill ' . $bill->id), 'Receipt');
+    }
+
+    /**
      * The same lookup the payment services use before they charge for a bill.
      *
      * Kept here so "is this bill the signed in patient's, at this hospital" is
@@ -244,6 +300,30 @@ class PatientBillingService
         }
 
         return $bill;
+    }
+
+    /**
+     * Every bill the patient still owes something on, oldest first.
+     *
+     * What "Pay now" on the Outstanding Bills card charges for, and the same set
+     * the summary counts — both derive outstanding the same way, so the card and
+     * the checkout can never disagree about which invoices are in play.
+     *
+     * Oldest first because that is the order the money is spread in when it does
+     * not cover everything: the debt that has been owed longest clears first,
+     * which is also how a part payment settles the lines within one invoice.
+     *
+     * @return \Illuminate\Support\Collection<int, \App\Models\BillingLog>
+     */
+    public function outstandingBills()
+    {
+        return $this->newQuery()
+            ->orderBy('billing_date')
+            ->orderBy('id')
+            ->get()
+            ->filter(fn($bill) => $this->outstandingFor($bill) > 0)
+            ->map(fn($bill) => $this->decorate($bill))
+            ->values();
     }
 
     /**
@@ -346,17 +426,46 @@ class PatientBillingService
         $bill->setAttribute('due_date', $this->dueDate($bill));
 
         if ($withPayments) {
-            $bill->setAttribute(
-                'payments',
-                PatientPayment::query()
-                    ->where('billing_id', $bill->id)
-                    ->successful()
-                    ->orderBy('paid_at', 'DESC')
-                    ->get()
-            );
+            $bill->setAttribute('payments', $this->paymentsFor($bill));
+        }
+
+        // The receipt card the detail screen prints under "Download Receipt" —
+        // its file name, size and page count. Only knowable by rendering the
+        // document, so it is costed on the detail screen alone and never on a
+        // row of the list, and only for a bill that has something to receipt.
+        // The render is cached, so the download that follows does not repeat it.
+        if ($withPayments && $outstanding <= 0) {
+            $bill->setAttribute('receipt', $this->reports->documentMeta(
+                $this->reports->receipt($bill, $tenant, $this->context->patient()),
+                $this->receiptFileName($bill)
+            ));
         }
 
         return $bill;
+    }
+
+    /**
+     * What has been paid towards one invoice, newest first.
+     *
+     * A bulk checkout settles several invoices with one charge, so a bill is
+     * found by the whole set a payment covers rather than by billing_id alone,
+     * and each row is stamped with `applied_amount` — this bill's share of it.
+     * Reading `amount` here would print the entire 85,000 against an invoice
+     * that only took 35,000 of it.
+     *
+     * @return \Illuminate\Support\Collection<int, \App\Models\PatientPayment>
+     */
+    protected function paymentsFor(BillingLog $bill)
+    {
+        return PatientPayment::query()
+            ->forBill($bill->id)
+            ->successful()
+            ->orderBy('paid_at', 'DESC')
+            ->get()
+            ->each(fn($payment) => $payment->setAttribute(
+                'applied_amount',
+                $payment->amountAppliedTo($bill->id)
+            ));
     }
 
     /**

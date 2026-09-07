@@ -11,7 +11,7 @@ use Illuminate\Validation\Rule;
  * The filters above the patient app's Billing list.
  *
  * The same search box and date sheet as every other list in the app, plus the
- * tab that says which half of the screen is being asked for.
+ * tab that says which half of the ledger the list is narrowed to.
  */
 class BillingIndexRequest extends PatientRequest
 {
@@ -34,10 +34,8 @@ class BillingIndexRequest extends PatientRequest
             // its "View all".
             'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
 
-            // The two lists page independently, because the screen shows them
-            // at once and one shared page would move both.
-            'outstanding_page' => ['nullable', 'integer', 'min:1'],
-            'paid_page' => ['nullable', 'integer', 'min:1'],
+            // One list, so the ordinary page cursor.
+            'page' => ['nullable', 'integer', 'min:1'],
         ];
     }
 

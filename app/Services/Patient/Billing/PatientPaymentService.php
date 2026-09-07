@@ -102,6 +102,95 @@ class PatientPaymentService
     }
 
     /**
+     * Start one checkout for everything the patient still owes this hospital.
+     *
+     * "Pay now" on the Outstanding Bills card. The app sends no ids — it has no
+     * business deciding which invoices are outstanding, and a list travelling
+     * over the wire is a list that can arrive stale or belonging to somebody
+     * else. The set is read here, from the same query the card's own total is
+     * counted from, so the amount charged is the amount shown.
+     *
+     * One Paystack transaction rather than several, because a patient tapping
+     * one button expects one card entry and one line on their statement. Which
+     * invoice each naira lands on is settled afterwards, in verify().
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     *
+     * @throws \App\Exceptions\PatientAppException
+     */
+    public function initiateAll(array $data = []): array
+    {
+        $tenant = $this->context->tenant();
+        $patient = $this->context->patient();
+        $user = $this->context->user();
+
+        $bills = $this->billing->outstandingBills();
+
+        if ($bills->isEmpty()) {
+            throw new PatientAppException('You have no outstanding bills at this hospital.', 409);
+        }
+
+        $outstanding = round($bills->sum(fn($bill) => $this->billing->outstandingFor($bill)), 2);
+
+        if ($outstanding <= 0) {
+            throw new PatientAppException('You have no outstanding bills at this hospital.', 409);
+        }
+
+        // Part payment is allowed here for the same reason it is on a single
+        // bill: a patient who can only manage some of it should still be able to
+        // pay some of it. What they send clears the oldest invoices first.
+        $amount = isset($data['amount']) && $data['amount'] !== null
+            ? round((float) $data['amount'], 2)
+            : $outstanding;
+
+        if ($amount <= 0) {
+            throw new PatientAppException('Enter an amount to pay.', 422);
+        }
+
+        if ($amount > $outstanding) {
+            throw new PatientAppException(
+                'That is more than you currently owe. The most you can pay is ' . number_format($outstanding, 2) . '.',
+                422
+            );
+        }
+
+        $email = $data['email'] ?? $user->email ?? $patient->email;
+
+        if (empty($email)) {
+            throw new PatientAppException('Your account needs an email address before you can pay online.', 422);
+        }
+
+        $checkout = $this->startCheckout(
+            tenant: $tenant,
+            // The oldest outstanding invoice. It is the one billing_id points
+            // at, so a bulk payment is still a payment against a bill to every
+            // query that predates this flow.
+            bill: $bills->first(),
+            amount: $amount,
+            email: $email,
+            payerName: trim($user->fullname ?: "{$patient->firstname} {$patient->lastname}"),
+            attributes: [
+                'patient_id' => $patient->id,
+                'user_id' => $user->id,
+            ],
+            channels: $data['channels'] ?? null,
+            billingIds: $bills->pluck('id')->all(),
+        );
+
+        return $checkout + [
+            'bills' => $bills->map(fn($bill) => [
+                'id' => $bill->id,
+                'invoice_number' => $bill->invoice_number,
+                'service' => $bill->service_title,
+                'outstanding' => $this->billing->outstandingFor($bill),
+            ])->values()->all(),
+            'bills_count' => $bills->count(),
+            'outstanding_total' => $outstanding,
+        ];
+    }
+
+    /**
      * Ask Paystack what became of a reference, and settle the bill if it
      * succeeded.
      *
@@ -234,11 +323,7 @@ class PatientPaymentService
                 'gateway_response' => $data,
             ])->save();
 
-            $bill = BillingLog::find($payment->billing_id);
-
-            if ($bill) {
-                $this->applyToBill($bill, $paidAmount, $payment->channel);
-            }
+            $this->applyToBills($payment, $paidAmount);
 
             if ($payment->support_request_id) {
                 $this->applyToSupportRequest($payment);
@@ -250,6 +335,83 @@ class PatientPaymentService
         $this->announce($tenant, $payment);
 
         return $this->result($payment);
+    }
+
+    /**
+     * Put a confirmed charge onto the invoices it was raised for.
+     *
+     * A single bill payment is unchanged: the whole amount goes on its bill, and
+     * applyToBill caps it there. A bulk charge is spread across the set it
+     * covers, oldest first, each invoice taking what it is owed and no more —
+     * so 85,000 against a 50,000 and a 35,000 clears both, and a part payment of
+     * 60,000 clears the older one and leaves 10,000 on the newer.
+     *
+     * What each bill received is written back onto the payment. It cannot be
+     * derived afterwards — by then the bills have moved — and without it the
+     * detail screen and the receipt would print the whole charge against every
+     * invoice it touched.
+     */
+    protected function applyToBills(PatientPayment $payment, float $amount): void
+    {
+        $ids = $payment->covered_billing_ids;
+
+        if (count($ids) < 2) {
+            $bill = BillingLog::find($payment->billing_id);
+
+            if ($bill) {
+                $this->applyToBill($bill, $amount, $payment->channel);
+            }
+
+            return;
+        }
+
+        $bills = BillingLog::with('billingLogDetails')->whereIn('id', $ids)->get()->keyBy('id');
+        $remaining = round($amount, 2);
+        $allocations = [];
+
+        foreach ($ids as $id) {
+            if ($remaining <= 0) {
+                break;
+            }
+
+            $bill = $bills->get($id);
+
+            if (!$bill) {
+                continue;
+            }
+
+            // Read now rather than when the checkout was started: a bill may
+            // have been settled at the hospital's counter while the payer was on
+            // Paystack, and paying it twice is not something we can undo.
+            $outstanding = $this->billing->outstandingFor($bill);
+
+            if ($outstanding <= 0) {
+                continue;
+            }
+
+            $applied = min($remaining, $outstanding);
+
+            $this->applyToBill($bill, $applied, $payment->channel);
+
+            $allocations[$id] = round($applied, 2);
+            $remaining = round($remaining - $applied, 2);
+        }
+
+        if ($remaining > 0) {
+            // Everything the charge was raised for is already covered, so there
+            // is nowhere left to put this. It is not forced onto a bill — that
+            // would report an invoice as overpaid — it is left for the hospital
+            // to refund or credit, and said loudly enough to be found.
+            Log::warning('A patient payment settled more than its bills were owed.', [
+                'payment_id' => $payment->id,
+                'reference' => $payment->reference,
+                'amount' => $amount,
+                'unallocated' => $remaining,
+                'billing_ids' => $ids,
+            ]);
+        }
+
+        $payment->forceFill(['allocations' => $allocations])->save();
     }
 
     /**
@@ -359,6 +521,7 @@ class PatientPaymentService
             'payment_id' => $payment->id,
             'reference' => $payment->reference,
             'billing_id' => $payment->billing_id,
+            'billing_ids' => $payment->covered_billing_ids,
         ];
 
         if ($payment->is_support) {
@@ -379,12 +542,16 @@ class PatientPaymentService
             return;
         }
 
+        $bills = count($payment->covered_billing_ids);
+
         $this->notifications->notify(
             $tenant,
             $patient,
             'payment_successful',
             'Payment successful',
-            'We have received your payment of ' . $amount . '.',
+            $bills > 1
+                ? 'We have received your payment of ' . $amount . ' towards ' . $bills . ' bills.'
+                : 'We have received your payment of ' . $amount . '.',
             $data
         );
     }
@@ -398,6 +565,9 @@ class PatientPaymentService
      *
      * @param  array<string, mixed>  $attributes
      * @param  array<int, string>|null  $channels
+     * @param  array<int, int>|null  $billingIds  every invoice this one charge
+     *                                            covers, when it covers more
+     *                                            than the one it was raised for
      * @return array<string, mixed>
      *
      * @throws \App\Exceptions\PatientAppException
@@ -410,8 +580,17 @@ class PatientPaymentService
         ?string $payerName = null,
         array $attributes = [],
         ?array $channels = null,
-        ?string $callbackUrl = null
+        ?string $callbackUrl = null,
+        ?array $billingIds = null
     ): array {
+        // A contribution sends the payer back to the page they came from, because
+        // a friend paying through a shared link has no app to return to. Anyone
+        // else lands on the app's own callback. Resolved here rather than left to
+        // PaystackService's fallback so the caller can be told which page Paystack
+        // will actually land on — the app has to watch for it to know checkout is
+        // over.
+        $callbackUrl = $callbackUrl ?: config('services.paystack.callback_url');
+
         $subaccount = $this->payoutAccounts->subaccountCodeFor($tenant);
 
         if (empty($subaccount)) {
@@ -425,9 +604,15 @@ class PatientPaymentService
 
         $reference = $this->paystack->generateReference('EMED');
 
+        // Left null for the ordinary one bill checkout, so a payment that covers
+        // several invoices is the only kind that carries a list, and every
+        // reader can tell the two apart without counting.
+        $covers = collect($billingIds ?: [])->map(fn($id) => (int) $id)->unique()->values();
+
         $payment = PatientPayment::create([
             'tenant_id' => $tenant->uuid,
             'billing_id' => $bill->id,
+            'billing_ids' => $covers->count() > 1 ? $covers->all() : null,
             'reference' => $reference,
             'amount' => $amount,
             'currency' => config('services.paystack.currency', 'NGN'),
@@ -444,13 +629,10 @@ class PatientPaymentService
                 'reference' => $reference,
                 'subaccount' => $subaccount,
                 'channels' => $channels ?: config('services.paystack.channels'),
-
-                // A contribution sends the payer back to the page they came
-                // from rather than to the app's own callback, because a friend
-                // paying through a shared link has no app to return to.
                 'callback_url' => $callbackUrl,
                 'metadata' => [
                     'billing_id' => $bill->id,
+                    'billing_ids' => $covers->count() > 1 ? $covers->all() : null,
                     'invoice_number' => $bill->invoice_number,
                     'tenant' => $tenant->uuid,
                     'hospital' => $tenant->name,
@@ -491,6 +673,7 @@ class PatientPaymentService
             'amount' => $amount,
             'currency' => config('services.paystack.currency', 'NGN'),
             'channels' => $channels ?: config('services.paystack.channels'),
+            'callback_url' => $callbackUrl,
             'payment' => $payment->fresh(),
         ];
     }
@@ -502,19 +685,34 @@ class PatientPaymentService
      */
     protected function result(PatientPayment $payment, bool $alreadySettled = false): array
     {
-        $bill = BillingLog::with('billingLogDetails')->find($payment->billing_id);
+        $ids = $payment->covered_billing_ids;
+        $bills = BillingLog::with('billingLogDetails')->whereIn('id', $ids)->get()->keyBy('id');
+
+        $settledBills = collect($ids)
+            ->map(fn($id) => $bills->get($id))
+            ->filter()
+            ->map(fn($bill) => [
+                'id' => $bill->id,
+                'invoice_number' => $bill->invoice_number,
+                'payment_status' => $bill->payment_status,
+                'amount_paid' => round((float) $bill->amount_paid, 2),
+                'amount_applied' => $payment->amountAppliedTo($bill->id),
+                'outstanding' => $this->billing->outstandingFor($bill),
+            ])
+            ->values();
 
         return [
             'payment' => $payment,
             'settled' => $payment->status === PatientPayment::SUCCESS,
             'already_settled' => $alreadySettled,
-            'bill' => $bill ? [
-                'id' => $bill->id,
-                'invoice_number' => $bill->invoice_number,
-                'payment_status' => $bill->payment_status,
-                'amount_paid' => round((float) $bill->amount_paid, 2),
-                'outstanding' => $this->billing->outstandingFor($bill),
-            ] : null,
+
+            // `bill` is the invoice the checkout was raised against, kept as it
+            // was so the single bill flow the app already reads is untouched.
+            // `bills` is the whole set, which is the only complete answer once a
+            // charge can cover more than one.
+            'bill' => $settledBills->first(),
+            'bills' => $settledBills->all(),
+            'is_bulk' => (bool) $payment->is_bulk,
         ];
     }
 

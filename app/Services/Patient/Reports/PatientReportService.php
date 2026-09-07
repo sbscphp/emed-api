@@ -2,7 +2,9 @@
 
 namespace App\Services\Patient\Reports;
 
+use App\Models\BillingLog;
 use App\Models\Laboratory;
+use App\Models\Patient;
 use App\Models\Radiology;
 use App\Models\Tenant;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -12,7 +14,8 @@ use Illuminate\Support\Str;
 /**
  * Class PatientReportService
  *
- * Turns a released result into the PDF the app offers under "Download PDF".
+ * Turns a released result into the PDF the app offers under "Download PDF", and
+ * a settled bill into the receipt it offers under "Download Receipt".
  *
  * The report is rendered rather than fetched: nothing in the schema stores a
  * file for a laboratory or radiology result, the result *is* the rows the lab
@@ -64,6 +67,43 @@ class PatientReportService
                 'tenant' => $tenant,
                 'results' => $order->results,
                 'patient' => $order->patient,
+            ]);
+        });
+    }
+
+    /**
+     * The rendered receipt for a settled bill, as raw PDF bytes.
+     *
+     * Rendered rather than stored, for the same reason the diagnostic reports
+     * are: nothing in the schema holds a receipt file, and one built from the
+     * invoice and the payments that cleared against it is always the current
+     * one. A bill part paid by a friend and finished by the patient therefore
+     * reads as a single receipt carrying both payments.
+     *
+     * The bill is expected to arrive decorated by PatientBillingService — with
+     * its `payments`, its computed totals and its service title already on it —
+     * because those are what the receipt prints.
+     *
+     * @param  \App\Models\BillingLog  $bill
+     * @param  \App\Models\Tenant  $tenant
+     * @param  \App\Models\Patient  $patient
+     * @return string
+     */
+    public function receipt(BillingLog $bill, Tenant $tenant, Patient $patient): string
+    {
+        return $this->remember($this->receiptCacheKey($bill), function () use ($bill, $tenant, $patient) {
+            return $this->render('exports.patient.receipt', [
+                'bill' => $bill,
+                'tenant' => $tenant,
+                'patient' => $patient,
+                'items' => collect($bill->billingLogDetails ?: []),
+                'payments' => collect($bill->payments ?: []),
+                'currency' => config('services.paystack.currency', 'NGN'),
+                'total' => round((float) $bill->computed_grand_total, 2),
+                'paid' => round((float) $bill->amount_paid, 2),
+                'outstanding' => round((float) $bill->computed_outstanding, 2),
+                'discount' => round((float) $bill->discount, 2),
+                'tax' => round((float) $bill->tax_amount, 2),
             ]);
         });
     }
@@ -173,6 +213,22 @@ class PatientReportService
             // their download.
             return $render();
         }
+    }
+
+    /**
+     * Cache a receipt against the last thing that could have changed it: the
+     * invoice itself, or a payment landing on it. A second payment therefore
+     * produces a new key rather than the earlier receipt being served again.
+     */
+    protected function receiptCacheKey(BillingLog $bill): string
+    {
+        $touched = collect($bill->payments ?: [])
+            ->map(fn($payment) => optional($payment->updated_at)->timestamp)
+            ->push(optional($bill->updated_at)->timestamp)
+            ->filter()
+            ->max();
+
+        return sprintf('patient-receipt:%d:%s', $bill->id, $touched ?: '0');
     }
 
     /**

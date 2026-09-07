@@ -26,6 +26,9 @@ class HospitalResource extends JsonResource
             'name' => $this->name,
             'hospital_id' => $this->hospital_code,
             'logo' => $this->logo,
+            'address' => $this->address,
+            'phone_number' => $this->phone_number,
+            'email' => $this->email,
 
             // "Primary Hospital" or "Linked". Answered twice, once as the words
             // the screen prints and once as the boolean it should switch on.
