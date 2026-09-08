@@ -4,6 +4,7 @@ namespace App\Http\Controllers\v1\Admin;
 
 use App\Enums\GeneralEnums;
 use App\Enums\ListModuleEnums;
+use App\Enums\RoleEnums;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreUserRequest;
@@ -110,7 +111,12 @@ class UserController extends Controller
     {
         try {
             $tenantId = $request->header('X-Tenant-ID');
-            $record = Role::where('tenant_id', $tenantId)->orderBy('id', 'DESC')->get();
+            // Roles a staff account can be given. Patient is left out: it is
+            // granted by the patient registration flow, never picked here.
+            $record = Role::where('tenant_id', $tenantId)
+                ->where('name', '!=', RoleEnums::PATIENT->value)
+                ->orderBy('id', 'DESC')
+                ->get();
 
             return JsonResponser::send(false, 'Record found successfully', $record, 200);
         } catch (\Throwable $th) {
@@ -220,6 +226,12 @@ class UserController extends Controller
                 return JsonResponser::send(true, 'Invalid role selected.', [], 422);
             }
 
+            // Patient accounts are created by registering a patient record, not
+            // from the staff user form, and they never appear in this list.
+            if ($tenantRole->name === RoleEnums::PATIENT->value) {
+                return JsonResponser::send(true, 'Patient accounts are created from patient registration.', [], 422);
+            }
+
             // 2️⃣ Check if user exists in landlord DB
             $user = User::on('landlord')
                 ->where('email', $request['email'])
@@ -275,7 +287,7 @@ class UserController extends Controller
                     'user_id'   => $user->id,
                 ],
                 [
-                    'status'        => $request['status'],
+                    'status'        => $request['status'] ?: GeneralEnums::ACTIVE->value,
                     'date_of_birth' => $request['date_of_birth'],
                     'is_active'     => 1,
                 ]
@@ -413,18 +425,16 @@ class UserController extends Controller
             $permissions = $tenantRole->permissions()->pluck('id')->toArray();
             $user->permissions()->sync($permissions);
 
-            // Update TenantUser row
-            TenantUser::on('landlord')->updateOrCreate(
-                [
-                    'tenant_id' => $tenant->id,
-                    'user_id'   => $user->id,
-                ],
-                [
-                    'status'        => $request['status'],
-                    'date_of_birth' => $request['date_of_birth'],
-                    'is_active'     => $request['is_active'] ?? 1,
-                ]
-            );
+            // Update TenantUser row (keep existing values when a field is not supplied)
+            $tenantUser = TenantUser::on('landlord')->firstOrNew([
+                'tenant_id' => $tenant->id,
+                'user_id'   => $user->id,
+            ]);
+
+            $tenantUser->status        = $request['status'] ?: ($tenantUser->status ?: GeneralEnums::ACTIVE->value);
+            $tenantUser->date_of_birth = $request['date_of_birth'] ?: $tenantUser->date_of_birth;
+            $tenantUser->is_active     = $request['is_active'] ?? $tenantUser->is_active ?? 1;
+            $tenantUser->save();
 
             // Consultant rate card: full-time doctors use the default (no custom row).
             if ($tenantRole->name === 'consultant' && !$request->boolean('use_default_rate')) {

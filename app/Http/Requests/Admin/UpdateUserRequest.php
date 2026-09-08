@@ -25,6 +25,8 @@ class UpdateUserRequest extends FormRequest
             // 'email' => 'nullable|email',
             'role' => 'required',
             'date_of_birth' => 'nullable|date|before:today',
+            'status' => 'nullable|string|in:Active,Inactive',
+            'is_active' => 'nullable|boolean',
             // 'password' => 'nullable|string|min:8',
 
             // Consultant rate card (applied only when the role is consultant).
@@ -60,6 +62,8 @@ class UpdateUserRequest extends FormRequest
 
             'date_of_birth.date' => 'Date of birth must be a valid date.',
             'date_of_birth.before' => 'Date of birth must be before today.',
+
+            'status.in' => 'Status must be either Active or Inactive.',
 
             // 'password.string' => 'Password must be a valid string.',
             // 'password.min' => 'Password must be at least 8 characters long.',

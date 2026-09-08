@@ -17,10 +17,18 @@ class Kernel extends ConsoleKernel
         $schedule->command('notifications:clear-read')->daily();
         $schedule->command('newsletter:send')->everyTwoWeeks();
 
-        // Generate monthly usage fee charges on the last day of every month at midnight.
-        // Laravel's lastDayOfMonth() dynamically resolves the correct final day
-        // regardless of whether the month has 28, 29, 30, or 31 days.
-        $schedule->command('charges:generate-monthly')->lastDayOfMonth('00:00');
+        // Bill every client for the month that has just ended.
+        //
+        // On the 1st, not the last day of the month: the command bills the
+        // PREVIOUS calendar month, so running it on 31 August billed July and
+        // left August waiting until 30 September. Running it on 1 September
+        // bills August, which is the month that has actually finished.
+        //
+        // Half past midnight rather than on it, so a run is not competing with
+        // everything else scheduled at 00:00.
+        $schedule->command('charges:generate-monthly')
+            ->monthlyOn(1, '00:30')
+            ->withoutOverlapping();
 
         // Close outpatient visits left open past their day (admissions exempt).
         $schedule->command('visits:close-stale')->dailyAt('00:15');

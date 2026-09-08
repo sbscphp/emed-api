@@ -45,12 +45,6 @@ return [
             'driver' => 'jwt',
             'provider' => 'users',
         ],
-
-        // Mobile-app patients authenticate here (tenant-scoped patients table).
-        'patient' => [
-            'driver' => 'jwt',
-            'provider' => 'patients',
-        ],
     ],
 
     /*
@@ -74,11 +68,6 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\User::class),
-        ],
-
-        'patients' => [
-            'driver' => 'eloquent',
-            'model' => App\Models\Patient::class,
         ],
 
         // 'users' => [

@@ -8,6 +8,8 @@ use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
 use App\Http\Middleware\RecordsAccessMiddleware;
 use App\Http\Middleware\NurseAccessMiddleware;
+use App\Http\Middleware\AdmissionAccessMiddleware;
+use App\Http\Middleware\AppointmentAccessMiddleware;
 use App\Http\Middleware\ConsultationAccessMiddleware;
 use App\Http\Middleware\BillingAccessMiddleware;
 use App\Http\Middleware\PharmacyAccessMiddleware;
@@ -29,14 +31,30 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::prefix('api/v1/superadmin')
                 ->middleware(["super_admin"])
                 ->group(base_path('routes/superadmin/api.php'));
+
+            // Every endpoint the patient mobile app calls, grouped by module in
+            // its own file rather than buried in the admin routes. The prefix
+            // stays api/v1 so the URLs are unchanged — only where they are
+            // declared moved.
+            Route::prefix('api/v1')
+                ->middleware('api')
+                ->group(base_path('routes/mobile.php'));
         }
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->append(\App\Http\Middleware\SecureHeaders::class);
+
+        // PHP parses a form body only for POST, so a PUT or PATCH carrying
+        // multipart/form-data reaches the application empty and an update
+        // silently writes nothing while answering 200. Prepended so the body is
+        // readable before anything validates it.
+        $middleware->prepend(\App\Http\Middleware\ParseFormDataForPutRequests::class);
         $middleware->alias([
             'tenant' => CurrentTenantMiddleware::class,
             'role.record' => RecordsAccessMiddleware::class,
             'role.nurse' => NurseAccessMiddleware::class,
+            'role.admission' => AdmissionAccessMiddleware::class,
+            'role.appointment' => AppointmentAccessMiddleware::class,
             'role.consultant' => ConsultationAccessMiddleware::class,
             'role.billing' => BillingAccessMiddleware::class,
             'role.pharmacy' => PharmacyAccessMiddleware::class,

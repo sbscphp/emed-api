@@ -6,9 +6,15 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class RolePermissionSeeder extends Seeder
 {
+    /**
+     * Marks the role that holds every module rather than a named list.
+     */
+    protected const ALL_MODULES = '*';
+
     /**
      * Run the database seeds.
      *
@@ -27,18 +33,59 @@ class RolePermissionSeeder extends Seeder
         // $config = config('role_permission_seeder.roles_structure');
         // $mapPermission = collect(config('role_permission_seeder.permissions_map'));
 
+        // Each role, with the config('permissions.apps') modules it owns. Most
+        // roles own the single module named after them; record and nurse each
+        // carry a second one, and admin is marked self::ALL_MODULES because it
+        // holds every module there is.
+        //
+        // Every role spells its modules out rather than leaning on the fallback
+        // below, so what a role can reach is readable here and nowhere else.
         $config = [
-            'admin' => 'This is the administrator role. It has full access to everything including global settings. This role is not editable.',
-            'record' => 'This role can access all the record modules of the software and have all the privileges within the system.',
-            'nurse' => 'This role can access all the nurse modules of the software and have all the privileges within the system.',
-            'consultant' => 'This role can access all the consultant modules of the software and have all the privileges within the system.',
-            'pharmacy' => 'This role can access all the pharmacy modules of the software and have all the privileges within the system.',
-            'laboratory' => 'This role can access all the laboratory modules of the software and have all the privileges within the system.',
-            'radiology' => 'This role can access all the radiology modules of the software and have all the privileges within the system.',
-            'billing' => 'This role can access all the billing modules of the software and have all the privileges within the system.',
+            'admin' => [
+                'description' => 'This is the administrator role. It has full access to everything including global settings. This role is not editable.',
+                'modules' => self::ALL_MODULES,
+            ],
+            'record' => [
+                'description' => 'This role can access all the record modules of the software and have all the privileges within the system.',
+                // Appointments are booked from the records desk.
+                'modules' => ['record', 'appointment'],
+            ],
+            'nurse' => [
+                'description' => 'This role can access all the nurse modules of the software and have all the privileges within the system.',
+                // Admissions are run from the ward.
+                'modules' => ['nurse', 'admission'],
+            ],
+            'consultant' => [
+                'description' => 'This role can access all the consultant modules of the software and have all the privileges within the system.',
+                'modules' => ['consultant'],
+            ],
+            'pharmacy' => [
+                'description' => 'This role can access all the pharmacy modules of the software and have all the privileges within the system.',
+                'modules' => ['pharmacy'],
+            ],
+            'laboratory' => [
+                'description' => 'This role can access all the laboratory modules of the software and have all the privileges within the system.',
+                'modules' => ['laboratory'],
+            ],
+            'radiology' => [
+                'description' => 'This role can access all the radiology modules of the software and have all the privileges within the system.',
+                'modules' => ['radiology'],
+            ],
+            'billing' => [
+                'description' => 'This role can access all the billing modules of the software and have all the privileges within the system.',
+                'modules' => ['billing'],
+            ],
+            // Patients sign into the mobile app, never the hospital console, so
+            // this role deliberately carries no permissions at all. It exists so
+            // a patient account can be told apart from a staff account, which is
+            // what keeps patients out of the staff user list.
+            'patient' => [
+                'description' => 'This role is held by patients of the hospital. It grants access to the patient mobile app only and no hospital console module.',
+                'modules' => [],
+            ],
         ];
 
-        foreach ($config as $key => $description) {
+        foreach ($config as $key => $definition) {
             $role = Role::updateOrCreate(
                 [
                     'tenant_id' => $tenant->uuid,
@@ -46,16 +93,26 @@ class RolePermissionSeeder extends Seeder
                 ],
                 [
                     'display_name' => ucwords(str_replace('_', ' ', $key)),
-                    'description'  => $description,
+                    'description'  => $definition['description'],
                     'status'       => 'Active'
                 ]
             );
 
-            $permissionIds = $key === 'admin'
+            // Falls back to the module named after the role, so a role added
+            // later without a modules key still gets its own permissions.
+            $modules = $definition['modules'] ?? [$key];
+
+            $permissionIds = $modules === self::ALL_MODULES
                 ? Permission::pluck('id')->all()
-                : Permission::where('module', $key)->pluck('id')->all();
+                : Permission::whereIn('module', $modules)->pluck('id')->all();
+
             if (!empty($permissionIds)) {
                 $role->permissions()->syncWithoutDetaching($permissionIds);
+
+                // The gates in AuthServiceProvider read permission_user, not
+                // permission_role, so a module added to a role after its users
+                // were created never reaches them until they are topped up here.
+                $this->grantToRoleHolders($role, $permissionIds);
             }
 
             // $role = Role::where('tenant_id', $tenant->uuid)->where('name', $key)->first();
@@ -174,4 +231,38 @@ class RolePermissionSeeder extends Seeder
     //     DB::statement('SET FOREIGN_KEY_CHECKS=1;');
     // }
 
+    /**
+     * Push a role's permissions down onto the users who already hold it.
+     *
+     * Users are created with a copy of their role's permissions in
+     * permission_user, so a module added to config('permissions.apps') later
+     * lands in permissions and permission_role but leaves the existing users
+     * behind. Topping them up here is what makes re-running the seeder enough.
+     *
+     * syncWithoutDetaching only adds, so a user whose permissions were tuned by
+     * hand keeps what they were given.
+     *
+     * @param  \App\Models\Role  $role
+     * @param  array<int, int>  $permissionIds
+     * @return void
+     */
+    protected function grantToRoleHolders($role, array $permissionIds)
+    {
+        // Roles and the role_user pivot live on the tenant connection while
+        // users live on the landlord one, so the pivot is read directly rather
+        // than through a relation that would try to join across databases.
+        $userIds = DB::connection('tenant')
+            ->table('role_user')
+            ->where('role_id', $role->id)
+            ->pluck('user_id')
+            ->all();
+
+        if (empty($userIds)) {
+            return;
+        }
+
+        User::whereIn('id', $userIds)->get()->each(function ($user) use ($permissionIds) {
+            $user->permissions()->syncWithoutDetaching($permissionIds);
+        });
+    }
 }

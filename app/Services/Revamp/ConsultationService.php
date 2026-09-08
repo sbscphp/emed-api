@@ -2,6 +2,7 @@
 
 namespace App\Services\Revamp;
 
+use App\Enums\AdmissionStatusEnums;
 use App\Enums\GeneralEnums;
 use App\Enums\PatientVisitStatusEnums;
 use App\Helpers\ExportHelper;
@@ -220,11 +221,25 @@ class ConsultationService
             ]);
 
             if ($request['admit_patient'] === 1 || $request['admit_patient'] === true) {
-                AdmittedPatient::updateOrCreate([
+                // Initiate the admission as Pending. It is completed on the
+                // admissions page, where the ward, bed and billing are applied.
+                $admission = AdmittedPatient::firstOrNew([
                     'tenant_id' => $tenantId,
                     'patient_id' => $request['patient_id'],
-                    'visit_id' => $request['visit_id']
+                    'visit_id' => $request['visit_id'],
                 ]);
+
+                $admission->admission_no = $admission->admission_no ?: GeneralHelper::getModelUniqueOrderlyId([
+                    'modelNamespace' => AdmittedPatient::class,
+                    'modelField' => 'admission_no',
+                    'prefix' => 'ADM-',
+                    'idLength' => 6,
+                ]);
+                $admission->doctor_id = $admission->doctor_id ?: $currentUser->id;
+                $admission->reason = $admission->reason ?: ($request['diagnosis'] ?? $request['reason_for_admission'] ?? null);
+                $admission->status = $admission->status ?: AdmissionStatusEnums::PENDING->value;
+                $admission->created_by = $admission->created_by ?: $currentUser->id;
+                $admission->save();
             }
             $status =    $request['admit_patient'] === 1 ? PatientVisitStatusEnums::ADMITTED->value : PatientVisitStatusEnums::NOT_ADMITTED->value;
             $req_status =    $request['schedule_a_follow_up'] === true ? GeneralEnums::FOLLOWUPPATIENT->value : $patient->req_status;

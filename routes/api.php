@@ -22,6 +22,7 @@ use App\Http\Controllers\v1\Admin\UserController;
 use App\Http\Controllers\v1\Admin\VendorController;
 use App\Http\Controllers\v1\Auth\ForgotPasswordController;
 use App\Http\Controllers\v1\Auth\LoginController;
+use App\Http\Controllers\v1\Patient\PatientAuthController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\v1\Admin\MainDashBoardStatsController;
 // use App\Http\Controllers\v1\Admin\ArtisanController;
@@ -35,10 +36,14 @@ use App\Http\Controllers\v1\Admin\Lab_Service_Controller;
 use App\Http\Controllers\v1\Admin\PharmacyServiceController;
 use App\Http\Controllers\v1\Admin\Radiology_service_Controller;
 use App\Http\Controllers\v1\Admin\Revamp\AdmissionController;
+use App\Http\Controllers\v1\Admin\Revamp\AppointmentController;
 use App\Http\Controllers\v1\Admin\Revamp\AuthenticationController;
 use App\Http\Controllers\v1\Admin\Revamp\BillingController as RevampBillingController;
+use App\Http\Controllers\v1\Admin\Revamp\BillingServiceController;
+use App\Http\Controllers\v1\Admin\Revamp\PayoutAccountController;
 use App\Http\Controllers\v1\Admin\Revamp\ConsultationController as RevampConsultationController;
 use App\Http\Controllers\v1\Admin\Revamp\DashboardController;
+use App\Http\Controllers\v1\Admin\Revamp\DepartmentController;
 use App\Http\Controllers\v1\Admin\Revamp\LabController as RevampLabController;
 use App\Http\Controllers\v1\Admin\Revamp\LabParameterController;
 use App\Http\Controllers\v1\Admin\Revamp\PharmacyController as RevampPharmacyController;
@@ -50,10 +55,6 @@ use App\Http\Controllers\v1\GeneralController;
 use App\Http\Controllers\v1\Admin\RateCardController;
 use App\Http\Controllers\v1\Admin\ConsultantRateCardController;
 use App\Http\Controllers\v1\Admin\ManualBillingController;
-use App\Http\Controllers\v1\Patient\PatientAuthController;
-use App\Http\Controllers\v1\Patient\PatientInvoiceController;
-use App\Http\Controllers\v1\Patient\PatientPaymentController;
-use App\Http\Controllers\Webhooks\PaystackWebhookController;
 use App\Services\HivAids\HivAidsService;
 // use App\Models\Immunization;
 use Illuminate\Support\Facades\Route;
@@ -110,32 +111,14 @@ Route::group(["prefix" => "v1"], function () {
     });
     Route::post('/logout', [RegistrationController::class, 'logout']);
 
-    // Paystack card payment webhook — public (signature-verified); tenant resolved
-    // from the transaction metadata inside the controller.
-    Route::post('/webhooks/paystack', [PaystackWebhookController::class, 'handle']);
-
-    // Mobile-app patient portal. Auth/reset need tenant context (X-Tenant-ID header)
-    // but not a logged-in patient; everything else runs on the `patient` guard.
-    Route::group(['prefix' => 'patient'], function () {
-        Route::group(['middleware' => ['tenant']], function () {
-            Route::post('/login', [PatientAuthController::class, 'login']);
-            Route::post('/forgot-password', [PatientAuthController::class, 'forgotPassword']);
-            Route::post('/reset-password', [PatientAuthController::class, 'resetPassword']);
-
-            Route::group(['middleware' => ['auth:patient']], function () {
-                Route::get('/me', [PatientAuthController::class, 'me']);
-                Route::post('/logout', [PatientAuthController::class, 'logout']);
-                Route::post('/change-password', [PatientAuthController::class, 'changePassword']);
-
-                Route::get('/invoices', [PatientInvoiceController::class, 'index']);
-                Route::get('/invoices/{id}/download', [PatientInvoiceController::class, 'downloadInvoice']);
-                Route::get('/invoices/{id}', [PatientInvoiceController::class, 'show']);
-
-                Route::post('/payments/card/initialize', [PatientPaymentController::class, 'initializeCard']);
-                Route::post('/payments/card/verify', [PatientPaymentController::class, 'verifyCard']);
-            });
-        });
-    });
+    /**
+     * PATIENT MOBILE APP
+     *
+     * Moved out to routes/mobile.php, where the app's endpoints are grouped one
+     * module at a time (auth, account, appointment, ...) instead of being spread
+     * through this file. That group is registered in bootstrap/app.php and is
+     * served under /api/v1/mobile.
+     */
 
     Route::group(["middleware" => ["auth:api"]], function () {
         Route::group(['middleware' => ["tenant"]], function () {
@@ -196,6 +179,9 @@ Route::group(["prefix" => "v1"], function () {
                         Route::delete('/delete/patient-document/{id}', [RecordManagementController::class, 'deletePatientDocument']);
                         Route::delete('/delete/{id}', [RecordManagementController::class, 'delete']);
                         // Bulk Upload (must be declared before the /{id} wildcard)
+                        // Re-send the patient app invitation (declared before the
+                        // /{id} wildcard so it is not swallowed by it).
+                        Route::post('/resend-invitation/{id}', [RecordManagementController::class, 'resendInvitation']);
                         Route::post('/bulk-upload', [RecordManagementController::class, 'bulkUpload']);
                         Route::get('/bulk-upload/template', [BulkUploadController::class, 'template']);
                         Route::get('/bulk-upload/{batch_id}/errors', [BulkUploadController::class, 'errors'])->name('patient-bulk-upload.errors');
@@ -385,6 +371,25 @@ Route::group(["prefix" => "v1"], function () {
 
                 // Billing routes
                 Route::group(['prefix' => 'billing'], function () {
+
+                    // Where this hospital is settled when a patient pays from
+                    // the mobile app. Patients pay the platform's Paystack
+                    // account and Paystack splits each charge to the hospital's
+                    // subaccount, which is what these details register. No API
+                    // key is involved — the hospital supplies a bank account,
+                    // the platform holds the keys.
+                    //
+                    // Declared before /{id} so the static segments are matched
+                    // as themselves rather than read as an id.
+                    Route::group(['prefix' => 'payout-account'], function () {
+                        Route::get('/banks', [PayoutAccountController::class, 'banks']);
+                        Route::post('/resolve', [PayoutAccountController::class, 'resolve']);
+                        Route::post('/retry', [PayoutAccountController::class, 'retry']);
+
+                        Route::get('/', [PayoutAccountController::class, 'show']);
+                        Route::put('/', [PayoutAccountController::class, 'update']);
+                    });
+
                     Route::get('/', [RevampBillingController::class, 'index']);
                     Route::get('/view/{id}', [RevampBillingController::class, 'viewBilling']);
                     Route::post('/make/payment', [RevampBillingController::class, 'makePayment']);
@@ -606,6 +611,7 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/lab_Service_all', [Lab_Service_Controller::class, "labService_all"]);
 
 
+                    Route::get('/all_radiology_category', [Radiology_service_Controller::class, "all_radiology_category"]);
                     Route::post('/create_radiology_service', [Radiology_service_Controller::class, "create_radiology_service"]);
                     Route::put('/edit_radiology_service', [Radiology_service_Controller::class, "edit_radiology_service"]);
                     Route::get('/all_radiology_service', [Radiology_service_Controller::class, "all_radiology_service"]);
@@ -637,10 +643,16 @@ Route::group(["prefix" => "v1"], function () {
 
                 Route::group(['prefix' => 'admissions'], function () {
                     Route::get('/', [AdmissionController::class, 'index']);
-                    Route::get('/{id}', [AdmissionController::class, 'show']);
+                    Route::get('/form/options', [AdmissionController::class, 'options']);
                     Route::get('/fetch/wards', [AdmissionController::class, 'wards']);
+                    Route::get('/fetch/wards/{wardId}/bed-spaces', [AdmissionController::class, 'wardBedSpaces']);
                     Route::post('/admit/patient', [AdmissionController::class, 'admitPatient']);
+                    Route::post('/schedule/patient', [AdmissionController::class, 'scheduleAdmission']);
+                    Route::post('/emergency/patient', [AdmissionController::class, 'emergencyAdmission']);
+                    Route::post('/transfer/patient', [AdmissionController::class, 'transferPatient']);
+                    Route::post('/cancel/patient', [AdmissionController::class, 'cancelAdmission']);
                     Route::post('/discharge/patient', [AdmissionController::class, 'dischargePatient']);
+                    Route::put('/update/{id}', [AdmissionController::class, 'updateAdmission']);
                     Route::get('/patients/{id}', [AdmissionController::class, 'viewPatient']);
                     Route::get('/all/patients/visits', [AdmissionController::class, 'viewPatientVisit']);
                     Route::get('/all/patients/care-notes', [AdmissionController::class, 'patientCareNotes']);
@@ -651,12 +663,44 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/all/patients/drug-charts', [AdmissionController::class, 'patientDrugCharts']);
                     Route::post('/add/patients/drug-charts', [AdmissionController::class, 'addPatientDrugCharts']);
                     Route::get('/view/patients/drug-charts/{id}', [AdmissionController::class, 'viewPatientDrugCharts']);
+                    // Kept last so the static admission routes above are matched first.
+                    Route::get('/{id}', [AdmissionController::class, 'show'])->whereNumber('id');
                 });
 
                 Route::group(['prefix' => 'notifications'], function () {
                     Route::get('/', [NotificationController::class, "index"]);
                     Route::put('/mark_read/{id}', [NotificationController::class, 'markAsRead']);
                     Route::post('/all/mark_read', [NotificationController::class, 'markAllAsRead']);
+                });
+
+                Route::group(['prefix' => 'departments'], function () {
+                    Route::get('/', [DepartmentController::class, "index"]);
+                    Route::post('/', [DepartmentController::class, 'store']);
+                    // The doctors that consult in a department, which is what the
+                    // patient app's booking flow offers once a department is
+                    // chosen. Declared before the /{id} wildcard.
+                    Route::get('/{id}/doctors', [DepartmentController::class, 'doctors'])->whereNumber('id');
+                    Route::put('/{id}/doctors', [DepartmentController::class, 'syncDoctors'])->whereNumber('id');
+                    Route::get('/{id}', [DepartmentController::class, 'show']);
+                    Route::put('/{id}', [DepartmentController::class, 'update']);
+                    Route::put('/toggle-status/{id}', [DepartmentController::class, 'toggleStatus']);
+                    Route::delete('/{id}', [DepartmentController::class, 'destroy']);
+                });
+
+                Route::group(['prefix' => 'appointments'], function () {
+                    Route::get('/', [AppointmentController::class, "index"]);
+                    Route::post('/', [AppointmentController::class, 'store']);
+                    Route::get('/{id}', [AppointmentController::class, 'show']);
+                    Route::put('/{id}', [AppointmentController::class, 'update']);
+                    Route::delete('/{id}', [AppointmentController::class, 'destroy']);
+                });
+
+                Route::group(['prefix' => 'billing_services'], function () {
+                    Route::get('/', [BillingServiceController::class, "index"]);
+                    Route::post('/', [BillingServiceController::class, 'store']);
+                    Route::get('/{id}', [BillingServiceController::class, 'show']);
+                    Route::put('/{id}', [BillingServiceController::class, 'update']);
+                    Route::delete('/{id}', [BillingServiceController::class, 'destroy']);
                 });
             });
         });

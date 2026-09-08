@@ -256,6 +256,14 @@ class Patient extends Authenticatable implements BulkUploadable, JWTSubject
         return $this->belongsTo(Service::class, 'service_id');
     }
 
+    /**
+     * The landlord user account this patient signs into the mobile app with.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
     public function nextOfKin()
     {
         return $this->hasOne(NextOfKin::class);
@@ -264,6 +272,44 @@ class Patient extends Authenticatable implements BulkUploadable, JWTSubject
     public function emergencyContact()
     {
         return $this->hasOne(EmergencyContact::class);
+    }
+
+    /**
+     * Every next of kin on record, rather than only the first.
+     *
+     * The patient app lets a patient keep more than one, and the table has
+     * always allowed it — nextOfKin() picks one arbitrarily because the admin
+     * screens only ever show one.
+     */
+    public function nextOfKins()
+    {
+        return $this->hasMany(NextOfKin::class);
+    }
+
+    public function emergencyContacts()
+    {
+        return $this->hasMany(EmergencyContact::class);
+    }
+
+    /**
+     * The patient's allergy list.
+     *
+     * Named apart from the `allergies` json column this model already casts, so
+     * the two can sit side by side while the column is still written by the
+     * admin registration form.
+     */
+    public function allergyRecords()
+    {
+        return $this->hasMany(PatientAllergy::class);
+    }
+
+    /**
+     * The long term conditions the patient keeps on their own profile, which
+     * are not the clinical medicalHistory() the doctor records.
+     */
+    public function medicalConditions()
+    {
+        return $this->hasMany(PatientMedicalCondition::class);
     }
 
     public function visits()

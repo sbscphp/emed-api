@@ -191,6 +191,30 @@ class GeneralHelper
         return $prefix . str_pad($uniqueId, $idLength, '0', STR_PAD_LEFT) . $suffix;
     }
 
+    /**
+     * The periods dateFilter() understands, for validating an incoming filter
+     * against the same list the helper switches on.
+     *
+     * @var array<int, string>
+     */
+    public const DATE_PERIODS = [
+        'Today',
+        'Yesterday',
+        'This Week',
+        'Last Week',
+        'This Month',
+        'Last Month',
+        'This Year',
+        'Last Year',
+        'All Time',
+        '3 days',
+        '7 days',
+        '14 days',
+        '30 days',
+        '3 months',
+        'custom date',
+    ];
+
     public static function dateFilter(?string $period, array $customDate = []): array|bool
     {
         if ($period === "Today") {
@@ -219,6 +243,10 @@ class GeneralHelper
             $carbonDateFilter = [Carbon::now()->subDays(14)->startOfDay(), Carbon::now()->endOfDay()];
         } elseif ($period === "30 days") {
             $carbonDateFilter = [Carbon::now()->subDays(30)->startOfDay(), Carbon::now()->endOfDay()];
+        } elseif ($period === "3 months") {
+            // Behind the "Last 3 months" shortcut on the patient app's date
+            // filter sheet.
+            $carbonDateFilter = [Carbon::now()->subMonths(3)->startOfDay(), Carbon::now()->endOfDay()];
         } elseif ($period === "custom date" && !empty($customDate)) {
             $carbonDateFilter = [
                 Carbon::parse($customDate[0])->startOfDay(),
