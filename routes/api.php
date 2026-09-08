@@ -50,6 +50,7 @@ use App\Http\Controllers\v1\Admin\Revamp\PharmacyController as RevampPharmacyCon
 use App\Http\Controllers\v1\Admin\Revamp\RadiologyController as RevampRadiologyController;
 use App\Http\Controllers\v1\Admin\Revamp\ReportController as RevampReportController;
 use App\Http\Controllers\v1\Admin\Revamp\ServiceCategoryController;
+use App\Http\Controllers\v1\Admin\Revamp\ServiceController;
 use App\Http\Controllers\v1\Admin\Revamp\WardBedController;
 use App\Http\Controllers\v1\GeneralController;
 use App\Services\HivAids\HivAidsService;
@@ -660,6 +661,20 @@ Route::group(["prefix" => "v1"], function () {
                     Route::delete('/{id}', [AppointmentController::class, 'destroy']);
                 });
 
+                // The services and pricing catalogue. Prefixed hospital_services
+                // because /admin/services already belongs to the nurse triage
+                // routes above.
+                Route::group(['prefix' => 'hospital_services'], function () {
+                    Route::get('/', [ServiceController::class, "index"]);
+                    Route::post('/', [ServiceController::class, 'store']);
+                    Route::get('/{id}/sub_services', [ServiceController::class, 'subServices'])->whereNumber('id');
+                    Route::get('/{id}', [ServiceController::class, 'show'])->whereNumber('id');
+                    Route::put('/toggle-status/{id}', [ServiceController::class, 'toggleStatus'])->whereNumber('id');
+                    Route::put('/{id}', [ServiceController::class, 'update'])->whereNumber('id');
+                    Route::delete('/{id}', [ServiceController::class, 'destroy'])->whereNumber('id');
+                });
+
+                // The sub-services of the catalogue above.
                 Route::group(['prefix' => 'billing_services'], function () {
                     Route::get('/', [BillingServiceController::class, "index"]);
                     Route::post('/', [BillingServiceController::class, 'store']);

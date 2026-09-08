@@ -27,11 +27,30 @@ class AdmittedPatientProfileResource extends JsonResource
         // Set by AdmissionService::getAdmittedPatientProfile — the stay this
         // profile describes. Null for a patient who has never been admitted.
         $admission = $this->currentAdmission;
+
+        // cancelledBy shares its name with the cancelled_by column, so the
+        // user is read off the relation and the relation then dropped: that
+        // key stays the id the payload has always carried, and the name goes
+        // out beside it as cancelled_by_name.
+        $cancelledBy = $admission && $admission->relationLoaded('cancelledBy')
+            ? $admission->getRelation('cancelledBy')
+            : null;
+
+        if ($admission) {
+            $admission->unsetRelation('cancelledBy');
+        }
+
         $ward = optional($admission)->ward;
         $lastVisit = $this->visits_recent;
         $arrival = $this->parseDate(optional($lastVisit)->arrival_date);
 
         return array_merge(parent::toArray($request), [
+            // The stay itself, as it has always been serialized, plus who
+            // cancelled it when it was cancelled.
+            'current_admission' => $admission ? array_merge($admission->toArray(), [
+                'cancelled_by_name' => $this->userName($cancelledBy),
+            ]) : null,
+
             // Kept from the previous payload shape.
             'visit_date' => $arrival,
 
@@ -77,6 +96,21 @@ class AdmittedPatientProfileResource extends JsonResource
     protected function fullName()
     {
         return trim(implode(' ', array_filter([$this->firstname, $this->lastname]))) ?: null;
+    }
+
+    /**
+     * Present a related user by their most complete name.
+     *
+     * @param  \App\Models\User|null  $user
+     * @return string|null
+     */
+    protected function userName($user)
+    {
+        if (!$user) {
+            return null;
+        }
+
+        return $user->fullname ?: (trim($user->first_name . ' ' . $user->last_name) ?: $user->email);
     }
 
     /**

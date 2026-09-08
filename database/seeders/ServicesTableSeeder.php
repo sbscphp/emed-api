@@ -27,7 +27,7 @@ class ServicesTableSeeder extends Seeder
         foreach ($services as $service) {
             Service::firstOrCreate(
                 ['tenant_id' => $service['tenant_id'], 'name' => $service['name']],
-                ['price' => $service['price']]
+                ['price' => $service['price'], 'status' => true]
             );
         }
     }

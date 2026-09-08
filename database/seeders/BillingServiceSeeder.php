@@ -3,13 +3,15 @@
 namespace Database\Seeders;
 
 use App\Models\BillingService;
+use App\Models\Service;
 use App\Models\ServiceUnit;
 use Illuminate\Database\Seeder;
 
 /**
- * Seeds the priced hospital services the modules bill against — admissions,
- * consultations and the general services. Pharmacy, laboratory and radiology
- * keep their own catalogues and are deliberately left out.
+ * Seeds the priced sub-services the modules bill against — admissions,
+ * consultations and the general services — under the parent service each one
+ * belongs to. Pharmacy, laboratory and radiology keep their own catalogues and
+ * are deliberately left out.
  */
 class BillingServiceSeeder extends Seeder
 {
@@ -28,6 +30,18 @@ class BillingServiceSeeder extends Seeder
                     ->first();
 
                 return [$name => optional($unit)->id];
+            });
+
+        // Every sub-service hangs off a service, so the three the catalogue
+        // is grouped by are made sure of first.
+        $parentServices = collect(['Admission', 'Consultation', 'General'])
+            ->mapWithKeys(function ($name) use ($tenantId) {
+                $service = Service::firstOrCreate(
+                    ['tenant_id' => $tenantId, 'name' => $name],
+                    ['price' => 0.00, 'status' => true]
+                );
+
+                return [$name => $service->id];
             });
 
         $services = [
@@ -78,6 +92,7 @@ class BillingServiceSeeder extends Seeder
             BillingService::firstOrCreate(
                 ['code' => $service['code'], 'tenant_id' => $tenantId],
                 [
+                    'service_id' => $parentServices[$service['category']],
                     'service_unit_id' => $serviceUnits[$service['unit']] ?? null,
                     'category' => $service['category'],
                     'name' => $service['name'],
