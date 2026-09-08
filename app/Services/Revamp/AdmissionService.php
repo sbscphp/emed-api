@@ -235,7 +235,7 @@ class AdmissionService
 
         $admissions = AdmittedPatient::query()
             ->forTenant($request->header('X-Tenant-ID'))
-            ->with(['ward', 'bedSpace'])
+            ->with(['ward', 'bedSpace', 'cancelledBy'])
             ->where('patient_id', $patient->id);
 
         $admission = (clone $admissions)

@@ -25,6 +25,22 @@ class UpdateBillingServiceRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'service_id' => [
+                'sometimes',
+                'required',
+                'integer',
+                Rule::exists('tenant.services', 'id')->where(function ($query) {
+                    $query->where('tenant_id', $this->header('X-Tenant-ID'))->whereNull('deleted_at');
+                }),
+            ],
+            'department_id' => [
+                'sometimes',
+                'nullable',
+                'integer',
+                Rule::exists('tenant.departments', 'id')->where(function ($query) {
+                    $query->where('tenant_uuid', $this->header('X-Tenant-ID'))->whereNull('deleted_at');
+                }),
+            ],
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'code' => [
                 'sometimes',
@@ -52,7 +68,10 @@ class UpdateBillingServiceRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'Service name cannot be empty.',
+            'service_id.required' => 'Parent service cannot be empty.',
+            'service_id.exists' => 'The selected parent service does not exist.',
+            'department_id.exists' => 'The selected department does not exist.',
+            'name.required' => 'Sub-service name cannot be empty.',
             'code.required' => 'Service code cannot be empty.',
             'code.unique' => 'A billing service with this code already exists.',
             'service_unit_id.exists' => 'The selected service unit does not exist.',

@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * One priced hospital service in the billing services catalogue.
+ * One priced sub-service of a service, as the sub-services table reads it.
  */
 class BillingServiceResource extends JsonResource
 {
@@ -25,6 +25,14 @@ class BillingServiceResource extends JsonResource
             'price' => $this->price,
             'status' => (bool) $this->status,
             'status_label' => $this->status ? 'Active' : 'Inactive',
+            'service' => [
+                'id' => $this->service_id,
+                'name' => optional($this->service)->name,
+            ],
+            'department' => [
+                'id' => $this->department_id,
+                'name' => optional($this->department)->name,
+            ],
             'service_unit' => [
                 'id' => optional($this->serviceUnit)->id,
                 'name' => optional($this->serviceUnit)->name,
