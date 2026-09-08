@@ -5,6 +5,7 @@ namespace App\Services\Patient\Reports;
 use App\Models\BillingLog;
 use App\Models\Laboratory;
 use App\Models\Patient;
+use App\Models\PatientPayment;
 use App\Models\Radiology;
 use App\Models\Tenant;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -106,6 +107,95 @@ class PatientReportService
                 'tax' => round((float) $bill->tax_amount, 2),
             ]);
         });
+    }
+
+    /**
+     * The receipt for a confirmed payment, as raw PDF bytes.
+     *
+     * A receipt for the charge rather than for an invoice, which is what makes
+     * it answer for "pay all" as well as for a single bill: one payment can
+     * clear several invoices at once, and this prints what each of them took.
+     *
+     * Nothing is derived here. The caller has already worked out what landed on
+     * which bill — it is the only place that can, because by the time anyone
+     * else asks, the bills have moved on — and this lays it out.
+     *
+     * Not cached, unlike the per-bill receipt: a reference settles exactly once,
+     * so a second render only ever happens if the mail is retried, and keeping a
+     * receipt per reference in the cache buys nothing.
+     *
+     * @param  \Illuminate\Support\Collection<int, array<string, mixed>>|array  $bills
+     *         one row per invoice the payment covered, as built by
+     *         PatientPaymentService::receiptBills()
+     */
+    public function paymentReceipt(
+        PatientPayment $payment,
+        Tenant $tenant,
+        ?Patient $patient,
+        $bills
+    ): string {
+        $bills = collect($bills);
+
+        return $this->render('exports.patient.payment-receipt', [
+            'payment' => $payment,
+            'tenant' => $tenant,
+            'patient' => $patient,
+            'patientName' => $this->patientName($patient),
+            'bills' => $bills,
+
+            // Itemised only when there is one invoice to itemise; see the note
+            // in the view.
+            'items' => $bills->count() === 1
+                ? collect($bills->first()['items'] ?? [])
+                : collect(),
+            'currency' => $payment->currency ?: config('services.paystack.currency', 'NGN'),
+            'amount' => round((float) $payment->amount, 2),
+            'outstandingTotal' => round($bills->sum(fn($bill) => (float) $bill['outstanding']), 2),
+            'method' => $this->paymentMethod($payment),
+        ]);
+    }
+
+    /**
+     * What a payment receipt is attached to the email as.
+     *
+     * Named after the reference rather than an invoice number, because the
+     * document is the payment: a bulk charge has no single invoice to be named
+     * after. References are generated from `[A-Za-z0-9-]` only, so this needs no
+     * sanitising the way fileName() does.
+     */
+    public function paymentReceiptFileName(PatientPayment $payment): string
+    {
+        return 'Receipt_' . $payment->reference . '.pdf';
+    }
+
+    /**
+     * What the receipt calls the payment channel.
+     *
+     * Paystack names it in its own vocabulary ("bank_transfer"), which is not
+     * what someone reading a receipt expects to see.
+     */
+    protected function paymentMethod(PatientPayment $payment): string
+    {
+        return match ($payment->channel) {
+            'card' => 'Card',
+            'bank_transfer', 'bank' => 'Bank Transfer',
+            'ussd' => 'USSD',
+            'qr' => 'QR',
+            'mobile_money' => 'Mobile Money',
+            default => 'Online Payment',
+        };
+    }
+
+    /**
+     * The patient as they are named on the document.
+     */
+    protected function patientName(?Patient $patient): string
+    {
+        if (!$patient) {
+            return '-';
+        }
+
+        return trim(($patient->firstname ?? '') . ' ' . ($patient->lastname ?? '')) ?: '-';
     }
 
     /**

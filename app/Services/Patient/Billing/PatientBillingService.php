@@ -470,8 +470,12 @@ class PatientBillingService
 
     /**
      * What the screen calls this bill.
+     *
+     * Public because the emailed payment receipt titles its rows the same way,
+     * and a bill named one thing on the screen and another on the receipt for it
+     * would read as two different bills.
      */
-    protected function serviceTitle(BillingLog $bill): string
+    public function serviceTitle(BillingLog $bill): string
     {
         $units = $bill->billingLogDetails
             ->map(fn($detail) => optional($detail->serviceUnit)->name)
