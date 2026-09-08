@@ -3,6 +3,7 @@
 namespace App\Services\Patient\Billing;
 
 use App\Exceptions\PatientAppException;
+use App\Mail\PatientPaymentReceiptMail;
 use App\Models\BillingLog;
 use App\Models\PatientPayment;
 use App\Models\PaymentSupportRequest;
@@ -10,10 +11,15 @@ use App\Models\Tenant;
 use App\Services\Billing\HospitalPayoutAccountService;
 use App\Services\Patient\Notification\PatientNotificationService;
 use App\Services\Patient\PatientContextService;
+use App\Services\Patient\Reports\PatientReportService;
 use App\Services\Payment\PaystackException;
 use App\Services\Payment\PaystackService;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Throwable;
 
 /**
  * Class PatientPaymentService
@@ -40,6 +46,7 @@ class PatientPaymentService
         protected PaystackService $paystack,
         protected HospitalPayoutAccountService $payoutAccounts,
         protected PatientNotificationService $notifications,
+        protected PatientReportService $reports,
     ) {}
 
     /**
@@ -333,8 +340,120 @@ class PatientPaymentService
         $payment = $payment->fresh();
 
         $this->announce($tenant, $payment);
+        $this->emailReceipt($tenant, $payment);
 
         return $this->result($payment);
+    }
+
+    /**
+     * Email the payer their receipt, with the PDF attached.
+     *
+     * Sent from here rather than from the controllers because this is the one
+     * place a payment is ever confirmed: /pay, /pay-all and a support link all
+     * end up in settle(), and the already-settled branch of verify() returns
+     * long before this — so a patient who verifies the same reference five times
+     * is thanked once and receipted once.
+     *
+     * Addressed to whoever actually paid. For the patient's own bill that is
+     * their own address; for a shared link it is the friend who contributed,
+     * which is who a receipt belongs to. The patient still hears about that
+     * payment through announce() above.
+     *
+     * Nothing here may cost anyone their money. The bill is already settled and
+     * committed by this point, so a mail server that is down, a patient with no
+     * address on file or a template that fails to render is logged and stepped
+     * over rather than thrown — the payment stands either way, and the app can
+     * still download the receipt from the bill itself.
+     */
+    protected function emailReceipt(Tenant $tenant, PatientPayment $payment): void
+    {
+        try {
+            $patient = $payment->patient;
+            $email = $payment->payer_email ?: ($patient->email ?? null);
+
+            if (empty($email)) {
+                Log::info('A payment settled with no address to send the receipt to.', [
+                    'tenant_id' => $tenant->id,
+                    'payment_id' => $payment->id,
+                    'reference' => $payment->reference,
+                ]);
+
+                return;
+            }
+
+            $bills = $this->receiptBills($payment);
+            $pdf = $this->reports->paymentReceipt($payment, $tenant, $patient, $bills);
+            $fileName = $this->reports->paymentReceiptFileName($payment);
+
+            $currency = $payment->currency ?: config('services.paystack.currency', 'NGN');
+            $outstanding = round($bills->sum(fn($bill) => (float) $bill['outstanding']), 2);
+            $patientName = trim(($patient->firstname ?? '') . ' ' . ($patient->lastname ?? '')) ?: 'there';
+
+            Mail::to($email)->send(new PatientPaymentReceiptMail([
+                'recipientName' => $payment->is_support
+                    ? ($payment->payer_name ?: 'there')
+                    : $patientName,
+                'patientName' => $patientName,
+                'isSupport' => $payment->is_support,
+                'hospitalName' => $tenant->name,
+                'reference' => $payment->reference,
+                'currency' => $currency,
+                'amount' => number_format((float) $payment->amount, 2),
+                'paidAt' => optional($payment->paid_at)->format('d M Y, h:i A') ?: now()->format('d M Y, h:i A'),
+                'method' => $this->paymentMethodLabel($payment->channel),
+                'billCount' => $bills->count(),
+                'bills' => $bills->map(fn($bill) => [
+                    'invoice_number' => $bill['invoice_number'],
+                    'title' => $bill['title'],
+                    'paid_now' => number_format($bill['paid_now'], 2),
+                ])->all(),
+                'hasOutstanding' => $outstanding > 0,
+                'outstandingTotal' => number_format($outstanding, 2),
+                'appName' => config('patient_app.name'),
+                'supportEmail' => config('patient_app.support_email'),
+            ], $pdf, $fileName));
+        } catch (Throwable $th) {
+            Log::error('Could not email a payment receipt.', [
+                'tenant_id' => $tenant->id,
+                'payment_id' => $payment->id,
+                'reference' => $payment->reference,
+                'message' => $th->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * The invoices a receipt lists, and what this payment put on each of them.
+     *
+     * Read after settlement, so the balance printed against a bill is the one
+     * the patient will see on the app when they go looking — not the one it
+     * carried a moment before the money landed.
+     *
+     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     */
+    protected function receiptBills(PatientPayment $payment): Collection
+    {
+        return collect($payment->covered_billing_ids)
+            ->map(fn($id) => BillingLog::with('billingLogDetails.serviceUnit', 'service', 'serviceUnit')->find($id))
+            ->filter()
+            ->map(function (BillingLog $bill) use ($payment) {
+                $billed = $bill->billing_date ?: $bill->created_at;
+
+                return [
+                    'id' => $bill->id,
+                    'invoice_number' => $bill->invoice_number ?: ('BILL-' . $bill->id),
+                    'title' => $this->billing->serviceTitle($bill),
+                    'billed_at' => $billed ? Carbon::parse($billed) : null,
+                    'total' => $this->billing->grandTotalFor($bill),
+
+                    // This bill's share of the charge, not the charge: a bulk
+                    // payment is worth more than any one invoice it cleared.
+                    'paid_now' => $payment->amountAppliedTo($bill->id),
+                    'outstanding' => $this->billing->outstandingFor($bill),
+                    'items' => $bill->billingLogDetails,
+                ];
+            })
+            ->values();
     }
 
     /**
