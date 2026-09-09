@@ -25,6 +25,20 @@ class StoreBillingServiceRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'service_id' => [
+                'required',
+                'integer',
+                Rule::exists('tenant.services', 'id')->where(function ($query) {
+                    $query->where('tenant_id', $this->header('X-Tenant-ID'))->whereNull('deleted_at');
+                }),
+            ],
+            'department_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('tenant.departments', 'id')->where(function ($query) {
+                    $query->where('tenant_uuid', $this->header('X-Tenant-ID'))->whereNull('deleted_at');
+                }),
+            ],
             'name' => ['required', 'string', 'max:255'],
             // Left out, the code is derived from the name by the service.
             'code' => [
@@ -36,7 +50,9 @@ class StoreBillingServiceRequest extends FormRequest
                 }),
             ],
             'category' => ['nullable', 'string', 'max:100'],
-            'service_unit_id' => ['nullable', 'integer', 'exists:tenant.service_units,id'],
+            // The parent service replaced it, so it is kept only for the
+            // records that already carry one.
+            'service_unit_id' => ['sometimes', 'nullable', 'integer', 'exists:tenant.service_units,id'],
             'price' => ['required', 'numeric', 'min:0'],
             'status' => ['sometimes', 'boolean'],
         ];
@@ -50,7 +66,10 @@ class StoreBillingServiceRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'Service name is required.',
+            'service_id.required' => 'Parent service is required.',
+            'service_id.exists' => 'The selected parent service does not exist.',
+            'department_id.exists' => 'The selected department does not exist.',
+            'name.required' => 'Sub-service name is required.',
             'code.unique' => 'A billing service with this code already exists.',
             'service_unit_id.exists' => 'The selected service unit does not exist.',
             'price.required' => 'Service price is required.',

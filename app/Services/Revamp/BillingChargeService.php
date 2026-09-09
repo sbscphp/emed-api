@@ -8,6 +8,7 @@ use App\Helpers\GeneralHelper;
 use App\Http\Requests\StoreBillingServiceRequest;
 use App\Http\Requests\UpdateBillingServiceRequest;
 use App\Models\BillingService;
+use App\Models\Service;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
 
@@ -26,7 +27,7 @@ class BillingChargeService
      *
      * @var array<int, string>
      */
-    protected array $relations = ['serviceUnit'];
+    protected array $relations = ['service', 'department', 'serviceUnit'];
 
     /**
      * Retrieve the billing services of the current tenant.
@@ -44,11 +45,19 @@ class BillingChargeService
                     $q->where('name', 'LIKE', $search)
                         ->orWhere('code', 'LIKE', $search)
                         ->orWhere('category', 'LIKE', $search)
+                        ->orWhereRelation('service', 'name', 'LIKE', $search)
+                        ->orWhereRelation('department', 'name', 'LIKE', $search)
                         ->orWhereRelation('serviceUnit', 'name', 'LIKE', $search);
                 });
             })
             ->when(!empty($request['category']), function ($query) use ($request) {
                 $query->where('category', $request['category']);
+            })
+            ->when(!empty($request['service_id']), function ($query) use ($request) {
+                $query->where('service_id', $request['service_id']);
+            })
+            ->when(!empty($request['department_id']), function ($query) use ($request) {
+                $query->where('department_id', $request['department_id']);
             })
             ->when(!empty($request['service_unit_id']), function ($query) use ($request) {
                 $query->where('service_unit_id', $request['service_unit_id']);
@@ -92,6 +101,7 @@ class BillingChargeService
             'active' => (clone $query)->where('status', true)->count(),
             'inactive' => (clone $query)->where('status', false)->count(),
             'categories' => (clone $query)->distinct()->count('category'),
+            'services' => (clone $query)->distinct()->count('service_id'),
         ];
     }
 
@@ -108,11 +118,16 @@ class BillingChargeService
 
         $record = BillingService::create([
             'tenant_id' => $tenantId,
+            'service_id' => $validated['service_id'],
+            'department_id' => $validated['department_id'] ?? null,
             'code' => !empty($validated['code'])
                 ? strtoupper(trim($validated['code']))
                 : $this->generateCode($validated['name'], $tenantId),
             'name' => $validated['name'],
-            'category' => $validated['category'] ?? null,
+            // The parent service is the grouping now; the legacy category is
+            // kept in step with it unless one is posted explicitly.
+            'category' => $validated['category']
+                ?? optional(Service::find($validated['service_id']))->name,
             'service_unit_id' => $validated['service_unit_id'] ?? null,
             'price' => $validated['price'],
             'status' => array_key_exists('status', $validated)
@@ -157,7 +172,7 @@ class BillingChargeService
         $oldData = $record->toArray();
 
         // Only the fields actually sent are touched.
-        foreach (['name', 'category', 'service_unit_id', 'price'] as $field) {
+        foreach (['service_id', 'department_id', 'name', 'category', 'service_unit_id', 'price'] as $field) {
             if (array_key_exists($field, $validated)) {
                 $record->{$field} = $validated[$field];
             }
@@ -221,6 +236,8 @@ class BillingChargeService
             return [
                 'Code' => $service->code,
                 'Name' => $service->name,
+                'Service' => optional($service->service)->name,
+                'Department' => optional($service->department)->name,
                 'Category' => $service->category,
                 'Service Unit' => optional($service->serviceUnit)->name,
                 'Price' => $service->price,

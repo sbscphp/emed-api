@@ -183,11 +183,11 @@ class PayoutAccountController extends Controller
     }
 
     /**
-     * What is safe to show back.
+     * What is shown back.
      *
-     * The account number is masked. Somebody who can reach this endpoint can
-     * change it, but nothing is served by printing it in full on a screen that
-     * gets screenshotted for support.
+     * The account number is returned in full: the hospital needs to read back
+     * the account it is being settled into, and anybody who can reach this
+     * endpoint can change that account anyway.
      *
      * @return array<string, mixed>
      */
@@ -196,7 +196,7 @@ class PayoutAccountController extends Controller
         return [
             'bank_code' => $account->bank_code,
             'bank_name' => $account->bank_name,
-            'account_number' => $account->masked_account_number,
+            'account_number' => $account->account_number,
             'account_name' => $account->account_name,
             'business_name' => $account->business_name,
             'commission_percent' => (float) $account->commission_percent,

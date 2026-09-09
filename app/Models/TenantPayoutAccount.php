@@ -50,18 +50,4 @@ class TenantPayoutAccount extends Model
     {
         return round(100 - (float) $this->commission_percent, 2);
     }
-
-    /**
-     * The account number as it is shown back to the hospital: last four digits
-     * only, so a support screenshot never carries the whole number.
-     */
-    public function getMaskedAccountNumberAttribute(): ?string
-    {
-        if (empty($this->account_number)) {
-            return null;
-        }
-
-        return str_repeat('*', max(0, strlen($this->account_number) - 4))
-            . substr($this->account_number, -4);
-    }
 }
