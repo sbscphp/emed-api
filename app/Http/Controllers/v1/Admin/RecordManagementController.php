@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\PatientInfomationRequest;
 use App\Responser\JsonResponser;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -288,6 +289,10 @@ class RecordManagementController extends Controller
         }
     }
 
+    /**
+     * The patient's uploaded documents, laboratory results and radiology
+     * reports as a single, uniformly shaped list.
+     */
     public function fetchPatientDocuments(Request $request)
     {
         try {
@@ -302,20 +307,32 @@ class RecordManagementController extends Controller
         }
     }
 
+    /**
+     * A single record from the patient document list.
+     *
+     * $id is either the record_id returned by the list endpoint
+     * ("lab_test-21", "radiology_test-4", "patient_document-1") or a plain id,
+     * optionally paired with a ?record_type= query parameter.
+     */
     public function showPatientDocument(Request $request, $id)
     {
         try {
-            $recordType = $request->query('record_type', $request->query('type', 'patient_document'));
+            $recordType = $request->query('record_type', $request->query('type'));
+            $recordType = is_string($recordType) ? $recordType : null;
 
-            if (in_array(strtolower((string) $recordType), ['patient_document', 'document', 'patient-doc'], true)) {
-                $document = $this->patientService->showPatientDocument($id);
-                return JsonResponser::send(false, 'Documents retrieved successfully.', ['documents' => $document], 200);
-            }
+            $record = $this->patientService->showPatientRecord($id, $recordType);
 
-            $record = $this->patientService->showPatientRecord($id, (string) $recordType);
-            return JsonResponser::send(false, 'Documents retrieved successfully.', ['record' => $record], 200);
+            // 'documents' is kept as an alias of 'record' for older clients.
+            return JsonResponser::send(false, 'Document retrieved successfully.', [
+                'record' => $record,
+                'documents' => $record,
+            ], 200);
+        } catch (ModelNotFoundException $th) {
+            return JsonResponser::send(true, $th->getMessage() ?: 'Record not found.', null, 404);
+        } catch (\InvalidArgumentException $th) {
+            return JsonResponser::send(true, $th->getMessage(), null, 422);
         } catch (\Throwable $th) {
-            return JsonResponser::send(true, $th->getMessage(), 'Internal server error', 500, $th);
+            return JsonResponser::send(true, 'An error occurred.', 'Internal server error', 500, $th);
         }
     }
 
