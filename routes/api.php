@@ -450,6 +450,9 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/{id}', [RevampLabController::class, 'show']);
                     Route::put('/update/result/{id}', [RevampLabController::class, 'updateResult']);
                     Route::put('/update/test/status/{id}', [RevampLabController::class, 'updateTestStatus']);
+                    // POST as well as PUT: PHP only parses multipart/form-data
+                    // bodies on POST, so a real file upload cannot arrive on PUT.
+                    Route::match(['post', 'put'], '/upload-result', [RevampLabController::class, 'uploadLabResult']);
                     Route::get('/summary/{id}', [RevampLabController::class, 'patientVisitSummary']);
                     Route::get('/patient/{id}', [RevampLabController::class, 'patientDetails']);
                 });
@@ -472,6 +475,9 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/{id}', [RevampRadiologyController::class, 'show']);
                     Route::put('/update/result/{id}', [RevampRadiologyController::class, 'updateResult']);
                     Route::put('/update/test/status/{id}', [RevampRadiologyController::class, 'updateTestStatus']);
+                    // POST as well as PUT: PHP only parses multipart/form-data
+                    // bodies on POST, so a real file upload cannot arrive on PUT.
+                    Route::match(['post', 'put'], '/upload-result', [RevampRadiologyController::class, 'uploadRadiologyResult']);
                     Route::get('/summary/{id}', [RevampRadiologyController::class, 'patientVisitSummary']);
                     Route::get('/patient/{id}', [RevampRadiologyController::class, 'patientDetails']);
                 });

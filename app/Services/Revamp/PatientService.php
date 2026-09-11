@@ -518,6 +518,9 @@ class PatientService
             'specimen_type' => $test->specimen_type,
             'notes' => $test->notes,
             'results_count' => $results->count(),
+            'file_url' => $test->file_url,
+            'file_name' => $test->file_name ?: $this->fileNameFromUrl($test->file_url),
+            'has_file' => !empty($test->file_url),
             'created_at' => optional($test->created_at)->toDateTimeString(),
             'updated_at' => optional($test->updated_at)->toDateTimeString(),
         ]);
@@ -533,7 +536,9 @@ class PatientService
         $results = $test->relationLoaded('results') ? $test->results : $test->results()->get();
         $latestResult = $results->sortByDesc('updated_at')->first();
         $uploadedById = optional($latestResult)->user_id ?: ($test->user_id ?: optional($test->consultation)->consulted_by);
-        $resultImage = optional($latestResult)->result_img;
+        // A report uploaded against the examination itself wins over the image
+        // attached to a typed report, since it is the released document.
+        $resultImage = $test->file_url ?: optional($latestResult)->result_img;
 
         return array_merge($this->recordDefaults(), [
             'record_id' => self::RECORD_TYPE_RADIOLOGY . '-' . $test->id,
@@ -553,9 +558,16 @@ class PatientService
             'status' => $test->status,
             'department' => $test->department,
             'results_count' => $results->count(),
-            'file_url' => $resultImage,
-            'file_name' => $resultImage ? $this->fileNameFromUrl($resultImage) : null,
-            'has_file' => !empty($resultImage),
+
+            // 'file_url' => $resultImage,
+            // 'file_name' => ($test->file_url ? $test->file_name : null)
+            //     ?: ($resultImage ? $this->fileNameFromUrl($resultImage) : null),
+            // 'has_file' => !empty($resultImage),
+
+            'file_url' => $test->file_url,
+            'file_name' => $test->file_name ?: $this->fileNameFromUrl($test->file_url),
+            'has_file' => !empty($test->file_url),
+
             'created_at' => optional($test->created_at)->toDateTimeString(),
             'updated_at' => optional($test->updated_at)->toDateTimeString(),
         ]);
@@ -685,8 +697,12 @@ class PatientService
                 ->with(['results', 'consultation:id,consulted_by'])
                 ->where('patient_id', $patient->id)
                 ->when(!$includePending, function ($query) {
+                    // A result counts as released once it is marked Ready, has
+                    // result rows, or carries an uploaded report.
                     $query->where(function ($q) {
-                        $q->where('status', 'Ready')->orWhereHas('results');
+                        $q->where('status', 'Ready')
+                            ->orWhereNotNull('file_url')
+                            ->orWhereHas('results');
                     });
                 })
                 ->when($request->filled('search_param'), function ($query) use ($request) {
@@ -696,6 +712,7 @@ class PatientService
                             ->orWhere('department', 'LIKE', $search)
                             ->orWhere('specimen_type', 'LIKE', $search)
                             ->orWhere('notes', 'LIKE', $search)
+                            ->orWhere('file_name', 'LIKE', $search)
                             ->orWhereHas('results', function ($r) use ($search) {
                                 $r->where('test', 'LIKE', $search)
                                     ->orWhere('result', 'LIKE', $search);
@@ -718,8 +735,12 @@ class PatientService
                 ->with(['results', 'consultation:id,consulted_by'])
                 ->where('patient_id', $patient->id)
                 ->when(!$includePending, function ($query) {
+                    // A report counts as released once it is marked Ready, has
+                    // findings recorded, or carries an uploaded report.
                     $query->where(function ($q) {
-                        $q->where('status', 'Ready')->orWhereHas('results');
+                        $q->where('status', 'Ready')
+                            ->orWhereNotNull('file_url')
+                            ->orWhereHas('results');
                     });
                 })
                 ->when($request->filled('search_param'), function ($query) use ($request) {
@@ -727,6 +748,7 @@ class PatientService
                     $query->where(function ($q) use ($search) {
                         $q->where('test_name', 'LIKE', $search)
                             ->orWhere('department', 'LIKE', $search)
+                            ->orWhere('file_name', 'LIKE', $search)
                             ->orWhereHas('results', function ($r) use ($search) {
                                 $r->where('examination_type', 'LIKE', $search)
                                     ->orWhere('findings', 'LIKE', $search);
@@ -920,7 +942,10 @@ class PatientService
 
         return array_merge($this->formatLabRecord($test, $userNames), [
             'results' => $results,
-            'files' => [],
+            'files' => $test->file_url ? [[
+                'url' => $test->file_url,
+                'name' => $test->file_name ?: $this->fileNameFromUrl($test->file_url),
+            ]] : [],
         ]);
     }
 
@@ -961,6 +986,7 @@ class PatientService
 
         $files = collect($results)
             ->pluck('result_img')
+            ->prepend($test->file_url)
             ->filter()
             ->unique()
             ->values()
