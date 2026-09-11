@@ -17,6 +17,7 @@ use App\Repositories\Laboratory\LaboratoryInterface;
 use App\Services\Patient\Notification\PatientNotificationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 /**
  * Class RadiologyService
@@ -194,18 +195,7 @@ class RadiologyService
         // where they are told. Never allowed to fail the release.
         $this->patientNotifications->resultReleased($test, 'radiology');
 
-        $visit = PatientVisit::find($test->visit_id);
-        $totalTests = Radiology::where('visit_id', $visit->id)->count();
-        $completedTests = RadiologyResult::whereIn(
-            'radiology_id',
-            Radiology::where('visit_id', $visit->id)->pluck('id')
-        )->count();
-
-        if ($totalTests > 0 && $totalTests === $completedTests) {
-            $visit->update([
-                'rad_status' => GeneralEnums::COMPLETED->value,
-            ]);
-        }
+        $this->markVisitRadiologyCompleteIfDone($test);
 
         return $test->refresh()->load('result');
     }
@@ -218,5 +208,72 @@ class RadiologyService
         ]);
 
         return $test->refresh();
+    }
+
+    /**
+     * Release a radiology report that was produced outside the system - a
+     * scanned film or a PDF - by attaching the file to the examination.
+     *
+     * The file is the report here, so the upload releases the examination in
+     * the same way entering the findings does: the test is marked Ready, the
+     * patient is notified, and the visit rolls up to Completed once every
+     * examination on it has been released.
+     */
+    public function uploadRadiologyResult($data)
+    {
+        $currentUserInstance = UserMgtHelper::userInstance();
+
+        $test = Radiology::find($data->input('id'));
+        if (!$test) {
+            throw new ModelNotFoundException('Radiology test not found.');
+        }
+
+        $fileUrl = FileUploadHelper::resolveUploadedFile($data, 'radiology_results');
+        if (!$fileUrl) {
+            throw new \InvalidArgumentException('No result file was provided.');
+        }
+
+        $test->update([
+            'file_url'  => $fileUrl,
+            'file_name' => FileUploadHelper::resolveUploadedFileName($data, $fileUrl),
+            'user_id'   => $currentUserInstance->id,
+            'status'    => GeneralEnums::READY->value,
+        ]);
+
+        // The patient can see the report the moment it is Ready, so this is
+        // where they are told. Never allowed to fail the release.
+        $this->patientNotifications->resultReleased($test, 'radiology');
+
+        $this->markVisitRadiologyCompleteIfDone($test);
+
+        return $test->refresh()->load('results');
+    }
+
+    /**
+     * Roll the visit's radiology status up to Completed once every examination
+     * ordered on it has been released.
+     *
+     * Released is measured by the test's own status rather than by the number
+     * of stored reports, because an examination can be released either by
+     * entering its findings or by uploading a scanned report, and only the
+     * former writes a radiology_results row.
+     */
+    private function markVisitRadiologyCompleteIfDone($test): void
+    {
+        $visit = PatientVisit::find($test->visit_id);
+        if (!$visit) {
+            return;
+        }
+
+        $totalTests = Radiology::where('visit_id', $visit->id)->count();
+        $completedTests = Radiology::where('visit_id', $visit->id)
+            ->where('status', GeneralEnums::READY->value)
+            ->count();
+
+        if ($totalTests > 0 && $totalTests === $completedTests) {
+            $visit->update([
+                'rad_status' => GeneralEnums::COMPLETED->value,
+            ]);
+        }
     }
 }
