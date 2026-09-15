@@ -16,6 +16,7 @@ use App\Repositories\Laboratory\LaboratoryInterface;
 use App\Services\Patient\Notification\PatientNotificationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 /**
  * Class LaboratoryService
@@ -300,6 +301,68 @@ class LaboratoryService
         ]);
 
         return $test->refresh();
+    }
+
+    /**
+     * Release a laboratory result that was produced outside the system - a
+     * scanned report or a PDF - by attaching the file to the test.
+     *
+     * The file is the result here, so the upload releases the test in the same
+     * way entering the result rows does: the test is marked Ready, the patient
+     * is notified, and the visit rolls up to Completed once every test on it
+     * has been released.
+     */
+    public function uploadLabResult($data)
+    {
+        $currentUserInstance = UserMgtHelper::userInstance();
+
+        $test = Laboratory::find($data->input('id'));
+        if (!$test) {
+            throw new ModelNotFoundException('Lab test not found.');
+        }
+
+        $fileUrl = FileUploadHelper::resolveUploadedFile($data, 'laboratory_results');
+        if (!$fileUrl) {
+            throw new \InvalidArgumentException('No result file was provided.');
+        }
+
+        $test->update([
+            'file_url'  => $fileUrl,
+            'file_name' => FileUploadHelper::resolveUploadedFileName($data, $fileUrl),
+            'user_id'   => $currentUserInstance->id,
+            'status'    => GeneralEnums::READY->value,
+        ]);
+
+        // The patient can see the result the moment it is Ready, so this is
+        // where they are told. Never allowed to fail the release.
+        $this->patientNotifications->resultReleased($test, 'laboratory');
+
+        $this->markVisitLabCompleteIfDone($test);
+
+        return $test->refresh()->load('results.parameter');
+    }
+
+    /**
+     * Roll the visit's lab status up to Completed once every lab test ordered
+     * on it has been released.
+     */
+    private function markVisitLabCompleteIfDone($test): void
+    {
+        $visit = PatientVisit::find($test->visit_id);
+        if (!$visit) {
+            return;
+        }
+
+        $totalLabRequests = Laboratory::where('visit_id', $visit->id)->count();
+        $completedLabRequests = Laboratory::where('visit_id', $visit->id)
+            ->where('status', GeneralEnums::READY->value)
+            ->count();
+
+        if ($totalLabRequests > 0 && $totalLabRequests === $completedLabRequests) {
+            $visit->update([
+                'lab_status' => GeneralEnums::COMPLETED->value,
+            ]);
+        }
     }
 
     public function resultForm($id)

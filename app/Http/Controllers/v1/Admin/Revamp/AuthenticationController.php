@@ -243,7 +243,7 @@ class AuthenticationController extends Controller
             $currentUser = auth()->user();
             // Super admin users have no tenant — early-return with JWT token
             $isSuperAdmin = $currentUser->superAdminRoles()->exists();
-            
+
             if ($isSuperAdmin) {
                 \Spatie\Multitenancy\Models\Tenant::forgetCurrent();
                 $user = User::find($currentUser->id);
@@ -288,11 +288,13 @@ class AuthenticationController extends Controller
                 $currentRole = $roles->first();
 
                 $user = $currentUser->toArray();
+                $user = array_merge($user, $tenant->theme?->only(['primary_color', 'secondary_color', 'tertiary_color']));
                 $user['current_tenant'] = [
                     'id'   => $tenant->id,
                     'uuid' => $tenant->uuid,
                     'name' => $tenant->name,
                     'logo' => $tenant->logo,
+                    // 'themes' => $tenant->theme?->only(['primary_color', 'secondary_color', 'tertiary_color']),
                     'address' => $tenant->address,
                 ];
                 $user['current_tenant_user'] = $tenantUser;

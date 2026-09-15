@@ -6,6 +6,7 @@ use App\Enums\GeneralEnums;
 use App\Helpers\ExportHelper;
 use App\Helpers\GeneralHelper;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\UploadLabResultRequest;
 use App\Models\BillingLog;
 use App\Models\Consultation;
 use App\Models\Laboratory;
@@ -14,6 +15,7 @@ use App\Models\PatientVisit;
 use App\Models\Radiology;
 use App\Models\Treatment;
 use App\Responser\JsonResponser;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -329,6 +331,44 @@ class LabController extends Controller
         } catch (\Throwable $th) {
             DB::rollBack();
             return JsonResponser::send(true, $th->getMessage(), 'Internal Server Error', 500);
+        }
+    }
+
+    /**
+     * Release a lab result by uploading the report as an image or a PDF.
+     *
+     * Accepts the file as a multipart upload (`file`) or as a base64 data URI
+     * or existing URL (`file_url`). Multipart bodies only reach PHP on POST,
+     * so the route answers both verbs.
+     */
+    public function uploadLabResult(UploadLabResultRequest $request)
+    {
+        try {
+            DB::beginTransaction();
+
+            $test = Laboratory::with(['billingLogDetail'])->find($request->input('id'));
+            if (!$test) {
+                DB::rollBack();
+                return JsonResponser::send(true, 'Lab test not found.', [], 404);
+            }
+
+            if (!$test->billingLogDetail || $test->billingLogDetail->status !== GeneralEnums::PAID->value) {
+                DB::rollBack();
+                return JsonResponser::send(true, 'Please make payment.', [], 402);
+            }
+
+            $record = $this->laboratoryService->uploadLabResult($request);
+            DB::commit();
+            return JsonResponser::send(false, 'Result uploaded successfully', $record);
+        } catch (ModelNotFoundException $th) {
+            DB::rollBack();
+            return JsonResponser::send(true, $th->getMessage() ?: 'Lab test not found.', [], 404);
+        } catch (\InvalidArgumentException $th) {
+            DB::rollBack();
+            return JsonResponser::send(true, $th->getMessage(), [], 422);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return $this->renderException($th);
         }
     }
 
