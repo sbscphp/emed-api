@@ -48,9 +48,11 @@ class DashboardService
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
 
         $tenantId = $request->header('X-Tenant-ID');
+        $scopeId = \App\Helpers\RoleHelper::consultantScopeId($tenantId);
 
         $records = Patient::query()
             ->where('tenant_id', $tenantId)
+            ->when($scopeId, fn ($q) => $q->whereHas('visits', fn ($v) => $v->where('doctor_id', $scopeId)))
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->where('firstname', 'LIKE', '%' . $request['search_param'] . '%')
@@ -87,8 +89,14 @@ class DashboardService
         }
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
         $tenantId = $request->header('X-Tenant-ID');
+        $scopeId = \App\Helpers\RoleHelper::consultantScopeId($tenantId);
+
+        // Consultant scoping helpers (no-op when $scopeId is null, e.g. admins).
+        $scopeByVisit = fn ($q) => $q->when($scopeId, fn ($qq) => $qq->whereIn('visit_id', PatientVisit::where('doctor_id', $scopeId)->select('id')));
+        $scopeByBillingVisit = fn ($q) => $q->when($scopeId, fn ($qq) => $qq->whereHas('billingLog', fn ($b) => $b->whereIn('visit_id', PatientVisit::where('doctor_id', $scopeId)->select('id'))));
 
         $patientQuery = Patient::query()->where('tenant_id', $tenantId)
+            ->when($scopeId, fn ($q) => $q->whereHas('visits', fn ($v) => $v->where('doctor_id', $scopeId)))
             ->when($request->startDate && $request->endDate, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
             })
@@ -99,6 +107,7 @@ class DashboardService
         $totalAdmittedPatient = (clone $patientQuery)->where('status', GeneralEnums::ADMITTED->value)->count();
 
         $consultationQuery = Consultation::query()->where('tenant_id', $tenantId)
+            ->when($scopeId, fn ($q) => $q->whereIn('visit_id', PatientVisit::where('doctor_id', $scopeId)->select('id')))
             ->when($request->startDate && $request->endDate, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
             })
@@ -107,6 +116,7 @@ class DashboardService
             });
         $totalConsultation = PatientVisit::whereNotNull('con_status')
             ->where('tenant_id', $tenantId)
+            ->when($scopeId, fn ($q) => $q->where('doctor_id', $scopeId))
             ->when($request->startDate && $request->endDate, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
             })
@@ -115,6 +125,7 @@ class DashboardService
             })->count();
         $totalPendingConsultation = PatientVisit::where('con_status', GeneralEnums::PENDING->value)
             ->where('tenant_id', $tenantId)
+            ->when($scopeId, fn ($q) => $q->where('doctor_id', $scopeId))
             ->when($request->startDate && $request->endDate, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
             })
@@ -123,6 +134,7 @@ class DashboardService
             })->count();
 
         $billingQuery = BillingLog::query()->where('tenant_id', $tenantId)
+            ->when($scopeId, fn ($q) => $q->whereIn('visit_id', PatientVisit::where('doctor_id', $scopeId)->select('id')))
             ->when($request->startDate && $request->endDate, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
             })
@@ -130,7 +142,7 @@ class DashboardService
                 return $query->whereBetween('created_at', $dateFilter);
             });
         $totalRevenue = (clone $billingQuery)->sum('grand_total');
-        $outstandingPayment = BillingLogDetail::where('tenant_id', $tenantId)->where('status', GeneralEnums::PENDING->value)->sum('amount');
+        $outstandingPayment = $scopeByBillingVisit(BillingLogDetail::where('tenant_id', $tenantId)->where('status', GeneralEnums::PENDING->value))->sum('amount');
 
         $totalReferrals = (clone $patientQuery)->whereNotNull('referral')->count();
         $totalReferralsToday = (clone $patientQuery)->whereNotNull('referral')->whereDate('created_at', Carbon::today())->count();
@@ -145,6 +157,7 @@ class DashboardService
 
         // Top earning department for selected date range
         $topDepartment = BillingLogDetail::whereRelation('billingLog', 'tenant_id', $tenantId)
+            ->when($scopeId, fn ($q) => $q->whereHas('billingLog', fn ($b) => $b->whereIn('visit_id', PatientVisit::where('doctor_id', $scopeId)->select('id'))))
             ->with('serviceUnit')
             ->select('service_unit_id', DB::raw('SUM(amount) as total'))
             ->when($request->startDate && $request->endDate, function ($query) use ($request) {
@@ -178,6 +191,7 @@ class DashboardService
         // End Statistics
 
         $totalDepartmentRevenue = BillingLogDetail::where('tenant_id', $tenantId)
+            ->when($scopeId, fn ($q) => $q->whereHas('billingLog', fn ($b) => $b->whereIn('visit_id', PatientVisit::where('doctor_id', $scopeId)->select('id'))))
             ->when(!empty($request['department_id']), function ($query) use ($request) {
                 $query->where('service_unit_id', $request['department_id']);
             })->when($request->startDate && $request->endDate, function ($query) use ($request) {
@@ -195,6 +209,7 @@ class DashboardService
             // Count treatments within the date range
             $treatmentQuery = Treatment::where('drug_id', $medication->id)
                 ->where('tenant_id', $tenantId)
+                ->when($scopeId, fn ($q) => $q->whereIn('visit_id', PatientVisit::where('doctor_id', $scopeId)->select('id')))
                 ->when($request->startDate && $request->endDate, function ($query) use ($request) {
                     $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
                 })
@@ -222,6 +237,7 @@ class DashboardService
 
         // Number of in and out patients
         $consultations = Consultation::where('tenant_id', $tenantId)
+            ->when($scopeId, fn ($q) => $q->whereIn('visit_id', PatientVisit::where('doctor_id', $scopeId)->select('id')))
             ->when($request->start_date && $request->end_date, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
             })
@@ -279,6 +295,7 @@ class DashboardService
 
         // visits trends
         $visits = PatientVisit::where('tenant_id', $tenantId)
+            ->when($scopeId, fn ($q) => $q->where('doctor_id', $scopeId))
             ->when($request->start_date && $request->end_date, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
             })
@@ -318,6 +335,7 @@ class DashboardService
         }
 
         $laboratoryQuery = Laboratory::query()->where('tenant_id', $tenantId)
+            ->when($scopeId, fn ($q) => $q->whereIn('visit_id', PatientVisit::where('doctor_id', $scopeId)->select('id')))
             ->when($request->start_date && $request->end_date, function ($query) use ($request) {
                 $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
             })

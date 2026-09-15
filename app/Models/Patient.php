@@ -6,16 +6,45 @@ use Azeemade\BulkUpload\Concerns\Uploadable;
 use Azeemade\BulkUpload\Contracts\BulkUploadable;
 use App\Helpers\GeneralHelper;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 use App\Models\PatientDocument;
 use Spatie\Multitenancy\Models\Tenant;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class Patient extends Model implements BulkUploadable
+class Patient extends Authenticatable implements BulkUploadable, JWTSubject
 {
-    use HasFactory, SoftDeletes, Uploadable;
+    use HasFactory, SoftDeletes, Uploadable, Notifiable;
 
     protected array $tempMetadata = [];
+
+    /**
+     * Hide the mobile-app credentials from serialization.
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    protected $casts = [
+        'allergies'         => 'array',
+        'email_verified_at' => 'datetime',
+        'last_login_at'     => 'datetime',
+    ];
+
+    /**
+     * JWTSubject — patients authenticate on the `patient` guard.
+     */
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return [];
+    }
 
     /**
      * Receive metadata from the upload request (tenant_id, created_by, etc.)
@@ -221,9 +250,6 @@ class Patient extends Model implements BulkUploadable
 
     protected $guarded = ['id'];
     protected $connection = 'tenant';
-    protected $casts = [
-        'allergies' => 'array',
-    ];
 
     public function service()
     {

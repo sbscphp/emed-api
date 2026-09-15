@@ -43,7 +43,12 @@ class CurrentTenantMiddleware
             ], 404);
         }
 
+        // makeCurrent() switches the tenant DB connection via
+        // ConditionalSwitchTenantDatabaseTask (see config/multitenancy.php).
         $tenant->makeCurrent();
+
+        // Share tenant globally for seeders/services that read app('currentTenant').
+        app()->instance('currentTenant', $tenant);
 
         return $next($request);
     }

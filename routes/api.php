@@ -53,6 +53,9 @@ use App\Http\Controllers\v1\Admin\Revamp\ServiceCategoryController;
 use App\Http\Controllers\v1\Admin\Revamp\ServiceController;
 use App\Http\Controllers\v1\Admin\Revamp\WardBedController;
 use App\Http\Controllers\v1\GeneralController;
+use App\Http\Controllers\v1\Admin\RateCardController;
+use App\Http\Controllers\v1\Admin\ConsultantRateCardController;
+use App\Http\Controllers\v1\Admin\ManualBillingController;
 use App\Services\HivAids\HivAidsService;
 // use App\Models\Immunization;
 use Illuminate\Support\Facades\Route;
@@ -405,6 +408,38 @@ Route::group(["prefix" => "v1"], function () {
                     Route::get('/service-type/all', [BillingController::class, 'getBillingByServiceType']);
                     Route::post('/createservice', [BillingController::class, 'createservice']);
                     Route::post('/editservice', [BillingController::class, 'editservice']);
+                });
+
+                // Rate card catalog (billing manager maintained price list)
+                Route::group(['prefix' => 'rate-card', 'middleware' => 'role.billing'], function () {
+                    Route::get('/', [RateCardController::class, 'index']);
+                    Route::post('/', [RateCardController::class, 'store']);
+                    Route::get('/{id}', [RateCardController::class, 'show']);
+                    Route::put('/{id}', [RateCardController::class, 'update']);
+                    Route::delete('/{id}', [RateCardController::class, 'destroy']);
+                });
+
+                // Consultants list (for the doctor dropdown at registration/visit)
+                Route::get('/consultants', [ConsultantRateCardController::class, 'consultants']);
+
+                // Consultant rate cards (admin-managed doctor consultation pricing)
+                Route::group(['prefix' => 'consultant-rates', 'middleware' => 'admin.superadmin'], function () {
+                    Route::get('/', [ConsultantRateCardController::class, 'index']);
+                    Route::get('/default', [ConsultantRateCardController::class, 'getDefault']);
+                    Route::put('/default', [ConsultantRateCardController::class, 'setDefault']);
+                    Route::get('/{userId}', [ConsultantRateCardController::class, 'showForUser']);
+                    Route::put('/{userId}', [ConsultantRateCardController::class, 'upsertForUser']);
+                });
+
+                // Manual (standalone) billing + manual payment reconciliation
+                Route::group(['prefix' => 'manual-billing', 'middleware' => 'role.billing'], function () {
+                    Route::get('/', [ManualBillingController::class, 'index']);
+                    Route::post('/', [ManualBillingController::class, 'store']);
+                    Route::post('/payment', [ManualBillingController::class, 'recordPayment']);
+                    Route::get('/{id}/invoice', [ManualBillingController::class, 'downloadInvoice']);
+                    Route::post('/{id}/send-invoice', [ManualBillingController::class, 'sendInvoice']);
+                    Route::get('/{id}', [ManualBillingController::class, 'show']);
+                    Route::put('/{id}', [ManualBillingController::class, 'update']);
                 });
 
                 // Old Billing routes

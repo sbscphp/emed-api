@@ -283,6 +283,16 @@ class RecordManagementController extends Controller
                 return JsonResponser::send(true, 'Patient Record not found.', null, 422);
             }
             $patientExists->visit_date = $patientExists->visits_recent ? Carbon::parse($patientExists->visits_recent->arrival_date) : null;
+
+            // Attach the assigned consultant (from the latest visit, else the patient's
+            // preferred doctor) so the triage screen can display it. Users live on landlord.
+            $doctorId = $patientExists->visits_recent?->doctor_id ?? $patientExists->preferred_doctor_id;
+            $consultant = $doctorId
+                ? User::on('landlord')->select('id', 'first_name', 'last_name', 'email')->find($doctorId)
+                : null;
+            $patientExists->setAttribute('doctor_id', $doctorId);
+            $patientExists->setAttribute('consultant', $consultant);
+
             return JsonResponser::send(false, 'Record retrieved successfully.', $patientExists, 200);
         } catch (\Throwable $th) {
             return JsonResponser::send(true, 'An error occurred.', 'Internal server error', 500, $th);
@@ -423,9 +433,9 @@ class RecordManagementController extends Controller
             $request->validate([
                 'patient_id' => 'required',
                 'service_id' => 'required',
+                'doctor_id'  => 'nullable',
                 // 'stage' => 'required|string'
             ]);
-            DB::connection('tenant');
 
             $currentUser = Auth::user();
 
@@ -449,8 +459,10 @@ class RecordManagementController extends Controller
                         'status'         => PatientVisitStatusEnums::COMPLETED->value,
                         'departure_date' => Carbon::now()->format('Y-m-d H:i:s'),
                     ]);
+                } elseif (\App\Helpers\VisitPolicy::closeStaleOutpatient($patientVisit)) {
+                    // Prior-day outpatient visit — auto-closed; fall through to create a new visit for today.
                 } else {
-                    // Patient still has an ongoing visit
+                    // Patient still has an ongoing (same-day or admitted) visit
                     return JsonResponser::send(false, 'A visit is already ongoing for this patient.', null, 422);
                 }
             }
@@ -483,6 +495,12 @@ class RecordManagementController extends Controller
             if (!$patientVisit) {
                 return JsonResponser::send(true, 'Patient visit not found.', null, 422);
             }
+
+            // Assigned consultant for this visit (landlord user).
+            $visitConsultant = $patientVisit->doctor_id
+                ? User::on('landlord')->select('id', 'first_name', 'last_name', 'email')->find($patientVisit->doctor_id)
+                : null;
+            $patientVisit->setAttribute('consultant', $visitConsultant);
 
             if ($patientVisit->consultation && $patientVisit->consultation->consulted_by) {
                 $consultedUser = User::on('landlord')

@@ -51,10 +51,12 @@ class ConsultationService
 
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
         $tenantId = $request->header('X-Tenant-ID');
+        $scopeId = \App\Helpers\RoleHelper::consultantScopeId($tenantId);
 
         $records = PatientVisit::query()
             ->where('tenant_id', $tenantId)
             ->whereNotNull('con_status')
+            ->when($scopeId, fn ($q) => $q->where('doctor_id', $scopeId))
             ->when(!empty($request['search_param']), function ($query) use ($request) {
                 $query->where(function ($q) use ($request) {
                     $q->whereRelation('patient', 'cardno', 'LIKE', '%' . $request['search_param'] . '%')
@@ -102,15 +104,23 @@ class ConsultationService
         }
         $dateFilter = GeneralHelper::dateFilter($request->period, $customDate);
         $tenantId = $request->header('X-Tenant-ID');
-        $query = PatientVisit::query()->where('tenant_id', $tenantId);
+        $scopeId = \App\Helpers\RoleHelper::consultantScopeId($tenantId);
+
+        // For a consultant, restrict every count to their own visits.
+        $visitScope = function ($q) use ($scopeId) {
+            return $q->when($scopeId, fn ($qq) => $qq->whereIn('visit_id', PatientVisit::where('doctor_id', $scopeId)->select('id')));
+        };
+
+        $query = PatientVisit::query()->where('tenant_id', $tenantId)
+            ->when($scopeId, fn ($q) => $q->where('doctor_id', $scopeId));
 
         $awaitingConsultation = (clone $query)->where('con_status', GeneralEnums::PENDING->value)->count();
         $completedConsultation = (clone $query)->where('con_status', GeneralEnums::COMPLETED->value)->count();
-        $awaitingInvestigation = Laboratory::where('tenant_id', $tenantId)->where('status', GeneralEnums::NOT_READY->value)->count();
-        $completedInvestigation = Laboratory::where('tenant_id', $tenantId)->where('status', GeneralEnums::READY->value)->count();
-        $awaitingProcedure = Radiology::where('tenant_id', $tenantId)->where('status', GeneralEnums::NOT_READY->value)->count();
-        $completedProcedure = Radiology::where('tenant_id', $tenantId)->where('status', GeneralEnums::READY->value)->count();
-        $totalSugery = Surgery::where('tenant_id', $tenantId)->count();
+        $awaitingInvestigation = $visitScope(Laboratory::where('tenant_id', $tenantId)->where('status', GeneralEnums::NOT_READY->value))->count();
+        $completedInvestigation = $visitScope(Laboratory::where('tenant_id', $tenantId)->where('status', GeneralEnums::READY->value))->count();
+        $awaitingProcedure = $visitScope(Radiology::where('tenant_id', $tenantId)->where('status', GeneralEnums::NOT_READY->value))->count();
+        $completedProcedure = $visitScope(Radiology::where('tenant_id', $tenantId)->where('status', GeneralEnums::READY->value))->count();
+        $totalSugery = $visitScope(Surgery::where('tenant_id', $tenantId))->count();
 
         return [
             'awaitingConsultation' => $awaitingConsultation,
@@ -171,6 +181,15 @@ class ConsultationService
 
             $currentUser = Auth::user();
             $visit = PatientVisit::find($request->visit_id);
+
+            // A visit belongs to its day; you cannot continue a consultation on a
+            // prior-day outpatient visit. (This runs inside the controller's tenant
+            // transaction, so we only detect here; the visit is closed by the nightly
+            // visits:close-stale job and by the initiate-visit path.)
+            if ($visit && \App\Helpers\VisitPolicy::isStaleOutpatient($visit)) {
+                throw new \Exception('This visit is from a previous day. Please initiate a new visit for today.');
+            }
+
             $patient = Patient::find($request->patient_id);
             $request['consulted_by'] = $currentUser->id;
             $tenantId = $request->header('X-Tenant-ID');

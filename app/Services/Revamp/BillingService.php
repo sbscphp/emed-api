@@ -626,6 +626,20 @@ class BillingService
             }
 
             $billingDetails = collect($request->billingDetails);
+
+            // Reject a payment larger than what the bill still owes. Compute the
+            // outstanding from the line items (the header amount_outstanding can be
+            // stale/zero before the first payment) using the same basis makePayment
+            // uses below: grand_total = sum(items) - discount, less what's been paid.
+            $itemsTotal  = (float) $billing->billingLogDetails()->sum('amount');
+            $alreadyPaid = (float) $billing->billingLogDetails()->sum('amount_paid');
+            $discount    = (float) ($request->discount ?? $billing->discount ?? 0);
+            $outstanding = round(($itemsTotal - $discount) - $alreadyPaid, 2);
+            $requested   = $billingDetails->sum(fn ($d) => (float) ($d['amount'] ?? 0));
+            if (round($requested, 2) > $outstanding) {
+                throw new \Exception("Amount exceeds the outstanding balance of {$outstanding}.");
+            }
+
             $totalPaymentApplied = 0;
 
             foreach ($billingDetails as $detail) {

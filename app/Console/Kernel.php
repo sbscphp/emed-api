@@ -29,6 +29,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('charges:generate-monthly')
             ->monthlyOn(1, '00:30')
             ->withoutOverlapping();
+
+        // Close outpatient visits left open past their day (admissions exempt).
+        $schedule->command('visits:close-stale')->dailyAt('00:15');
     }
 
 
