@@ -314,6 +314,7 @@ class PatientAuthService
         }
 
         $user->forceFill(['last_login' => now()])->save();
+        $tenant->loadMissing('theme');
 
         $patient = $this->patientFor($user, $tenant);
 
@@ -684,6 +685,7 @@ class PatientAuthService
 
         $profile['must_change_password'] = (bool) $user->must_change_password;
         $profile['biometric_enabled'] = (bool) $user->biometric_enabled;
+        $profile = array_merge($profile, $tenant->theme?->only(['primary_color', 'secondary_color', 'tertiary_color']));
         $profile['current_tenant'] = [
             'id'      => $tenant->id,
             'uuid'    => $tenant->uuid,
