@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\V1\Theme\ThemeController;
 use App\Http\Controllers\RadiologyController;
 use App\Http\Controllers\v1\Admin\AntenatalController;
 use App\Http\Controllers\v1\Admin\AuditLogController;
@@ -137,6 +138,12 @@ Route::group(["prefix" => "v1"], function () {
                 Route::get('/lab_test/by_category/{id}', [GeneralController::class, 'labTestByCategory']);
                 Route::get('/view/consultation/{id}', [GeneralController::class, 'viewConsultation']);
                 Route::get('/show/service/{id}', [TriageController::class, 'showService']);
+            });
+
+            /** THEME ROUTE */
+            Route::prefix('theme')->group(function () {
+                Route::get('/', [ThemeController::class, 'all']);
+                Route::put('/', [ThemeController::class, 'update']);
             });
             // Route::get('/test_all-records', [RecordManagementController::class, 'allRecords']);
 
