@@ -133,4 +133,7 @@ return [
 
     'default_license_fee' => env('DEFAULT_LICENSE_FEE', 50000),
 
+    // User profile
+    'can_edit_profile' => env('CAN_EDIT_PROFILE', true),
+
 ];
