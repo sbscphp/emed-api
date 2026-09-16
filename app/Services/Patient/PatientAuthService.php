@@ -694,6 +694,7 @@ class PatientAuthService
             'address' => $tenant->address,
         ];
         $profile['current_tenant_user'] = $tenantUser;
+        $profile['can_edit_profile'] = config('app.can_edit_profile', false);
 
         // Resolved once, so `dob` and `date_of_birth` below cannot disagree with
         // each other or with the Personal Information screen, which resolves it
