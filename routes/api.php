@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\V1\Theme\ThemeController;
 use App\Http\Controllers\RadiologyController;
 use App\Http\Controllers\v1\Admin\AntenatalController;
 use App\Http\Controllers\v1\Admin\AuditLogController;
@@ -24,6 +23,7 @@ use App\Http\Controllers\v1\Admin\VendorController;
 use App\Http\Controllers\v1\Auth\ForgotPasswordController;
 use App\Http\Controllers\v1\Auth\LoginController;
 use App\Http\Controllers\v1\Patient\PatientAuthController;
+use App\Http\Controllers\V1\Theme\ThemeController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\v1\Admin\MainDashBoardStatsController;
 // use App\Http\Controllers\v1\Admin\ArtisanController;
