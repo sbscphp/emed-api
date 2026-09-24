@@ -85,8 +85,10 @@ use App\Services\PharmacyRequest\PharmacyRequestService;
 use App\Services\PharmacySupplier\PharmacySupplyService;
 use App\Services\Role\RoleService;
 use App\Services\Vendor\VendorService;
+use Illuminate\Console\Events\CommandStarting;
 use Illuminate\Support\Facades\Event;
 use App\Events\CreateUserEvent;
+use App\Listeners\BlockTenantMigrationsOnLandlord;
 use App\Listeners\CreateUserListener;
 class AppServiceProvider extends ServiceProvider
 {
@@ -257,6 +259,14 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(
             CreateUserEvent::class,
             CreateUserListener::class
+        );
+
+        // Refuses `migrate --path=database/migrations/tenant` on the landlord
+        // connection, where it would build the tenant schema in the central
+        // database instead of the tenant's own.
+        Event::listen(
+            CommandStarting::class,
+            BlockTenantMigrationsOnLandlord::class
         );
 
         Sanctum::usePersonalAccessTokenModel(SanctumPersonalAccessToken::class);
