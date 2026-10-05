@@ -18,12 +18,12 @@
         body {
             font-family: Helvetica, Arial, sans-serif;
             font-size: 11px;
-            color: #1f2430;
+            color: #333333;
         }
 
         .meta { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
         .meta td { padding: 3px 0; vertical-align: top; font-size: 10.5px; }
-        .meta .label { color: #6b7280; width: 110px; }
+        .meta .label { color: #666666; width: 110px; }
         .meta .value { font-weight: bold; }
 
         table.results { width: 100%; border-collapse: collapse; margin-top: 6px; }
@@ -37,15 +37,15 @@
             padding: 7px 8px;
             border-bottom: 0;
         }
-        table.results td { padding: 7px 8px; border-bottom: 1px solid #eef0f4; font-size: 10.5px; }
+        table.results td { padding: 7px 8px; border-bottom: 1px solid #eeeeee; font-size: 10.5px; }
         table.results tr td.flag-high { color: #b42318; font-weight: bold; }
         table.results tr td.flag-low { color: #b54708; font-weight: bold; }
 
-        .notes { margin-top: 16px; padding: 10px 12px; background: #fafafe; border-left: 3px solid #d9d2ff; }
-        .notes-title { font-size: 10px; text-transform: uppercase; color: #6b7280; margin-bottom: 4px; letter-spacing: 0.4px; }
+        .notes { margin-top: 16px; padding: 10px 12px; background: #f7f5ff; border-left: 3px solid #6C4BF4; }
+        .notes-title { font-size: 10px; text-transform: uppercase; color: #666666; margin-bottom: 4px; letter-spacing: 0.4px; }
 
-        .footer { margin-top: 22px; padding-top: 8px; border-top: 1px solid #e5e7eb; font-size: 9px; color: #9098a8; }
-        .empty { padding: 18px; text-align: center; color: #6b7280; font-style: italic; }
+        .footer { margin-top: 22px; padding-top: 8px; border-top: 1px solid #eeeeee; font-size: 9px; color: #999999; }
+        .empty { padding: 18px; text-align: center; color: #666666; font-style: italic; }
     </style>
     @include('exports.partials.pdf-styles')
 </head>

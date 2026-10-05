@@ -31,7 +31,7 @@
             margin: 0;
             font-family: "DejaVu Sans", sans-serif;
             font-size: 9px;
-            color: #1f2430;
+            color: #333333;
             background: #ffffff;
         }
     </style>
