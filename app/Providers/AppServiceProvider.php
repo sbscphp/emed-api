@@ -90,6 +90,9 @@ use Illuminate\Support\Facades\Event;
 use App\Events\CreateUserEvent;
 use App\Listeners\BlockTenantMigrationsOnLandlord;
 use App\Listeners\CreateUserListener;
+use App\Helpers\PdfBranding;
+use App\Models\Tenant;
+use Illuminate\Support\Facades\View;
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -270,5 +273,19 @@ class AppServiceProvider extends ServiceProvider
         );
 
         Sanctum::usePersonalAccessTokenModel(SanctumPersonalAccessToken::class);
+
+        // Brands every exported PDF with the hospital it is exported from. A
+        // view handed a `$tenant` is branded with that one (the patient app
+        // renders outside the tenant context); partials inherit the parent's
+        // branding rather than resolving it again.
+        View::composer(['exports.*', 'reports.*'], function ($view) {
+            $data = $view->getData();
+
+            if (!array_key_exists('branding', $data)) {
+                $tenant = $data['tenant'] ?? null;
+
+                $view->with('branding', PdfBranding::resolve($tenant instanceof Tenant ? $tenant : null));
+            }
+        });
     }
 }

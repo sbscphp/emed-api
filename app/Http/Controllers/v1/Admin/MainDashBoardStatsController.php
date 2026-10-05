@@ -96,7 +96,7 @@ class MainDashBoardStatsController extends Controller
                 }
 
                 if ($export === 'pdf') {
-                    return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+                    return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf', 'Recent Patients');
                 }
             }
             return JsonResponser::send(false, ' fetched successfully.', $data);

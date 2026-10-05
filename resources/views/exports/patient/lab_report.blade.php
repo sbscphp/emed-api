@@ -13,18 +13,13 @@
     <meta charset="utf-8">
     <title>{{ $order->test_name ?? 'Laboratory Report' }}</title>
     <style>
-        @page { margin: 28px 34px; }
+        @page { margin: 28px 34px 56px; }
 
         body {
             font-family: Helvetica, Arial, sans-serif;
             font-size: 11px;
             color: #1f2430;
         }
-
-        .header { border-bottom: 2px solid #6d4aff; padding-bottom: 10px; margin-bottom: 16px; }
-        .hospital { font-size: 17px; font-weight: bold; color: #2b1b6b; }
-        .hospital-address { font-size: 10px; color: #6b7280; margin-top: 2px; }
-        .doc-title { font-size: 13px; font-weight: bold; margin-top: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
 
         .meta { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
         .meta td { padding: 3px 0; vertical-align: top; font-size: 10.5px; }
@@ -33,14 +28,14 @@
 
         table.results { width: 100%; border-collapse: collapse; margin-top: 6px; }
         table.results th {
-            background: #f3f0ff;
-            color: #2b1b6b;
+            background: #6C4BF4;
+            color: #ffffff;
             text-align: left;
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.4px;
             padding: 7px 8px;
-            border-bottom: 1px solid #e2ddf7;
+            border-bottom: 0;
         }
         table.results td { padding: 7px 8px; border-bottom: 1px solid #eef0f4; font-size: 10.5px; }
         table.results tr td.flag-high { color: #b42318; font-weight: bold; }
@@ -52,16 +47,13 @@
         .footer { margin-top: 22px; padding-top: 8px; border-top: 1px solid #e5e7eb; font-size: 9px; color: #9098a8; }
         .empty { padding: 18px; text-align: center; color: #6b7280; font-style: italic; }
     </style>
+    @include('exports.partials.pdf-styles')
 </head>
 
 <body>
-    <div class="header">
-        <div class="hospital">{{ $tenant->name }}</div>
-        @if (!empty($tenant->address))
-            <div class="hospital-address">{{ $tenant->address }}</div>
-        @endif
-        <div class="doc-title">Laboratory Report</div>
-    </div>
+    @include('exports.partials.pdf-chrome', ['watermarkSize' => 22, 'orientation' => 'portrait'])
+
+    @include('exports.partials.pdf-header', ['title' => 'Laboratory Report'])
 
     <table class="meta">
         <tr>
@@ -129,7 +121,6 @@
     @endif
 
     <div class="footer">
-        Generated {{ now()->format('d M Y, h:i A') }} - {{ $tenant->name }}.
         This report is issued to the patient named above and is not valid for anyone else.
     </div>
 </body>

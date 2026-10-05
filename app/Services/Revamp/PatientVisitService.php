@@ -177,7 +177,7 @@ class PatientVisitService
         }
 
         if (strtolower($format) === 'pdf') {
-            $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData])
+            $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData, 'title' => 'Patient Visits'])
                 ->setPaper('A1', 'landscape');
 
             return $pdf->download('patients.pdf');
@@ -350,7 +350,7 @@ class PatientVisitService
         }
 
         if (strtolower($format) === 'pdf') {
-            $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData])
+            $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData, 'title' => 'Investigation Orders'])
                 ->setPaper('A1', 'landscape');
 
             return $pdf->download('investigationorders.pdf');

@@ -197,7 +197,7 @@ class TriageController extends Controller
                 }
 
                 if ($request->export === 'pdf') {
-                    $pdf = PDF::loadView('exports.patients', ['patients' => $exportData->toArray()])
+                    $pdf = PDF::loadView('exports.patients', ['patients' => $exportData->toArray(), 'title' => 'Radiology Investigation Orders'])
                         ->setPaper('A1', 'landscape');
                     return $pdf->download('radiology.pdf');
                 }
@@ -261,7 +261,7 @@ class TriageController extends Controller
                 }
 
                 if ($request->export === 'pdf') {
-                    $pdf = PDF::loadView('exports.patients', ['patients' => $exportData->toArray()])
+                    $pdf = PDF::loadView('exports.patients', ['patients' => $exportData->toArray(), 'title' => 'Laboratory Investigation Orders'])
                         ->setPaper('A1', 'landscape');
                     return $pdf->download('lab-records.pdf');
                 }
@@ -323,7 +323,7 @@ class TriageController extends Controller
                 }
 
                 if ($request->export === 'pdf') {
-                    $pdf = PDF::loadView('exports.patients', ['patients' => $exportData->toArray()])
+                    $pdf = PDF::loadView('exports.patients', ['patients' => $exportData->toArray(), 'title' => 'Pharmacy Investigation Orders'])
                         ->setPaper('A1', 'landscape');
                     return $pdf->download('pharmacy-records.pdf');
                 }

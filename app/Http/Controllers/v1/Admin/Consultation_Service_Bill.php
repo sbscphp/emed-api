@@ -92,7 +92,7 @@ class Consultation_Service_Bill extends Controller
                 }
 
                 if ($validated['export'] === 'pdf') {
-                    return ExportHelper::downloadPdf($exportData, 'service.pdf');
+                    return ExportHelper::downloadPdf($exportData, 'service.pdf', 'Consultation Services');
                 }
             }
             $services = $query->paginate(10);

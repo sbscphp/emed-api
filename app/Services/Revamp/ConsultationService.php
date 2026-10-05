@@ -149,7 +149,7 @@ class ConsultationService
         }
 
         if (strtolower($format) === 'pdf') {
-            $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData])
+            $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData, 'title' => 'Patient Consultations'])
                 ->setPaper('A1', 'landscape');
 
             return $pdf->download('patient_consultations.pdf');

@@ -78,7 +78,7 @@ class PharmacyServiceController extends Controller
                 }
 
                 if ($validated['export'] === 'pdf') {
-                    return ExportHelper::downloadPdf($exportData, 'service.pdf');
+                    return ExportHelper::downloadPdf($exportData, 'service.pdf', 'Pharmacy Services');
                 }
             }
             $tenantId = $request->header('X-Tenant-ID');

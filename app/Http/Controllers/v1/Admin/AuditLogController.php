@@ -141,7 +141,7 @@ class AuditLogController extends Controller
             }
 
             if ($downloadType === 'pdf') {
-                $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData])
+                $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData, 'title' => 'Audit Logs'])
                     ->setPaper('A1', 'landscape');
                 return $pdf->download('logs.pdf');
             }
@@ -216,7 +216,7 @@ class AuditLogController extends Controller
             if (!empty($validate['export']) && $validate['export'] == 'pdf') {
                 $medical_log = Medicine_Log::with(["patient", "medication", "pharmacy"])->get();
                 $data = MedicineLogResouces::collection($medical_log)->resolve();
-                return ExportHelper::downloadPdf($data, 'medicine.pdf');
+                return ExportHelper::downloadPdf($data, 'medicine.pdf', 'Medical Logs');
             } else if (!empty($validate['export']) && $validate['export'] == 'csv') {
                 $medical_log = Medicine_Log::with(["patient", "medication", "pharmacy"])->get();
                 $data = MedicineLogResouces::collection($medical_log)->resolve();
@@ -259,7 +259,7 @@ class AuditLogController extends Controller
                 }
 
                 if (strtolower($request['export']) === 'pdf') {
-                    return ExportHelper::downloadPdf($exportData, 'audit-logs.pdf');
+                    return ExportHelper::downloadPdf($exportData, 'audit-logs.pdf', 'Data Change Logs');
                 }
             }
 

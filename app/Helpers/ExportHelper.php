@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExportHelper
@@ -74,14 +75,35 @@ class ExportHelper
         ]);
     }
 
-    public static function downloadPdf($data, $filename = 'export.pdf')
+    /**
+     * Download rows as the branded table PDF.
+     *
+     * The title printed on the document defaults to one made from the file
+     * name ("lab-records.pdf" prints as "Lab Records"); pass one where the file
+     * name does not describe the contents.
+     */
+    public static function downloadPdf($data, $filename = 'export.pdf', ?string $title = null)
     {
         // Clean data before passing to PDF
-        $cleanedData = is_array($data) 
-            ? array_map('self::cleanUtf8', $data) 
+        $cleanedData = is_array($data)
+            ? array_map('self::cleanUtf8', $data)
             : self::cleanUtf8($data);
-            
-        $pdf = PDF::loadView('exports.patients', ['patients' => $cleanedData]);
+
+        $title ??= self::titleFromFileName($filename);
+
+        $pdf = PDF::loadView('exports.patients', ['patients' => $cleanedData, 'title' => $title]);
         return $pdf->download($filename);
+    }
+
+    /**
+     * A document title made from an export's file name, without its extension
+     * or the timestamp some exports append.
+     */
+    protected static function titleFromFileName(string $filename): string
+    {
+        $name = pathinfo($filename, PATHINFO_FILENAME);
+        $name = preg_replace('/[_\-\s]*\d{8}[_\-]?\d{4,6}$/', '', $name);
+
+        return Str::headline($name) ?: 'Export';
     }
 }

@@ -1,57 +1,37 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Patient Report</title>
-    <style>
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        table, th, td {
-            border: 1px solid black;
-        }
-        th, td {
-            padding: 8px;
-            text-align: left;
-        }
-        h2 {
-            text-align: center;
-        }
-    </style>
-</head>
-<body>
-    <h2>Finance Report</h2>
-    <table>
+@php
+    $title = 'Finance Report';
+@endphp
+
+@extends('exports.layouts.pdf')
+
+@section('content')
+    <table class="pdf-table">
         <thead>
             <tr>
                 <th>Department</th>
-                <th>Total Revenue</th>
-                <th>Pending Payment</th>
+                <th class="pdf-num">Total Revenue</th>
+                <th class="pdf-num">Pending Payment</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($report as $item)
-                @php
-                    $department = strval($item['department']);
-                    $total_revenue = strval($item['total_revenue']);
-                   $pending_payment = strval($item['pending_payment']);
-                @endphp
+            @forelse ($report as $item)
                 <tr>
-                    <td>{{ $department }}</td>
-                    <td>{{ $total_revenue }}</td>
-                    <td>{{  $pending_payment }}</td>
+                    <td class="pdf-table__key">{{ strval($item['department']) }}</td>
+                    <td class="pdf-num">{{ strval($item['total_revenue']) }}</td>
+                    <td class="pdf-num">{{ strval($item['pending_payment']) }}</td>
                 </tr>
-            @endforeach
-            <tr>
-                <td><strong>TOTALREVENUE</strong></td>
-                <td><strong>{{ $totalrevenue }}</strong></td>
-            </tr>
-              <tr>
-                <td><strong>TotalPending</strong></td>
-                <td><strong>{{ $totalpending }}</strong></td>
-            </tr>
+            @empty
+                <tr>
+                    <td colspan="3" class="pdf-empty">No records to display.</td>
+                </tr>
+            @endforelse
         </tbody>
+        <tfoot>
+            <tr>
+                <td>Total</td>
+                <td class="pdf-num">{{ $totalrevenue }}</td>
+                <td class="pdf-num">{{ $totalpending }}</td>
+            </tr>
+        </tfoot>
     </table>
-</body>
-</html>
+@endsection

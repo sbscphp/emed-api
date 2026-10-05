@@ -1,88 +1,73 @@
-<!DOCTYPE html>
-<html>
+{{--
+    The generic table export: every list screen's "Export PDF" renders its rows
+    through this view, whatever the rows are (the name is historical).
 
-<head>
-    @php
-        $first = $patients[0] ?? [];
-    @endphp
-    <style>
-        body {
-            font-family: DejaVu Sans, sans-serif;
-        }
+    Takes:
+      - `patients`      the rows, each an array keyed by column
+      - `title`         what the document is called (defaults from `type`)
+      - `headers`       optional column order; defaults to the first row's keys
+      - `footerTotals`  optional totals row, keyed by column or positional
 
-        /* .section {
-            margin-bottom: 20px;
-        } */
+    Columns whose heading mentions a status are drawn as coloured pills, and
+    the page size grows with the column count; see PdfBranding.
+--}}
+@use('App\Helpers\PdfBranding')
 
-        h2 {
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 5px;
-        }
+@php
+    $rows = collect($patients ?? [])
+        ->map(fn($row) => is_array($row) ? $row : (is_object($row) && method_exists($row, 'toArray') ? $row->toArray() : (array) $row))
+        ->values();
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            table-layout: fixed;
-            word-wrap: break-word;
-        }
+    $columns = !empty($headers) ? array_values($headers) : array_keys($rows->first() ?? []);
 
-        th,
-        td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            padding: 6px;
-            word-break: break-word;
-            white-space: normal;
-        }
+    $title = $title ?? (!empty($type) ? $type . ' Report' : 'Export');
+    $paper = $paper ?? PdfBranding::paperFor(count($columns));
 
-        tr {
-            page-break-inside: avoid;
-        }
+    $totals = !empty($footerTotals) ? (array) $footerTotals : [];
+    $positionalTotals = array_is_list($totals);
+@endphp
 
-        table,
-        .section {
-            page-break-inside: avoid;
-            page-break-after: auto;
-        }
-    </style>
-</head>
+@extends('exports.layouts.pdf')
 
-<body>
-    <div class="section">
-        @if (!empty($first))
-            <table>
-                <thead>
+@section('content')
+    @if ($rows->isEmpty() || empty($columns))
+        <div class="pdf-empty">No records to display.</div>
+    @else
+        <table class="pdf-table">
+            <thead>
+                <tr>
+                    @foreach ($columns as $column)
+                        <th>{{ PdfBranding::heading($column) }}</th>
+                    @endforeach
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($rows as $row)
                     <tr>
-                        @foreach (array_keys($first) as $key)
-                            <th>{{ ucwords(str_replace('_', ' ', $key)) }}</th>
+                        @foreach ($columns as $position => $column)
+                            @php
+                                $value = PdfBranding::cell($row[$column] ?? null);
+                            @endphp
+                            @if (PdfBranding::isStatusColumn($column) && $value !== '—')
+                                <td>
+                                    <span class="pdf-pill pdf-pill--{{ PdfBranding::statusTone($value) }}">{{ $value }}</span>
+                                </td>
+                            @else
+                                <td class="{{ $position === 0 ? 'pdf-table__key' : '' }}">{{ $value }}</td>
+                            @endif
                         @endforeach
                     </tr>
-                </thead>
-                <tbody>
-                    @foreach ($patients as $patient)
-                        <tr>
-                            @foreach ($patient as $value)
-                                <td>{{ is_scalar($value) ? $value : json_encode($value) }}</td>
-                            @endforeach
-                        </tr>
-                    @endforeach
-                </tbody>
-                @if (!empty($footerTotals))
-                    <tfoot>
-                        <tr>
-                            @foreach ($footerTotals as $value)
-                                <th style="padding: 8px; background: #f3f3f3;">{{ $value }}</th>
-                            @endforeach
-                        </tr>
-                    </tfoot>
-                @endif
-            </table>
-        @else
-            <p>No records to display.</p>
-        @endif
-    </div>
-
-</body>
-
-</html>
+                @endforeach
+            </tbody>
+            @if (!empty($totals))
+                <tfoot>
+                    <tr>
+                        @foreach ($columns as $position => $column)
+                            <td>{{ $positionalTotals ? ($totals[$position] ?? '') : ($totals[$column] ?? '') }}</td>
+                        @endforeach
+                    </tr>
+                </tfoot>
+            @endif
+        </table>
+    @endif
+@endsection
