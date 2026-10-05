@@ -124,7 +124,7 @@ class LabController extends Controller
                 if ($export === 'pdf') {
                     // return ExportHelper::downloadPdf($exportData->toArray(), 'lab-records.pdf');
 
-                    $pdf = PDF::loadView('exports.patients', ['patients' => $exportData->toArray()])->setPaper('A1', 'landscape');
+                    $pdf = PDF::loadView('exports.patients', ['patients' => $exportData->toArray(), 'title' => 'Laboratory Records'])->setPaper('A1', 'landscape');
                     return $pdf->download('lab-records.pdf');
                 }
             }
@@ -218,7 +218,7 @@ class LabController extends Controller
                 }
 
                 if ($request->export === 'pdf') {
-                    $pdf = PDF::loadView('exports.patients', ['patients' => $exportData->toArray()])
+                    $pdf = PDF::loadView('exports.patients', ['patients' => $exportData->toArray(), 'title' => 'Patient Laboratory Tests'])
                         ->setPaper('A1', 'landscape');
                     return $pdf->download('lab-records.pdf');
                 }

@@ -133,7 +133,7 @@ class ReportService
         }
 
         if (strtolower($format) === 'pdf') {
-            $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData])
+            $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData, 'title' => 'Billing Report'])
                 ->setPaper('A1', 'landscape');
 
             return $pdf->download('reports.pdf');
@@ -354,6 +354,7 @@ class ReportService
             // Pass as 'patients' so your existing blade works unchanged
             $pdf = Pdf::loadView('exports.patients', [
                 'patients'     => $exportData,
+                'title'        => "{$type} Report",
                 'headers'      => $headers,
                 'type'         => $type,
                 'footerTotals' => $footerTotals,

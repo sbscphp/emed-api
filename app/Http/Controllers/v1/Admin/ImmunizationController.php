@@ -353,7 +353,7 @@ class ImmunizationController extends Controller
                 }
 
                 if ($validated['export'] === 'pdf') {
-                    return ExportHelper::downloadPdf($exportData, 'service.pdf');
+                    return ExportHelper::downloadPdf($exportData, 'service.pdf', 'Immunization Services');
                 }
             }
             $services = $query->paginate(10);

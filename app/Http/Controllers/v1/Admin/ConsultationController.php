@@ -233,7 +233,7 @@ class ConsultationController extends Controller
                 }
 
                 if ($validate['export'] === 'pdf') {
-                    return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+                    return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf', 'Patient Consultations');
                 }
             }
             $response = [

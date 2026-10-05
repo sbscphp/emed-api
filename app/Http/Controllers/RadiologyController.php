@@ -58,7 +58,7 @@ class RadiologyController extends Controller
             }
 
             if ($export === 'pdf') {
-                return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+                return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf', 'Radiology Records');
             }
         }
         return JsonResponser::send(false, 'Billing records retrieved successfully.', $data, 200);
@@ -98,7 +98,7 @@ class RadiologyController extends Controller
             }
 
             if ($export === 'pdf') {
-                return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+                return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf', 'Patient Radiology Records');
             }
         }
 

@@ -89,7 +89,7 @@ class Lab_Service_Controller extends Controller
                 }
 
                 if ($validated['export'] === 'pdf') {
-                    return ExportHelper::downloadPdf($exportData, 'service.pdf');
+                    return ExportHelper::downloadPdf($exportData, 'service.pdf', 'Laboratory Services');
                 }
             }
             $tenantId = $request->header('X-Tenant-ID');

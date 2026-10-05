@@ -238,7 +238,7 @@ class TriageService
             case 'pdf':
                 // return ExportHelper::downloadPdf($exportData, "{$filename}.pdf", 'exports.triage_patients');
                 // return $pdf->download('lab-records.pdf');
-                $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData])
+                $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData, 'title' => 'Triage Patients'])
                     ->setPaper('A1', 'landscape');
                 return $pdf->download("{$filename}.pdf");
             case 'csv':

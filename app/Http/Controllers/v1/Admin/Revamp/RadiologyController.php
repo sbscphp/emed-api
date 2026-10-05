@@ -133,7 +133,7 @@ class RadiologyController extends Controller
                 }
 
                 if ($request->export === 'pdf') {
-                    $pdf = PDF::loadView('exports.patients', ['patients' => $exportData->toArray()])
+                    $pdf = PDF::loadView('exports.patients', ['patients' => $exportData->toArray(), 'title' => 'Radiology Tests'])
                         ->setPaper('A1', 'landscape');
                     return $pdf->download('lab-records.pdf');
                 }

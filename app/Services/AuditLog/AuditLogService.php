@@ -208,7 +208,8 @@ class AuditLogService
             // ✅ PDF EXPORT
             // ----------------------------
             'pdf' => Pdf::loadView('exports.patients', [
-                'patients' => $exportData
+                'patients' => $exportData,
+                'title' => 'Audit Logs',
             ])->download('audit_logs.pdf'),
 
             default => throw new \Exception('Invalid export format.'),

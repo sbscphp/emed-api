@@ -156,7 +156,7 @@ class Radiology_service_Controller extends Controller
         if (strtolower($format) === 'pdf') {
             $pdf = Pdf::loadView(
                 'exports.patients',
-                ['patients' => $exportData]
+                ['patients' => $exportData, 'title' => 'Radiology Services']
             )->setPaper('A4', 'landscape');
 
             return $pdf->download('radiology_services.pdf');

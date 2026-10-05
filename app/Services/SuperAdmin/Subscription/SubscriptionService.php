@@ -133,7 +133,8 @@ class SubscriptionService
                 'subscribers.xlsx'
             ),
             'pdf' => Pdf::loadView('exports.patients', [
-                'patients' => $exportData
+                'patients' => $exportData,
+                'title' => 'Subscribers',
             ])->download('subscribers.pdf'),
 
             default => throw new \Exception('Invalid export format.'),
@@ -240,7 +241,8 @@ class SubscriptionService
                 'subscription_plans.xlsx'
             ),
             'pdf' => Pdf::loadView('exports.patients', [
-                'patients' => $exportData
+                'patients' => $exportData,
+                'title' => 'Subscription Plans',
             ])->download('subscription_plans.pdf'),
 
             default => throw new \Exception('Invalid export format.'),

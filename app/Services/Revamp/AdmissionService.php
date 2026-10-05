@@ -186,7 +186,7 @@ class AdmissionService
         }
 
         if (strtolower($format) === 'pdf') {
-            $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData])
+            $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData, 'title' => 'Patient Admissions'])
                 ->setPaper('A1', 'landscape');
 
             return $pdf->download('patient_admissions.pdf');
@@ -1379,7 +1379,7 @@ class AdmissionService
         }
 
         if (strtolower($format) === 'pdf') {
-            $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData])
+            $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData, 'title' => 'Patient Care Notes'])
                 ->setPaper('A1', 'landscape');
 
             return $pdf->download('patient_care_notes.pdf');
@@ -1512,7 +1512,7 @@ class AdmissionService
         }
 
         if (strtolower($request['format']) === 'pdf') {
-            $pdf = Pdf::loadView('exports.drug_charts', ['drugCharts' => $exportData])
+            $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData, 'title' => 'Patient Drug Charts'])
                 ->setPaper('A1', 'landscape');
 
             return $pdf->download('patient_drug_charts.pdf');

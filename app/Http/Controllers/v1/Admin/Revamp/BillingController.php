@@ -261,7 +261,7 @@ class BillingController extends Controller
                 }
 
                 if ($request->export === 'pdf') {
-                    $pdf = PDF::loadView('exports.patients', ['patients' => $exportData->toArray()])
+                    $pdf = PDF::loadView('exports.patients', ['patients' => $exportData->toArray(), 'title' => 'Patient Tests'])
                         ->setPaper('A1', 'landscape');
                     return $pdf->download('lab-records.pdf');
                 }

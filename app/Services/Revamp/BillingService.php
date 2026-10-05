@@ -220,7 +220,7 @@ class BillingService
         }
 
         if (strtolower($format) === 'pdf') {
-            $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData])
+            $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData, 'title' => 'Billing Records'])
                 ->setPaper('A1', 'landscape');
 
             return $pdf->download('billing.pdf');
@@ -303,7 +303,7 @@ class BillingService
         }
 
         if (strtolower($format) === 'pdf') {
-            $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData])
+            $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData, 'title' => 'Billing Invoices'])
                 ->setPaper('A1', 'landscape');
 
             return $pdf->download('billing_invoice.pdf');
@@ -372,7 +372,7 @@ class BillingService
         }
 
         if (strtolower($format) === 'pdf') {
-            $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData])
+            $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData, 'title' => 'Billing Summary'])
                 ->setPaper('A1', 'landscape');
 
             return $pdf->download('billing_summary.pdf');
@@ -522,7 +522,7 @@ class BillingService
         }
 
         if (strtolower($format) === 'pdf') {
-            $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData])
+            $pdf = Pdf::loadView('exports.patients', ['patients' => $exportData, 'title' => 'Billing Services'])
                 ->setPaper('A1', 'landscape');
 
             return $pdf->download('billing_service.pdf');

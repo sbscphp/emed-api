@@ -20,28 +20,12 @@
     <meta charset="utf-8">
     <title>Receipt {{ $bill->invoice_number ?? $bill->id }}</title>
     <style>
-        @page { margin: 28px 34px; }
+        @page { margin: 28px 34px 56px; }
 
         body {
             font-family: Helvetica, Arial, sans-serif;
             font-size: 11px;
             color: #1f2430;
-        }
-
-        .header { border-bottom: 2px solid #6d4aff; padding-bottom: 10px; margin-bottom: 16px; }
-        .hospital { font-size: 17px; font-weight: bold; color: #2b1b6b; }
-        .hospital-address { font-size: 10px; color: #6b7280; margin-top: 2px; }
-        .doc-title { font-size: 13px; font-weight: bold; margin-top: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-
-        .paid-stamp {
-            float: right;
-            border: 2px solid #067647;
-            color: #067647;
-            font-size: 13px;
-            font-weight: bold;
-            letter-spacing: 1.5px;
-            padding: 6px 14px;
-            text-transform: uppercase;
         }
 
         .meta { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
@@ -51,14 +35,14 @@
 
         table.lines { width: 100%; border-collapse: collapse; margin-top: 6px; }
         table.lines th {
-            background: #f3f0ff;
-            color: #2b1b6b;
+            background: #6C4BF4;
+            color: #ffffff;
             text-align: left;
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.4px;
             padding: 7px 8px;
-            border-bottom: 1px solid #e2ddf7;
+            border-bottom: 0;
         }
         table.lines td { padding: 7px 8px; border-bottom: 1px solid #eef0f4; font-size: 10.5px; }
         table.lines .num { text-align: right; }
@@ -77,22 +61,13 @@
         .footer { margin-top: 22px; padding-top: 8px; border-top: 1px solid #e5e7eb; font-size: 9px; color: #9098a8; }
         .empty { padding: 18px; text-align: center; color: #6b7280; font-style: italic; }
     </style>
+    @include('exports.partials.pdf-styles')
 </head>
 
 <body>
-    <div class="header">
-        <div class="paid-stamp">Paid</div>
-        <div class="hospital">{{ $tenant->name }}</div>
-        @if (!empty($tenant->address))
-            <div class="hospital-address">{{ $tenant->address }}</div>
-        @endif
-        @if (!empty($tenant->phone_number) || !empty($tenant->email))
-            <div class="hospital-address">
-                {{ collect([$tenant->phone_number, $tenant->email])->filter()->implode('  |  ') }}
-            </div>
-        @endif
-        <div class="doc-title">Payment Receipt</div>
-    </div>
+    @include('exports.partials.pdf-chrome', ['watermarkSize' => 22, 'orientation' => 'portrait'])
+
+    @include('exports.partials.pdf-header', ['title' => 'Payment Receipt', 'stamp' => 'Paid'])
 
     <table class="meta">
         <tr>
@@ -214,7 +189,6 @@
     @endif
 
     <div class="footer">
-        Generated {{ now()->format('d M Y, h:i A') }} - {{ $tenant->name }}.
         This receipt is issued to the patient named above as confirmation of payment.
     </div>
 </body>

@@ -89,7 +89,7 @@ class BillingController extends Controller
         if ($request['export'] === 'pdf') {
             $billinglog = BillingLog::with(['serviceType', 'serviceUnit', 'patient.service'])->get();
             $exportData = Billingresource::collection($billinglog)->resolve();
-            $html = view('exports.patients', ['patients' => $exportData])->render();
+            $html = view('exports.patients', ['patients' => $exportData, 'title' => 'Billing Records'])->render();
             $pdf = Pdf::loadHTML($html)->setPaper('A1', 'landscape');
             return Response::make($pdf->output(), 200, [
                 'Content-Type' => 'application/pdf',
@@ -431,7 +431,7 @@ class BillingController extends Controller
                 }
 
                 if ($export === 'pdf') {
-                    return ExportHelper::downloadPdf($exportData, 'audit-logs.pdf');
+                    return ExportHelper::downloadPdf($exportData, 'audit-logs.pdf', 'Billing Summary');
                 }
             }
 
@@ -467,7 +467,7 @@ class BillingController extends Controller
                 }
 
                 if ($export === 'pdf') {
-                    return ExportHelper::downloadPdf($exportData, 'audit-logs.pdf');
+                    return ExportHelper::downloadPdf($exportData, 'audit-logs.pdf', 'Registration Billing');
                 }
             }
             return JsonResponser::send(false, 'Billing stats fetched successfully.', $data);
@@ -501,7 +501,7 @@ class BillingController extends Controller
             }
 
             if ($export === 'pdf') {
-                return ExportHelper::downloadPdf($exportData, 'pharmacy.pdf');
+                return ExportHelper::downloadPdf($exportData, 'pharmacy.pdf', 'Pharmacy Billing');
             }
         }
         return JsonResponser::send(false, 'Billing stats fetched successfully.', $data);
@@ -532,7 +532,7 @@ class BillingController extends Controller
                 }
 
                 if ($export === 'pdf') {
-                    return ExportHelper::downloadPdf($exportData, 'Consultation.pdf');
+                    return ExportHelper::downloadPdf($exportData, 'Consultation.pdf', 'Consultation Billing');
                 }
             }
             return JsonResponser::send(false, ' fetched successfully.',  $data);
@@ -585,7 +585,7 @@ class BillingController extends Controller
             }
 
             if ($export === 'pdf') {
-                return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+                return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf', 'Laboratory Billing');
             }
         }
 
@@ -637,7 +637,7 @@ class BillingController extends Controller
             }
 
             if ($export === 'pdf') {
-                return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+                return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf', 'Radiology Billing');
             }
         }
 
@@ -672,7 +672,7 @@ class BillingController extends Controller
                 }
 
                 if ($export === 'pdf') {
-                    return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+                    return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf', 'Payment Drafts');
                 }
             }
 
@@ -723,7 +723,7 @@ class BillingController extends Controller
                 }
 
                 if ($export === 'pdf') {
-                    return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+                    return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf', 'Pharmacy Billing');
                 }
             }
             return JsonResponser::send(false, ' fetched successfully.',  $data);
@@ -760,7 +760,7 @@ class BillingController extends Controller
                 }
 
                 if ($export === 'pdf') {
-                    return ExportHelper::downloadPdf($exportData, 'Registration.pdf');
+                    return ExportHelper::downloadPdf($exportData, 'Registration.pdf', 'Registration Billing');
                 }
             }
             return JsonResponser::send(false, ' fetched successfully.',  $data);
@@ -796,7 +796,7 @@ class BillingController extends Controller
                 }
 
                 if ($export === 'pdf') {
-                    return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+                    return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf', 'Laboratory Billing');
                 }
             }
 
@@ -834,7 +834,7 @@ class BillingController extends Controller
                 }
 
                 if ($export === 'pdf') {
-                    return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+                    return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf', 'Radiology Billing');
                 }
             }
 
@@ -870,7 +870,7 @@ class BillingController extends Controller
             }
 
             if ($export === 'pdf') {
-                return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf');
+                return ExportHelper::downloadPdf($exportData, 'Laboratory.pdf', 'Consultation Billing');
             }
         }
         return JsonResponser::send(false, ' fetched successfully.',  $data);
