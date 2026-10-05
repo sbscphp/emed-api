@@ -22,11 +22,16 @@ use Illuminate\Support\Str;
 class PdfBranding
 {
     /**
-     * EMED's brand purple, and the shades the documents are drawn in.
+     * EMED's brand palette, as the patient emails use it
+     * (resources/views/emails/patient-invitation.blade.php): the purple for
+     * headings and accents, its soft tint for fills, and the text, muted and
+     * border greys.
      */
     public const PRIMARY = '#6C4BF4';
-    public const PRIMARY_DARK = '#2b1b6b';
-    public const PRIMARY_SOFT = '#f3f0ff';
+    public const PRIMARY_SOFT = '#f1ecff';
+    public const TEXT = '#333333';
+    public const MUTED = '#999999';
+    public const BORDER = '#eeeeee';
 
     /**
      * Who the document is attributed to when there is no hospital to name.
@@ -45,6 +50,12 @@ class PdfBranding
      * would make every export several megabytes heavier for no visible gain.
      */
     protected const LOGO_MAX_EDGE = 360;
+
+    /**
+     * Bumped whenever what embed() produces changes, so a logo cached in the
+     * old shape is rebuilt rather than served for another day.
+     */
+    protected const LOGO_CACHE_VERSION = 2;
 
     /**
      * Branding already resolved during this request, by tenant id.
@@ -264,7 +275,7 @@ class PdfBranding
 
         try {
             $logo = Cache::remember(
-                'pdf-branding:logo:' . md5($source),
+                'pdf-branding:logo:v' . self::LOGO_CACHE_VERSION . ':' . md5($source),
                 now()->addHours(self::LOGO_CACHE_HOURS),
                 $build
             );
@@ -309,9 +320,11 @@ class PdfBranding
             $image = self::fit($image);
             $logo = self::png($image);
 
-            imagefilter($image, IMG_FILTER_GRAYSCALE);
-            $watermark = self::png($image);
+            $seal = self::roundel($image);
+            imagefilter($seal, IMG_FILTER_GRAYSCALE);
+            $watermark = self::png($seal);
 
+            imagedestroy($seal);
             imagedestroy($image);
 
             return [
@@ -380,6 +393,95 @@ class PdfBranding
         imagedestroy($image);
 
         return $canvas;
+    }
+
+    /**
+     * The logo as a round seal for the watermark: clipped to a circle inside a
+     * thin ring, on a transparent square.
+     *
+     * A logo that is roughly square fills the circle, losing only its corners;
+     * a wide or tall one (a wordmark) is fitted whole inside it instead, since
+     * filling the circle would crop most of it away. Edges are antialiased by
+     * hand because GD's own antialiasing does not apply to alpha.
+     *
+     * @param  \GdImage  $image
+     * @return \GdImage
+     */
+    protected static function roundel($image)
+    {
+        $size = self::LOGO_MAX_EDGE;
+        $ring = max(4, (int) round($size * 0.022));
+        $gap = (int) round($size * 0.035);
+        $inner = $size - 2 * ($ring + $gap);
+
+        $width = imagesx($image);
+        $height = imagesy($image);
+        $ratio = $width / max($height, 1);
+
+        $seal = imagecreatetruecolor($size, $size);
+        imagealphablending($seal, false);
+        imagesavealpha($seal, true);
+        imagefill($seal, 0, 0, imagecolorallocatealpha($seal, 0, 0, 0, 127));
+
+        if ($ratio > 0.8 && $ratio < 1.25) {
+            $side = min($width, $height);
+            $offset = intdiv($size - $inner, 2);
+
+            imagecopyresampled(
+                $seal, $image,
+                $offset, $offset,
+                intdiv($width - $side, 2), intdiv($height - $side, 2),
+                $inner, $inner, $side, $side
+            );
+        } else {
+            // The largest rectangle of this shape whose corners touch the
+            // circle, pulled in a little so they do not.
+            $diagonal = sqrt(1 + $ratio * $ratio);
+            $fitWidth = max(1, (int) floor($inner * 0.92 * $ratio / $diagonal));
+            $fitHeight = max(1, (int) floor($inner * 0.92 / $diagonal));
+
+            imagecopyresampled(
+                $seal, $image,
+                intdiv($size - $fitWidth, 2), intdiv($size - $fitHeight, 2),
+                0, 0,
+                $fitWidth, $fitHeight, $width, $height
+            );
+        }
+
+        $centre = ($size - 1) / 2;
+        $outer = $size / 2;
+        $ringInner = $outer - $ring;
+        $clip = $inner / 2;
+        $coverage = fn(float $value) => max(0.0, min(1.0, $value));
+
+        for ($y = 0; $y < $size; $y++) {
+            for ($x = 0; $x < $size; $x++) {
+                $distance = hypot($x - $centre, $y - $centre);
+
+                if ($distance <= $clip + 0.5) {
+                    // Inside the picture: keep it, fading the last pixel out.
+                    $edge = $coverage($clip - $distance + 0.5);
+
+                    if ($edge < 1.0) {
+                        $pixel = imagecolorat($seal, $x, $y);
+                        $alpha = 127 - (int) round((127 - (($pixel >> 24) & 0x7F)) * $edge);
+
+                        imagesetpixel($seal, $x, $y, ($pixel & 0xFFFFFF) | ($alpha << 24));
+                    }
+
+                    continue;
+                }
+
+                $band = min($coverage($distance - $ringInner + 0.5), $coverage($outer - $distance + 0.5));
+
+                imagesetpixel(
+                    $seal, $x, $y,
+                    imagecolorallocatealpha($seal, 60, 60, 60, 127 - (int) round(127 * $band))
+                );
+            }
+        }
+
+        return $seal;
     }
 
     /**

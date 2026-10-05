@@ -8,18 +8,24 @@
 
     Expects `$branding`. `$watermarkSize` sets the size of the hospital name
     under the watermark logo, so it can grow with the paper, and
-    `$orientation` (landscape by default) places the watermark in the middle of
-    the page: the logo is sized to the page width, so how far down it starts
-    depends on how tall the page is relative to that.
+    `$orientation` (landscape by default) sizes and places the watermark.
+
+    Dompdf cannot centre a box vertically, so the seal's width (a share of the
+    page width) and its offset from the top (a share of the page height) are
+    worked out together for each orientation: every A-series sheet has the
+    same proportions, so one pair keeps the seal and the name under it in the
+    middle of the page from A4 to A1, clear of the header.
 --}}
 @php
-    $watermarkTop = empty($branding['watermark'])
-        ? '46%'
-        : (($orientation ?? 'landscape') === 'portrait' ? '32%' : '17%');
+    $portrait = ($orientation ?? 'landscape') === 'portrait';
+
+    [$sealWidth, $watermarkTop] = empty($branding['watermark'])
+        ? [null, '47%']
+        : ($portrait ? ['44%', '33%'] : ['26%', '27%']);
 @endphp
 <div class="pdf-watermark" style="top: {{ $watermarkTop }};">
     @if (!empty($branding['watermark']))
-        <img class="pdf-watermark__logo" src="{{ $branding['watermark'] }}" alt="">
+        <img class="pdf-watermark__logo" src="{{ $branding['watermark'] }}" style="width: {{ $sealWidth }};" alt="">
     @endif
     <div class="pdf-watermark__name" style="font-size: {{ $watermarkSize ?? 26 }}px;">
         {{ $branding['name'] }}

@@ -32,7 +32,6 @@ class SuperAdminSeeder extends Seeder
                 'phone_number' => fake()->phoneNumber,
                 'status' => 'Active',
                 'can_login' => true,
-                'is_active' => true,
                 'is_verified' => true,
                 'is_completed' => true,
                 '2fa' => true,

@@ -9,8 +9,10 @@
 --}}
 @php
     $primary = \App\Helpers\PdfBranding::PRIMARY;
-    $primaryDark = \App\Helpers\PdfBranding::PRIMARY_DARK;
     $primarySoft = \App\Helpers\PdfBranding::PRIMARY_SOFT;
+    $text = \App\Helpers\PdfBranding::TEXT;
+    $muted = \App\Helpers\PdfBranding::MUTED;
+    $border = \App\Helpers\PdfBranding::BORDER;
 @endphp
 <style>
     .pdf-header,
@@ -66,12 +68,12 @@
     .pdf-header__name {
         font-size: 15px;
         font-weight: bold;
-        color: {{ $primaryDark }};
+        color: {{ $primary }};
     }
 
     .pdf-header__meta {
         font-size: 9px;
-        color: #8a90a2;
+        color: {{ $muted }};
         margin-top: 3px;
     }
 
@@ -90,7 +92,7 @@
     .pdf-header__title {
         font-size: 22px;
         font-weight: bold;
-        color: {{ $primaryDark }};
+        color: {{ $primary }};
     }
 
     /* Watermark --------------------------------------------------------- */
@@ -107,8 +109,7 @@
     }
 
     .pdf-watermark__logo {
-        width: 40%;
-        opacity: 0.07;
+        opacity: 0.08;
     }
 
     .pdf-watermark__name {
@@ -127,7 +128,7 @@
         right: 0;
         bottom: -34px;
         height: 22px;
-        border-top: 1px solid #e6e3f1;
+        border-top: 1px solid {{ $border }};
         padding-top: 6px;
     }
 
@@ -139,7 +140,7 @@
     .pdf-footer td {
         width: 33.33%;
         font-size: 8px;
-        color: #8a90a2;
+        color: {{ $muted }};
     }
 
     .pdf-footer__page:after {
@@ -173,21 +174,21 @@
 
     .pdf-table td {
         font-size: 8.5px;
-        color: #1f2430;
+        color: {{ $text }};
         vertical-align: middle;
         padding: 9px 7px;
-        border-bottom: 1px solid #ece9f6;
+        border-bottom: 1px solid {{ $border }};
         word-wrap: break-word;
     }
 
     .pdf-table td.pdf-table__key {
         font-weight: bold;
-        color: #111827;
+        color: {{ $text }};
     }
 
     .pdf-table tfoot td {
         background: {{ $primarySoft }};
-        color: {{ $primaryDark }};
+        color: {{ $primary }};
         font-weight: bold;
         border-top: 2px solid {{ $primary }};
         border-bottom: 0;
@@ -200,7 +201,7 @@
     .pdf-empty {
         padding: 40px 0;
         text-align: center;
-        color: #8a90a2;
+        color: {{ $muted }};
         font-size: 11px;
     }
 
@@ -218,6 +219,6 @@
     .pdf-pill--success { background: #e3f6ec; color: #067647; }
     .pdf-pill--danger { background: #fde4e7; color: #b42318; }
     .pdf-pill--warning { background: #fff1db; color: #b54708; }
-    .pdf-pill--info { background: #ece7ff; color: #5534d6; }
-    .pdf-pill--neutral { background: #eef0f4; color: #475467; }
+    .pdf-pill--info { background: {{ $primarySoft }}; color: {{ $primary }}; }
+    .pdf-pill--neutral { background: #f4f4f4; color: #666666; }
 </style>

@@ -17,12 +17,12 @@
         body {
             font-family: Helvetica, Arial, sans-serif;
             font-size: 11px;
-            color: #1f2430;
+            color: #333333;
         }
 
         .meta { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
         .meta td { padding: 3px 0; vertical-align: top; font-size: 10.5px; }
-        .meta .label { color: #6b7280; width: 110px; }
+        .meta .label { color: #666666; width: 110px; }
         .meta .value { font-weight: bold; }
 
         .section { margin-top: 14px; }
@@ -30,18 +30,18 @@
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.4px;
-            color: #2b1b6b;
-            background: #f3f0ff;
+            color: #6C4BF4;
+            background: #f1ecff;
             padding: 6px 8px;
             font-weight: bold;
         }
-        .section-body { padding: 8px; border: 1px solid #eef0f4; border-top: 0; line-height: 1.55; }
+        .section-body { padding: 8px; border: 1px solid #eeeeee; border-top: 0; line-height: 1.55; }
 
         .image { margin-top: 14px; text-align: center; }
         .image img { max-width: 100%; max-height: 320px; }
 
-        .footer { margin-top: 22px; padding-top: 8px; border-top: 1px solid #e5e7eb; font-size: 9px; color: #9098a8; }
-        .empty { padding: 18px; text-align: center; color: #6b7280; font-style: italic; }
+        .footer { margin-top: 22px; padding-top: 8px; border-top: 1px solid #eeeeee; font-size: 9px; color: #999999; }
+        .empty { padding: 18px; text-align: center; color: #666666; font-style: italic; }
     </style>
     @include('exports.partials.pdf-styles')
 </head>
